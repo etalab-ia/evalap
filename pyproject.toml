@@ -1,0 +1,46 @@
+[project]
+name = "eg1"
+version = "0.0.0"
+description = "Albert Evaluations"
+authors = [{ name = "Etalab", email = "etalab@modernisation.gouv.fr" }]
+requires-python = ">=3.10"
+readme = "README.md"
+license = { text = "MIT" }
+dependencies = [
+    "fastapi==0.115.2",
+    "SQLAlchemy==2.0.36",
+    "sqlalchemy-utils==0.41.2",
+    "alembic==1.13.3",
+    "uvicorn==0.32.0",
+    "requests==2.32.3",
+    "python-dotenv==1.0.1",
+    "psycopg2-binary==2.9.10",
+]
+
+# Tests
+
+[project.optional-dependencies]
+test = ["pytest==8.3.3", "pytest-asyncio==0.24.0"]
+
+[tool.pytest.ini_options]
+testpaths = ["api/tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+# Linter
+
+[tool.ruff]
+line-length = 100
+exclude = ["alembic/versions/"]
+
+[tool.ruff.lint.isort]
+known-third-party = ["alembic"]
+known-first-party = ["api", "config", "tests"]
+
+[tool.setuptools]
+py-modules = []
+
+[tool.pdm]
+distribution = false
+
