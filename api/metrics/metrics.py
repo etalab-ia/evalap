@@ -16,16 +16,20 @@ class Metric:
 
 all_metrics = [
     {
-        "name": "g",
-        "type_": MetricType.deepeval,
-    },
-    {
         "name": "qcm",
         "type_": MetricType.adhoc,
     },
     {
         "name": "human-vote",
         "type_": MetricType.human,
+    },
+    {
+        "name": "g",
+        "type_": MetricType.deepeval,
+    },
+    {
+        "name": "blue",
+        "type_": MetricType.deepeval,
     },
 ]
 

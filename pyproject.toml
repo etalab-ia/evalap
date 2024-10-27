@@ -15,6 +15,8 @@ dependencies = [
     "requests==2.32.3",
     "python-dotenv==1.0.1",
     "psycopg2-binary==2.9.10",
+    "pandas==2.2.3",
+    "pyzmq==26.2.0",
 ]
 
 # Tests
@@ -36,7 +38,7 @@ exclude = ["alembic/versions/"]
 
 [tool.ruff.lint.isort]
 known-third-party = ["alembic"]
-known-first-party = ["api", "config", "tests"]
+known-first-party = ["api", "config", "tests", "ui"]
 
 [tool.setuptools]
 py-modules = []

@@ -1,12 +1,16 @@
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 import api.crud as crud
 import api.schemas as schemas
 from api.db import get_db
-from config import Metric
+from api.errors import CustomIntegrityError, SchemaError
+from api.metrics import Metric
+from api.runners import dispatch_tasks
 
 router = APIRouter()
+
 
 #
 # Datasets
@@ -43,7 +47,16 @@ def read_metrics(db: Session = Depends(get_db)):
 
 @router.post("/experiment", response_model=schemas.Experiment)
 def create_experiment(experiment: schemas.ExperimentCreate, db: Session = Depends(get_db)):
-    return crud.create_experiment(db, experiment)
+    try:
+        db_exp = crud.create_experiment(db, experiment)
+        dispatch_tasks(db, db_exp)
+        return db_exp
+    except SchemaError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except IntegrityError as e:
+        return CustomIntegrityError.from_integrity_error(e.orig).to_http_response()
+    except Exception as e:
+        raise e
 
 
 @router.delete("/experiment/{id}", status_code=204)
@@ -55,9 +68,9 @@ def delete_experiment(id: int, db: Session = Depends(get_db)):
 
 @router.get("/experiments", response_model=list[schemas.Experiment])
 def read_experiments(
-    status: str | None = None, set_id: int | None = None, db: Session = Depends(get_db)
+    set_id: int | None = None, db: Session = Depends(get_db)
 ):
-    return crud.get_experiments(db, status, set_id)
+    return crud.get_experiments(db, set_id)
 
 
 @router.get("/experiment/{id}", response_model=schemas.Experiment)
@@ -85,7 +98,15 @@ def update_experiment(
 
 @router.post("/experimentset", response_model=schemas.ExperimentSet)
 def create_experimentset(experimentset: schemas.ExperimentSetCreate, db: Session = Depends(get_db)):
-    return crud.create_experimentset(db, experimentset)
+    try:
+        db_expset = crud.create_experiment(db, experimentset)
+        return db_expset
+    except SchemaError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except IntegrityError as e:
+        return CustomIntegrityError.from_integrity_error(e.orig).to_http_response()
+    except Exception as e:
+        raise e
 
 
 @router.delete("/experimentset/{id}", status_code=204)
@@ -97,9 +118,9 @@ def delete_experimentset(id: int, db: Session = Depends(get_db)):
 
 @router.get("/experimentsets", response_model=list[schemas.ExperimentSet])
 def read_experimentsets(
-    status: str | None = None, set_id: int | None = None, db: Session = Depends(get_db)
+    set_id: int | None = None, db: Session = Depends(get_db)
 ):
-    return crud.get_experimentsets(db, status, set_id)
+    return crud.get_experimentsets(db, set_id)
 
 
 @router.get("/experimentset/{id}", response_model=schemas.ExperimentSet)

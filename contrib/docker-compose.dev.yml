@@ -1,0 +1,15 @@
+services:
+  db:
+    image: postgres:17
+    container_name: postgres-albert-eg1
+    ports:
+      - "5432:5432"  # Use a different port than your development database
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: changeme
+      POSTGRES_DB: eg1_test
+    volumes:
+      - postgres_db:/var/lib/postgresql/data
+
+volumes:
+  postgres_db:

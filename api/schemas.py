@@ -1,14 +1,43 @@
 from datetime import datetime
 from enum import Enum
+from io import StringIO
+from typing import Optional
 
-from pydantic import BaseModel, ConfigDict
+import pandas as pd
+from pydantic import BaseModel, ConfigDict, create_model
+from sqlalchemy.orm import Session
+
+import api.models as models
+from api.errors import SchemaError
+from api.metrics import all_metrics_names
 
 
-class MetricEnum(str, Enum):
-    accuracy = "accuracy"
-    f1_score = "f1_score"
-    precision = "precision"
-    recall = "recall"
+#
+# Custom BaseModel
+#
+class EgBaseModel(BaseModel):
+    def recurse_table_init(self, db: Session) -> dict:
+        obj = self.model_dump()
+        for k, v in obj.items():
+            sub_schema = getattr(self, k)
+            if hasattr(sub_schema, "to_table_init"):
+                obj[k] = sub_schema.to_table_init(db)
+            elif isinstance(sub_schema, list):
+                obj[k] = [
+                    o.recurse_table_init(db) if isinstance(o, BaseModel) else o for o in sub_schema
+                ]
+
+        return obj
+
+    def to_table_init(self, db: Session):
+        return self.model_dump()
+
+
+#
+# Enum
+#
+
+MetricEnum = Enum("MetricEnum", {name: name for name in all_metrics_names}, type=str)
 
 
 class ResultStatus(str, Enum):
@@ -17,20 +46,47 @@ class ResultStatus(str, Enum):
     finished = "finished"
 
 
+class ExperimentStatus(str, Enum):
+    pending = "pending"
+    running_anwsers = "running_anwsers"
+    running_metrics = "running_metrics"
+    finished = "finished"
+
+
 #
 # Dataset
 #
 
 
-class DatasetBase(BaseModel):
+class DatasetBase(EgBaseModel):
     name: str
-    type_: str
+    df: str  # from_json
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class DatasetCreate(DatasetBase):
+    def to_table_init(self, db: Session) -> dict:
+        obj = self.recurse_table_init(db)
+
+        # Handle dataframe
+        df = pd.read_json(StringIO(self.df))
+        has_answer = "answer" in df.columns
+        has_answer_true = "answer_true" in df.columns
+
+        return {
+            "has_answer": has_answer,
+            "has_answer_true": has_answer_true,
+            "size": len(df),
+            **obj,
+        }
 
 
 class Dataset(DatasetBase):
     id: int
-
-    model_config = ConfigDict(from_attributes=True)
+    has_answer: bool
+    has_answer_true: bool
+    size: int
 
 
 #
@@ -38,18 +94,23 @@ class Dataset(DatasetBase):
 #
 
 
-class ModelBase(BaseModel):
+class ModelBase(EgBaseModel):
     name: str
-    prompt_template: str | None = None
+    base_url: str
+    api_key: str
     prompt_system: str | None = None
     sampling_params: dict | None = None
     extra_kw: dict | None = None
 
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ModelCreate(EgBaseModel):
+    pass
+
 
 class Model(ModelBase):
     id: int
-
-    model_config = ConfigDict(from_attributes=True)
 
 
 #
@@ -57,19 +118,20 @@ class Model(ModelBase):
 #
 
 
-class ResultBase(BaseModel):
+class ResultBase(EgBaseModel):
     metric: MetricEnum
-
-    model_config = ConfigDict(from_attributes=True)
 
 
 class Result(ResultBase):
     id: int
     created_at: datetime
     score: dict
-    status: ResultStatus
-    generation_table: list[dict] | None = None
+    result_status: ResultStatus
+    num_try: int
+    num_success: int
     experiment_id: int
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 #
@@ -77,44 +139,85 @@ class Result(ResultBase):
 #
 
 
-class ExperimentBase(BaseModel):
+class ExperimentBase(EgBaseModel):
     name: str
-    dataset: Dataset
     metrics: list[MetricEnum]
-    model: Model
-    dataset_id: int
-    model_id: int
-    experiment_set_id: int
+    experiment_set_id: int | None = None
 
     model_config = ConfigDict(from_attributes=True, protected_namespaces=())
 
 
 class ExperimentCreate(ExperimentBase):
-    pass
+    dataset: DatasetCreate | str
+    model: ModelCreate | None = None
+
+    def to_table_init(self, db: Session) -> dict:
+        obj = self.recurse_table_init(db)
+
+        # Handle dataset
+        if isinstance(self.dataset, str):
+            dataset = db.query(models.Dataset).filter_by(name=self.dataset).first()
+            if not dataset:
+                raise SchemaError("Dataset not found")
+        else:
+            dataset = obj["dataset"]
+        obj["dataset"] = dataset
+
+        return {
+            "experiment_status": "pending",
+            "num_try": 0,
+            "num_success": 0,
+            **obj,
+        }
 
 
 class Experiment(ExperimentBase):
     id: int
     created_at: datetime
     results: list[Result] | None
+    experiment_status: ExperimentStatus
+    num_try: int
+    num_success: int
 
+    dataset_id: int
+    model_id: int
+
+
+ExperimentUpdate = create_model(
+    "Experiment",
+    **{
+        field_name: (Optional[field], None)
+        for field_name, field in Experiment.__annotations__.items()
+    },
+)
 
 #
 # Experiment Set
 #
 
 
-class ExperimentSetBase(BaseModel):
+class ExperimentSetBase(EgBaseModel):
     name: str
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class ExperimentSetCreate(ExperimentSetBase):
-    pass
+    def to_table_init(self, db: Session) -> dict:
+        obj = self.recurse_table_init(db)
+        return {**obj}
 
 
 class ExperimentSet(ExperimentSetBase):
     id: int
     created_at: datetime
     experiments: list[Experiment] | None
+
+
+ExperimentSetUpdate = create_model(
+    "ExperimentSet",
+    **{
+        field_name: (Optional[field], None)
+        for field_name, field in ExperimentSet.__annotations__.items()
+    },
+)

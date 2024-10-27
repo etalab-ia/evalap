@@ -28,20 +28,25 @@ assert ENV in ["unittest", "dev", "prod"], "wrong ENV value"
 BACKEND_CORS_ORIGINS = ["*"]
 ALBERT_API_URL = os.getenv("ALBERT_API_URL")
 ALBERT_API_KEY = os.getenv("ALBERT_API_KEY")
+API_PREFIX = ""
 
 #######################################################################
 ### Environment specific
 #######################################################################
 
 if ENV == "unittest":
-    DATABASE_URI = "sqlite:///" + os.path.join(tempfile.gettempdir(), "eg1-unittest-sqlite3.db")
-
+    API_BASE_URL = "http://localhost:8000" + API_PREFIX
+    DB_NAME = "eg1-unittest"
+    DATABASE_URI = "sqlite:///" + os.path.join(tempfile.gettempdir(), f"{DB_NAME}-sqlite3.db")
 elif ENV == "dev":
+    API_BASE_URL = "http://localhost:8000" +API_PREFIX
+    DB_NAME = "eg1_dev"
     DATABASE_URI = os.getenv(
         "POSTGRES_URI", "postgresql+psycopg2://postgres:changeme@localhost:5432/eg1_dev"
     )
-
 else:
+    API_BASE_URL = "http://localhost:8000" + API_PREFIX
+    DB_NAME = "eg1"
     DATABASE_URI = os.getenv(
         "POSTGRES_URI", "postgresql+psycopg2://postgres:changeme@localhost:5432/eg1"
     )
