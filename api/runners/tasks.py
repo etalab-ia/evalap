@@ -1,6 +1,10 @@
+import logging
 from dataclasses import dataclass
 
+from sqlalchemy import select
+
 import api.crud as crud
+import api.models as models
 from api.clients import LlmClient
 from api.db import SessionLocal
 
@@ -14,7 +18,7 @@ class MessageAnswer:
     query: str  # the name of the observation/metric to process.
 
 
-async def generate_answer(message: dict):
+def generate_answer(message: dict):
     """Message is a dict containing the necessary information to process data
     {
         message_type(str): message router identifier.
@@ -26,29 +30,47 @@ async def generate_answer(message: dict):
     """
     msg = MessageAnswer(**message)
     with SessionLocal() as db:
-        print("|", end="", flush=True)
-        db_exp = crud.get_experiment(db, msg.exp_id)
-        db_model = crud.get_model(db, msg.model_id)
+        print("+", end="", flush=True)
+        exp = crud.get_model(db, msg.model_id)
+        model = crud.get_model(db, msg.model_id)
+        sampling_params = model.sampling_params or {}
 
-        # Generate answer
-        # --
-        messages = [{"role": "user", "content": msg.query}]
-        if db_model.prompt_system:
-            messages = [{"role": "system", "content": db_model.prompt_system}] + messages
-        aiclient = LlmClient(base_url=db_model.base_url, api_key=db_model.api_key)
-        answer = aiclient.generate(
-            model=db_model.name, messages=messages, **db_model.sampling_params
-        )
+        answer = None
+        try:
+            # Generate answer
+            # --
+            messages = [{"role": "user", "content": msg.query}]
+            if model.prompt_system:
+                messages = [{"role": "system", "content": model.prompt_system}] + messages
+            aiclient = LlmClient(base_url=model.base_url, api_key=model.api_key)
+            result = aiclient.generate(model=model.name, messages=messages, **sampling_params)
+            answer = result.choices[0].message.content
 
-        # Upsert answer
-        crud.upsert_answer(db, db_exp.id, msg.line_id, answer=answer)
+            # Upsert answer
+            crud.upsert_answer(db, exp.id, msg.line_id, answer=answer)
+
+        except Exception as e:
+            logging.warning("Generation error: %s" % e)
+        finally:
+            # Ensure atomic transaction
+            # @TODO: crud.get_experiment(db, expid, lock=True)
+            db_exp = db.execute(
+                select(models.Experiment)
+                .where(models.Experiment.id == msg.exp_id)
+                .with_for_update()
+            ).scalar_one()
+
+            db_exp.num_try += 1
+            db_exp.num_success += 1 if answer else 0
+
+            db.commit()
 
         # Check if all the answer have been generated.
         if db_exp.num_try == db_exp.dataset.size:
             crud.update_experiment(db, db_exp.id, dict(experiment_status="finished"))
 
 
-async def generate_observation(message: dict):
+def generate_observation(message: dict):
     """Message is a dict containing the necessary information to process data
     {
         message_type(str): message router identifie.
@@ -60,10 +82,10 @@ async def generate_observation(message: dict):
     }
     """
     with SessionLocal() as db:
-        print("+", end="", flush=True)
+        print(".", end="", flush=True)
 
 
-async def process_task(message: dict):
+def process_task(message: dict):
     """Route and process message"""
     match message["message_type"]:
         case "answer":
@@ -73,4 +95,4 @@ async def process_task(message: dict):
         case _:
             raise NotImplementedError("Message type Unknown")
 
-    return await task(message)
+    return task(message)

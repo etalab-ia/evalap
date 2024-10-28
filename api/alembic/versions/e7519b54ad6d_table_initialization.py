@@ -1,8 +1,8 @@
 """Table Initialization
 
-Revision ID: 9c06bb6e17e5
+Revision ID: e7519b54ad6d
 Revises: 
-Create Date: 2024-10-27 23:20:46.455266
+Create Date: 2024-10-28 00:47:35.864548
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '9c06bb6e17e5'
+revision: str = 'e7519b54ad6d'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -24,6 +24,7 @@ def upgrade() -> None:
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.Text(), nullable=True),
     sa.Column('df', sa.JSON(), nullable=True),
+    sa.Column('has_query', sa.Boolean(), nullable=True),
     sa.Column('has_answer', sa.Boolean(), nullable=True),
     sa.Column('has_answer_true', sa.Boolean(), nullable=True),
     sa.Column('size', sa.Integer(), nullable=True),
@@ -45,8 +46,7 @@ def upgrade() -> None:
     sa.Column('prompt_system', sa.Text(), nullable=True),
     sa.Column('sampling_params', sa.JSON(), nullable=True),
     sa.Column('extra_kw', sa.JSON(), nullable=True),
-    sa.PrimaryKeyConstraint('id'),
-    sa.UniqueConstraint('name')
+    sa.PrimaryKeyConstraint('id')
     )
     op.create_table('experiments',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -66,7 +66,7 @@ def upgrade() -> None:
     )
     op.create_table('answers',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('answer', sa.Float(), nullable=True),
+    sa.Column('answer', sa.Text(), nullable=True),
     sa.Column('num_line', sa.Integer(), nullable=True),
     sa.Column('experiment_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['experiment_id'], ['experiments.id'], ),

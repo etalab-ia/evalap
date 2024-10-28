@@ -8,7 +8,7 @@ from .schemas.openai import ChatCompletionResponse
 
 
 class LlmClient:
-    def __init__(self, api_key=None, base_url=None):
+    def __init__(self, base_url=None, api_key=None):
         self.url = base_url
         self.api_key = api_key
 

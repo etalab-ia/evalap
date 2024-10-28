@@ -25,3 +25,6 @@ drop-database:
   os.system(command)
   print(f"Database '{DB_NAME}' has been dropped.")
 
+rainfrog:
+  rainfrog --url postgres://postgres:changeme@localhost:5432/eg1_dev
+

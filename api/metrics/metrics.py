@@ -18,18 +18,22 @@ all_metrics = [
     {
         "name": "qcm",
         "type_": MetricType.adhoc,
+        "require": ["answer", "answer_true"]
     },
     {
         "name": "human-vote",
         "type_": MetricType.human,
+        "require": ["answer"]
     },
     {
         "name": "g",
         "type_": MetricType.deepeval,
+        "require": ["answer"]
     },
     {
         "name": "blue",
         "type_": MetricType.deepeval,
+        "require": []
     },
 ]
 

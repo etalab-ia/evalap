@@ -17,6 +17,7 @@ def dispatch_tasks(db, db_exp):
         # iterate the dataset
         df = pd.read_json(StringIO(db_exp.dataset.df))
         for line_num, row in df.iterrows():
+            print(line_num)
             socket.send_json(
                 {
                     "message_type": "answer",
@@ -27,7 +28,7 @@ def dispatch_tasks(db, db_exp):
                 }
             )
 
-        crud.update_experiment(db, db_exp.id, dict(experiment_status="running"))
+        crud.update_experiment(db, db_exp.id, dict(experiment_status="running_answers"))
         # The runner will check when all answer are finished
         # tu run generation the observation if needed.
     else:
@@ -48,3 +49,5 @@ def dispatch_tasks(db, db_exp):
                         "output_true": row["answer_true"],
                     }
                 )
+
+        crud.update_experiment(db, db_exp.id, dict(experiment_status="running_metrics"))

@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from concurrent.futures import ProcessPoolExecutor
 
 import zmq
 import zmq.asyncio
@@ -11,6 +12,17 @@ MAX_CONCURRENT_TASKS = 32
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+async def run_blocking_task_in_executor(task):
+    # The aproach with the ProcessPoolExecutor is more efficient got CPU bound task, but have a higher overload.
+    # asyncio.to_thread is good for bypassing the GIL and I/O bound task.
+    # --
+    # loop = asyncio.get_running_loop()
+    # with ProcessPoolExecutor() as executor:
+    #     await loop.run_in_executor(executor, process_task, task)
+    return await asyncio.to_thread(process_task, task)
+
 
 async def worker(url, semaphore):
     context = zmq.asyncio.Context()
@@ -26,7 +38,7 @@ async def worker(url, semaphore):
             # Acquire a semaphore before processing the task
             async with semaphore:
                 # Process the task
-                await process_task(message)
+                asyncio.create_task(run_blocking_task_in_executor(message))
         except Exception as e:
             logger.exception("An error occurred in the ZMQ main loop: %s", e)
 

@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 import api.models as models
 from api.errors import SchemaError
-from api.metrics import all_metrics_names
+from api.metrics import all_metrics, all_metrics_names
 
 
 #
@@ -48,7 +48,7 @@ class ResultStatus(str, Enum):
 
 class ExperimentStatus(str, Enum):
     pending = "pending"
-    running_anwsers = "running_anwsers"
+    running_answers = "running_answers"
     running_metrics = "running_metrics"
     finished = "finished"
 
@@ -71,10 +71,12 @@ class DatasetCreate(DatasetBase):
 
         # Handle dataframe
         df = pd.read_json(StringIO(self.df))
+        has_query = "query" in df.columns
         has_answer = "answer" in df.columns
         has_answer_true = "answer_true" in df.columns
 
         return {
+            "has_query": has_query,
             "has_answer": has_answer,
             "has_answer_true": has_answer_true,
             "size": len(df),
@@ -84,6 +86,7 @@ class DatasetCreate(DatasetBase):
 
 class Dataset(DatasetBase):
     id: int
+    has_query: bool
     has_answer: bool
     has_answer_true: bool
     size: int
@@ -105,7 +108,7 @@ class ModelBase(EgBaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class ModelCreate(EgBaseModel):
+class ModelCreate(ModelBase):
     pass
 
 
@@ -154,14 +157,34 @@ class ExperimentCreate(ExperimentBase):
     def to_table_init(self, db: Session) -> dict:
         obj = self.recurse_table_init(db)
 
-        # Handle dataset
+        # Handle Dataset
         if isinstance(self.dataset, str):
             dataset = db.query(models.Dataset).filter_by(name=self.dataset).first()
             if not dataset:
                 raise SchemaError("Dataset not found")
         else:
-            dataset = obj["dataset"]
+            dataset = models.Dataset(**obj["dataset"])
         obj["dataset"] = dataset
+
+        # Validate Model and metric compatibility
+        needs_answer = any("answer" in all_metrics[m]["require"] for m in self.metrics)
+        needs_answer_true = any("answer" in all_metrics[m]["require"] for m in self.metrics)
+        if needs_answer and not self.model and not dataset.has_answer:
+            raise SchemaError(
+                "You need to provide an answer for this metric. "
+                "Either set a model to generate it or provide a dataset with the 'answer' field."
+            )
+        if needs_answer and not dataset.has_answer and not dataset.has_query:
+            raise SchemaError(
+                "You need to provide an answer for this metric. "
+                "Either provide a dataset with the 'query' field to generate the answer or with an 'answer' field if have generated it yourself."
+            )
+
+        if needs_answer_true and not dataset.has_answer_true:
+            raise SchemaError(
+                "You need to provide a ground truth for this metric. "
+                "Your dataset needs to have an 'answer_true' field."
+            )
 
         return {
             "experiment_status": "pending",

@@ -3,6 +3,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import RelationshipProperty, class_mapper, relationship
 from sqlalchemy.sql import func
 
+from api.schemas import EgBaseModel
+
 Base = declarative_base()
 
 # By convention, we reserve the String type for Enum defined in the schema scope.
@@ -37,9 +39,15 @@ def create_object_from_dict(db, model, data):
         elif isinstance(rel_data, list):  # Handle one-to-many or many-to-many
             related_objs = [create_object_from_dict(db, rel_model, item) for item in rel_data]
             setattr(obj, rel_name, related_objs)
-        else:  # Handle one-to-one or many-to-one
+        elif isinstance(rel_data, (dict, EgBaseModel)):  # Handle one-to-one or many-to-one
+            if isinstance(rel_data, EgBaseModel):
+                rel_data = vars(rel_data)
             related_obj = create_object_from_dict(db, rel_model, rel_data)
             setattr(obj, rel_name, related_obj)
+        else:
+            raise NotImplementedError(
+                f"Unknonw type for relationtioship {rel_name}:{type(rel_data)}"
+            )
 
     return obj
 
@@ -50,6 +58,7 @@ class Dataset(Base):
     id = Column(Integer, primary_key=True)
     name = Column(Text, unique=True)
     df = Column(JSON)
+    has_query = Column(Boolean)
     has_answer = Column(Boolean)
     has_answer_true = Column(Boolean)
     size = Column(Integer)
@@ -59,7 +68,7 @@ class Model(Base):
     __tablename__ = "models"
 
     id = Column(Integer, primary_key=True)
-    name = Column(Text, unique=True)
+    name = Column(Text)
     base_url = Column(Text)
     api_key = Column(Text)
     prompt_system = Column(Text)
@@ -102,7 +111,7 @@ class ObservationTable(Base):
 class Answer(Base):
     __tablename__ = "answers"
     id = Column(Integer, primary_key=True)
-    answer = Column(Float)
+    answer = Column(Text)
     num_line = Column(Integer)
 
     # One

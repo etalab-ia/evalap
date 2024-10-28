@@ -68,7 +68,7 @@ def update_experiment(
     db: Session, experiment_id: int, experiment_update: schemas.ExperimentUpdate | dict
 ) -> models.Experiment | None:
     if isinstance(experiment_update, dict):
-        experiment_update = schemas.ExperimentSetUpdate(**experiment_update)
+        experiment_update = schemas.ExperimentUpdate(**experiment_update)
 
     experiment = db.query(models.Experiment).get(experiment_id)
     if experiment is None:
@@ -138,7 +138,7 @@ def update_experimentset(
 #
 
 
-def upsert_answer(db: Session, experiment_id: str, num_line: int, **answer):
+def upsert_answer(db: Session, experiment_id: str, num_line: int, **answer) -> models.Answer:
     # Check if the record already exists
     db_answer = (
         db.query(models.Answer).filter_by(num_line=num_line, experiment_id=experiment_id).first()
@@ -147,7 +147,7 @@ def upsert_answer(db: Session, experiment_id: str, num_line: int, **answer):
     if db_answer:
         # Update the existing record
         for k, v in answer.items():
-            setattr(db_answer, "k", v)
+            setattr(db_answer, k, v)
     else:
         # Insert a new record
         db_answer = models.Answer(experiment_id=experiment_id, num_line=num_line, **answer)
