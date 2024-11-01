@@ -1,8 +1,8 @@
 """Table Initialization
 
-Revision ID: e7519b54ad6d
+Revision ID: 9754af036589
 Revises: 
-Create Date: 2024-10-28 00:47:35.864548
+Create Date: 2024-11-01 19:53:06.323917
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'e7519b54ad6d'
+revision: str = '9754af036589'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -62,7 +62,8 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['dataset_id'], ['datasets.id'], ),
     sa.ForeignKeyConstraint(['experiment_set_id'], ['experiment_sets.id'], ),
     sa.ForeignKeyConstraint(['model_id'], ['models.id'], ),
-    sa.PrimaryKeyConstraint('id')
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('experiment_set_id', 'name', name='_expset_name_unique_constraint')
     )
     op.create_table('answers',
     sa.Column('id', sa.Integer(), nullable=False),
@@ -75,8 +76,7 @@ def upgrade() -> None:
     op.create_table('results',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=True),
-    sa.Column('metric', sa.String(), nullable=True),
-    sa.Column('result_status', sa.String(), nullable=True),
+    sa.Column('metric_name', sa.String(), nullable=True),
     sa.Column('num_try', sa.Integer(), nullable=True),
     sa.Column('num_success', sa.Integer(), nullable=True),
     sa.Column('experiment_id', sa.Integer(), nullable=True),
@@ -85,7 +85,9 @@ def upgrade() -> None:
     )
     op.create_table('observation_table',
     sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=True),
     sa.Column('score', sa.Float(), nullable=True),
+    sa.Column('observation', sa.JSON(), nullable=True),
     sa.Column('num_line', sa.Integer(), nullable=True),
     sa.Column('result_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['result_id'], ['results.id'], ),

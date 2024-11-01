@@ -30,6 +30,9 @@ ALBERT_API_URL = os.getenv("ALBERT_API_URL")
 ALBERT_API_KEY = os.getenv("ALBERT_API_KEY")
 API_PREFIX = ""
 
+# Runners
+MAX_CONCURRENT_TASKS = 32
+
 #######################################################################
 ### Environment specific
 #######################################################################

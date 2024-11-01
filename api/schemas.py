@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 import api.models as models
 from api.errors import SchemaError
-from api.metrics import all_metrics, all_metrics_names
+from api.metrics import metric_registry
 
 
 #
@@ -37,13 +37,9 @@ class EgBaseModel(BaseModel):
 # Enum
 #
 
-MetricEnum = Enum("MetricEnum", {name: name for name in all_metrics_names}, type=str)
-
-
-class ResultStatus(str, Enum):
-    pending = "pending"
-    running = "running"
-    finished = "finished"
+MetricEnum = Enum(
+    "MetricEnum", {name: name for name in metric_registry.get_metric_names()}, type=str
+)
 
 
 class ExperimentStatus(str, Enum):
@@ -121,20 +117,28 @@ class Model(ModelBase):
 #
 
 
-class ResultBase(EgBaseModel):
-    metric: MetricEnum
+class Observation(EgBaseModel):
+    id: int
+    created_at: datetime
+    score: float | None
+    observation: str | None  # json
+    num_line: int
 
+    model_config = ConfigDict(from_attributes=True)
+
+class ResultBase(EgBaseModel):
+    metric_name: MetricEnum
+
+    model_config = ConfigDict(from_attributes=True)
 
 class Result(ResultBase):
     id: int
     created_at: datetime
-    score: dict
-    result_status: ResultStatus
+    observation_table: list[Observation]
     num_try: int
     num_success: int
     experiment_id: int
 
-    model_config = ConfigDict(from_attributes=True)
 
 
 #
@@ -153,6 +157,7 @@ class ExperimentBase(EgBaseModel):
 class ExperimentCreate(ExperimentBase):
     dataset: DatasetCreate | str
     model: ModelCreate | None = None
+    skip_answers_generation: bool = False
 
     def to_table_init(self, db: Session) -> dict:
         obj = self.recurse_table_init(db)
@@ -163,12 +168,19 @@ class ExperimentCreate(ExperimentBase):
             if not dataset:
                 raise SchemaError("Dataset not found")
         else:
-            dataset = models.Dataset(**obj["dataset"])
+            dataset = obj["dataset"]
         obj["dataset"] = dataset
 
+        # Handle Results
+        results = []
+        for metric_name in self.metrics:
+            results.append({"metric_name": metric_name})
+        obj["results"] = results
+
         # Validate Model and metric compatibility
-        needs_answer = any("answer" in all_metrics[m]["require"] for m in self.metrics)
-        needs_answer_true = any("answer" in all_metrics[m]["require"] for m in self.metrics)
+        mr = metric_registry
+        needs_answer = any("answer" in mr.get_metric(m).require for m in self.metrics)
+        needs_answer_true = any("answer" in mr.get_metric(m).require for m in self.metrics)
         if needs_answer and not self.model and not dataset.has_answer:
             raise SchemaError(
                 "You need to provide an answer for this metric. "
@@ -188,13 +200,22 @@ class ExperimentCreate(ExperimentBase):
 
         return {
             "experiment_status": "pending",
-            "num_try": 0,
-            "num_success": 0,
             **obj,
         }
 
 
 class Experiment(ExperimentBase):
+    id: int
+    created_at: datetime
+    experiment_status: ExperimentStatus
+    num_try: int
+    num_success: int
+
+    dataset_id: int
+    model_id: int
+
+
+class ExperimentWithResults(ExperimentBase):
     id: int
     created_at: datetime
     results: list[Result] | None

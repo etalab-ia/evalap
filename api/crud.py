@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 
 import api.models as models
 import api.schemas as schemas
-from api.metrics import Metric, all_metrics
+from api.metrics import Metric, metric_registry
 from api.models import create_object_from_dict
 
 #
@@ -28,7 +28,31 @@ def get_model(db: Session, model_id: int) -> models.Model | None:
 
 
 def get_metrics(db: Session) -> list[Metric]:
-    return all_metrics.values()
+    return list(metric_registry.get_metrics())
+
+
+#
+# Results
+#
+
+
+def get_result(
+    db: Session,
+    result_id: int | None = None,
+    experiment_id: str | None = None,
+    metric_name: str | None = None,
+) -> models.Result | None:
+    if result_id:
+        return db.query(models.Result).filter(models.Result.id == result_id).first()
+    elif experiment_id and metric_name:
+        # TODO: unique by name vs configurable metric (always acceded is by result_id)
+        return (
+            db.query(models.Result)
+            .filter_by(experiment_id=experiment_id, metric_name=metric_name)
+            .first()
+        )
+    else:
+        raise ValueError("Should give at list an result_idid or couple experiment_id metric_name.")
 
 
 #
@@ -44,13 +68,8 @@ def create_experiment(db: Session, experiment: schemas.ExperimentCreate) -> mode
     return db_exp
 
 
-def remove_experiment(db: Session, experiment_id: int) -> bool:
-    experiment = db.query(models.Experiment).get(experiment_id)
-    if experiment is None:
-        return False
-    db.delete(experiment)
-    db.commit()
-    return True
+def get_experiment(db: Session, experiment_id: int) -> models.Experiment | None:
+    return db.query(models.Experiment).get(experiment_id)
 
 
 def get_experiments(db: Session, set_id: int | None = None) -> list[models.Experiment]:
@@ -58,10 +77,6 @@ def get_experiments(db: Session, set_id: int | None = None) -> list[models.Exper
     if set_id:
         query = query.filter(models.Experiment.experiment_set_id == set_id)
     return query.all()
-
-
-def get_experiment(db: Session, experiment_id: int) -> models.Experiment | None:
-    return db.query(models.Experiment).get(experiment_id)
 
 
 def update_experiment(
@@ -81,6 +96,15 @@ def update_experiment(
     return experiment
 
 
+def remove_experiment(db: Session, experiment_id: int) -> bool:
+    experiment = db.query(models.Experiment).get(experiment_id)
+    if experiment is None:
+        return False
+    db.delete(experiment)
+    db.commit()
+    return True
+
+
 #
 # Experiment Sets
 #
@@ -96,13 +120,8 @@ def create_experimentset(
     return db_expset
 
 
-def remove_experimentset(db: Session, experimentset_id: int) -> bool:
-    experimentset = db.query(models.ExperimentSet).get(experimentset_id)
-    if experimentset is None:
-        return False
-    db.delete(experimentset)
-    db.commit()
-    return True
+def get_experimentset(db: Session, experimentset_id: int) -> models.ExperimentSet | None:
+    return db.query(models.ExperimentSet).get(experimentset_id)
 
 
 def get_experimentsets(db: Session, set_id: int | None = None) -> list[models.ExperimentSet]:
@@ -110,10 +129,6 @@ def get_experimentsets(db: Session, set_id: int | None = None) -> list[models.Ex
     if set_id:
         query = query.filter(models.ExperimentSet.experimentset_set_id == set_id)
     return query.all()
-
-
-def get_experimentset(db: Session, experimentset_id: int) -> models.ExperimentSet | None:
-    return db.query(models.ExperimentSet).get(experimentset_id)
 
 
 def update_experimentset(
@@ -133,12 +148,21 @@ def update_experimentset(
     return experimentset
 
 
+def remove_experimentset(db: Session, experimentset_id: int) -> bool:
+    experimentset = db.query(models.ExperimentSet).get(experimentset_id)
+    if experimentset is None:
+        return False
+    db.delete(experimentset)
+    db.commit()
+    return True
+
+
 #
 # Runner Crud
 #
 
 
-def upsert_answer(db: Session, experiment_id: str, num_line: int, **answer) -> models.Answer:
+def upsert_answer(db: Session, experiment_id: str, num_line: int, answer: dict) -> models.Answer:
     # Check if the record already exists
     db_answer = (
         db.query(models.Answer).filter_by(num_line=num_line, experiment_id=experiment_id).first()
@@ -151,6 +175,28 @@ def upsert_answer(db: Session, experiment_id: str, num_line: int, **answer) -> m
     else:
         # Insert a new record
         db_answer = models.Answer(experiment_id=experiment_id, num_line=num_line, **answer)
+        db.add(db_answer)
+
+    db.commit()
+    db.refresh(db_answer)
+    return db_answer
+
+
+def upsert_observation(
+    db: Session, result_id: str, num_line: int, observation: dict
+) -> models.Answer:
+    # Check if the record already exists
+    db_observation = (
+        db.query(models.ObservationTable).filter_by(num_line=num_line, result_id=result_id).first()
+    )
+
+    if db_observation:
+        # Update the existing record
+        for k, v in observation.items():
+            setattr(db_observation, k, v)
+    else:
+        # Insert a new record
+        db_answer = models.ObservationTable(result_id=result_id, num_line=num_line, **observation)
         db.add(db_answer)
 
     db.commit()

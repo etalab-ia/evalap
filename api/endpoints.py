@@ -49,7 +49,11 @@ def read_metrics(db: Session = Depends(get_db)):
 def create_experiment(experiment: schemas.ExperimentCreate, db: Session = Depends(get_db)):
     try:
         db_exp = crud.create_experiment(db, experiment)
-        dispatch_tasks(db, db_exp)
+        if db_exp.dataset.has_answer:
+            dispatch_tasks(db, db_exp, "observations")
+        else:
+            dispatch_tasks(db, db_exp, "answers")
+
         return db_exp
     except SchemaError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -66,19 +70,16 @@ def delete_experiment(id: int, db: Session = Depends(get_db)):
     return
 
 
-@router.get("/experiments", response_model=list[schemas.Experiment])
-def read_experiments(
-    set_id: int | None = None, db: Session = Depends(get_db)
-):
-    return crud.get_experiments(db, set_id)
-
-
-@router.get("/experiment/{id}", response_model=schemas.Experiment)
-def read_experiment(id: int, db: Session = Depends(get_db)):
+@router.get("/experiment/{id}", response_model=schemas.Experiment | schemas.ExperimentWithResults)
+def read_experiment(id: int, with_results: bool = False, db: Session = Depends(get_db)):
     experiment = crud.get_experiment(db, id)
     if experiment is None:
         raise HTTPException(status_code=404, detail="Experiment not found")
-    return experiment
+
+    if with_results:
+        return schemas.ExperimentWithResults.from_orm(experiment)
+
+    return schemas.Experiment.from_orm(experiment)
 
 
 @router.patch("/experiment/{id}", response_model=schemas.Experiment)
@@ -114,13 +115,6 @@ def delete_experimentset(id: int, db: Session = Depends(get_db)):
     if not crud.remove_experimentset(db, id):
         raise HTTPException(status_code=404, detail="ExperimentSet not found")
     return
-
-
-@router.get("/experimentsets", response_model=list[schemas.ExperimentSet])
-def read_experimentsets(
-    set_id: int | None = None, db: Session = Depends(get_db)
-):
-    return crud.get_experimentsets(db, set_id)
 
 
 @router.get("/experimentset/{id}", response_model=schemas.ExperimentSet)

@@ -5,10 +5,11 @@ from concurrent.futures import ProcessPoolExecutor
 import zmq
 import zmq.asyncio
 
+from api.config import MAX_CONCURRENT_TASKS
+
 from .tasks import process_task
 
 ZMQ_URL = "tcp://localhost:5555"
-MAX_CONCURRENT_TASKS = 32
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

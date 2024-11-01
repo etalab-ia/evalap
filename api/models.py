@@ -1,4 +1,15 @@
-from sqlalchemy import JSON, Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import RelationshipProperty, class_mapper, relationship
 from sqlalchemy.sql import func
@@ -18,6 +29,9 @@ def is_relationship(model, attribute_name):
 
 def create_object_from_dict(db, model, data):
     """Create a SQL object from a nested dictionary with relationship"""
+    if isinstance(data, Base):
+        return data
+
     # Separate relationships from simple attributes
     relationships = {}
     attributes = {}
@@ -82,10 +96,9 @@ class Result(Base):
 
     id = Column(Integer, primary_key=True)
     created_at = Column(DateTime, server_default=func.now())
-    metric = Column(String)
-    result_status = Column(String)
-    num_try = Column(Integer)
-    num_success = Column(Integer)
+    metric_name = Column(String)
+    num_try = Column(Integer, default=0)
+    num_success = Column(Integer, default=0)
 
     # One
     experiment_id = Column(Integer, ForeignKey("experiments.id"))
@@ -97,11 +110,10 @@ class Result(Base):
 class ObservationTable(Base):
     __tablename__ = "observation_table"
     id = Column(Integer, primary_key=True)
+    created_at = Column(DateTime, server_default=func.now())
     score = Column(Float)
+    observation = Column(JSON)
     num_line = Column(Integer)
-    # output
-    # output_true
-    # @TODO: How to represent potential intermediate generation (e.g Ragtime) ?
 
     # One
     result_id = Column(Integer, ForeignKey("results.id"))
@@ -127,8 +139,8 @@ class Experiment(Base):
     created_at = Column(DateTime, server_default=func.now())
     metrics = Column(JSON)  # asked metrics,  list of enum
     experiment_status = Column(String)
-    num_try = Column(Integer)
-    num_success = Column(Integer)
+    num_try = Column(Integer, default=0)
+    num_success = Column(Integer, default=0)
 
     # One
     dataset_id = Column(Integer, ForeignKey("datasets.id"))
@@ -139,7 +151,9 @@ class Experiment(Base):
     experiment_set = relationship("ExperimentSet", back_populates="experiments")
     # Many
     results = relationship("Result", back_populates="experiment")  # len == #metrics
-    answers = relationship("Answer", back_populates="experiment")
+    answers = relationship("Answer", back_populates="experiment") # len == #dataset.df
+
+    __table_args__ = (UniqueConstraint('experiment_set_id', 'name', name='_expset_name_unique_constraint'),)
 
 
 class ExperimentSet(Base):
