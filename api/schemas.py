@@ -124,19 +124,32 @@ class Model(ModelBase):
 #
 
 
+class Answer(EgBaseModel):
+    id: int
+    created_at: datetime
+    answer: str | None
+    num_line: int
+    error_msg: str | None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class Observation(EgBaseModel):
     id: int
     created_at: datetime
     score: float | None
     observation: str | None  # json
     num_line: int
+    error_msg: str | None
 
     model_config = ConfigDict(from_attributes=True)
+
 
 class ResultBase(EgBaseModel):
     metric_name: MetricEnum
 
     model_config = ConfigDict(from_attributes=True)
+
 
 class Result(ResultBase):
     id: int
@@ -147,7 +160,6 @@ class Result(ResultBase):
     experiment_id: int
 
 
-
 #
 # Experiment
 #
@@ -156,16 +168,17 @@ class Result(ResultBase):
 class ExperimentBase(EgBaseModel):
     name: str
     metrics: list[MetricEnum]
-    readme : str | None = None
+    readme: str | None = None
     experiment_set_id: int | None = None
 
     model_config = ConfigDict(from_attributes=True, protected_namespaces=())
+
+    skip_answers_generation: bool = False
 
 
 class ExperimentCreate(ExperimentBase):
     dataset: DatasetCreate | str
     model: ModelCreate | None = None
-    skip_answers_generation: bool = False
 
     def to_table_init(self, db: Session) -> dict:
         obj = self.recurse_table_init(db)
@@ -223,16 +236,17 @@ class Experiment(ExperimentBase):
     model_id: int
 
 
-class ExperimentWithResults(ExperimentBase):
-    id: int
-    created_at: datetime
+class ExperimentWithResults(Experiment):
     results: list[Result] | None
-    experiment_status: ExperimentStatus
-    num_try: int
-    num_success: int
 
-    dataset_id: int
-    model_id: int
+
+class ExperimentWithAnswers(Experiment):
+    answers: list[Answer] | None
+
+
+class ExperimentFull(Experiment):
+    answers: list[Answer] | None
+    results: list[Result] | None
 
 
 ExperimentUpdate = create_model(
@@ -243,6 +257,11 @@ ExperimentUpdate = create_model(
     },
 )
 
+
+class ExperimentPatch(ExperimentUpdate):
+    skip_answers_generation: bool = False
+
+
 #
 # Experiment Set
 #
@@ -250,7 +269,7 @@ ExperimentUpdate = create_model(
 
 class ExperimentSetBase(EgBaseModel):
     name: str
-    readme : str | None = None
+    readme: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

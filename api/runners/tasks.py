@@ -1,7 +1,8 @@
 import logging
 from dataclasses import dataclass
 
-from sqlalchemy import select
+from sqlalchemy import select, update
+from sqlalchemy.orm import Session
 
 import api.crud as crud
 import api.models as models
@@ -29,6 +30,7 @@ def generate_answer(message: dict):
         model = crud.get_model(db, msg.model_id)
         sampling_params = model.sampling_params or {}
         answer = None
+        error_msg = None
         try:
             # Generate answer
             # --
@@ -43,24 +45,28 @@ def generate_answer(message: dict):
             crud.upsert_answer(db, exp.id, msg.line_id, dict(answer=answer))
 
         except Exception as e:
-            logging.error("Generation failed with error: %s" % e)
+            error_msg = "Generation failed with error: %s" % e
+            logging.error(error_msg)
         finally:
             # Ensure atomic transaction
-            # @TODO: crud.get_experiment(db, expid, lock=True)
-            db_exp = db.execute(
-                select(models.Experiment)
-                .where(models.Experiment.id == msg.exp_id)
-                .with_for_update()
-            ).scalar_one()
-
-            db_exp.num_try += 1
-            db_exp.num_success += 1 if answer else 0
-
+            stmt = (
+                update(models.Experiment)
+                .where(models.Experiment.id == exp.id)
+                .values(
+                    num_try=models.Experiment.num_try + 1,
+                    num_success=models.Experiment.num_success + (1 if answer else 0),
+                )
+                .returning(models.Experiment)
+            )
+            exp = db.execute(stmt).scalars().one()
             db.commit()
 
+            if error_msg:
+                crud.upsert_answer(db, exp.id, msg.line_id, dict(error_msg=error_msg))
+
         # Check if all the answer have been generated.
-        if db_exp.num_try == db_exp.dataset.size:
-            dispatch_tasks(db, db_exp, MessageType.observation)
+        if exp.num_try >= exp.dataset.size:
+            dispatch_tasks(db, exp, MessageType.observation)
 
 
 @dataclass
@@ -74,13 +80,14 @@ class MessageObservation:
 
 
 def generate_observation(message: dict):
-    """Message is a MessageObservation dict containing the necessary information to process data """
+    """Message is a MessageObservation dict containing the necessary information to process data"""
     msg = MessageObservation(**message)
     with SessionLocal() as db:
         print(".", end="", flush=True)
         result = crud.get_result(db, experiment_id=msg.exp_id, metric_name=msg.metric_name)
         score = None
         observation = None
+        error_msg = None
         try:
             # Generate observation/metric
             # --
@@ -96,26 +103,32 @@ def generate_observation(message: dict):
                 score = metric_result
 
             # Upsert obsevation
-            crud.upsert_observation(db, result.id, msg.line_id, dict(observation=observation, score=score))
+            crud.upsert_observation(
+                db, result.id, msg.line_id, dict(observation=observation, score=score)
+            )
 
         except Exception as e:
-            logging.error("Observation failed with error: %s" % e)
+            error_msg = "Observation failed with error: %s" % e
+            logging.error(error_msg)
         finally:
             # Ensure atomic transaction
-            # @TODO: crud.get_experiment(db, expid, lock=True)
-            db_result = db.execute(
-                select(models.Result)
+            stmt = (
+                update(models.Result)
                 .where(models.Result.id == result.id)
-                .with_for_update()
-            ).scalar_one()
-
-            db_result.num_try += 1
-            db_result.num_success += 1 if score is not None else 0
-
+                .values(
+                    num_try=models.Result.num_try + 1,
+                    num_success=models.Result.num_success + (1 if score is not None else 0),
+                )
+                .returning(models.Result)
+            )
+            result = db.execute(stmt).scalars().one()
             db.commit()
 
+            if error_msg:
+                crud.upsert_observation(db, result.id, msg.line_id, dict(error_msg=error_msg))
+
         # Check if all the answer have been generated.
-        if db_result.num_try == db_result.experiment.dataset.size:
+        if result.num_try >= result.experiment.dataset.size:
             # @DEBUG: partially finished - check all metrics...
             crud.update_experiment(db, msg.exp_id, dict(experiment_status="finished"))
 

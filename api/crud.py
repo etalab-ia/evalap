@@ -202,9 +202,9 @@ def upsert_observation(
             setattr(db_observation, k, v)
     else:
         # Insert a new record
-        db_answer = models.ObservationTable(result_id=result_id, num_line=num_line, **observation)
-        db.add(db_answer)
+        db_observation = models.ObservationTable(result_id=result_id, num_line=num_line, **observation)
+        db.add(db_observation)
 
     db.commit()
-    db.refresh(db_answer)
-    return db_answer
+    db.refresh(db_observation)
+    return db_observation

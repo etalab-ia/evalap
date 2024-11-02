@@ -63,6 +63,27 @@ def create_experiment(experiment: schemas.ExperimentCreate, db: Session = Depend
         raise e
 
 
+@router.patch("/experiment/{id}", response_model=schemas.Experiment)
+def patch_experiment(
+    id: int, experiment_patch: schemas.ExperimentPatch, db: Session = Depends(get_db)
+):
+    experiment = crud.update_experiment(db, id, experiment_patch)
+    if experiment is None:
+        raise HTTPException(status_code=404, detail="Experiment not found")
+    elif experiment.experiment_status != schemas.ExperimentStatus.finished:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Experiment is running ({experiment.experiment_status}), please try again later",
+        )
+
+    if experiment.dataset.has_answer or experiment_patch.skip_answers_generation:
+        dispatch_tasks(db, experiment, "observations")
+    else:
+        dispatch_tasks(db, experiment, "answers")
+
+    return experiment
+
+
 @router.delete("/experiment/{id}", status_code=204)
 def delete_experiment(id: int, db: Session = Depends(get_db)):
     if not crud.remove_experiment(db, id):
@@ -70,21 +91,30 @@ def delete_experiment(id: int, db: Session = Depends(get_db)):
     return
 
 
-@router.get("/experiment/{id}", response_model=schemas.Experiment | schemas.ExperimentWithResults)
-def read_experiment(id: int, with_results: bool = False, db: Session = Depends(get_db)):
+@router.get(
+    "/experiment/{id}",
+    response_model=schemas.Experiment | schemas.ExperimentWithResults | schemas.ExperimentFull,
+)
+def read_experiment(
+    id: int, with_answers: bool = False, with_results: bool = False, db: Session = Depends(get_db)
+):
     experiment = crud.get_experiment(db, id)
     if experiment is None:
         raise HTTPException(status_code=404, detail="Experiment not found")
 
-    if with_results:
+    if with_answers and with_results:
+        return schemas.ExperimentFull.from_orm(experiment)
+    elif with_results:
         return schemas.ExperimentWithResults.from_orm(experiment)
+    elif with_answers:
+        return schemas.ExperimentWithAnswers.from_orm(experiment)
 
     return schemas.Experiment.from_orm(experiment)
 
 
 @router.patch("/experiment/{id}", response_model=schemas.Experiment)
 def update_experiment(
-    id: int, experiment_update: schemas.ExperimentCreate, db: Session = Depends(get_db)
+    id: int, experiment_update: schemas.ExperimentUpdate, db: Session = Depends(get_db)
 ):
     experiment = crud.update_experiment(db, id, experiment_update)
     if experiment is None:
@@ -127,7 +157,7 @@ def read_experimentset(id: int, db: Session = Depends(get_db)):
 
 @router.patch("/experimentset/{id}", response_model=schemas.ExperimentSet)
 def update_experimentset(
-    id: int, experimentset_update: schemas.ExperimentSetCreate, db: Session = Depends(get_db)
+    id: int, experimentset_update: schemas.ExperimentSetUpdate, db: Session = Depends(get_db)
 ):
     experimentset = crud.update_experimentset(db, id, experimentset_update)
     if experimentset is None:

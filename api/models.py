@@ -114,6 +114,7 @@ class ObservationTable(Base):
     score = Column(Float)
     observation = Column(JSON)
     num_line = Column(Integer)
+    error_msg = Column(String)
 
     # One
     result_id = Column(Integer, ForeignKey("results.id"))
@@ -125,6 +126,7 @@ class Answer(Base):
     id = Column(Integer, primary_key=True)
     answer = Column(Text)
     num_line = Column(Integer)
+    error_msg = Column(String)
 
     # One
     experiment_id = Column(Integer, ForeignKey("experiments.id"))
