@@ -66,10 +66,17 @@ class DatasetCreate(DatasetBase):
         obj = self.recurse_table_init(db)
 
         # Handle dataframe
-        df = pd.read_json(StringIO(self.df))
+        try:
+            df = pd.read_json(StringIO(self.df))
+        except ValueError:
+            raise SchemaError("'df' should be a readable dataframe. Use df.to_json()...")
+
         has_query = "query" in df.columns
         has_answer = "answer" in df.columns
         has_answer_true = "answer_true" in df.columns
+
+        if not (has_query or has_answer):
+            raise SchemaError("Your dataset needs at least a column 'query' or 'answer'.")
 
         return {
             "has_query": has_query,
@@ -149,6 +156,7 @@ class Result(ResultBase):
 class ExperimentBase(EgBaseModel):
     name: str
     metrics: list[MetricEnum]
+    readme : str | None = None
     experiment_set_id: int | None = None
 
     model_config = ConfigDict(from_attributes=True, protected_namespaces=())
@@ -168,7 +176,7 @@ class ExperimentCreate(ExperimentBase):
             if not dataset:
                 raise SchemaError("Dataset not found")
         else:
-            dataset = obj["dataset"]
+            dataset = models.Dataset(**obj["dataset"])
         obj["dataset"] = dataset
 
         # Handle Results
@@ -179,8 +187,8 @@ class ExperimentCreate(ExperimentBase):
 
         # Validate Model and metric compatibility
         mr = metric_registry
-        needs_answer = any("answer" in mr.get_metric(m).require for m in self.metrics)
-        needs_answer_true = any("answer" in mr.get_metric(m).require for m in self.metrics)
+        needs_answer = any("output" in mr.get_metric(m).require for m in self.metrics)
+        needs_answer_true = any("output_true" in mr.get_metric(m).require for m in self.metrics)
         if needs_answer and not self.model and not dataset.has_answer:
             raise SchemaError(
                 "You need to provide an answer for this metric. "
@@ -242,6 +250,7 @@ ExperimentUpdate = create_model(
 
 class ExperimentSetBase(EgBaseModel):
     name: str
+    readme : str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 

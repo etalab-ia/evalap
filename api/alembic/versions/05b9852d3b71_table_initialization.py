@@ -1,8 +1,8 @@
 """Table Initialization
 
-Revision ID: 9754af036589
+Revision ID: 05b9852d3b71
 Revises: 
-Create Date: 2024-11-01 19:53:06.323917
+Create Date: 2024-11-02 00:44:19.456307
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '9754af036589'
+revision: str = '05b9852d3b71'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -34,7 +34,9 @@ def upgrade() -> None:
     op.create_table('experiment_sets',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.Text(), nullable=True),
+    sa.Column('readme', sa.Text(), nullable=True),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=True),
+    sa.Column('is_archived', sa.Boolean(), nullable=True),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('name')
     )
@@ -51,6 +53,8 @@ def upgrade() -> None:
     op.create_table('experiments',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.Text(), nullable=True),
+    sa.Column('readme', sa.Text(), nullable=True),
+    sa.Column('is_archived', sa.Boolean(), nullable=True),
     sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=True),
     sa.Column('metrics', sa.JSON(), nullable=True),
     sa.Column('experiment_status', sa.String(), nullable=True),

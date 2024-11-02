@@ -73,7 +73,7 @@ def get_experiment(db: Session, experiment_id: int) -> models.Experiment | None:
 
 
 def get_experiments(db: Session, set_id: int | None = None) -> list[models.Experiment]:
-    query = db.query(models.Experiment)
+    query = db.query(models.Experiment).filter_by(is_archived=False)
     if set_id:
         query = query.filter(models.Experiment.experiment_set_id == set_id)
     return query.all()
@@ -100,8 +100,10 @@ def remove_experiment(db: Session, experiment_id: int) -> bool:
     experiment = db.query(models.Experiment).get(experiment_id)
     if experiment is None:
         return False
-    db.delete(experiment)
-    db.commit()
+    #db.delete(experiment)
+    #db.commit()
+    #return True
+    update_experiment(db, experiment_id, dict(is_archived=True))
     return True
 
 
@@ -152,8 +154,12 @@ def remove_experimentset(db: Session, experimentset_id: int) -> bool:
     experimentset = db.query(models.ExperimentSet).get(experimentset_id)
     if experimentset is None:
         return False
-    db.delete(experimentset)
-    db.commit()
+    # db.delete(experimentset)
+    # db.commit()
+    # return True
+    update_experimentset(db, experimentset_id, dict(is_archived=True))
+    for exp_id in experimentset.experiments:
+        update_experiment(db, exp_id, dict(is_archived=True))
     return True
 
 

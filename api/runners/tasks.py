@@ -117,7 +117,7 @@ def generate_observation(message: dict):
         # Check if all the answer have been generated.
         if db_result.num_try == db_result.experiment.dataset.size:
             # @DEBUG: partially finished - check all metrics...
-            crud.update_experiment(db, msg.id, dict(experiment_status="finished"))
+            crud.update_experiment(db, msg.exp_id, dict(experiment_status="finished"))
 
 
 def process_task(message: dict):

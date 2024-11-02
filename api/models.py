@@ -136,6 +136,8 @@ class Experiment(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(Text)
+    readme = Column(Text)
+    is_archived = Column(Boolean, default=False)  # do not allow user to remove without IAM.
     created_at = Column(DateTime, server_default=func.now())
     metrics = Column(JSON)  # asked metrics,  list of enum
     experiment_status = Column(String)
@@ -151,9 +153,11 @@ class Experiment(Base):
     experiment_set = relationship("ExperimentSet", back_populates="experiments")
     # Many
     results = relationship("Result", back_populates="experiment")  # len == #metrics
-    answers = relationship("Answer", back_populates="experiment") # len == #dataset.df
+    answers = relationship("Answer", back_populates="experiment")  # len == #dataset.df
 
-    __table_args__ = (UniqueConstraint('experiment_set_id', 'name', name='_expset_name_unique_constraint'),)
+    __table_args__ = (
+        UniqueConstraint("experiment_set_id", "name", name="_expset_name_unique_constraint"),
+    )
 
 
 class ExperimentSet(Base):
@@ -161,7 +165,9 @@ class ExperimentSet(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(Text, unique=True)
+    readme = Column(Text)
     created_at = Column(DateTime, server_default=func.now())
+    is_archived = Column(Boolean, default=False)  # do not allow user to remove without IAM.
 
     # Many
     experiments = relationship("Experiment", back_populates="experiment_set")
