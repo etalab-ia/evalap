@@ -1,8 +1,9 @@
 import logging
 from dataclasses import dataclass
+from io import StringIO
 
-from sqlalchemy import select, update
-from sqlalchemy.orm import Session
+import pandas as pd
+from sqlalchemy import update
 
 import api.crud as crud
 import api.models as models
@@ -91,12 +92,20 @@ def generate_observation(message: dict):
         try:
             # Generate observation/metric
             # --
-
-            # get my_metric from registry
+            # Get the metric from registry
+            metric  = metric_registry.get_metric(msg.metric_name)
             metric_fun = metric_registry.get_metric_function(msg.metric_name)
+            metric_params = {}
+            requires = [r for r in metric.require if r not in ["output", "output_true"]]
             if not metric_fun:
                 raise ValueError(f"Metric {msg.metric_name} not found for experiment {msg.exp_id}")
-            metric_result = metric_fun(msg.output, msg.output_true)
+            for require in requires:
+                # Add extra inputs required by the metric
+                dataset = result.experience.dataset
+                df = pd.read_json(StringIO(dataset.df))
+                metric_params[require] = df.iloc[msg.line_id][require]
+            # Compute metric
+            metric_result = metric_fun(msg.output, msg.output_true, **metric_params)
             if isinstance(metric_result, tuple):
                 score, observation = metric_result
             else:

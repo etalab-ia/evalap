@@ -1,7 +1,23 @@
 import functools
 import time
 
+from jinja2 import BaseLoader, Environment
 from requests import Response
+
+#
+# String utils
+#
+
+
+def render_jinja(template: str, **kwargs):
+    env = Environment(loader=BaseLoader())
+    template = env.from_string(template)
+    return template.render(**kwargs)
+
+
+#
+# API utils
+#
 
 
 def retry(tries: int = 3, delay: int = 2):
@@ -22,7 +38,7 @@ def retry(tries: int = 3, delay: int = 2):
                 try:
                     return func(*args, **kwargs)
                 # @TODO: Catch network error.
-                #except (requests.exceptions.RequestException, httpx.RequestError) as e:
+                # except (requests.exceptions.RequestException, httpx.RequestError) as e:
                 except Exception as e:
                     print(f"Error: {e}, retrying in {delay} seconds...")
                     time.sleep(delay)

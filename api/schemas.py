@@ -200,8 +200,13 @@ class ExperimentCreate(ExperimentBase):
 
         # Validate Model and metric compatibility
         mr = metric_registry
+        needs_query = any("query" in mr.get_metric(m).require for m in self.metrics)
         needs_answer = any("output" in mr.get_metric(m).require for m in self.metrics)
         needs_answer_true = any("output_true" in mr.get_metric(m).require for m in self.metrics)
+        if needs_query and  not dataset.has_query:
+            raise SchemaError(
+                "You need to provide a query for this metric. "
+            )
         if needs_answer and not self.model and not dataset.has_answer:
             raise SchemaError(
                 "You need to provide an answer for this metric. "

@@ -130,7 +130,7 @@ def update_experiment(
 @router.post("/experimentset", response_model=schemas.ExperimentSet)
 def create_experimentset(experimentset: schemas.ExperimentSetCreate, db: Session = Depends(get_db)):
     try:
-        db_expset = crud.create_experiment(db, experimentset)
+        db_expset = crud.create_experimentset(db, experimentset)
         return db_expset
     except SchemaError as e:
         raise HTTPException(status_code=400, detail=str(e))
