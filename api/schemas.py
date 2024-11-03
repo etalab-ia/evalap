@@ -72,16 +72,16 @@ class DatasetCreate(DatasetBase):
             raise SchemaError("'df' should be a readable dataframe. Use df.to_json()...")
 
         has_query = "query" in df.columns
-        has_answer = "answer" in df.columns
-        has_answer_true = "answer_true" in df.columns
+        has_output = "output" in df.columns
+        has_output_true = "output_true" in df.columns
 
-        if not (has_query or has_answer):
-            raise SchemaError("Your dataset needs at least a column 'query' or 'answer'.")
+        if not (has_query or has_output):
+            raise SchemaError("Your dataset needs at least a column 'query' or 'ouput'.")
 
         return {
             "has_query": has_query,
-            "has_answer": has_answer,
-            "has_answer_true": has_answer_true,
+            "has_output": has_output,
+            "has_output_true": has_output_true,
             "size": len(df),
             **obj,
         }
@@ -90,8 +90,8 @@ class DatasetCreate(DatasetBase):
 class Dataset(DatasetBase):
     id: int
     has_query: bool
-    has_answer: bool
-    has_answer_true: bool
+    has_ouput: bool
+    has_output_true: bool
     size: int
 
 
@@ -201,27 +201,27 @@ class ExperimentCreate(ExperimentBase):
         # Validate Model and metric compatibility
         mr = metric_registry
         needs_query = any("query" in mr.get_metric(m).require for m in self.metrics)
-        needs_answer = any("output" in mr.get_metric(m).require for m in self.metrics)
-        needs_answer_true = any("output_true" in mr.get_metric(m).require for m in self.metrics)
+        needs_output = any("output" in mr.get_metric(m).require for m in self.metrics)
+        needs_output_true = any("output_true" in mr.get_metric(m).require for m in self.metrics)
         if needs_query and  not dataset.has_query:
             raise SchemaError(
                 "You need to provide a query for this metric. "
             )
-        if needs_answer and not self.model and not dataset.has_answer:
+        if needs_output and not self.model and not dataset.has_output:
             raise SchemaError(
                 "You need to provide an answer for this metric. "
-                "Either set a model to generate it or provide a dataset with the 'answer' field."
+                "Either set a model to generate it or provide a dataset with the 'output' field."
             )
-        if needs_answer and not dataset.has_answer and not dataset.has_query:
+        if needs_output and not dataset.has_output and not dataset.has_query:
             raise SchemaError(
                 "You need to provide an answer for this metric. "
-                "Either provide a dataset with the 'query' field to generate the answer or with an 'answer' field if have generated it yourself."
+                "Either provide a dataset with the 'query' field to generate the answer or with an 'output' field if have generated it yourself."
             )
 
-        if needs_answer_true and not dataset.has_answer_true:
+        if needs_output_true and not dataset.has_output_true:
             raise SchemaError(
                 "You need to provide a ground truth for this metric. "
-                "Your dataset needs to have an 'answer_true' field."
+                "Your dataset needs to have an 'output_true' field."
             )
 
         return {

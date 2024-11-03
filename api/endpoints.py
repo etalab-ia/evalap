@@ -49,7 +49,7 @@ def read_metrics(db: Session = Depends(get_db)):
 def create_experiment(experiment: schemas.ExperimentCreate, db: Session = Depends(get_db)):
     try:
         db_exp = crud.create_experiment(db, experiment)
-        if db_exp.dataset.has_answer:
+        if db_exp.dataset.has_output:
             dispatch_tasks(db, db_exp, "observations")
         else:
             dispatch_tasks(db, db_exp, "answers")
@@ -76,7 +76,7 @@ def patch_experiment(
             detail=f"Experiment is running ({experiment.experiment_status}), please try again later",
         )
 
-    if experiment.dataset.has_answer or experiment_patch.skip_answers_generation:
+    if experiment.dataset.has_output or experiment_patch.skip_answers_generation:
         dispatch_tasks(db, experiment, "observations")
     else:
         dispatch_tasks(db, experiment, "answers")

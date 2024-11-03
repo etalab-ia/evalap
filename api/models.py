@@ -73,8 +73,8 @@ class Dataset(Base):
     name = Column(Text, unique=True)
     df = Column(JSON)
     has_query = Column(Boolean)
-    has_answer = Column(Boolean)
-    has_answer_true = Column(Boolean)
+    has_output = Column(Boolean)
+    has_output_true = Column(Boolean)
     size = Column(Integer)
 
 

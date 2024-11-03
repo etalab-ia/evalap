@@ -40,7 +40,7 @@ def dispatch_tasks(db, db_exp, message_type: MessageType):
         # Generate observation
         # --
         # iterate metrics and dataset
-        if db_exp.dataset.has_answer:
+        if db_exp.dataset.has_output:
             df = pd.read_json(StringIO(db_exp.dataset.df))
             metrics = db_exp.metrics
             crud.update_experiment(db, db_exp.id, dict(experiment_status="running_metrics"))
