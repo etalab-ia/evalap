@@ -1,3 +1,17 @@
+## Run test API
+
+1. Launch the API:
+
+    uvicorn api.main:app --reload
+
+2. Launch the runner:
+
+    PYTHONPATH="." python -m api.runners
+
+
+## Adding new metrics
+
+WIP
 
 
 ## Database initialization
@@ -15,10 +29,4 @@ Create the first migration script:
 Initialize the database:
 
     alembic upgrade head
-
-
-## Run test API
-
-    uvicorn api.main:app --reload
-
 
