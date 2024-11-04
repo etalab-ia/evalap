@@ -55,7 +55,7 @@ def get_api_url(model: str) -> (str | None, dict):
 
 class LlmClient:
     def __init__(self, base_url=None, api_key=None):
-        self.url = base_url
+        self.base_url = base_url
         self.api_key = api_key
 
     @staticmethod

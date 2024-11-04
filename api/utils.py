@@ -11,8 +11,8 @@ from requests import Response
 
 def render_jinja(template: str, **kwargs):
     env = Environment(loader=BaseLoader())
-    template = env.from_string(template)
-    return template.render(**kwargs)
+    t = env.from_string(template)
+    return t.render(**kwargs)
 
 
 #

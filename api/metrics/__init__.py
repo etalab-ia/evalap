@@ -10,8 +10,10 @@ from enum import Enum
 
 
 class MetricType(str, Enum):
+    # @TODO: ill defined at this point...
     deepeval = "deepeval"
     adhoc = "adhoc"
+    llm = "llm"
     human = "human"
 
 

@@ -52,8 +52,8 @@ def dispatch_tasks(db, db_exp, message_type: MessageType):
                             "exp_id": db_exp.id,
                             "line_id": num_line,
                             "metric_name": metric_name,
-                            "output": row["answer"],
-                            "output_true": row.get("answer_true"),
+                            "output": row["output"],
+                            "output_true": row.get("output_true"),
                         }
                     )
         elif len(db_exp.answers) > 0:
@@ -70,7 +70,7 @@ def dispatch_tasks(db, db_exp, message_type: MessageType):
                             "line_id": a.num_line,
                             "metric_name": metric_name,
                             "output": a.answer,
-                            "output_true": row.get("answer_true"),
+                            "output_true": row.get("output_true"),
                         }
                     )
 

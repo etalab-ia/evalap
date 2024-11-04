@@ -101,7 +101,7 @@ def generate_observation(message: dict):
                 raise ValueError(f"Metric {msg.metric_name} not found for experiment {msg.exp_id}")
             for require in requires:
                 # Add extra inputs required by the metric
-                dataset = result.experience.dataset
+                dataset = result.experiment.dataset
                 df = pd.read_json(StringIO(dataset.df))
                 metric_params[require] = df.iloc[msg.line_id][require]
             # Compute metric
@@ -117,7 +117,7 @@ def generate_observation(message: dict):
             )
 
         except Exception as e:
-            error_msg = "Observation failed with error: %s" % e
+            error_msg = f"Observation {msg.metric_name} failed with error: %s" % e
             logging.error(error_msg)
         finally:
             # Ensure atomic transaction

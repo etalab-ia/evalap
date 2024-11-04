@@ -9,6 +9,12 @@ from api.models import create_object_from_dict
 # Datasets
 #
 
+def create_dataset(db: Session, dataset: schemas.DatasetCreate) -> models.Dataset:
+    db_dataset = create_object_from_dict(db, models.Dataset, dataset.to_table_init(db))
+    db.add(db_dataset)
+    db.commit()
+    db.refresh(db_dataset)
+    return db_dataset
 
 def get_datasets(db: Session) -> list[models.Dataset]:
     return db.query(models.Dataset).all()

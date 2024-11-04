@@ -16,6 +16,17 @@ router = APIRouter()
 # Datasets
 #
 
+@router.post("/dataset", response_model=schemas.Dataset)
+def create_dataset(dataset: schemas.DatasetCreate, db: Session = Depends(get_db)):
+    try:
+        db_dataset = crud.create_dataset(db, dataset)
+        return db_dataset
+    except SchemaError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except IntegrityError as e:
+        return CustomIntegrityError.from_integrity_error(e.orig).to_http_response()
+    except Exception as e:
+        raise e
 
 @router.get("/datasets", response_model=list[schemas.Dataset])
 def read_datasets(db: Session = Depends(get_db)):

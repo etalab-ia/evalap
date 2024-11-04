@@ -56,12 +56,13 @@ class ExperimentStatus(str, Enum):
 
 class DatasetBase(EgBaseModel):
     name: str
-    df: str  # from_json
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class DatasetCreate(DatasetBase):
+    df: str  # from_json
+
     def to_table_init(self, db: Session) -> dict:
         obj = self.recurse_table_init(db)
 
@@ -90,7 +91,7 @@ class DatasetCreate(DatasetBase):
 class Dataset(DatasetBase):
     id: int
     has_query: bool
-    has_ouput: bool
+    has_output: bool
     has_output_true: bool
     size: int
 
@@ -203,10 +204,8 @@ class ExperimentCreate(ExperimentBase):
         needs_query = any("query" in mr.get_metric(m).require for m in self.metrics)
         needs_output = any("output" in mr.get_metric(m).require for m in self.metrics)
         needs_output_true = any("output_true" in mr.get_metric(m).require for m in self.metrics)
-        if needs_query and  not dataset.has_query:
-            raise SchemaError(
-                "You need to provide a query for this metric. "
-            )
+        if needs_query and not dataset.has_query:
+            raise SchemaError("You need to provide a query for this metric. ")
         if needs_output and not self.model and not dataset.has_output:
             raise SchemaError(
                 "You need to provide an answer for this metric. "
