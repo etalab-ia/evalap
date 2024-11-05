@@ -27,10 +27,10 @@ Launch the development services:
 
 Create the first migration script:
 
-    alembic revision --autogenerate -m "Table Initialization"
+    alembic -c api/alembic.ini revision --autogenerate -m "Table Initialization"
 
 
-Initialize the database:
+Initialize/Update the database:
 
-    alembic upgrade head
+    alembic -c api/alembic.ini upgrade head
 
