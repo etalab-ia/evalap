@@ -15,7 +15,27 @@
 
 ## Adding new metrics
 
-WIP
+Each single metric should be defined in a file in `api/metrics/{metric_name}.py`.
+The file should be self-contained, i.e contains the eventual prompt and settings related to the metric.
+The metric should be decorated as follow to be registed as a known metric of EG1: 
+
+
+```python
+from . import metric_registry
+
+@metric_registry.register(
+    name="metric_name", # the name that identified the metric
+    metric_type="llm",  # to be documented, not yet used
+    require=["output", "output_true", "query"] # the fields that should be present in the dataset related to experiment under evaluation
+)
+def metric_name_metric(output:str, output_true:str, **kwargs) -> float:
+    # ...
+    # ...You code goes here
+    # ...
+    return score
+    # or, if you want to store the intermediate generated observation by the metric (like a judge answer typically)
+    #return score, observation
+```
 
 
 ## Database initialization
