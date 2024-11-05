@@ -17,7 +17,7 @@
 
 Each single metric should be defined in a file in `api/metrics/{metric_name}.py`.
 The file should be self-contained, i.e contains the eventual prompt and settings related to the metric.
-The metric should be decorated as follow to be registed as a known metric of EG1: 
+The metric should be decorated as followinf example to be registed as a known metric of EG1: 
 
 
 ```python
