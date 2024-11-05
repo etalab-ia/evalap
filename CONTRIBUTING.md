@@ -51,7 +51,7 @@ def metric_name_metric(output:str, output_true:str, **kwargs) -> float:
     alembic -c api/alembic.ini revision --autogenerate -m "Table Initialization"
 
 
-3. Initialize/Update the database:
+3. Initialize/Update the database schema:
 
     alembic -c api/alembic.ini upgrade head
 
