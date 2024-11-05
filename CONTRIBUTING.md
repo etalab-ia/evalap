@@ -25,6 +25,7 @@ from . import metric_registry
 
 @metric_registry.register(
     name="metric_name", # the name that identified the metric
+    description="Explain the metrics briefly"
     metric_type="llm",  # to be documented, not yet used
     require=["output", "output_true", "query"] # the fields that should be present in the dataset related to experiment under evaluation
 )
@@ -40,17 +41,17 @@ def metric_name_metric(output:str, output_true:str, **kwargs) -> float:
 
 ## Database initialization
 
-Launch the development services:
+1. Launch the development services:
 
     docker-compose -f contrib/docker-compose.dev.yml up
 
 
-Create the first migration script:
+2. Create the first migration script:
 
     alembic -c api/alembic.ini revision --autogenerate -m "Table Initialization"
 
 
-Initialize/Update the database:
+3. Initialize/Update the database:
 
     alembic -c api/alembic.ini upgrade head
 

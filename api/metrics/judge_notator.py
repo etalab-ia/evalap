@@ -50,7 +50,10 @@ _config = {
 
 
 @metric_registry.register(
-    name="judge_notator", metric_type="llm", require=["output", "output_true", "query"]
+    name="judge_notator",
+    description="[1-10] score semantic similarity between output and output_true",
+    metric_type="llm",
+    require=["output", "output_true", "query"],
 )
 def judge_notator_metric(output, output_true, **kwargs):
     messages = [

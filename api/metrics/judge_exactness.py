@@ -38,7 +38,10 @@ _config = {
 
 
 @metric_registry.register(
-    name="judge_exactness", metric_type="llm", require=["output", "output_true", "query"]
+    name="judge_exactness",
+    description="Binary correspondance between output and output_true",
+    metric_type="llm",
+    require=["output", "output_true", "query"],
 )
 def judge_exactness_metric(output, output_true, **kwargs):
     messages = [

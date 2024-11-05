@@ -3,11 +3,6 @@ import os
 from dataclasses import dataclass
 from enum import Enum
 
-# @TODO:
-# - Document the signature of a metric function with exemple.
-# - Document the signature of the decorator of the register metric.
-# - add require to the definition of thje metric (decorator or parsing the sign ?)
-
 
 class MetricType(str, Enum):
     # @TODO: ill defined at this point...
@@ -20,6 +15,7 @@ class MetricType(str, Enum):
 @dataclass
 class Metric:
     name: str
+    description: str
     type: MetricType
     require: list[str]
 
@@ -28,38 +24,15 @@ class Metric:
         return cls(**{k: v for k, v in d.items() if k not in ["func"]})
 
 
-# all_metrics = [
-#     {
-#         "name": "qcm",
-#         "type": MetricType.adhoc,
-#         "require": ["answer", "answer_true"]
-#     },
-#     {
-#         "name": "human-vote",
-#         "type": MetricType.human,
-#         "require": ["answer"]
-#     },
-#     {
-#         "name": "g",
-#         "type": MetricType.deepeval,
-#         "require": ["answer"]
-#     },
-#     {
-#         "name": "blue",
-#         "type": MetricType.deepeval,
-#         "require": []
-#     },
-# ]
-
-
 class MetricRegistry:
     def __init__(self):
         self._metrics = {}
 
-    def register(self, name: str, metric_type: str, require: list[str]):
+    def register(self, name: str, description: str, metric_type: str, require: list[str]):
         def decorator(func):
             self._metrics[name] = {
                 "name": name,
+                "description": description,
                 "type": metric_type,
                 "require": require,
                 "func": func,
