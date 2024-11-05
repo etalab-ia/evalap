@@ -1,5 +1,9 @@
 ## Run test API
 
+1. Install the requirements
+
+    pip install .
+
 1. Launch the API:
 
     uvicorn api.main:app --reload
@@ -18,7 +22,7 @@ WIP
 
 Launch the development services:
 
-    docker-compose -f contrib/docker-compose.test.yml up
+    docker-compose -f contrib/docker-compose.dev.yml up
 
 
 Create the first migration script:
