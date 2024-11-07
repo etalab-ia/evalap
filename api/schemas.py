@@ -225,7 +225,7 @@ class ExperimentCreate(ExperimentBase):
 
         if dataset.has_output and self.model:
             raise SchemaError(
-                "You can't give at the same time a model and a a dataset with an answer (output). "
+                "You can't give at the same time a model and a dataset with an answer ('output' column). "
                 "Gives either one or the other."
             )
 
