@@ -1,16 +1,63 @@
-## Run test API
+## Code Architecture
+|- eg1
+|-- api
+|-- contrib
+|-- notebook
 
-1. Install the requirements
 
+1. **api** contains the evaluation API.
+2. **contrib** contains the docker-compose files.
+3. **notebook** contains example notebooks.
+
+
+
+
+## Database initialization 
+
+1. Launch the development services:
+```
+    docker-compose -f contrib/docker-compose.dev.yml up
+```
+
+2. Create the first migration script:
+```
+    alembic -c api/alembic.ini revision --autogenerate -m "Table Initialization"
+```
+
+3. Initialize/Update the database schema:
+```
+    alembic -c api/alembic.ini upgrade head
+```
+
+
+## Run API
+
+
+1. Install the requirements (in .venv if you prefer)
+```
     pip install .
-
-1. Launch the API:
-
+```
+2. Launch the API:
+```
     uvicorn api.main:app --reload
-
-2. Launch the runner:
-
+```
+3. Launch the runner:
+```
     PYTHONPATH="." python -m api.runners
+```
+
+## Swagger
+
+Access the API documentation at: http://localhost:8000/redoc.
+
+## Streamlit Application (not available)
+
+Once the Docker containers are launched, you can access the Streamlit application at: http://localhost:8501
+
+
+## Jupyter Tutorial
+
+The `notebook/` directory contains examples of API usage.
 
 
 ## Adding new metrics
@@ -39,19 +86,5 @@ def metric_name_metric(output:str, output_true:str, **kwargs) -> float:
 ```
 
 
-## Database initialization
-
-1. Launch the development services:
-
-    docker-compose -f contrib/docker-compose.dev.yml up
-
-
-2. Create the first migration script:
-
-    alembic -c api/alembic.ini revision --autogenerate -m "Table Initialization"
-
-
-3. Initialize/Update the database schema:
-
-    alembic -c api/alembic.ini upgrade head
-
+## Unit Tests
+In development
