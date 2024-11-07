@@ -223,6 +223,12 @@ class ExperimentCreate(ExperimentBase):
                 "Your dataset needs to have an 'output_true' field."
             )
 
+        if dataset.has_output and self.model:
+            raise SchemaError(
+                "You can't give at the same time a model and a a dataset with an answer (output). "
+                "Gives either one or the other."
+            )
+
         return {
             "experiment_status": "pending",
             **obj,
