@@ -1,15 +1,29 @@
-## Code Architecture
-|- eg1
-|-- api
-|-- contrib
-|-- notebook
+## Project Architecture
+
+The stack used Fastapi+pydantic+sqlachemy for the API in conjonction with ZeroMQ for the Runner.
+The project includes an UI/UX based on Streamlit [WIP].
 
 
-1. **api** contains the evaluation API.
-2. **contrib** contains the docker-compose files.
-3. **notebook** contains example notebooks.
+```
+eg1/
+├── justfile    --> just is a handy way to save and run project-specific commands. see https://just.systems
+├── api/        --> The evaluation API source code
+├── tests/      --> The api tests
+├── notebooks/  --> Example and demo notebooks
+└── ui/         --> [WIP] The user interface code source
+```
 
+## Environment
 
+The project needs the following API key to be set perform LLM based metrics: 
+
+```bash
+export OPENAI_API_KEY="You secret key"
+```
+
+All the project global settings and environmant variable are handled in `api/config.py`.
+
+The environement variable can also be defined in a `.env` file at the root of the project.
 
 
 ## Database initialization 
@@ -48,7 +62,7 @@
 
 ## Swagger
 
-Access the API documentation at: http://localhost:8000/redoc.
+Access the API documentation at: http://localhost:8000/redoc (or http://localhost:8000/docs if you prefer the legacy version).
 
 ## Streamlit Application (not available)
 
@@ -87,4 +101,5 @@ def metric_name_metric(output:str, output_true:str, **kwargs) -> float:
 
 
 ## Unit Tests
+
 In development
