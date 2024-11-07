@@ -1,6 +1,6 @@
 ## Project Architecture
 
-The stack used Fastapi+pydantic+sqlachemy for the API in conjonction with ZeroMQ for the Runner.
+The stack is based on Fastapi+pydantic+sqlachemy for the API in conjonction with ZeroMQ for the Runner.
 The project includes an UI/UX based on Streamlit [WIP].
 
 
@@ -21,9 +21,9 @@ The project needs the following API key to be set perform LLM based metrics:
 export OPENAI_API_KEY="You secret key"
 ```
 
-All the project global settings and environmant variable are handled in `api/config.py`.
+All the project global settings and environmant variables are handled in `api/config.py`.
 
-The environement variable can also be defined in a `.env` file at the root of the project.
+The environement variables can also be defined in a `.env` file at the root of the project.
 
 
 ## Database initialization 
@@ -46,7 +46,6 @@ The environement variable can also be defined in a `.env` file at the root of th
 
 ## Run API
 
-
 1. Install the requirements (in .venv if you prefer)
 ```
     pip install .
@@ -63,6 +62,7 @@ The environement variable can also be defined in a `.env` file at the root of th
 ## Swagger
 
 Access the API documentation at: http://localhost:8000/redoc (or http://localhost:8000/docs if you prefer the legacy version).
+
 
 ## Streamlit Application (not available)
 
