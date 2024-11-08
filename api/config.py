@@ -3,7 +3,7 @@ import tempfile
 
 import dotenv
 
-os.environ['DEEPEVAL_TELEMETRY_OPT_OUT'] = "YES"
+os.environ["DEEPEVAL_TELEMETRY_OPT_OUT"] = "YES"
 
 dotenv.load_dotenv()
 
@@ -44,7 +44,7 @@ if ENV == "unittest":
     DB_NAME = "eg1-unittest"
     DATABASE_URI = "sqlite:///" + os.path.join(tempfile.gettempdir(), f"{DB_NAME}-sqlite3.db")
 elif ENV == "dev":
-    API_BASE_URL = "http://localhost:8000" +API_PREFIX
+    API_BASE_URL = "http://localhost:8000" + API_PREFIX
     DB_NAME = "eg1_dev"
     DATABASE_URI = os.getenv(
         "POSTGRES_URI", "postgresql+psycopg2://postgres:changeme@localhost:5432/eg1_dev"
@@ -55,4 +55,3 @@ else:
     DATABASE_URI = os.getenv(
         "POSTGRES_URI", "postgresql+psycopg2://postgres:changeme@localhost:5432/eg1"
     )
-

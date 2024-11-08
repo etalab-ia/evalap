@@ -75,7 +75,7 @@ class MetricRegistry:
                     if k in reverse_require_map
                 }
             )
-            metric.measure(test_case)
+            metric.measure(test_case, _show_indicator=False)
             if hasattr(metric, "reason"):
                 return metric.score, metric.reason
             return metric.score

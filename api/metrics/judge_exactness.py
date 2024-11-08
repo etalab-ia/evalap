@@ -25,9 +25,9 @@ Et étant donnée la réponse C générée par un autre agent, à évaluer :
 </C>
 
 
-Est-ce que la réponse C de l'agent correspond bien à la vrai réponse B ? En d'autres termes, la réponse de l'agent est-elle similaire à la bonne réponse?
+Indique si la réponse C de l'agent correspond bien à la vrai réponse B ? En d'autres termes, la réponse de l'agent est-elle similaire à la bonne réponse?
 Réponds 1 si oui ou 0 si non.
-Ne retourne que 0 ou 1, rien d'autre !
+Ne retourne que 1 ou 0, rien d'autre !
 """.strip()
 
 _config = {

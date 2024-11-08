@@ -107,7 +107,7 @@ class ModelBase(EgBaseModel):
     api_key: str
     prompt_system: str | None = None
     sampling_params: dict | None = None
-    extra_kw: dict | None = None
+    extra_params: dict | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -131,6 +131,7 @@ class Answer(EgBaseModel):
     answer: str | None
     num_line: int
     error_msg: str | None
+    execution_time: int | None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -142,6 +143,7 @@ class Observation(EgBaseModel):
     observation: str | None  # json
     num_line: int
     error_msg: str | None
+    execution_time: int | None
 
     model_config = ConfigDict(from_attributes=True)
 
