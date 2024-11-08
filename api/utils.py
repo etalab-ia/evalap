@@ -1,4 +1,6 @@
 import functools
+import importlib
+import pkgutil
 import time
 
 from jinja2 import BaseLoader, Environment
@@ -60,3 +62,47 @@ def log_and_raise_for_status(response: Response, msg_on_error: str = "API Error 
             error_detail = response.text
         print(f"{msg_on_error}: {error_detail}\n")
         response.raise_for_status()
+
+
+#
+# Modules
+#
+
+
+def import_classes(package_name: str, class_names: list[str], more: list[str] = None) -> list[dict]:
+    # Import the package
+    package = importlib.import_module(package_name)
+
+    # Iterate over all modules in the package
+    classes = []
+    remaining_classes = set(class_names)
+    for finder, name, ispkg in pkgutil.walk_packages(package.__path__, package.__name__ + "."):
+        # Import the module
+        try:
+            module = importlib.import_module(name)
+        except Exception as e:
+            print(f"Failed to import module {name}: {e}")
+            continue
+
+        # Check for each class in the module
+        found_classes = remaining_classes.intersection(dir(module))
+        for class_name in found_classes:
+            cls = getattr(module, class_name)
+            class_info = {"name": class_name, "obj": cls}
+            for extra in more or []:
+                class_info[extra] = getattr(module, extra, None)
+            classes.append(class_info)
+            remaining_classes.remove(class_name)
+
+        # Stop if all classes have been found
+        if not remaining_classes:
+            break
+
+    if remaining_classes:
+        raise ValueError(f"Warning: The following classes were not found: {remaining_classes}")
+
+    # Reorder the list of class
+    class_indexes = {name: index for index, name in enumerate(class_names)}
+    classes = sorted(classes, key=lambda d: class_indexes[d['name']])
+
+    return classes
