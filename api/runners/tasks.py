@@ -1,4 +1,5 @@
 import logging
+import traceback
 from dataclasses import dataclass
 from io import StringIO
 
@@ -47,7 +48,9 @@ def generate_answer(message: dict):
 
         except Exception as e:
             error_msg = "Generation failed with error: %s" % e
+            logging.debug(traceback.print_exc())
             logging.error(error_msg)
+
         finally:
             # Ensure atomic transaction
             stmt = (
@@ -118,6 +121,7 @@ def generate_observation(message: dict):
 
         except Exception as e:
             error_msg = f"Observation {msg.metric_name} failed with error: %s" % e
+            logging.debug(traceback.print_exc())
             logging.error(error_msg)
         finally:
             # Ensure atomic transaction
