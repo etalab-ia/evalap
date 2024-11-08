@@ -36,6 +36,7 @@ class LlmApiModels:
     anthropic: set[str] = ("claude",)
     mistral: set[str] = ("mistral-embed",)
 
+
 def get_api_url(model: str) -> (str | None, dict):
     h_pattern = r"\{(.*?)\}"
     for provider, models in LlmApiModels.__dict__.items():
@@ -52,6 +53,7 @@ def get_api_url(model: str) -> (str | None, dict):
 
             return getattr(LlmApiUrl, provider), headers
     return None
+
 
 class LlmClient:
     def __init__(self, base_url=None, api_key=None):
@@ -97,7 +99,9 @@ class LlmClient:
         json_data["stream"] = stream
 
         url, headers = self.get_url_and_headers(model)
-        response = requests.post(url + path, headers=headers, json=json_data, stream=stream)
+        response = requests.post(
+            url + path, headers=headers, json=json_data, stream=stream, timeout=300
+        )
         log_and_raise_for_status(response, "Albert API error")
 
         if stream:
@@ -123,7 +127,7 @@ class LlmClient:
             json_data["doc_type"] = doc_type
 
         url, headers = self.get_url_and_headers(model)
-        response = requests.post(url + path, headers=headers, json=json_data)
+        response = requests.post(url + path, headers=headers, json=json_data, timeout=300)
         log_and_raise_for_status(response, "LLM API error")
         results = response.json()
         if openai_format:

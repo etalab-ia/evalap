@@ -13,16 +13,20 @@ ZMQ_URL = "tcp://localhost:5555"
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+logging.getLogger("httpx").setLevel(logging.WARNING)
 
 
-async def run_blocking_task_in_executor(task):
+async def run_blocking_task_in_executor(task, semaphore):
     # The aproach with the ProcessPoolExecutor is more efficient got CPU bound task, but have a higher overload.
     # asyncio.to_thread is good for bypassing the GIL and I/O bound task.
     # --
     # loop = asyncio.get_running_loop()
     # with ProcessPoolExecutor() as executor:
     #     await loop.run_in_executor(executor, process_task, task)
-    return await asyncio.to_thread(process_task, task)
+
+    # Acquire a semaphore before processing the task
+    async with semaphore:
+        return await asyncio.to_thread(process_task, task)
 
 
 async def worker(url, semaphore):
@@ -36,10 +40,8 @@ async def worker(url, semaphore):
             # Receive a task
             message = await socket.recv_json()
 
-            # Acquire a semaphore before processing the task
-            async with semaphore:
-                # Process the task
-                asyncio.create_task(run_blocking_task_in_executor(message))
+            # Process the task
+            asyncio.create_task(run_blocking_task_in_executor(message, semaphore))
         except Exception as e:
             logger.exception("An error occurred in the ZMQ main loop: %s", e)
 

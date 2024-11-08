@@ -1,3 +1,4 @@
+import concurrent.futures
 import functools
 import importlib
 import pkgutil
@@ -15,6 +16,29 @@ def render_jinja(template: str, **kwargs):
     env = Environment(loader=BaseLoader())
     t = env.from_string(template)
     return t.render(**kwargs)
+
+
+#
+# Time utils
+#
+
+
+class Timer:
+    """Usage
+
+    with Timer() as timer:
+        some_function()
+
+    print(f"The function took {timer.execution_time} seconds to execute.")
+    """
+
+    def __enter__(self):
+        self.start_time = time.time()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.end_time = time.time()
+        self.execution_time = self.end_time - self.start_time
 
 
 #
@@ -103,6 +127,23 @@ def import_classes(package_name: str, class_names: list[str], more: list[str] = 
 
     # Reorder the list of class
     class_indexes = {name: index for index, name in enumerate(class_names)}
-    classes = sorted(classes, key=lambda d: class_indexes[d['name']])
+    classes = sorted(classes, key=lambda d: class_indexes[d["name"]])
 
     return classes
+
+
+#
+# Async utils
+#
+
+
+def run_with_timeout(func, timeout, *args, **kwargs):
+    """Set a timeout in seconds before stopping execution."""
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+        future = executor.submit(func, *args, **kwargs)
+        try:
+            result = future.result(timeout=timeout)
+            return result
+        except concurrent.futures.TimeoutError:
+            print("Function execution exceeded the timeout.")
+            return None
