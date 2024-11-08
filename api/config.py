@@ -3,6 +3,8 @@ import tempfile
 
 import dotenv
 
+os.environ['DEEPEVAL_TELEMETRY_OPT_OUT'] = "YES"
+
 dotenv.load_dotenv()
 
 #######################################################################
