@@ -97,16 +97,20 @@ def generate_observation(message: dict):
     with SessionLocal() as db:
         print(".", end="", flush=True)
         result = crud.get_result(db, experiment_id=msg.exp_id, metric_name=msg.metric_name)
+        answer = crud.get_answer(db, experiment_id=msg.exp_id, num_line=msg.line_id)
         score = None
         observation = None
         error_msg = None
+        metadata = {}
+        if answer:
+            metadata["generation_time"] = answer.execution_time
         try:
             # Generate observation/metric
             # --
             # Get the metric from registry
             metric = metric_registry.get_metric(msg.metric_name)
             metric_fun = metric_registry.get_metric_function(msg.metric_name)
-            metric_params = {}
+            metric_params = {"metadata": metadata}
             requires = [r for r in metric.require if r not in ["output", "output_true"]]
             if not metric_fun:
                 raise ValueError(f"Metric {msg.metric_name} not found for experiment {msg.exp_id}")
@@ -131,7 +135,9 @@ def generate_observation(message: dict):
                 db,
                 result.id,
                 msg.line_id,
-                dict(observation=observation, score=score, execution_time=timer.execution_time),
+                dict(
+                    observation=observation, score=score, execution_time=int(timer.execution_time)
+                ),
             )
 
         except Exception as e:
