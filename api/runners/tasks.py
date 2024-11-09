@@ -111,14 +111,24 @@ def generate_observation(message: dict):
             metric = metric_registry.get_metric(msg.metric_name)
             metric_fun = metric_registry.get_metric_function(msg.metric_name)
             metric_params = {"metadata": metadata}
-            requires = [r for r in metric.require if r not in ["output", "output_true"]]
             if not metric_fun:
                 raise ValueError(f"Metric {msg.metric_name} not found for experiment {msg.exp_id}")
-            for require in requires:
+            for require in metric.require:
                 # Add extra inputs required by the metric
+                if require in ["output", "output_true"]:
+                    if not getattr(msg, require):
+                        raise ValueError(
+                            f"The metric {msg.metric_name} require a non null {require} value."
+                        )
+                    continue
                 dataset = result.experiment.dataset
                 df = pd.read_json(StringIO(dataset.df))
                 metric_params[require] = df.iloc[msg.line_id][require]
+                if not metric_params[require]:
+                    raise ValueError(
+                        f"The metric {msg.metric_name} require a non null {require} value."
+                    )
+
             # Compute metric
             with Timer() as timer:
                 metric_result = metric_fun(msg.output, msg.output_true, **metric_params)
