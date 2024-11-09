@@ -9,12 +9,14 @@ from api.models import create_object_from_dict
 # Datasets
 #
 
+
 def create_dataset(db: Session, dataset: schemas.DatasetCreate) -> models.Dataset:
     db_dataset = create_object_from_dict(db, models.Dataset, dataset.to_table_init(db))
     db.add(db_dataset)
     db.commit()
     db.refresh(db_dataset)
     return db_dataset
+
 
 def get_datasets(db: Session) -> list[models.Dataset]:
     return db.query(models.Dataset).all()
@@ -42,6 +44,24 @@ def get_metrics(db: Session) -> list[Metric]:
 #
 
 
+def get_answer(
+    db: Session,
+    answer_id: int | None = None,
+    experiment_id: str | None = None,
+    num_line: int | None = None,
+) -> models.Answer | None:
+    if answer_id:
+        return db.query(models.Answer).filter(models.Answer.id == answer_id).first()
+    elif experiment_id and num_line is not None:
+        return (
+            db.query(models.Answer)
+            .filter_by(experiment_id=experiment_id, num_line=num_line)
+            .first()
+        )
+    else:
+        raise ValueError("Should give at list an answer_id or a experiment_id/num_line couple.")
+
+
 def get_result(
     db: Session,
     result_id: int | None = None,
@@ -58,7 +78,34 @@ def get_result(
             .first()
         )
     else:
-        raise ValueError("Should give at list an result_idid or couple experiment_id metric_name.")
+        raise ValueError(
+            "Should give at list an result_id or a couple experiment_id/metric_name couple."
+        )
+
+
+def create_result(db: Session, result: schemas.ResultCreate) -> models.Result:
+    db_result = create_object_from_dict(db, models.Result, result.to_table_init(db))
+    db.add(db_result)
+    db.commit()
+    db.refresh(db_result)
+    return db_result
+
+
+def update_result(
+    db: Session, result_id: int, result_update: schemas.ResultUpdate | dict
+) -> models.Result | None:
+    if isinstance(result_update, dict):
+        result_update = schemas.ResultUpdate(**result_update)
+
+    result = db.query(models.Result).get(result_id)
+    if result is None:
+        return None
+    # Update fields
+    for var, value in vars(result_update).items():
+        setattr(result, var, value) if value else None
+    db.commit()
+    db.refresh(result)
+    return result
 
 
 #
@@ -106,9 +153,9 @@ def remove_experiment(db: Session, experiment_id: int) -> bool:
     experiment = db.query(models.Experiment).get(experiment_id)
     if experiment is None:
         return False
-    #db.delete(experiment)
-    #db.commit()
-    #return True
+    # db.delete(experiment)
+    # db.commit()
+    # return True
     update_experiment(db, experiment_id, dict(is_archived=True))
     return True
 
@@ -208,7 +255,9 @@ def upsert_observation(
             setattr(db_observation, k, v)
     else:
         # Insert a new record
-        db_observation = models.ObservationTable(result_id=result_id, num_line=num_line, **observation)
+        db_observation = models.ObservationTable(
+            result_id=result_id, num_line=num_line, **observation
+        )
         db.add(db_observation)
 
     db.commit()
