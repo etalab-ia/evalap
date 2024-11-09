@@ -37,6 +37,40 @@ drop-table table_name:
   command = f'psql "{PGURI}" -c "DROP TABLE IF EXISTS {TABLE_NAME};"'
   exit_status = os.system(command)
 
+[no-cd]
+reset-experiment-status *expids:
+  #!/usr/bin/env python
+  import sys, os; sys.path.append("{{work_dir}}")
+  from api.config import DATABASE_URI
+
+  PGURI = DATABASE_URI.replace("+psycopg2", "")
+  expids = "{{expids}}".split()
+  req = f"""
+    UPDATE experiments
+    SET experiment_status = 'finished'
+    WHERE id IN ({", ".join(expids)});
+  """.strip().replace("\n", " ")
+  command = f'psql "{PGURI}" -c "{req}"'
+  exit_status = os.system(command)
+
+[no-cd]
+get-experiment expid:
+  #!/usr/bin/env python
+  import sys, os; sys.path.append("{{work_dir}}")
+  from api.config import DATABASE_URI
+
+  PGURI = DATABASE_URI.replace("+psycopg2", "")
+  expid = "{{expid}}"
+  req = f"""
+    SELECT json_agg(row_to_json(t)) FROM (
+      SELECT *
+      FROM experiments
+      WHERE id = {expid}
+    ) t;
+  """.strip()
+  command = f'psql "{PGURI}" -t -P pager=off -c "{req}" | jq'
+  exit_status = os.system(command)
+
 rainfrog:
   rainfrog --url postgres://postgres:changeme@localhost:5432/eg1_dev
 

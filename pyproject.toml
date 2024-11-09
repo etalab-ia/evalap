@@ -1,6 +1,6 @@
 [project]
 name = "eg1"
-version = "0.1"
+version = "0.2"
 description = "Albert Evaluations"
 authors = [{ name = "Etalab", email = "etalab@modernisation.gouv.fr" }]
 requires-python = ">=3.10"

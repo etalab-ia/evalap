@@ -44,6 +44,8 @@
 3. Launch the runner:
 ```
     PYTHONPATH="." python -m api.runners
+    # To change the default loggin level you can do:
+    #LOG_LEVEL="DEBUG" PYTHONPATH="." python -m api.runners
 ```
 
 ## Swagger
