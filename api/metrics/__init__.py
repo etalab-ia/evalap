@@ -4,9 +4,12 @@ from dataclasses import dataclass
 from enum import Enum
 
 import inflection
+from deepeval.key_handler import KEY_FILE_HANDLER
 
 from api.utils import import_classes
 
+# FIX deepeval: OSError: [Errno 24] Too many open files: '.deepeval'
+KEY_FILE_HANDLER.fetch_data = lambda x: None
 
 class MetricType(str, Enum):
     # @TODO: ill defined at this point...

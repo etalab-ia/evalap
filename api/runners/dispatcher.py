@@ -15,7 +15,7 @@ class MessageType(str, Enum):
 def dispatch_tasks(db, db_exp, message_type: MessageType):
     context = zmq.Context()
     socket = context.socket(zmq.PUSH)
-    socket.bind("tcp://*:5555")
+    socket.connect("tcp://localhost:5555")
 
     if message_type == MessageType.answer:
         # Generate answer
@@ -44,6 +44,10 @@ def dispatch_tasks(db, db_exp, message_type: MessageType):
             df = pd.read_json(StringIO(db_exp.dataset.df))
             metrics = db_exp.metrics
             crud.update_experiment(db, db_exp.id, dict(experiment_status="running_metrics"))
+            # @TODO: in crud
+            for r in db_exp.results:
+                r.num_try = 0
+            db.commit()
             for metric_name in metrics:
                 for num_line, row in df.iterrows():
                     socket.send_json(
@@ -60,6 +64,10 @@ def dispatch_tasks(db, db_exp, message_type: MessageType):
             metrics = db_exp.metrics
             df = pd.read_json(StringIO(db_exp.dataset.df))
             crud.update_experiment(db, db_exp.id, dict(experiment_status="running_metrics"))
+            # @TODO: in crud
+            for r in db_exp.results:
+                r.num_try = 0
+            db.commit()
             for metric_name in metrics:
                 for a in db_exp.answers:
                     row = df.iloc[a.num_line]

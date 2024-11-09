@@ -139,6 +139,8 @@ def import_classes(package_name: str, class_names: list[str], more: list[str] = 
 
 def run_with_timeout(func, timeout, *args, **kwargs):
     """Set a timeout in seconds before stopping execution."""
+    # @DEBUG: generates OSError: [Errno 24] Too many open files
+    #         + uncatchable exception
     with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
         future = executor.submit(func, *args, **kwargs)
         try:

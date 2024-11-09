@@ -76,7 +76,7 @@ class LlmClient:
 
         return url, headers
 
-    @retry(tries=3, delay=2)
+    @retry(tries=3, delay=5)
     def generate(
         self,
         messages: str | list[dict] | None,
@@ -110,7 +110,7 @@ class LlmClient:
         r = response.json()
         return ChatCompletionResponse(**r)
 
-    @retry(tries=3, delay=2)
+    @retry(tries=3, delay=5)
     def create_embeddings(
         self,
         texts: str | list[str],
