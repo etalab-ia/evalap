@@ -61,6 +61,22 @@ def get_result(
         raise ValueError("Should give at list an result_idid or couple experiment_id metric_name.")
 
 
+def update_result(
+    db: Session, result_id: int, result_update: schemas.ResultUpdate | dict
+) -> models.Result | None:
+    if isinstance(result_update, dict):
+        result_update = schemas.ResultUpdate(**result_update)
+
+    result = db.query(models.Result).get(result_id)
+    if result is None:
+        return None
+    # Update fields
+    for var, value in vars(result_update).items():
+        setattr(result, var, value) if value else None
+    db.commit()
+    db.refresh(result)
+    return result
+
 #
 # Experiments
 #

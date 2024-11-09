@@ -3,6 +3,8 @@
 #
 
 notebooks/_data
+notebooks/\[DEBUG\]*
+*.back.py
 
 
 #

@@ -99,6 +99,7 @@ class Result(Base):
     metric_name = Column(String)
     num_try = Column(Integer, default=0)
     num_success = Column(Integer, default=0)
+    metric_status = Column(String)
 
     # One
     experiment_id = Column(Integer, ForeignKey("experiments.id"))

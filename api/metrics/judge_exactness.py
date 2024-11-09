@@ -39,7 +39,7 @@ _config = {
 
 @metric_registry.register(
     name="judge_exactness",
-    description="Binary correspondance between output and output_true",
+    description="Binary similarity between output and output_true",
     metric_type="llm",
     require=["output", "output_true", "query"],
 )
