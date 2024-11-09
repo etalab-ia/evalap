@@ -168,6 +168,13 @@ class ResultBase(EgBaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class ResultCreate(ResultBase):
+    experiment_id: int | None = None
+    def to_table_init(self, db):
+        obj = self.recurse_table_init(db)
+        return {"metric_status": "pending", **obj}
+
+
 class Result(ResultBase):
     id: int
     created_at: datetime
@@ -175,7 +182,7 @@ class Result(ResultBase):
     num_try: int
     num_success: int
     experiment_id: int
-    metric_status: MetricStatus = "pending"
+    metric_status: MetricStatus
 
 
 ResultUpdate = create_model(
@@ -221,9 +228,7 @@ class ExperimentCreate(ExperimentBase):
         # Handle Results
         results = []
         for metric_name in self.metrics:
-            results.append(
-                models.Result(**{"metric_name": metric_name, "metric_status": "pending"})
-            )
+            results.append(ResultCreate(metric_name=metric_name).to_table_init(db))
         obj["results"] = results
 
         # Validate Model and metric compatibility
@@ -314,7 +319,7 @@ class ExperimentSetBase(EgBaseModel):
 class ExperimentSetCreate(ExperimentSetBase):
     def to_table_init(self, db: Session) -> dict:
         obj = self.recurse_table_init(db)
-        return {**obj}
+        return obj
 
 
 class ExperimentSet(ExperimentSetBase):

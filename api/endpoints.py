@@ -94,9 +94,15 @@ def patch_experiment(
 
     # Rerun experiment
     # --
+    # Initialize metric results
     for metric in experiment_patch.metrics:
         result = crud.get_result(db, experiment_id=experiment.id, metric_name=metric)
-        crud.update_result(db, result.id, dict(metric_status="pending"))
+        if result:
+            crud.update_result(db, result.id, dict(metric_status="pending"))
+        else:
+            result = schemas.ResultCreate(experiment_id=experiment.id, metric_name=metric)
+            crud.create_result(db, result)
+    # Dispatch tasks
     if experiment.dataset.has_output or experiment_patch.skip_answers_generation:
         dispatch_tasks(db, experiment, "observations")
     else:
