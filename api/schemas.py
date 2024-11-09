@@ -1,7 +1,7 @@
 from datetime import datetime
 from enum import Enum
 from io import StringIO
-from typing import Optional
+from typing import Optional, get_type_hints
 
 import pandas as pd
 from pydantic import BaseModel, ConfigDict, create_model
@@ -33,6 +33,14 @@ class EgBaseModel(BaseModel):
         return self.model_dump()
 
 
+def get_all_annotations(cls):
+    annotations = {}
+    for base in cls.__mro__:
+        if hasattr(base, "__annotations__"):
+            annotations.update(get_type_hints(base))
+    return annotations
+
+
 #
 # Enum
 #
@@ -46,6 +54,12 @@ class ExperimentStatus(str, Enum):
     pending = "pending"
     running_answers = "running_answers"
     running_metrics = "running_metrics"
+    finished = "finished"
+
+
+class MetricStatus(str, Enum):
+    pending = "pending"
+    running = "running"
     finished = "finished"
 
 
@@ -161,7 +175,16 @@ class Result(ResultBase):
     num_try: int
     num_success: int
     experiment_id: int
+    metric_status: MetricStatus = "pending"
 
+
+ResultUpdate = create_model(
+    "Result",
+    **{
+        field_name: (Optional[field], None)
+        for field_name, field in get_all_annotations(Result).items()
+    },
+)
 
 #
 # Experiment
@@ -198,7 +221,9 @@ class ExperimentCreate(ExperimentBase):
         # Handle Results
         results = []
         for metric_name in self.metrics:
-            results.append({"metric_name": metric_name})
+            results.append(
+                models.Result(**{"metric_name": metric_name, "metric_status": "pending"})
+            )
         obj["results"] = results
 
         # Validate Model and metric compatibility
@@ -265,7 +290,7 @@ ExperimentUpdate = create_model(
     "Experiment",
     **{
         field_name: (Optional[field], None)
-        for field_name, field in Experiment.__annotations__.items()
+        for field_name, field in get_all_annotations(Experiment).items()
     },
 )
 
@@ -302,6 +327,6 @@ ExperimentSetUpdate = create_model(
     "ExperimentSet",
     **{
         field_name: (Optional[field], None)
-        for field_name, field in ExperimentSet.__annotations__.items()
+        for field_name, field in get_all_annotations(ExperimentSet).items()
     },
 )

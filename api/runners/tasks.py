@@ -128,7 +128,10 @@ def generate_observation(message: dict):
 
             # Upsert obsevation
             crud.upsert_observation(
-                db, result.id, msg.line_id, dict(observation=observation, score=score, execution_time=timer.execution_time)
+                db,
+                result.id,
+                msg.line_id,
+                dict(observation=observation, score=score, execution_time=timer.execution_time),
             )
 
         except Exception as e:
@@ -154,9 +157,11 @@ def generate_observation(message: dict):
 
         # Check if all the answer have been generated.
         if result.num_try >= result.experiment.dataset.size:
-            # @DEBUG: partially finished - check all metrics...
-            crud.update_experiment(db, msg.exp_id, dict(experiment_status="finished"))
-            print("$", end="", flush=True)
+            result = crud.update_result(db, result.id, dict(metric_status="finished"))
+            print("x", end="", flush=True)
+            if all(r.metric_status == "finished" for r in result.experiment.results):
+                crud.update_experiment(db, msg.exp_id, dict(experiment_status="finished"))
+                print("$", end="", flush=True)
 
 
 def process_task(message: dict):
