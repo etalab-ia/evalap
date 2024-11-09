@@ -117,10 +117,10 @@ def generate_observation(message: dict):
                 metric_params[require] = df.iloc[msg.line_id][require]
             # Compute metric
             with Timer() as timer:
-                #metric_result = metric_fun(msg.output, msg.output_true, **metric_params)
-                metric_result = run_with_timeout(
-                    metric_fun, 300, msg.output, msg.output_true, **metric_params
-                )
+                metric_result = metric_fun(msg.output, msg.output_true, **metric_params)
+                # metric_result = run_with_timeout(
+                #     metric_fun, 300, msg.output, msg.output_true, **metric_params
+                # )
             if isinstance(metric_result, tuple):
                 score, observation = metric_result
             else:

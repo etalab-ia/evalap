@@ -33,7 +33,7 @@ ALBERT_API_KEY = os.getenv("ALBERT_API_KEY")
 API_PREFIX = ""
 
 # Runners
-MAX_CONCURRENT_TASKS = 32
+MAX_CONCURRENT_TASKS = 4 # 8 ok, 16 hard !
 
 #######################################################################
 ### Environment specific
