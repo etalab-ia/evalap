@@ -88,7 +88,7 @@ class Model(Base):
     prompt_system = Column(Text)
     # prompt_template = Column(Text) # rag, composition, multiagents ?
     sampling_params = Column(JSON)  # dict
-    extra_kw = Column(JSON)  # dict
+    extra_params = Column(JSON)  # dict
 
 
 class Result(Base):
@@ -99,6 +99,7 @@ class Result(Base):
     metric_name = Column(String)
     num_try = Column(Integer, default=0)
     num_success = Column(Integer, default=0)
+    metric_status = Column(String)
 
     # One
     experiment_id = Column(Integer, ForeignKey("experiments.id"))
@@ -115,6 +116,7 @@ class ObservationTable(Base):
     observation = Column(JSON)
     num_line = Column(Integer)
     error_msg = Column(String)
+    execution_time = Column(Integer)
 
     # One
     result_id = Column(Integer, ForeignKey("results.id"))
@@ -127,6 +129,7 @@ class Answer(Base):
     answer = Column(Text)
     num_line = Column(Integer)
     error_msg = Column(String)
+    execution_time = Column(Integer)
 
     # One
     experiment_id = Column(Integer, ForeignKey("experiments.id"))

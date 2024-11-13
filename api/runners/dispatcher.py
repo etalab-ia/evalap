@@ -15,7 +15,7 @@ class MessageType(str, Enum):
 def dispatch_tasks(db, db_exp, message_type: MessageType):
     context = zmq.Context()
     socket = context.socket(zmq.PUSH)
-    socket.bind("tcp://*:5555")
+    socket.connect("tcp://localhost:5555")
 
     if message_type == MessageType.answer:
         # Generate answer
@@ -42,25 +42,35 @@ def dispatch_tasks(db, db_exp, message_type: MessageType):
         # iterate metrics and dataset
         if db_exp.dataset.has_output:
             df = pd.read_json(StringIO(db_exp.dataset.df))
-            metrics = db_exp.metrics
             crud.update_experiment(db, db_exp.id, dict(experiment_status="running_metrics"))
-            for metric_name in metrics:
+            for result in db_exp.results:
+                if result.metric_status != "pending":
+                    continue
+                result.num_try = 0
+                result.num_success = 0
+                result.metric_status = "running"
+                db.commit()
                 for num_line, row in df.iterrows():
                     socket.send_json(
                         {
                             "message_type": MessageType.observation,
                             "exp_id": db_exp.id,
                             "line_id": num_line,
-                            "metric_name": metric_name,
+                            "metric_name": result.metric_name,
                             "output": row["output"],
                             "output_true": row.get("output_true"),
                         }
                     )
         elif len(db_exp.answers) > 0:
-            metrics = db_exp.metrics
             df = pd.read_json(StringIO(db_exp.dataset.df))
             crud.update_experiment(db, db_exp.id, dict(experiment_status="running_metrics"))
-            for metric_name in metrics:
+            for result in db_exp.results:
+                if result.metric_status != "pending":
+                    continue
+                result.num_try = 0
+                result.num_success = 0
+                result.metric_status = "running"
+                db.commit()
                 for a in db_exp.answers:
                     row = df.iloc[a.num_line]
                     socket.send_json(
@@ -68,7 +78,7 @@ def dispatch_tasks(db, db_exp, message_type: MessageType):
                             "message_type": MessageType.observation,
                             "exp_id": db_exp.id,
                             "line_id": a.num_line,
-                            "metric_name": metric_name,
+                            "metric_name": result.metric_name,
                             "output": a.answer,
                             "output_true": row.get("output_true"),
                         }
