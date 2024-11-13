@@ -3,7 +3,7 @@ from . import metric_registry
 
 @metric_registry.register(
     name="output_length",
-    description="Binary correspondance between output and output_true",
+    description="Number of words of the output",
     metric_type="llm",
     require=["output"],
 )

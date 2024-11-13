@@ -1,7 +1,7 @@
 from datetime import datetime
 from enum import Enum
 from io import StringIO
-from typing import Optional
+from typing import Optional, get_type_hints
 
 import pandas as pd
 from pydantic import BaseModel, ConfigDict, create_model
@@ -33,6 +33,14 @@ class EgBaseModel(BaseModel):
         return self.model_dump()
 
 
+def get_all_annotations(cls):
+    annotations = {}
+    for base in cls.__mro__:
+        if hasattr(base, "__annotations__"):
+            annotations.update(get_type_hints(base))
+    return annotations
+
+
 #
 # Enum
 #
@@ -46,6 +54,12 @@ class ExperimentStatus(str, Enum):
     pending = "pending"
     running_answers = "running_answers"
     running_metrics = "running_metrics"
+    finished = "finished"
+
+
+class MetricStatus(str, Enum):
+    pending = "pending"
+    running = "running"
     finished = "finished"
 
 
@@ -107,7 +121,7 @@ class ModelBase(EgBaseModel):
     api_key: str
     prompt_system: str | None = None
     sampling_params: dict | None = None
-    extra_kw: dict | None = None
+    extra_params: dict | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -131,6 +145,7 @@ class Answer(EgBaseModel):
     answer: str | None
     num_line: int
     error_msg: str | None
+    execution_time: int | None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -142,6 +157,7 @@ class Observation(EgBaseModel):
     observation: str | None  # json
     num_line: int
     error_msg: str | None
+    execution_time: int | None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -152,6 +168,13 @@ class ResultBase(EgBaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class ResultCreate(ResultBase):
+    experiment_id: int | None = None
+    def to_table_init(self, db):
+        obj = self.recurse_table_init(db)
+        return {"metric_status": "pending", **obj}
+
+
 class Result(ResultBase):
     id: int
     created_at: datetime
@@ -159,7 +182,16 @@ class Result(ResultBase):
     num_try: int
     num_success: int
     experiment_id: int
+    metric_status: MetricStatus
 
+
+ResultUpdate = create_model(
+    "Result",
+    **{
+        field_name: (Optional[field], None)
+        for field_name, field in get_all_annotations(Result).items()
+    },
+)
 
 #
 # Experiment
@@ -196,7 +228,7 @@ class ExperimentCreate(ExperimentBase):
         # Handle Results
         results = []
         for metric_name in self.metrics:
-            results.append({"metric_name": metric_name})
+            results.append(ResultCreate(metric_name=metric_name).to_table_init(db))
         obj["results"] = results
 
         # Validate Model and metric compatibility
@@ -263,7 +295,7 @@ ExperimentUpdate = create_model(
     "Experiment",
     **{
         field_name: (Optional[field], None)
-        for field_name, field in Experiment.__annotations__.items()
+        for field_name, field in get_all_annotations(Experiment).items()
     },
 )
 
@@ -287,7 +319,7 @@ class ExperimentSetBase(EgBaseModel):
 class ExperimentSetCreate(ExperimentSetBase):
     def to_table_init(self, db: Session) -> dict:
         obj = self.recurse_table_init(db)
-        return {**obj}
+        return obj
 
 
 class ExperimentSet(ExperimentSetBase):
@@ -300,6 +332,6 @@ ExperimentSetUpdate = create_model(
     "ExperimentSet",
     **{
         field_name: (Optional[field], None)
-        for field_name, field in ExperimentSet.__annotations__.items()
+        for field_name, field in get_all_annotations(ExperimentSet).items()
     },
 )

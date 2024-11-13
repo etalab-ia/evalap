@@ -1,4 +1,5 @@
 import logging
+import traceback
 from dataclasses import dataclass
 from io import StringIO
 
@@ -11,6 +12,7 @@ from api.clients import LlmClient
 from api.db import SessionLocal
 from api.metrics import metric_registry
 from api.runners import MessageType, dispatch_tasks
+from api.utils import Timer, run_with_timeout
 
 
 @dataclass
@@ -30,6 +32,8 @@ def generate_answer(message: dict):
         exp = crud.get_experiment(db, msg.exp_id)
         model = crud.get_model(db, msg.model_id)
         sampling_params = model.sampling_params or {}
+        extra_params = model.extra_params or {}
+        sampling_params_plus = sampling_params | extra_params
         answer = None
         error_msg = None
         try:
@@ -39,15 +43,22 @@ def generate_answer(message: dict):
             if model.prompt_system:
                 messages = [{"role": "system", "content": model.prompt_system}] + messages
             aiclient = LlmClient(base_url=model.base_url, api_key=model.api_key)
-            result = aiclient.generate(model=model.name, messages=messages, **sampling_params)
+            with Timer() as timer:
+                result = aiclient.generate(
+                    model=model.name, messages=messages, **sampling_params_plus
+                )
             answer = result.choices[0].message.content
 
             # Upsert answer
-            crud.upsert_answer(db, exp.id, msg.line_id, dict(answer=answer))
+            crud.upsert_answer(
+                db, exp.id, msg.line_id, dict(answer=answer, execution_time=timer.execution_time)
+            )
 
         except Exception as e:
             error_msg = "Generation failed with error: %s" % e
+            logging.debug(traceback.print_exc())
             logging.error(error_msg)
+
         finally:
             # Ensure atomic transaction
             stmt = (
@@ -86,26 +97,44 @@ def generate_observation(message: dict):
     with SessionLocal() as db:
         print(".", end="", flush=True)
         result = crud.get_result(db, experiment_id=msg.exp_id, metric_name=msg.metric_name)
+        answer = crud.get_answer(db, experiment_id=msg.exp_id, num_line=msg.line_id)
         score = None
         observation = None
         error_msg = None
+        metadata = {}
+        if answer:
+            metadata["generation_time"] = answer.execution_time
         try:
             # Generate observation/metric
             # --
             # Get the metric from registry
-            metric  = metric_registry.get_metric(msg.metric_name)
+            metric = metric_registry.get_metric(msg.metric_name)
             metric_fun = metric_registry.get_metric_function(msg.metric_name)
-            metric_params = {}
-            requires = [r for r in metric.require if r not in ["output", "output_true"]]
+            metric_params = {"metadata": metadata}
             if not metric_fun:
                 raise ValueError(f"Metric {msg.metric_name} not found for experiment {msg.exp_id}")
-            for require in requires:
+            for require in metric.require:
                 # Add extra inputs required by the metric
+                if require in ["output", "output_true"]:
+                    if not getattr(msg, require):
+                        raise ValueError(
+                            f"The metric {msg.metric_name} require a non null {require} value."
+                        )
+                    continue
                 dataset = result.experiment.dataset
                 df = pd.read_json(StringIO(dataset.df))
                 metric_params[require] = df.iloc[msg.line_id][require]
+                if not metric_params[require]:
+                    raise ValueError(
+                        f"The metric {msg.metric_name} require a non null {require} value."
+                    )
+
             # Compute metric
-            metric_result = metric_fun(msg.output, msg.output_true, **metric_params)
+            with Timer() as timer:
+                metric_result = metric_fun(msg.output, msg.output_true, **metric_params)
+                # metric_result = run_with_timeout(
+                #     metric_fun, 300, msg.output, msg.output_true, **metric_params
+                # )
             if isinstance(metric_result, tuple):
                 score, observation = metric_result
             else:
@@ -113,11 +142,17 @@ def generate_observation(message: dict):
 
             # Upsert obsevation
             crud.upsert_observation(
-                db, result.id, msg.line_id, dict(observation=observation, score=score)
+                db,
+                result.id,
+                msg.line_id,
+                dict(
+                    observation=observation, score=score, execution_time=int(timer.execution_time)
+                ),
             )
 
         except Exception as e:
             error_msg = f"Observation {msg.metric_name} failed with error: %s" % e
+            logging.debug(traceback.print_exc())
             logging.error(error_msg)
         finally:
             # Ensure atomic transaction
@@ -138,8 +173,11 @@ def generate_observation(message: dict):
 
         # Check if all the answer have been generated.
         if result.num_try >= result.experiment.dataset.size:
-            # @DEBUG: partially finished - check all metrics...
-            crud.update_experiment(db, msg.exp_id, dict(experiment_status="finished"))
+            result = crud.update_result(db, result.id, dict(metric_status="finished"))
+            print("x", end="", flush=True)
+            if all(r.metric_status == "finished" for r in result.experiment.results):
+                crud.update_experiment(db, msg.exp_id, dict(experiment_status="finished"))
+                print("$", end="", flush=True)
 
 
 def process_task(message: dict):

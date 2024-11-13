@@ -1,8 +1,8 @@
 """Table Initialization
 
-Revision ID: 7bfc46020c12
+Revision ID: dfc7f5595173
 Revises: 
-Create Date: 2024-11-04 00:19:32.446433
+Create Date: 2024-11-09 03:34:21.634188
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '7bfc46020c12'
+revision: str = 'dfc7f5595173'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -47,7 +47,7 @@ def upgrade() -> None:
     sa.Column('api_key', sa.Text(), nullable=True),
     sa.Column('prompt_system', sa.Text(), nullable=True),
     sa.Column('sampling_params', sa.JSON(), nullable=True),
-    sa.Column('extra_kw', sa.JSON(), nullable=True),
+    sa.Column('extra_params', sa.JSON(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('experiments',
@@ -74,6 +74,7 @@ def upgrade() -> None:
     sa.Column('answer', sa.Text(), nullable=True),
     sa.Column('num_line', sa.Integer(), nullable=True),
     sa.Column('error_msg', sa.String(), nullable=True),
+    sa.Column('execution_time', sa.Integer(), nullable=True),
     sa.Column('experiment_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['experiment_id'], ['experiments.id'], ),
     sa.PrimaryKeyConstraint('id')
@@ -84,6 +85,7 @@ def upgrade() -> None:
     sa.Column('metric_name', sa.String(), nullable=True),
     sa.Column('num_try', sa.Integer(), nullable=True),
     sa.Column('num_success', sa.Integer(), nullable=True),
+    sa.Column('metric_status', sa.String(), nullable=True),
     sa.Column('experiment_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['experiment_id'], ['experiments.id'], ),
     sa.PrimaryKeyConstraint('id')
@@ -95,6 +97,7 @@ def upgrade() -> None:
     sa.Column('observation', sa.JSON(), nullable=True),
     sa.Column('num_line', sa.Integer(), nullable=True),
     sa.Column('error_msg', sa.String(), nullable=True),
+    sa.Column('execution_time', sa.Integer(), nullable=True),
     sa.Column('result_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['result_id'], ['results.id'], ),
     sa.PrimaryKeyConstraint('id')

@@ -16,6 +16,7 @@ router = APIRouter()
 # Datasets
 #
 
+
 @router.post("/dataset", response_model=schemas.Dataset)
 def create_dataset(dataset: schemas.DatasetCreate, db: Session = Depends(get_db)):
     try:
@@ -27,6 +28,7 @@ def create_dataset(dataset: schemas.DatasetCreate, db: Session = Depends(get_db)
         return CustomIntegrityError.from_integrity_error(e.orig).to_http_response()
     except Exception as e:
         raise e
+
 
 @router.get("/datasets", response_model=list[schemas.Dataset])
 def read_datasets(db: Session = Depends(get_db)):
@@ -81,12 +83,26 @@ def patch_experiment(
     experiment = crud.update_experiment(db, id, experiment_patch)
     if experiment is None:
         raise HTTPException(status_code=404, detail="Experiment not found")
-    elif experiment.experiment_status != schemas.ExperimentStatus.finished:
+    elif experiment.experiment_status not in [
+        schemas.ExperimentStatus.pending,
+        schemas.ExperimentStatus.finished,
+    ]:
         raise HTTPException(
             status_code=400,
             detail=f"Experiment is running ({experiment.experiment_status}), please try again later",
         )
 
+    # Rerun experiment
+    # --
+    # Initialize metric results
+    for metric in experiment_patch.metrics:
+        result = crud.get_result(db, experiment_id=experiment.id, metric_name=metric)
+        if result:
+            crud.update_result(db, result.id, dict(metric_status="pending"))
+        else:
+            result = schemas.ResultCreate(experiment_id=experiment.id, metric_name=metric)
+            crud.create_result(db, result)
+    # Dispatch tasks
     if experiment.dataset.has_output or experiment_patch.skip_answers_generation:
         dispatch_tasks(db, experiment, "observations")
     else:

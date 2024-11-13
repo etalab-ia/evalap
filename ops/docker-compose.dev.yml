@@ -3,7 +3,7 @@ services:
     image: postgres:17
     container_name: postgres-albert-eg1
     ports:
-      - "5432:5432"  # Use a different port than your development database
+      - "5432:5432"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: changeme
