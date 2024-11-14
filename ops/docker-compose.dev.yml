@@ -7,7 +7,7 @@ services:
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: changeme
-      POSTGRES_DB: eg1_test
+      POSTGRES_DB: eg1_dev
     volumes:
       - postgres_db:/var/lib/postgresql/data
 
