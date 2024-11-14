@@ -30,7 +30,7 @@ The environement variables can also be defined in a `.env` file at the root of t
 
 1. Launch the development services:
 ```
-    docker-compose -f contrib/docker-compose.dev.yml up
+    docker-compose -f ops/docker-compose.dev.yml up
 ```
 
 2. Create the first migration script:
