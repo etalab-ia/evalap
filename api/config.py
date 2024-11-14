@@ -33,7 +33,7 @@ ALBERT_API_KEY = os.getenv("ALBERT_API_KEY")
 API_PREFIX = ""
 
 # Runners
-MAX_CONCURRENT_TASKS = 4 # 8 ok, 16 hard !
+MAX_CONCURRENT_TASKS = 4  # 8 ok, 16 hard !
 
 #######################################################################
 ### Environment specific
@@ -52,6 +52,6 @@ elif ENV == "dev":
 else:
     API_BASE_URL = "http://localhost:8000" + API_PREFIX
     DB_NAME = "eg1"
-    DATABASE_URI = os.getenv(
-        "POSTGRES_URI", "postgresql+psycopg2://postgres:changeme@localhost:5432/eg1"
-    )
+    DATABASE_URI = os.getenv("POSTGRES_URI")
+    if not DATABASE_URI:
+        raise ValueError("You need to provid a valid POSTGRES_URI env variable.")
