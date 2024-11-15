@@ -42,7 +42,11 @@ The environement variables can also be defined in a `.env` file at the root of t
 ```
     alembic -c api/alembic.ini upgrade head
 ```
-
+4. If you modify the schema :
+```
+    alembic -c api/alembic.ini revision --autogenerate -m "text explication"
+    alembic -c api/alembic.ini upgrade head  
+```
 
 ## Run API
 
