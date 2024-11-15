@@ -3,6 +3,8 @@ import functools
 import importlib
 import pkgutil
 import time
+from itertools import product
+from typing import Any
 
 from jinja2 import BaseLoader, Environment
 from requests import Response
@@ -149,3 +151,70 @@ def run_with_timeout(func, timeout, *args, **kwargs):
         except concurrent.futures.TimeoutError:
             print("Function execution exceeded the timeout.")
             return None
+
+
+#
+# Misc
+#
+
+
+def build_param_grid(
+    common_params: dict[str, Any], grid_params: dict[str, list[Any]]
+) -> list[dict[str, Any]]:
+    """
+    # Example usage:
+    common_params = {
+        "batch_size": 32,
+        "model_params": {
+            "dropout": 0.5,
+            "activation": "relu"
+        }
+    }
+
+    grid_params = {
+        "learning_rate": [0.001, 0.01],
+        "model_params": [
+            {"hidden_layers": 2},
+            {"hidden_layers": 3}
+        ]
+    }
+
+    result = build_param_grid(common_params, grid_params)
+
+    # Example of one entry in the result:
+    # {
+    #     "batch_size": 32,
+    #     "learning_rate": 0.001,
+    #     "model_params": {
+    #         "dropout": 0.5,
+    #         "activation": "relu",
+    #         "hidden_layers": 2
+    #     }
+    # }
+    """
+    # Get all possible combinations of grid parameters
+    keys = grid_params.keys()
+    values = grid_params.values()
+    combinations = list(product(*values))
+
+    param_grid = []
+
+    for combo in combinations:
+        # Create a new dictionary starting with common_params
+        params = common_params.copy()
+
+        # Create dictionary for current combination
+        current_combo = dict(zip(keys, combo))
+
+        # For each parameter in the current combination
+        for key, value in current_combo.items():
+            if key in params and isinstance(params[key], dict) and isinstance(value, dict):
+                # If both are dicts, merge at first level only
+                params[key] = {**params[key], **value}
+            else:
+                # Otherwise, simply update the value
+                params[key] = value
+
+        param_grid.append(params)
+
+    return param_grid
