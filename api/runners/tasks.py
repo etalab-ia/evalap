@@ -51,7 +51,15 @@ def generate_answer(message: dict):
 
             # Upsert answer
             crud.upsert_answer(
-                db, exp.id, msg.line_id, dict(answer=answer, execution_time=timer.execution_time)
+                db,
+                exp.id,
+                msg.line_id,
+                dict(
+                    answer=answer,
+                    execution_time=timer.execution_time,
+                    nb_tokens_prompt=result.usage.prompt_tokens,
+                    nb_tokens_completion=result.usage.completion_tokens,
+                ),
             )
 
         except Exception as e:
@@ -104,6 +112,8 @@ def generate_observation(message: dict):
         metadata = {}
         if answer:
             metadata["generation_time"] = answer.execution_time
+            metadata["nb_tokens_prompt"] = answer.nb_tokens_prompt
+            metadata["nb_tokens_completion"] = answer.nb_tokens_completion
         try:
             # Generate observation/metric
             # --
