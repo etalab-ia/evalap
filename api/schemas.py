@@ -1,7 +1,7 @@
 from datetime import datetime
 from enum import Enum
 from io import StringIO
-from typing import Optional, get_type_hints
+from typing import Any, Optional, get_type_hints
 
 import pandas as pd
 from pydantic import BaseModel, ConfigDict, create_model
@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 import api.models as models
 from api.errors import SchemaError
 from api.metrics import metric_registry
+from api.utils import build_param_grid
 
 
 #
@@ -170,6 +171,7 @@ class ResultBase(EgBaseModel):
 
 class ResultCreate(ResultBase):
     experiment_id: int | None = None
+
     def to_table_init(self, db):
         obj = self.recurse_table_init(db)
         return {"metric_status": "pending", **obj}
@@ -274,8 +276,8 @@ class Experiment(ExperimentBase):
     num_try: int
     num_success: int
 
+    model: Model | None
     dataset_id: int
-    model_id: int
 
 
 class ExperimentWithResults(Experiment):
@@ -309,6 +311,11 @@ class ExperimentPatch(ExperimentUpdate):
 #
 
 
+class GridCV(BaseModel):
+    common_params: dict[str, Any]
+    grid_params: dict[str, list[Any]]
+
+
 class ExperimentSetBase(EgBaseModel):
     name: str
     readme: str | None = None
@@ -317,8 +324,27 @@ class ExperimentSetBase(EgBaseModel):
 
 
 class ExperimentSetCreate(ExperimentSetBase):
+    experiments: list[ExperimentCreate] | None = None
+    cv: GridCV | None = None
+
     def to_table_init(self, db: Session) -> dict:
         obj = self.recurse_table_init(db)
+
+        if self.experiments is not None and self.cv is not None:
+            raise SchemaError("Please, give either an expriments or a cv parameter but not both.")
+
+        # Handle Experiments
+        if self.cv is not None:
+            experiments = []
+            for i, experiment in enumerate(
+                build_param_grid(self.cv.common_params, self.cv.grid_params)
+            ):
+                experiment["name"] = f"{self.name}__{i}"
+                experiments.append(ExperimentCreate(**experiment).to_table_init(db))
+            obj["experiments"] = experiments
+        elif self.experiments is None:
+            obj.pop("experiments")
+
         return obj
 
 
