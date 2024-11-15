@@ -48,14 +48,21 @@ def generate_answer(message: dict):
                     model=model.name, messages=messages, **sampling_params_plus
                 )
             answer = result.choices[0].message.content
-            nb_tokens_prompt = result.usage.prompt_tokens
-            nb_tokens_completion = result.usage.completion_tokens
+            # nb_tokens_prompt = result.usage.prompt_tokens
+            # nb_tokens_completion = result.usage.completion_tokens
+
+            metrics_to_save = {
+                "answer": answer,
+                "execution_time": timer.execution_time,
+                "nb_tokens_prompt": result.usage.prompt_tokens,
+                "nb_tokens_completion": result.usage.completion_tokens
+                }
 
             # Upsert answer
             crud.upsert_answer(
                 db, exp.id, msg.line_id,
-                dict(answer=answer, execution_time=timer.execution_time, nb_tokens_prompt=nb_tokens_prompt, nb_tokens_completion=nb_tokens_completion)
-            )
+                metrics_to_save
+                )
 
         except Exception as e:
             error_msg = "Generation failed with error: %s" % e
@@ -151,7 +158,10 @@ def generate_observation(message: dict):
                 result.id,
                 msg.line_id,
                 dict(
-                    observation=observation, score=score, execution_time=int(timer.execution_time),
+                    observation=observation, score=score, 
+                    execution_time=int(timer.execution_time),
+                    nb_tokens_prompt=metadata.get("nb_tokens_prompt"),
+                    nb_tokens_completion=metadata.get("nb_tokens_completion"), 
                 ),
             )
 
