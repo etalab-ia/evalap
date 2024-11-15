@@ -158,6 +158,12 @@ def update_experiment(
 def create_experimentset(experimentset: schemas.ExperimentSetCreate, db: Session = Depends(get_db)):
     try:
         db_expset = crud.create_experimentset(db, experimentset)
+        for db_exp in db_expset.experiments:
+            if db_exp.dataset.has_output:
+                dispatch_tasks(db, db_exp, "observations")
+            else:
+                dispatch_tasks(db, db_exp, "answers")
+
         return db_expset
     except SchemaError as e:
         raise HTTPException(status_code=400, detail=str(e))

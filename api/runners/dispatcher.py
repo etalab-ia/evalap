@@ -86,7 +86,7 @@ def dispatch_tasks(db, db_exp, message_type: MessageType):
 
         else:
             raise NotImplementedError(
-                "Answer is needed to generate observation for experience: %s" % db_exp.id
+                "Answer is needed to generate observation for experiment: %s" % db_exp.id
             )
 
     else:
