@@ -50,8 +50,6 @@ def generate_answer(message: dict):
             answer = result.choices[0].message.content
             nb_tokens_prompt = result.usage.prompt_tokens
             nb_tokens_completion = result.usage.completion_tokens
-            print("result answer ")
-            print(result.usage)
 
             # Upsert answer
             crud.upsert_answer(
