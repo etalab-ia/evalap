@@ -46,12 +46,12 @@ if ENV == "unittest":
 elif ENV == "dev":
     API_BASE_URL = "http://localhost:8000" + API_PREFIX
     DB_NAME = "eg1_dev"
-    DATABASE_URI = os.getenv(
-        "POSTGRES_URI", "postgresql+psycopg2://postgres:changeme@localhost:5432/eg1_dev"
-    )
+    DATABASE_URL = os.getenv("POSTGRES_URL", "postgresql+psycopg2://postgres:changeme@localhost:5432")
+    DATABASE_URI = DATABASE_URL.rstrip("/") + "/" + DB_NAME
 else:
     API_BASE_URL = "http://localhost:8000" + API_PREFIX
-    DB_NAME = "eg1"
-    DATABASE_URI = os.getenv("POSTGRES_URI")
-    if not DATABASE_URI:
-        raise ValueError("You need to provid a valid POSTGRES_URI env variable.")
+    DB_NAME = os.getenv("DB_NAME", "eg1")
+    DATABASE_URL = os.getenv("POSTGRES_URL")
+    if not DATABASE_URL:
+        raise ValueError("You need to provid a valid POSTGRES_URL env variable.")
+    DATABASE_URI = DATABASE_URL.rstrip("/") + "/" + DB_NAME
