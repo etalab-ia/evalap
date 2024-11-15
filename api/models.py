@@ -130,6 +130,8 @@ class Answer(Base):
     num_line = Column(Integer)
     error_msg = Column(String)
     execution_time = Column(Integer)
+    nb_tokens_prompt = Column(Integer)
+    nb_tokens_completion = Column(Integer)
 
     # One
     experiment_id = Column(Integer, ForeignKey("experiments.id"))
