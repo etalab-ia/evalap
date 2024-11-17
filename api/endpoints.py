@@ -58,7 +58,11 @@ def read_metrics(db: Session = Depends(get_db)):
 #
 
 
-@router.post("/experiment", response_model=schemas.Experiment)
+@router.post(
+    "/experiment",
+    response_model=schemas.Experiment,
+    description="Launch an experiment. If a model is given, it will be use to generate the model output (answer), otherwise it will use the `output` column of the given dataset.",
+)
 def create_experiment(experiment: schemas.ExperimentCreate, db: Session = Depends(get_db)):
     try:
         db_exp = crud.create_experiment(db, experiment)
