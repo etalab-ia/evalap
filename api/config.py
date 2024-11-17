@@ -1,3 +1,5 @@
+import importlib.metadata
+import logging
 import os
 import tempfile
 
@@ -11,14 +13,19 @@ dotenv.load_dotenv()
 ### App metadata
 #######################################################################
 
-APP_NAME = "EG1"
+APP_NAME = "eg1" # redundant wuth pyproject.name
 APP_DESCRIPTION = "Albert Evaluations API"
-APP_VERSION = os.getenv("APP_VERSION", "0.0.0")
 CONTACT = {
     "name": "Etalab - Datalab",
     "url": "https://www.etalab.gouv.fr/",
     "email": "etalab@modernisation.gouv.fr",
 }
+
+try:
+    APP_VERSION = importlib.metadata.version(APP_NAME)
+except importlib.metadata.PackageNotFoundError:
+    logging.warning(f"Package {APP_NAME} is not installed.")
+    APP_VERSION = "0.0"
 
 
 #######################################################################

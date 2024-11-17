@@ -314,6 +314,7 @@ class ExperimentPatch(ExperimentUpdate):
 class GridCV(BaseModel):
     common_params: dict[str, Any]
     grid_params: dict[str, list[Any]]
+    repeat: int = 1
 
 
 class ExperimentSetBase(EgBaseModel):
@@ -336,11 +337,12 @@ class ExperimentSetCreate(ExperimentSetBase):
         # Handle Experiments
         if self.cv is not None:
             experiments = []
-            for i, experiment in enumerate(
-                build_param_grid(self.cv.common_params, self.cv.grid_params)
-            ):
-                experiment["name"] = f"{self.name}__{i}"
-                experiments.append(ExperimentCreate(**experiment).to_table_init(db))
+            i = 0
+            for experiment in build_param_grid(self.cv.common_params, self.cv.grid_params):
+                for _ in range(self.cv.repeat):
+                    experiment["name"] = f"{self.name}__{i}"
+                    experiments.append(ExperimentCreate(**experiment).to_table_init(db))
+                    i += 1
             obj["experiments"] = experiments
         elif self.experiments is None:
             obj.pop("experiments")
