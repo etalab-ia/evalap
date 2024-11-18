@@ -35,12 +35,16 @@ def read_datasets(db: Session = Depends(get_db)):
     return crud.get_datasets(db)
 
 
-@router.get("/dataset/{id}", response_model=schemas.Dataset)
-def read_dataset(id: int, db: Session = Depends(get_db)):
-    dataset = crud.get_dataset(db, id)
+@router.get("/dataset/{name}", response_model=schemas.Dataset | schemas.DatasetFull)
+def read_dataset(name: str, with_df: bool = False, db: Session = Depends(get_db)):
+    dataset = crud.get_dataset(db, name)
     if dataset is None:
         raise HTTPException(status_code=404, detail="Dataset not found")
-    return dataset
+
+    if with_df:
+        return schemas.DatasetFull.from_orm(dataset)
+
+    return schemas.Dataset.from_orm(dataset)
 
 
 #
@@ -158,7 +162,7 @@ def update_experiment(
 #
 
 
-@router.post("/experimentset", response_model=schemas.ExperimentSet)
+@router.post("/experiment_set", response_model=schemas.ExperimentSet)
 def create_experimentset(experimentset: schemas.ExperimentSetCreate, db: Session = Depends(get_db)):
     try:
         db_expset = crud.create_experimentset(db, experimentset)
@@ -177,14 +181,16 @@ def create_experimentset(experimentset: schemas.ExperimentSetCreate, db: Session
         raise e
 
 
-@router.delete("/experimentset/{id}", status_code=204)
-def delete_experimentset(id: int, db: Session = Depends(get_db)):
-    if not crud.remove_experimentset(db, id):
-        raise HTTPException(status_code=404, detail="ExperimentSet not found")
-    return
+@router.get("/experiment_sets", response_model=list[schemas.ExperimentSet])
+def read_experimentsets(db: Session = Depends(get_db)):
+    experimentsets = crud.get_experimentsets(db)
+    if experimentsets is None:
+        raise HTTPException(status_code=404, detail="ExperimentSets not found")
+    return experimentsets
+    #return [schemas.ExperimentSet.from_orm(x) for x in experimentsets]
 
 
-@router.get("/experimentset/{id}", response_model=schemas.ExperimentSet)
+@router.get("/experiment_set/{id}", response_model=schemas.ExperimentSet)
 def read_experimentset(id: int, db: Session = Depends(get_db)):
     experimentset = crud.get_experimentset(db, id)
     if experimentset is None:
@@ -192,7 +198,7 @@ def read_experimentset(id: int, db: Session = Depends(get_db)):
     return experimentset
 
 
-@router.patch("/experimentset/{id}", response_model=schemas.ExperimentSet)
+@router.patch("/experiment_set/{id}", response_model=schemas.ExperimentSet)
 def update_experimentset(
     id: int, experimentset_update: schemas.ExperimentSetUpdate, db: Session = Depends(get_db)
 ):
@@ -200,3 +206,10 @@ def update_experimentset(
     if experimentset is None:
         raise HTTPException(status_code=404, detail="ExperimentSet not found")
     return experimentset
+
+
+@router.delete("/experiment_set/{id}", status_code=204)
+def delete_experimentset(id: int, db: Session = Depends(get_db)):
+    if not crud.remove_experimentset(db, id):
+        raise HTTPException(status_code=404, detail="ExperimentSet not found")
+    return
