@@ -110,6 +110,8 @@ class Dataset(DatasetBase):
     has_output_true: bool
     size: int
 
+class DatasetFull(Dataset):
+    df: str  # from_json
 
 #
 # Model

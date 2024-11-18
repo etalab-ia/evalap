@@ -22,8 +22,8 @@ def get_datasets(db: Session) -> list[models.Dataset]:
     return db.query(models.Dataset).all()
 
 
-def get_dataset(db: Session, dataset_id: int) -> models.Dataset | None:
-    return db.query(models.Dataset).filter(models.Dataset.id == dataset_id).first()
+def get_dataset(db: Session, name: str) -> models.Dataset | None:
+    return db.query(models.Dataset).filter(models.Dataset.name == name).first()
 
 
 def get_model(db: Session, model_id: int) -> models.Model | None:
@@ -175,15 +175,13 @@ def create_experimentset(
     return db_expset
 
 
+def get_experimentsets(db: Session) -> list[models.ExperimentSet]:
+    query = db.query(models.ExperimentSet)
+    return query.all()
+
+
 def get_experimentset(db: Session, experimentset_id: int) -> models.ExperimentSet | None:
     return db.query(models.ExperimentSet).get(experimentset_id)
-
-
-def get_experimentsets(db: Session, set_id: int | None = None) -> list[models.ExperimentSet]:
-    query = db.query(models.ExperimentSet)
-    if set_id:
-        query = query.filter(models.ExperimentSet.experimentset_set_id == set_id)
-    return query.all()
 
 
 def update_experimentset(
