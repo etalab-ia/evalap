@@ -43,11 +43,11 @@ _config = {
     metric_type="llm",
     require=["output", "output_true", "query"],
 )
-def judge_exactness_metric(output, output_true, query, **kwargs):
+def judge_exactness_metric(output, output_true, **kwargs):
     messages = [
         {
             "role": "user",
-            "content": render_jinja(_template, output=output, output_true=output_true, query=query, **kwargs),
+            "content": render_jinja(_template, output=output, output_true=output_true, **kwargs),
         }
     ]
     aiclient = LlmClient()

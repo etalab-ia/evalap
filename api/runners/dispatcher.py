@@ -16,7 +16,7 @@ class MessageType(str, Enum):
 def dispatch_tasks(db, db_exp, message_type: MessageType):
     context = zmq.Context()
     socket = context.socket(zmq.PUSH)
-    socket.connect("tcp://localhost:5555")
+    socket.connect("tcp://localhost:5555")#TODO mettre l'URL_client pour plus de clarté
 
     if message_type == MessageType.answer:
         # Generate answer
