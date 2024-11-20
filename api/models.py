@@ -146,7 +146,6 @@ class Experiment(Base):
     readme = Column(Text)
     is_archived = Column(Boolean, default=False)  # do not allow user to remove without IAM.
     created_at = Column(DateTime, server_default=func.now())
-    metrics = Column(JSON)  # asked metrics,  list of enum
     experiment_status = Column(String)
     num_try = Column(Integer, default=0)
     num_success = Column(Integer, default=0)
