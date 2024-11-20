@@ -1,3 +1,4 @@
+import re
 from api.clients import LlmClient
 from api.utils import render_jinja
 
@@ -48,15 +49,15 @@ _config = {
 
 @metric_registry.register(
     name="judge_complexity",
-    description="[0-10] score complexity of query, thématique...",
+    description="[0-10] score complexity of query, thematic...",
     metric_type="dataset",
     require=["query"],
 )
-def judge_complexity_metric(query, **kwargs):
+def judge_complexity_metric(output, output_true, **kwargs):
     messages = [
         {
             "role": "user",
-            "content": render_jinja(_template, query=query, **kwargs),
+            "content": render_jinja(_template, output=output, output_true=output_true, **kwargs),
         }
     ]
     aiclient = LlmClient()
@@ -96,4 +97,4 @@ def judge_complexity_metric(query, **kwargs):
         "thematique": thematique
     }
 
-    return scores["global"], answer
+    return int(scores["global"]), answer
