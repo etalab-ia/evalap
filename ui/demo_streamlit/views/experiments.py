@@ -18,6 +18,7 @@ def main():
         df = pd.DataFrame(
             [
                 {
+                    "Id": exp["id"],
                     "Name": exp["name"],
                     "Status": exp["experiment_status"],
                     "Created Date": exp["created_at"],
@@ -27,6 +28,7 @@ def main():
                 for exp in experimentset["experiments"]
             ]
         )
+        df.sort_values(by='Id', ascending=True, inplace=True)
 
         # Show the table
         st.dataframe(
@@ -34,6 +36,9 @@ def main():
             use_container_width=True,
             hide_index=True,
             height=600,
+            column_config={
+                "Id": st.column_config.TextColumn(width="small"),
+            },
         )
 
         return
@@ -61,7 +66,7 @@ def main():
                 st.markdown(exp_set.get("readme", "No description available"))
                 col1, col2 = st.columns(2)
                 with col1:
-                    st.caption(f'Runs: {len(exp_set["experiments"])} ')
+                    st.caption(f'Experiment: {len(exp_set["experiments"])} ')
                 with col2:
                     st.caption(f"Created the {when}")
 

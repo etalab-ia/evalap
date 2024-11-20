@@ -1,7 +1,7 @@
 from datetime import datetime
 from enum import Enum
 from io import StringIO
-from typing import Any, Optional, get_type_hints
+from typing import Any, Optional
 
 import pandas as pd
 from pydantic import BaseModel, ConfigDict, create_model
@@ -32,14 +32,6 @@ class EgBaseModel(BaseModel):
 
     def to_table_init(self, db: Session):
         return self.model_dump()
-
-
-def get_all_annotations(cls):
-    annotations = {}
-    for base in cls.__mro__:
-        if hasattr(base, "__annotations__"):
-            annotations.update(get_type_hints(base))
-    return annotations
 
 
 #
@@ -110,8 +102,10 @@ class Dataset(DatasetBase):
     has_output_true: bool
     size: int
 
+
 class DatasetFull(Dataset):
     df: str  # from_json
+
 
 #
 # Model
@@ -190,11 +184,12 @@ class Result(ResultBase):
 
 
 ResultUpdate = create_model(
-    "Result",
+    "ResultUpdate",
     **{
-        field_name: (Optional[field], None)
-        for field_name, field in get_all_annotations(Result).items()
+        field_name: (Optional[field.annotation], None)
+        for field_name, field in Result.__fields__.items()
     },
+    __base__=Result,
 )
 
 #
@@ -204,16 +199,14 @@ ResultUpdate = create_model(
 
 class ExperimentBase(EgBaseModel):
     name: str
-    metrics: list[MetricEnum]
     readme: str | None = None
     experiment_set_id: int | None = None
 
     model_config = ConfigDict(from_attributes=True, protected_namespaces=())
 
-    skip_answers_generation: bool = False
-
 
 class ExperimentCreate(ExperimentBase):
+    metrics: list[MetricEnum]
     dataset: DatasetCreate | str
     model: ModelCreate | None = None
 
@@ -295,17 +288,23 @@ class ExperimentFull(Experiment):
     results: list[Result] | None
 
 
+# For the special `metrics` input
+class ExperimentExtra(Experiment, ExperimentCreate):
+    pass
+
+
 ExperimentUpdate = create_model(
-    "Experiment",
+    "ExperimentUpdate",
     **{
-        field_name: (Optional[field], None)
-        for field_name, field in get_all_annotations(Experiment).items()
+        field_name: (Optional[field.annotation], None)
+        for field_name, field in ExperimentExtra.__fields__.items()
     },
+    __base__=ExperimentExtra,
 )
 
 
 class ExperimentPatch(ExperimentUpdate):
-    skip_answers_generation: bool = False
+    rerun_answers: bool = False
 
 
 #
@@ -359,9 +358,14 @@ class ExperimentSet(ExperimentSetBase):
 
 
 ExperimentSetUpdate = create_model(
-    "ExperimentSet",
+    "ExperimentSetUpdate",
     **{
-        field_name: (Optional[field], None)
-        for field_name, field in get_all_annotations(ExperimentSet).items()
+        field_name: (Optional[field.annotation], None)
+        for field_name, field in ExperimentSet.__fields__.items()
     },
+    __base__=ExperimentSet,
 )
+
+
+class ExperimentSetPatch(ExperimentSetUpdate):
+    pass
