@@ -29,6 +29,14 @@ Critère Procedure : [Explication] [Note : X/5]
 Score de complexité global : [Explication] [Note : X/10]
 Attention, si vous ne savez pas donner de note, mettre 0! ne jamais laisser la note vide
 Recommandation : [Suggérez brièvement la marche à suivre pour traiter cette demande]
+
+Enfin, vous nous direz quelle est la thématique principale associée à cette demande administrative parmis une liste de thème; 
+Liste des thèmes : CAF / ANTS / CPAM / CARSAT - MSA / IMPOTS / ...
+
+si vous ne savez pas la classer, vous la mettrez dans la catégorie "non catégorisé"
+Vous ajouterez cela à la réponse en mettant "thèmathique : [thème identifié]"
+
+A vous.
 """.strip()
 
 _config = {
@@ -40,8 +48,8 @@ _config = {
 
 @metric_registry.register(
     name="judge_complexity",
-    description="[0-10] score complexity of query",
-    metric_type="llm",
+    description="[0-10] score complexity of query, thématique...",
+    metric_type="dataset",
     require=["query"],
 )
 def judge_complexity_metric(query, **kwargs):
@@ -55,13 +63,12 @@ def judge_complexity_metric(query, **kwargs):
     result = aiclient.generate(
         model=_config["model"], messages=messages, **_config["sampling_params"]
     )
-    answer = result.choices[0].message.content
-
+    answer_text = result.choices[0].message.content
 
     def extract_score(line):
         match = re.search(r'\[Note : (\d+(?:\.\d+)?)/\d+\]', line)
         return float(match.group(1)) if match else 0
- 
+
     scores = {
         "demande": 0,
         "administration": 0,
@@ -69,7 +76,9 @@ def judge_complexity_metric(query, **kwargs):
         "global": 0
     }
 
-    for line in answer.split('\n'):
+    thematique = "non catégorisé" 
+
+    for line in answer_text.split('\n'):
         if "Critère Demande :" in line:
             scores["demande"] = extract_score(line)
         elif "Critère Administration :" in line:
@@ -78,5 +87,13 @@ def judge_complexity_metric(query, **kwargs):
             scores["procedure"] = extract_score(line)
         elif "Score de complexité global :" in line:
             scores["global"] = extract_score(line)
+        elif line.startswith("Thématique :"):  
+            thematique = line.split(":", 1)[1].strip()  
 
-    return scores, answer
+    answer = {
+        "answer": answer_text,
+        "scores": scores,
+        "thematique": thematique
+    }
+
+    return scores["global"], answer
