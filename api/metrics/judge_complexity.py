@@ -1,3 +1,4 @@
+import json
 import re
 from api.clients import LlmClient
 from api.utils import render_jinja
@@ -97,4 +98,4 @@ def judge_complexity_metric(output, output_true, **kwargs):
         "thematique": thematique
     }
 
-    return int(scores["global"]), answer
+    return int(scores["global"]), json.dumps(answer)
