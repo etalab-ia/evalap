@@ -8,6 +8,10 @@ default:
 alembic-init:
   alembic -c api/alembic.ini revision --autogenerate -m "Table Initialization"
 
+alembic-generate-revision name:
+  alembic -c api/alembic.ini upgrade head
+  alembic -c api/alembic.ini revision --autogenerate -m "{{name}}"
+
 alembic-upgrade:
   alembic -c api/alembic.ini upgrade head
 

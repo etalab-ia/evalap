@@ -11,7 +11,8 @@ from api.models import create_object_from_dict
 
 
 def create_dataset(db: Session, dataset: schemas.DatasetCreate) -> models.Dataset:
-    db_dataset = create_object_from_dict(db, models.Dataset, dataset.to_table_init(db))
+    dataset = dataset.to_table_init(db) if isinstance(dataset, schemas.EgBaseModel) else dataset
+    db_dataset = create_object_from_dict(db, models.Dataset, dataset)
     db.add(db_dataset)
     db.commit()
     db.refresh(db_dataset)
@@ -22,8 +23,8 @@ def get_datasets(db: Session) -> list[models.Dataset]:
     return db.query(models.Dataset).all()
 
 
-def get_dataset(db: Session, dataset_id: int) -> models.Dataset | None:
-    return db.query(models.Dataset).filter(models.Dataset.id == dataset_id).first()
+def get_dataset(db: Session, name: str) -> models.Dataset | None:
+    return db.query(models.Dataset).filter(models.Dataset.name == name).first()
 
 
 def get_model(db: Session, model_id: int) -> models.Model | None:
@@ -84,7 +85,8 @@ def get_result(
 
 
 def create_result(db: Session, result: schemas.ResultCreate) -> models.Result:
-    db_result = create_object_from_dict(db, models.Result, result.to_table_init(db))
+    result = result.to_table_init(db) if isinstance(result, schemas.EgBaseModel) else result
+    db_result = create_object_from_dict(db, models.Result, result)
     db.add(db_result)
     db.commit()
     db.refresh(db_result)
@@ -114,7 +116,10 @@ def update_result(
 
 
 def create_experiment(db: Session, experiment: schemas.ExperimentCreate) -> models.Experiment:
-    db_exp = create_object_from_dict(db, models.Experiment, experiment.to_table_init(db))
+    experiment = (
+        experiment.to_table_init(db) if isinstance(experiment, schemas.EgBaseModel) else experiment
+    )
+    db_exp = create_object_from_dict(db, models.Experiment, experiment)
     db.add(db_exp)
     db.commit()
     db.refresh(db_exp)
@@ -168,22 +173,25 @@ def remove_experiment(db: Session, experiment_id: int) -> bool:
 def create_experimentset(
     db: Session, experimentset: schemas.ExperimentSetCreate
 ) -> models.ExperimentSet:
-    db_expset = create_object_from_dict(db, models.ExperimentSet, experimentset.to_table_init(db))
+    experimentset = (
+        experimentset.to_table_init(db)
+        if isinstance(experimentset, schemas.EgBaseModel)
+        else experimentset
+    )
+    db_expset = create_object_from_dict(db, models.ExperimentSet, experimentset)
     db.add(db_expset)
     db.commit()
     db.refresh(db_expset)
     return db_expset
 
 
+def get_experimentsets(db: Session) -> list[models.ExperimentSet]:
+    query = db.query(models.ExperimentSet)
+    return query.all()
+
+
 def get_experimentset(db: Session, experimentset_id: int) -> models.ExperimentSet | None:
     return db.query(models.ExperimentSet).get(experimentset_id)
-
-
-def get_experimentsets(db: Session, set_id: int | None = None) -> list[models.ExperimentSet]:
-    query = db.query(models.ExperimentSet)
-    if set_id:
-        query = query.filter(models.ExperimentSet.experimentset_set_id == set_id)
-    return query.all()
 
 
 def update_experimentset(
