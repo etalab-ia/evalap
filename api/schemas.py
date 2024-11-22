@@ -1,7 +1,7 @@
 from datetime import datetime
 from enum import Enum
 from io import StringIO
-from typing import Optional, get_type_hints
+from typing import Any, Optional
 
 import pandas as pd
 from pydantic import BaseModel, ConfigDict, create_model
@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 import api.models as models
 from api.errors import SchemaError
 from api.metrics import metric_registry
+from api.utils import build_param_grid
 
 
 #
@@ -31,14 +32,6 @@ class EgBaseModel(BaseModel):
 
     def to_table_init(self, db: Session):
         return self.model_dump()
-
-
-def get_all_annotations(cls):
-    annotations = {}
-    for base in cls.__mro__:
-        if hasattr(base, "__annotations__"):
-            annotations.update(get_type_hints(base))
-    return annotations
 
 
 #
@@ -110,6 +103,10 @@ class Dataset(DatasetBase):
     size: int
 
 
+class DatasetFull(Dataset):
+    df: str  # from_json
+
+
 #
 # Model
 #
@@ -170,6 +167,7 @@ class ResultBase(EgBaseModel):
 
 class ResultCreate(ResultBase):
     experiment_id: int | None = None
+
     def to_table_init(self, db):
         obj = self.recurse_table_init(db)
         return {"metric_status": "pending", **obj}
@@ -186,11 +184,12 @@ class Result(ResultBase):
 
 
 ResultUpdate = create_model(
-    "Result",
+    "ResultUpdate",
     **{
-        field_name: (Optional[field], None)
-        for field_name, field in get_all_annotations(Result).items()
+        field_name: (Optional[field.annotation], None)
+        for field_name, field in Result.__fields__.items()
     },
+    __base__=Result,
 )
 
 #
@@ -200,16 +199,14 @@ ResultUpdate = create_model(
 
 class ExperimentBase(EgBaseModel):
     name: str
-    metrics: list[MetricEnum]
     readme: str | None = None
     experiment_set_id: int | None = None
 
     model_config = ConfigDict(from_attributes=True, protected_namespaces=())
 
-    skip_answers_generation: bool = False
-
 
 class ExperimentCreate(ExperimentBase):
+    metrics: list[MetricEnum]
     dataset: DatasetCreate | str
     model: ModelCreate | None = None
 
@@ -274,8 +271,8 @@ class Experiment(ExperimentBase):
     num_try: int
     num_success: int
 
+    model: Model | None
     dataset_id: int
-    model_id: int
 
 
 class ExperimentWithResults(Experiment):
@@ -291,22 +288,34 @@ class ExperimentFull(Experiment):
     results: list[Result] | None
 
 
+# For the special `metrics` input
+class ExperimentExtra(Experiment, ExperimentCreate):
+    pass
+
+
 ExperimentUpdate = create_model(
-    "Experiment",
+    "ExperimentUpdate",
     **{
-        field_name: (Optional[field], None)
-        for field_name, field in get_all_annotations(Experiment).items()
+        field_name: (Optional[field.annotation], None)
+        for field_name, field in ExperimentExtra.__fields__.items()
     },
+    __base__=ExperimentExtra,
 )
 
 
 class ExperimentPatch(ExperimentUpdate):
-    skip_answers_generation: bool = False
+    rerun_answers: bool = False
 
 
 #
 # Experiment Set
 #
+
+
+class GridCV(BaseModel):
+    common_params: dict[str, Any]
+    grid_params: dict[str, list[Any]]
+    repeat: int = 1
 
 
 class ExperimentSetBase(EgBaseModel):
@@ -317,8 +326,28 @@ class ExperimentSetBase(EgBaseModel):
 
 
 class ExperimentSetCreate(ExperimentSetBase):
+    experiments: list[ExperimentCreate] | None = None
+    cv: GridCV | None = None
+
     def to_table_init(self, db: Session) -> dict:
         obj = self.recurse_table_init(db)
+
+        if self.experiments is not None and self.cv is not None:
+            raise SchemaError("Please, give either an expriments or a cv parameter but not both.")
+
+        # Handle Experiments
+        if self.cv is not None:
+            experiments = []
+            i = 0
+            for experiment in build_param_grid(self.cv.common_params, self.cv.grid_params):
+                for _ in range(self.cv.repeat):
+                    experiment["name"] = f"{self.name}__{i}"
+                    experiments.append(ExperimentCreate(**experiment).to_table_init(db))
+                    i += 1
+            obj["experiments"] = experiments
+        elif self.experiments is None:
+            obj.pop("experiments")
+
         return obj
 
 
@@ -329,9 +358,14 @@ class ExperimentSet(ExperimentSetBase):
 
 
 ExperimentSetUpdate = create_model(
-    "ExperimentSet",
+    "ExperimentSetUpdate",
     **{
-        field_name: (Optional[field], None)
-        for field_name, field in get_all_annotations(ExperimentSet).items()
+        field_name: (Optional[field.annotation], None)
+        for field_name, field in ExperimentSet.__fields__.items()
     },
+    __base__=ExperimentSet,
 )
+
+
+class ExperimentSetPatch(ExperimentSetUpdate):
+    pass

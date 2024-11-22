@@ -70,9 +70,11 @@ The environement variables can also be defined in a `.env` file at the root of t
 Access the API documentation at: http://localhost:8000/redoc (or http://localhost:8000/docs if you prefer the legacy version).
 
 
-## Streamlit Application (not available)
+## Streamlit Application
 
-Once the Docker containers are launched, you can access the Streamlit application at: http://localhost:8501
+To run the streamlit frontend, run : 
+
+    streamlit run ui/demo_streamlit/app.py
 
 
 ## Jupyter Tutorial
