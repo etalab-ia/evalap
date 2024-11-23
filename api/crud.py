@@ -23,8 +23,8 @@ def get_datasets(db: Session) -> list[models.Dataset]:
     return db.query(models.Dataset).all()
 
 
-def get_dataset(db: Session, name: str) -> models.Dataset | None:
-    return db.query(models.Dataset).filter(models.Dataset.name == name).first()
+def get_dataset(db: Session, dataset_id: str) -> models.Dataset | None:
+    return db.query(models.Dataset).filter(models.Dataset.name == dataset_id).first()
 
 
 def get_model(db: Session, model_id: int) -> models.Model | None:
