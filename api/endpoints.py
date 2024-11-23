@@ -36,9 +36,9 @@ def read_datasets(db: Session = Depends(get_db)):
     return crud.get_datasets(db)
 
 
-@router.get("/dataset/{name}", response_model=schemas.Dataset | schemas.DatasetFull)
-def read_dataset(name: str, with_df: bool = False, db: Session = Depends(get_db)):
-    dataset = crud.get_dataset(db, name)
+@router.get("/dataset/{id}", response_model=schemas.Dataset | schemas.DatasetFull)
+def read_dataset(id: int, with_df: bool = False, db: Session = Depends(get_db)):
+    dataset = crud.get_dataset(db, id)
     if dataset is None:
         raise HTTPException(status_code=404, detail="Dataset not found")
 

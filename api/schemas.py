@@ -273,7 +273,6 @@ class Experiment(ExperimentBase):
 
     dataset: Dataset
     model: Model | None
-    dataset_id: int
 
 
 class ExperimentWithResults(Experiment):
