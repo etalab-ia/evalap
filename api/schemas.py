@@ -271,8 +271,8 @@ class Experiment(ExperimentBase):
     num_try: int
     num_success: int
 
+    dataset: Dataset
     model: Model | None
-    dataset_id: int
 
 
 class ExperimentWithResults(Experiment):
