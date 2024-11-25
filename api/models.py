@@ -38,6 +38,8 @@ def create_object_from_dict(db, model, data):
     for k, v in data.items():
         if hasattr(model, k):
             if is_relationship(model, k):
+                if v is None:
+                    continue
                 relationships[k] = v
             else:
                 attributes[k] = v
