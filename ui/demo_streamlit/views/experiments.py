@@ -1,74 +1,76 @@
-import pandas as pd
-from datetime import datetime
 import streamlit as st
+import pandas as pd
+import numpy as np
 from utils import fetch
-from routes import get_page
 
+def fetch_all_experiments():
+    endpoint = "/experiments"
+    return fetch("get", endpoint)
+
+def fetch_experiment_results(exp_id):
+    endpoint = f"/experiment/{exp_id}"
+    params = {"with_results": "true"}
+    return fetch("get", endpoint, params)
+
+def process_experiment_results(experiment):
+    results = experiment.get("results", [])
+    df_metrics = {}
+    
+    for metric_results in results:
+        metric_name = metric_results["metric_name"]
+        arr = np.array([x["score"] for x in metric_results["observation_table"] if pd.notna(x["score"])])
+        
+        if len(arr) > 0:
+            df = pd.DataFrame([[
+                np.mean(arr),
+                np.std(arr),
+                np.median(arr),
+                f"{arr.mean():.2f} ± {arr.std():.2f}",
+                len(arr),
+            ]], columns=["mean", "std", "median", "mean_std", "support"])
+            
+            df_metrics[metric_name] = df
+    
+    return pd.DataFrame({metric_name: df["mean_std"].iloc[0] for metric_name, df in sorted(df_metrics.items())}, index=[experiment["name"]])
+
+def display_all_experiments():
+    experiments = fetch_all_experiments()
+    
+    if not experiments:
+        st.error("No experiments found.")
+        return
+    
+    df = pd.DataFrame(experiments)
+    
+    st.dataframe(df)
+
+def display_experiment_results(exp_id):
+    experiment = fetch_experiment_results(exp_id)
+    
+    if not experiment:
+        return
+    
+    if experiment["experiment_status"] != "finished":
+        st.warning(f"Experiment {exp_id} is not finished yet...")
+    
+    results_df = process_experiment_results(experiment)
+    
+    if not results_df.empty:
+        st.dataframe(results_df)
+    else:
+        st.info("No results available for this experiment.")
 
 def main():
-    # Display selected experiment set overview
-    if st.session_state.get("experimentset"):
-        experimentset = st.session_state["experimentset"]
-        if st.button(f":material/arrow_back: Go back"):
-            st.session_state["experimentset"] = None
-            st.rerun()
-        st.write(f"## Overview of experiment set: {experimentset['name']}")
-
-        # Convert experiments list to a pandas DataFrame
-        df = pd.DataFrame(
-            [
-                {
-                    "Id": exp["id"],
-                    "Name": exp["name"],
-                    "Status": exp["experiment_status"],
-                    "Created Date": exp["created_at"],
-                    "Num try": exp["num_try"],
-                    "Num success": exp["num_success"],
-                }
-                for exp in experimentset["experiments"]
-            ]
-        )
-        df.sort_values(by='Id', ascending=True, inplace=True)
-
-        # Show the table
-        st.dataframe(
-            df,
-            use_container_width=True,
-            hide_index=True,
-            height=600,
-            column_config={
-                "Id": st.column_config.TextColumn(width="small"),
-            },
-        )
-
-        return
-
-    st.title("Experiments (Set)")
-
-    # Fetch experiment sets
-    experiment_sets = fetch("get", "/experiment_sets")
-    if not experiment_sets:
-        return
-
-    # Create a grid of cards (3 columns)
-    cols = st.columns(3)
-
-    for idx, exp_set in enumerate(experiment_sets):
-        when = datetime.fromisoformat(exp_set["created_at"]).strftime("%d %B %Y")
-
-        with cols[idx % 3]:
-            # Create a card-like container
-            with st.container(border=True):
-                # st.page_link(get_page("experiment"), label=f"**{exp_set['name']}**") # Issue with https://github.com/streamlit/streamlit/issues/9195
-                if st.button(f"{exp_set['name']}"):
-                    st.session_state["experimentset"] = exp_set
-                    st.rerun()
-                st.markdown(exp_set.get("readme", "No description available"))
-                col1, col2 = st.columns(2)
-                with col1:
-                    st.caption(f'Experiment: {len(exp_set["experiments"])} ')
-                with col2:
-                    st.caption(f"Created the {when}")
+    st.title("Experiments")
+    
+    view_option = st.radio("Select View Option", ["View All Experiments", "View Experiment by ID"])
+    
+    if view_option == "View All Experiments":
+        display_all_experiments()
+    else:
+        exp_id = st.number_input("Enter Experiment ID", min_value=1, step=1)
+        if st.button("Show Results"):
+            display_experiment_results(exp_id)
 
 
 main()

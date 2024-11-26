@@ -28,11 +28,18 @@ ROUTES = [
         "description": "A list of available metrics",
         "icon": ":material/visibility:",
     },
-    {
+        {
         "id": "experiments",
         "path": "views/experiments.py",
-        "title": "Experiments",
-        "description": "Navigate the experiments collections",
+        "title": "Experiment",
+        "description": "Navigate the experiments",
+        "icon": ":material/experiment:",
+    },
+    {
+        "id": "experiments_set",
+        "path": "views/experiments_set.py",
+        "title": "Experiments Set",
+        "description": "Navigate the experiments collections groups",
         "icon": ":material/experiment:",
     },
 ]
