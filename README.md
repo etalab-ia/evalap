@@ -2,8 +2,8 @@
 
 ## Overview
 
-Albert General One is a high-level service designed to perform evaluations for Etalab. 
-This project provides an API and an interface to evaluate [LLM] models. 
+Albert "Evaluation General One" is a high-level service designed to perform evaluations for Etalab. 
+This project provides an API to evaluate [LLM] models and an interface to navigate datasets, models, metrics and experiments.
 
 ![Logo](images/eg1_overview.png)
 
