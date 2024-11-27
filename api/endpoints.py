@@ -158,7 +158,7 @@ def read_experiment(
 
 
 
-@router.get("/experiments_test", response_model=list[schemas.ExperimentWithResults])
+@router.get("/experiments", response_model=list[schemas.ExperimentWithResults])
 def read_all_experiments(db: Session = Depends(get_db)):
     experiments = crud.get_experiments(db)
     

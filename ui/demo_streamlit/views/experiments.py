@@ -4,7 +4,7 @@ import numpy as np
 from utils import fetch
 
 def fetch_all_experiments():
-    endpoint = "/experiments_test"
+    endpoint = "/experiments"
     return fetch("get", endpoint)
 
 def fetch_experiment_results(exp_id):

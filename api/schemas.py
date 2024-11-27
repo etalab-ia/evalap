@@ -42,7 +42,6 @@ MetricEnum = Enum(
     "MetricEnum",
     {
         **{name: name for name in metric_registry.get_metric_names()},
-        "judge_complexity": "judge_complexity"#TODO: drop when MR 20 merged
     },
     type=str
 )

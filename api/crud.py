@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import joinedload, Session
 
 import api.models as models
 import api.schemas as schemas
@@ -129,7 +129,6 @@ def create_experiment(db: Session, experiment: schemas.ExperimentCreate) -> mode
 def get_experiment(db: Session, experiment_id: int) -> models.Experiment | None:
     return db.query(models.Experiment).get(experiment_id)
 
-from sqlalchemy.orm import joinedload
 def get_experiments(db: Session, set_id: int | None = None) -> list[models.Experiment]:
     query = db.query(models.Experiment).filter_by(is_archived=False)
     if set_id:
