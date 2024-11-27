@@ -71,10 +71,12 @@ def read_metrics(db: Session = Depends(get_db)):
 def create_experiment(experiment: schemas.ExperimentCreate, db: Session = Depends(get_db)):
     try:
         db_exp = crud.create_experiment(db, experiment)
-        needs_output = any("output" in metric_registry.get_metric(m).require for m in experiment.metrics)
+        needs_output = any(
+            "output" in metric_registry.get_metric(m).require for m in experiment.metrics
+        )
         if needs_output and not db_exp.dataset.has_output:
             dispatch_tasks(db, db_exp, "answers")
-        else: #db_exp.dataset.has_output:
+        else:
             dispatch_tasks(db, db_exp, "observations")
 
         return db_exp

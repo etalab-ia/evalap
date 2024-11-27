@@ -7,7 +7,7 @@ from . import metric_registry
 
 _template = """
 Vous êtes un assistant administratif, expert dans l'analyse de questions et leurs complexités.
-Voilà la question à analyser : 
+Voilà la question à analyser :
 
 {{query}}
 
@@ -32,7 +32,7 @@ Score de complexité global : [Explication] [Note : X/10]
 Attention, si vous ne savez pas donner de note, mettre 0! ne jamais laisser la note vide
 Recommandation : [Suggérez brièvement la marche à suivre pour traiter cette demande]
 
-Enfin, vous nous direz quelle est la thématique principale associée à cette demande administrative parmis une liste de thème; 
+Enfin, vous nous direz quelle est la thématique principale associée à cette demande administrative parmis une liste de thème;
 Liste des thèmes : CAF / ANTS / CPAM / CARSAT - MSA / IMPOTS / ...
 
 si vous ne savez pas la classer, vous la mettrez dans la catégorie "non catégorisé"
@@ -68,19 +68,14 @@ def judge_complexity_metric(output, output_true, **kwargs):
     answer_text = result.choices[0].message.content
 
     def extract_score(line):
-        match = re.search(r'\[Note : (\d+(?:\.\d+)?)/\d+\]', line)
+        match = re.search(r"\[Note : (\d+(?:\.\d+)?)/\d+\]", line)
         return float(match.group(1)) if match else 0
 
-    scores = {
-        "demande": 0,
-        "administration": 0,
-        "procedure": 0,
-        "global": 0
-    }
+    scores = {"demande": 0, "administration": 0, "procedure": 0, "global": 0}
 
-    thematique = "non catégorisé" 
+    thematique = "non catégorisé"
 
-    for line in answer_text.split('\n'):
+    for line in answer_text.split("\n"):
         if "Critère Demande :" in line:
             scores["demande"] = extract_score(line)
         elif "Critère Administration :" in line:
@@ -89,13 +84,10 @@ def judge_complexity_metric(output, output_true, **kwargs):
             scores["procedure"] = extract_score(line)
         elif "Score de complexité global :" in line:
             scores["global"] = extract_score(line)
-        elif line.startswith("Thématique :"):  
-            thematique = line.split(":", 1)[1].strip()  
+        elif line.startswith("Thématique :"):
+            thematique = line.split(":", 1)[1].strip()
 
-    answer = {
-        "answer": answer_text,
-        "scores": scores,
-        "thematique": thematique
-    }
+    answer = {"answer": answer_text, "scores": scores, "thematique": thematique}
 
     return int(scores["global"]), json.dumps(answer)
+
