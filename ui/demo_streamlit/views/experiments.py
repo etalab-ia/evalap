@@ -44,7 +44,7 @@ def display_all_experiments():
     formatted_experiments = []
     
     for exp in experiments:
-        if exp["experiment_status"] == "finished":
+        if exp["experiment_status"] == "finished" and exp["experiment_set_id"] is None :
             formatted_exp = {
                 "id": exp["id"],
                 "name": exp["name"],
@@ -62,7 +62,10 @@ def display_all_experiments():
             formatted_experiments.append(formatted_exp)
     
     df = pd.DataFrame(formatted_experiments)
-    
+
+    metric_columns = [col for col in df.columns if col.endswith("_score")]
+    df = df[df[metric_columns].notna().any(axis=1)]
+
     st.dataframe(df)
     
     if not df.empty:
@@ -91,7 +94,9 @@ def display_experiment_results(exp_id):
         st.info("No results available for this experiment.")
 
 def main():
-    st.title("Experiments")
+    st.title("Experiments (not in a Set)")
+    st.info("Here, you can see the experiments that are not in evaluation sets. ")
+
     options_button = ["View All Experiments (finished)", "View Experiment by ID"]
     view_option = st.radio("Select View Option", options_button)
     
