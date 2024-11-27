@@ -4,7 +4,7 @@ import numpy as np
 from utils import fetch
 
 def fetch_all_experiments():
-    endpoint = "/experiments"
+    endpoint = "/experiments_test"
     return fetch("get", endpoint)
 
 def fetch_experiment_results(exp_id):
@@ -33,6 +33,7 @@ def process_experiment_results(experiment):
     
     return pd.DataFrame({metric_name: df["mean_std"].iloc[0] for metric_name, df in sorted(df_metrics.items())}, index=[experiment["name"]])
 
+
 def display_all_experiments():
     experiments = fetch_all_experiments()
     
@@ -40,9 +41,38 @@ def display_all_experiments():
         st.error("No experiments found.")
         return
     
-    df = pd.DataFrame(experiments)
+    formatted_experiments = []
+    
+    for exp in experiments:
+        if exp["experiment_status"] == "finished":
+            formatted_exp = {
+                "id": exp["id"],
+                "name": exp["name"],
+                "dataset": exp["dataset"]["name"],
+                "model": exp["model"]["name"] if exp["model"] else "N/A"
+            }
+            
+            for result in exp.get("results", []):
+                metric_name = result["metric_name"]
+                scores = [obs["score"] for obs in result["observation_table"] if obs["score"] is not None]
+                if scores:
+                    avg_score = sum(scores) / len(scores)
+                    formatted_exp[f"{metric_name}_score"] = f"{avg_score:.2f}"
+            
+            formatted_experiments.append(formatted_exp)
+    
+    df = pd.DataFrame(formatted_experiments)
     
     st.dataframe(df)
+    
+    if not df.empty:
+        selected_exp_id = st.selectbox("Select a finished experiment to view details:", df["id"].tolist())
+        
+        if st.button("Show Selected Experiment Results"):
+            display_experiment_results(selected_exp_id)
+    else:
+        st.info("No finished experiments found.")
+
 
 def display_experiment_results(exp_id):
     experiment = fetch_experiment_results(exp_id)
@@ -62,10 +92,10 @@ def display_experiment_results(exp_id):
 
 def main():
     st.title("Experiments")
+    options_button = ["View All Experiments (finished)", "View Experiment by ID"]
+    view_option = st.radio("Select View Option", options_button)
     
-    view_option = st.radio("Select View Option", ["View All Experiments", "View Experiment by ID"])
-    
-    if view_option == "View All Experiments":
+    if view_option == "View All Experiments (finished)":
         display_all_experiments()
     else:
         exp_id = st.number_input("Enter Experiment ID", min_value=1, step=1)

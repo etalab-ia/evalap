@@ -39,7 +39,12 @@ class EgBaseModel(BaseModel):
 #
 
 MetricEnum = Enum(
-    "MetricEnum", {name: name for name in metric_registry.get_metric_names()}, type=str
+    "MetricEnum",
+    {
+        **{name: name for name in metric_registry.get_metric_names()},
+        "judge_complexity": "judge_complexity"#TODO: drop when MR 20 merged
+    },
+    type=str
 )
 
 
@@ -151,7 +156,7 @@ class Observation(EgBaseModel):
     id: int
     created_at: datetime
     score: float | None
-    observation: str | None  # json
+    observation: str | dict | list | None  # json
     num_line: int
     error_msg: str | None
     execution_time: int | None

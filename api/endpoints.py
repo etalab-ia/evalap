@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import ValidationError
 import re
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -156,18 +157,25 @@ def read_experiment(
     return schemas.Experiment.from_orm(experiment)
 
 
-@router.get("/experiments", response_model=list[schemas.Experiment])
+
+@router.get("/experiments_test", response_model=list[schemas.ExperimentWithResults])
 def read_all_experiments(db: Session = Depends(get_db)):
-    return crud.get_experiments(db)
-
-# @router.get("/experiments", response_model=list[schemas.ExperimentWithResults])
-# def read_all_experiments(db: Session = Depends(get_db)):
-#     experiments = crud.get_experiments(db)
+    experiments = crud.get_experiments(db)
     
-#     if not experiments:
-#         raise HTTPException(status_code=404, detail="No experiments found")
+    if not experiments:
+        raise HTTPException(status_code=404, detail="No experiments found")
 
-#     return [schemas.ExperimentWithResults.from_orm(exp) for exp in experiments]
+    validated_experiments = []
+    for exp in experiments:
+        try:
+            validated_exp = schemas.ExperimentWithResults.from_orm(exp)
+            validated_experiments.append(validated_exp)
+        except ValidationError as e:
+            print(f"Validation error for experiment {exp.id}: {e}")
+
+    return validated_experiments
+
+
 
 #
 # Experiment Sets
