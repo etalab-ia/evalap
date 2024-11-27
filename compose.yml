@@ -3,6 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    image: eg1-app:dev
     ports:
       - "8000:8000"
       - "8501:8501" 
