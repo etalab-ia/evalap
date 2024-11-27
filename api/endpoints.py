@@ -7,7 +7,7 @@ import api.crud as crud
 import api.schemas as schemas
 from api.db import get_db
 from api.errors import CustomIntegrityError, SchemaError
-from api.metrics import Metric
+from api.metrics import Metric, metric_registry
 from api.runners import dispatch_tasks
 
 router = APIRouter()
@@ -71,12 +71,14 @@ def read_metrics(db: Session = Depends(get_db)):
 def create_experiment(experiment: schemas.ExperimentCreate, db: Session = Depends(get_db)):
     try:
         db_exp = crud.create_experiment(db, experiment)
-        if db_exp.dataset.has_output:
-            dispatch_tasks(db, db_exp, "observations")
-        else:
+        needs_output = any("output" in metric_registry.get_metric(m).require for m in experiment.metrics)
+        if needs_output and not db_exp.dataset.has_output:
             dispatch_tasks(db, db_exp, "answers")
+        else: #db_exp.dataset.has_output:
+            dispatch_tasks(db, db_exp, "observations")
 
         return db_exp
+
     except SchemaError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except IntegrityError as e:
