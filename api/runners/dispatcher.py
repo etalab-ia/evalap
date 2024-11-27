@@ -5,6 +5,7 @@ import pandas as pd
 import zmq
 
 import api.crud as crud
+from api.metrics import metric_registry
 
 
 class MessageType(str, Enum):
@@ -40,7 +41,10 @@ def dispatch_tasks(db, db_exp, message_type: MessageType):
         # Generate observation
         # --
         # iterate metrics and dataset
-        if db_exp.dataset.has_output:
+        needs_output = any(  # to see if better to add a new table attribute to store this...
+            "output" in metric_registry.get_metric(r.metric_name).require for r in db_exp.results
+        )
+        if db_exp.dataset.has_output or not needs_output:
             df = pd.read_json(StringIO(db_exp.dataset.df))
             crud.update_experiment(db, db_exp.id, dict(experiment_status="running_metrics"))
             for result in db_exp.results:
@@ -57,7 +61,7 @@ def dispatch_tasks(db, db_exp, message_type: MessageType):
                             "exp_id": db_exp.id,
                             "line_id": num_line,
                             "metric_name": result.metric_name,
-                            "output": row["output"],
+                            "output": row.get("output"),
                             "output_true": row.get("output_true"),
                         }
                     )
@@ -86,7 +90,7 @@ def dispatch_tasks(db, db_exp, message_type: MessageType):
 
         else:
             raise NotImplementedError(
-                "Answer is needed to generate observation for experiment: %s" % db_exp.id
+                "No Answer available to generate observations for this experiment: %s" % db_exp.id
             )
 
     else:
