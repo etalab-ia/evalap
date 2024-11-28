@@ -5,6 +5,22 @@ from utils import fetch
 from routes import get_page
 
 
+def display_adaptive_dataframe(df):
+    row_height = 35  
+    padding = 40 
+    num_rows = len(df)
+    height = min(num_rows * row_height + padding, 600)  
+
+    st.dataframe(
+        df,
+        use_container_width=True,
+        hide_index=True,
+        height=height,
+        column_config={
+            "Id": st.column_config.TextColumn(width="small"),
+        },
+    )
+
 def main():
     # Display selected experiment set overview
     if st.session_state.get("experimentset"):
@@ -30,16 +46,8 @@ def main():
         )
         df.sort_values(by='Id', ascending=True, inplace=True)
 
-        # Show the table
-        st.dataframe(
-            df,
-            use_container_width=True,
-            hide_index=True,
-            height=600,
-            column_config={
-                "Id": st.column_config.TextColumn(width="small"),
-            },
-        )
+        # Show the table, adaptative function number of row in dataframe
+        display_adaptive_dataframe(df)
 
         return
 
