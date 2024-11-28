@@ -13,3 +13,4 @@ services:
 
 volumes:
   postgres_db:
+    name: eg1_postgres_db

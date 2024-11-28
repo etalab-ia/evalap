@@ -41,7 +41,7 @@ def dispatch_tasks(db, db_exp, message_type: MessageType):
         # Generate observation
         # --
         # iterate metrics and dataset
-        needs_output = any( # to see if better to add a new table attribute to store this...
+        needs_output = any(  # to see if better to add a new table attribute to store this...
             "output" in metric_registry.get_metric(r.metric_name).require for r in db_exp.results
         )
         if db_exp.dataset.has_output or not needs_output:
