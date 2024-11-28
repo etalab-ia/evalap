@@ -39,11 +39,7 @@ class EgBaseModel(BaseModel):
 #
 
 MetricEnum = Enum(
-    "MetricEnum",
-    {
-        **{name: name for name in metric_registry.get_metric_names()},
-    },
-    type=str
+    "MetricEnum", {name: name for name in metric_registry.get_metric_names()}, type=str
 )
 
 
