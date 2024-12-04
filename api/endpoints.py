@@ -156,8 +156,6 @@ def read_experiment(
     return schemas.Experiment.from_orm(experiment)
 
 
-<<<<<<< Updated upstream
-=======
 @router.get("/experiments", response_model=list[schemas.ExperimentWithResults])
 def read_experiments(db: Session = Depends(get_db)):
     experiments = crud.get_experiments(db)
@@ -176,7 +174,6 @@ def get_experiment_details(experiment_id: int, db: Session = Depends(get_db)):
     return details
     
 
->>>>>>> Stashed changes
 #
 # Experiment Sets
 #
