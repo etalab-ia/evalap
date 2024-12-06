@@ -128,6 +128,7 @@ class ObservationTable(Base):
 class Answer(Base):
     __tablename__ = "answers"
     id = Column(Integer, primary_key=True)
+    created_at = Column(DateTime, server_default=func.now())
     answer = Column(Text)
     num_line = Column(Integer)
     error_msg = Column(String)
