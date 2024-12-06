@@ -138,7 +138,7 @@ class Model(ModelBase):
 
 class Answer(EgBaseModel):
     id: int
-    created_at: datetime
+    #created_at: datetime
     answer: str | None
     num_line: int
     error_msg: str | None
