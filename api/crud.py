@@ -129,11 +129,12 @@ def create_experiment(db: Session, experiment: schemas.ExperimentCreate) -> mode
 def get_experiment(db: Session, experiment_id: int) -> models.Experiment | None:
     return db.query(models.Experiment).get(experiment_id)
 
+
 def get_experiments(db: Session, set_id: int | None = None) -> list[models.Experiment]:
     query = db.query(models.Experiment).filter_by(is_archived=False)
     if set_id:
-        query = query.filter(models.Experiment.experiment_set_id == set_id)
-    return query.options(joinedload(models.Experiment.results)).all()
+        query = query.filter(models.Experiment.experiment_set_id == set_id).order_by(models.Experiment.created_at.desc())
+    return query.limit(100).options(joinedload(models.Experiment.results)).all()
 
 
 def update_experiment(
