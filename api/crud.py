@@ -229,45 +229,6 @@ def remove_experimentset(db: Session, experimentset_id: int) -> bool:
 
 
 
-def get_experiment_details(db: Session, experiment_id: int) -> dict:
-    experiment = db.query(models.Experiment).options(
-        joinedload(models.Experiment.dataset),
-        joinedload(models.Experiment.results),
-        joinedload(models.Experiment.answers)
-    ).filter(models.Experiment.id == experiment_id).first()
-
-    if not experiment:
-        return None
-
-    df = pd.read_json(StringIO(experiment.dataset.df))
-
-    data = []
-    for index, row in df.iterrows():
-        row_data = {
-            "num_line": index,
-            "query": row.get("query", None),
-            "output_true": row.get("output_true", None),
-        }
-        
-        answer = next((a for a in experiment.answers if a.num_line == index), None)
-        row_data["reponse"] = answer.answer if answer else None
-
-        for result in experiment.results:
-            observation = next((obs for obs in result.observation_table if obs.num_line == index), None)
-            if observation:
-                row_data[f"{result.metric_name}"] = observation.score
-
-        data.append(row_data)
-
-    final_df = pd.DataFrame(data)
-
-    return {
-        "experiment_name": experiment.name,
-        "dataset_name": experiment.dataset.name,
-        "data": final_df.to_dict(orient="records")
-    }
-
-
 #
 # Runner Crud
 #

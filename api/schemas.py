@@ -311,13 +311,6 @@ class ExperimentPatch(ExperimentUpdate):
     rerun_answers: bool = False
 
 
-class ExperimentDetails(BaseModel):
-    experiment_name: str
-    dataset_name: str
-    data: list[dict]
-
-    model_config = ConfigDict(from_attributes=True)
-
 
 #
 # Experiment Set
