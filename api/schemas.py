@@ -101,11 +101,11 @@ class Dataset(DatasetBase):
     has_output: bool
     has_output_true: bool
     size: int
-    df: str | None = None
+    df: str
 
 
 class DatasetFull(Dataset):
-    df: str | None = None # from_json
+    df: str # from_json
 
 
 #
