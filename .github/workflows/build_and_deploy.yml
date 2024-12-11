@@ -1,10 +1,9 @@
-name: Build and deploy when pushing on staging or main
+name: Build and Deploy
 
 on:
   push:
     branches:
       - main
-      - ops/deploy
 
 env:
   IMAGE_NAME: ghcr.io/${{ github.repository }}/eg1
@@ -12,7 +11,6 @@ env:
 
 jobs:
   build-and-push:
-    if: github.ref_name == 'ops/deploy'
     name: Build and push from ${{ github.ref_name }}/${{ github.sha }}
     outputs:
       commit_title: ${{ steps.get_head_commit_title.outputs.title }}
@@ -49,11 +47,10 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  deploy-main:
+  deploy:
     name: Deploy from ${{ github.ref_name }}/${{ github.sha }}
     runs-on: ubuntu-latest
     needs: build-and-push
-    if: github.ref_name == 'main'
     steps:
       - name: Trigger dev deployment
         run: |
@@ -72,4 +69,3 @@ jobs:
             echo $RESPONSE
             exit 1
           fi
-
