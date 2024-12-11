@@ -156,6 +156,16 @@ def read_experiment(
     return schemas.Experiment.from_orm(experiment)
 
 
+@router.get("/experiments", response_model=list[schemas.ExperimentWithResults])
+def read_experiments(set_id: int | None = None, limit: int = 100, db: Session = Depends(get_db)):
+    experiments = crud.get_experiments(db, set_id=set_id, limit=limit)
+
+    if not experiments:
+        raise HTTPException(status_code=404, detail="No experiments found")
+
+    return experiments
+
+
 #
 # Experiment Sets
 #
