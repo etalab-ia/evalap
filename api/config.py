@@ -35,8 +35,6 @@ except importlib.metadata.PackageNotFoundError:
 ENV = os.getenv("ENV", "dev")
 assert ENV in ["unittest", "dev", "prod"], "wrong ENV value"
 BACKEND_CORS_ORIGINS = ["*"]
-ALBERT_API_URL = os.getenv("ALBERT_API_URL")
-ALBERT_API_KEY = os.getenv("ALBERT_API_KEY")
 API_PREFIX = ""
 
 # Runners
