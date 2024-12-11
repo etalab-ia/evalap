@@ -101,10 +101,11 @@ class Dataset(DatasetBase):
     has_output: bool
     has_output_true: bool
     size: int
+    df: str | None = None
 
 
 class DatasetFull(Dataset):
-    df: str  # from_json
+    df: str | None = None # from_json
 
 
 #
@@ -284,8 +285,11 @@ class ExperimentWithAnswers(Experiment):
 
 
 class ExperimentFull(Experiment):
-    answers: list[Answer] | None
-    results: list[Result] | None
+    answers: list[Answer] | None = None
+    results: list[Result] | None = None
+
+class ExperimentFullWithDataset(ExperimentFull):
+    dataset: DatasetFull | None = None
 
 
 # For the special `metrics` input
