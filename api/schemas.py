@@ -152,7 +152,7 @@ class Observation(EgBaseModel):
     id: int
     created_at: datetime
     score: float | None
-    observation: str | None  # json
+    observation: str | dict | list | None  # json
     num_line: int
     error_msg: str | None
     execution_time: int | None

@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import joinedload, Session
 
 import api.models as models
 import api.schemas as schemas
@@ -130,11 +130,12 @@ def get_experiment(db: Session, experiment_id: int) -> models.Experiment | None:
     return db.query(models.Experiment).get(experiment_id)
 
 
-def get_experiments(db: Session, set_id: int | None = None) -> list[models.Experiment]:
+def get_experiments(db: Session, set_id: int | None = None, limit:int=100) -> list[models.Experiment]:
+    limit = min(limit, 100)
     query = db.query(models.Experiment).filter_by(is_archived=False)
     if set_id:
-        query = query.filter(models.Experiment.experiment_set_id == set_id)
-    return query.all()
+        query = query.filter(models.Experiment.experiment_set_id == set_id).order_by(models.Experiment.created_at.desc())
+    return query.limit(limit).options(joinedload(models.Experiment.results)).all()
 
 
 def update_experiment(

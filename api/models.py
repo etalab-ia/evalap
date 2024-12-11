@@ -128,12 +128,14 @@ class ObservationTable(Base):
 class Answer(Base):
     __tablename__ = "answers"
     id = Column(Integer, primary_key=True)
+    created_at = Column(DateTime, server_default=func.now())
     answer = Column(Text)
     num_line = Column(Integer)
     error_msg = Column(String)
     execution_time = Column(Integer)
     nb_tokens_prompt = Column(Integer)
     nb_tokens_completion = Column(Integer)
+    retrieval_context = Column(JSON) # list[str]
 
     # One
     experiment_id = Column(Integer, ForeignKey("experiments.id"))
