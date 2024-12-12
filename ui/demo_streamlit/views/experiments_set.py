@@ -54,7 +54,7 @@ def display_experiment_set_overview(experimentset):
         column_config={"Id": st.column_config.TextColumn(width="small")},
     )
     if df['Num success'].sum() != df['Num try'].sum() and (df['Status'] == 'finished').all():
-        st.warning("Attention : toutes les expériences sont en échecs.")
+        st.warning("Warning : all experiments are failed.")
 
     return df
 
@@ -98,11 +98,23 @@ def main():
         
         with tab1:
             overview_df = display_experiment_set_overview(experimentset)
-        with tab2:
-            display_in_progress()
-        with tab3:
-            experiment_ids = overview_df['Id'].tolist()
-            display_experiment_details(experiment_ids)
+
+        # if all experiments are failed
+        if overview_df['Num success'].sum() != overview_df['Num try'].sum() and (overview_df['Status'] == 'finished').all():
+            with tab2:
+                st.warning("Results cannot be displayed as all experiments have failed.")
+            with tab3:
+                st.warning("Details cannot be displayed as all experiments have failed.")
+        
+        else:
+            with tab2:
+                display_in_progress()
+            with tab3:
+                experiment_ids = overview_df['Id'].tolist()
+                display_experiment_details(experiment_ids)
+
+
+
     else:
         st.title("Experiments (Set)")
         experiment_sets = fetch("get", "/experiment_sets")
