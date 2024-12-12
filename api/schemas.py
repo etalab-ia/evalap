@@ -63,7 +63,7 @@ class MetricStatus(str, Enum):
 
 class DatasetBase(EgBaseModel):
     name: str
-    readme: str | None = None
+    readme: str 
     model_config = ConfigDict(from_attributes=True)
 
 
