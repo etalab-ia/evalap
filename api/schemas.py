@@ -63,7 +63,7 @@ class MetricStatus(str, Enum):
 
 class DatasetBase(EgBaseModel):
     name: str
-
+    readme: str | None = None
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -91,6 +91,7 @@ class DatasetCreate(DatasetBase):
             "has_output": has_output,
             "has_output_true": has_output_true,
             "size": len(df),
+            "readme": self.readme,
             **obj,
         }
 
@@ -101,6 +102,7 @@ class Dataset(DatasetBase):
     has_output: bool
     has_output_true: bool
     size: int
+    
 
 
 class DatasetFull(DatasetBase):
