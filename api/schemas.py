@@ -91,7 +91,6 @@ class DatasetCreate(DatasetBase):
             "has_output": has_output,
             "has_output_true": has_output_true,
             "size": len(df),
-            "readme": self.readme,
             **obj,
         }
 
