@@ -326,7 +326,7 @@ class GridCV(BaseModel):
 
 class ExperimentSetBase(EgBaseModel):
     name: str
-    readme: str | None = None
+    readme: str
 
     model_config = ConfigDict(from_attributes=True)
 
