@@ -39,6 +39,10 @@ API_PREFIX = ""
 
 # Runners
 MAX_CONCURRENT_TASKS = 4  # 8 ok, 16 hard !
+DEFAULT_JUDGE_MODEL = "gpt-4o-mini"
+
+# Soon obsolete
+MFS_API_KEY_V2 = os.getenv("MFS_API_KEY_V2")
 
 #######################################################################
 ### Environment specific

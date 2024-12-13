@@ -198,14 +198,15 @@ def create_experimentset(experimentset: schemas.ExperimentSetCreate, db: Session
 def patch_experimentset(
     id: int, experimentset: schemas.ExperimentSetPatch, db: Session = Depends(get_db)
 ):
-    expset = experimentset.to_table_init(db)
     db_experimentset = crud.update_experimentset(db, id, experimentset)
     if db_experimentset is None:
         raise HTTPException(status_code=404, detail="Experiment not found")
 
+    expset = experimentset.to_table_init(db)
     for experiment in expset.get("experiments") or []:
         experiment["experiment_set_id"] = id
         # Respect the unique constraint for auto-naming experiment !
+        # -> add an increment suffix to the experiment name
         if re.search(r"__\d+$", experiment["name"]):
             parts = experiment["name"].split("__")
             parts[-1] = str(int(parts[-1]) + len(db_experimentset.experiments))

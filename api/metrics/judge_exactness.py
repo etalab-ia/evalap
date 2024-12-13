@@ -44,6 +44,7 @@ _config = {
     require=["output", "output_true", "query"],
 )
 def judge_exactness_metric(output, output_true, **kwargs):
+    config = _config | {k: v for k, v in kwargs.items() if k in _config}
     messages = [
         {
             "role": "user",
@@ -52,7 +53,7 @@ def judge_exactness_metric(output, output_true, **kwargs):
     ]
     aiclient = LlmClient()
     result = aiclient.generate(
-        model=_config["model"], messages=messages, **_config["sampling_params"]
+        model=config["model"], messages=messages, **config["sampling_params"]
     )
     answer = result.choices[0].message.content
     score = answer.strip(" \n\"'.%")
