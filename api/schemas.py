@@ -3,6 +3,7 @@ from enum import Enum
 from io import StringIO
 from typing import Any, Literal, Optional
 
+import numpy as np
 import pandas as pd
 from pydantic import BaseModel, ConfigDict, create_model
 from sqlalchemy.orm import Session
@@ -18,6 +19,15 @@ from api.utils import build_param_grid
 # Custom BaseModel
 #
 class EgBaseModel(BaseModel):
+    model_config = ConfigDict(
+        from_attributes=True,
+        protected_namespaces=(),
+        json_encoders={
+            # np.nan is not serializable !
+            float: lambda v: None if np.isnan(v) else v,
+        },
+    )
+
     def recurse_table_init(self, db: Session) -> dict:
         obj = self.model_dump()
         for k, v in obj.items():
@@ -64,8 +74,6 @@ class MetricStatus(str, Enum):
 
 class DatasetBase(EgBaseModel):
     name: str
-
-    model_config = ConfigDict(from_attributes=True)
 
 
 class DatasetCreate(DatasetBase):
@@ -121,8 +129,6 @@ class ModelBase(EgBaseModel):
     sampling_params: dict | None = None
     extra_params: dict | None = None
 
-    model_config = ConfigDict(from_attributes=True)
-
 
 class ModelCreate(ModelBase):
     pass
@@ -145,8 +151,6 @@ class Answer(EgBaseModel):
     error_msg: str | None
     execution_time: int | None
 
-    model_config = ConfigDict(from_attributes=True)
-
 
 class Observation(EgBaseModel):
     id: int
@@ -157,13 +161,9 @@ class Observation(EgBaseModel):
     error_msg: str | None
     execution_time: int | None
 
-    model_config = ConfigDict(from_attributes=True)
-
 
 class ResultBase(EgBaseModel):
     metric_name: MetricEnum
-
-    model_config = ConfigDict(from_attributes=True)
 
 
 class ResultCreate(ResultBase):
@@ -203,8 +203,6 @@ class ExperimentBase(EgBaseModel):
     readme: str | None = None
     experiment_set_id: int | None = None
     judge_model: Literal[*LlmApiModels.openai] | None = None
-
-    model_config = ConfigDict(from_attributes=True, protected_namespaces=())
 
 
 class ExperimentCreate(ExperimentBase):
@@ -324,8 +322,6 @@ class ExperimentSetBase(EgBaseModel):
     name: str
     readme: str | None = None
 
-    model_config = ConfigDict(from_attributes=True)
-
 
 class ExperimentSetCreate(ExperimentSetBase):
     experiments: list[ExperimentCreate] | None = None
@@ -362,6 +358,7 @@ class ExperimentSet(ExperimentSetBase):
 # For the special `metrics` input
 class ExperimentSetExtra(ExperimentSet, ExperimentSetCreate):
     pass
+
 
 ExperimentSetUpdate = create_model(
     "ExperimentSetUpdate",
