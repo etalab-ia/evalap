@@ -22,6 +22,7 @@ dependencies = [
     "pydantic==2.9.2",
     "inflection==0.5.1",
     "deepeval==1.5.0",
+    "ragas==0.2.7",
     # Front
     "streamlit==1.40.1"
 ]

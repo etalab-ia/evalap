@@ -55,6 +55,7 @@ _config = {
     require=["query"],
 )
 def judge_complexity_metric(output, output_true, **kwargs):
+    config = _config | {k: v for k, v in kwargs.items() if k in _config}
     messages = [
         {
             "role": "user",
@@ -63,7 +64,7 @@ def judge_complexity_metric(output, output_true, **kwargs):
     ]
     aiclient = LlmClient()
     result = aiclient.generate(
-        model=_config["model"], messages=messages, **_config["sampling_params"]
+        model=config["model"], messages=messages, **config["sampling_params"]
     )
     answer_text = result.choices[0].message.content
 
