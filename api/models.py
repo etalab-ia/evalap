@@ -117,7 +117,7 @@ class ObservationTable(Base):
     score = Column(Float)
     observation = Column(JSON)
     num_line = Column(Integer)
-    error_msg = Column(String)
+    error_msg = Column(Text)
     execution_time = Column(Integer)
 
     # One
@@ -131,7 +131,7 @@ class Answer(Base):
     created_at = Column(DateTime, server_default=func.now())
     answer = Column(Text)
     num_line = Column(Integer)
-    error_msg = Column(String)
+    error_msg = Column(Text)
     execution_time = Column(Integer)
     nb_tokens_prompt = Column(Integer)
     nb_tokens_completion = Column(Integer)
@@ -153,6 +153,7 @@ class Experiment(Base):
     experiment_status = Column(String)
     num_try = Column(Integer, default=0)
     num_success = Column(Integer, default=0)
+    judge_model = Column(String)
 
     # One
     dataset_id = Column(Integer, ForeignKey("datasets.id"))
