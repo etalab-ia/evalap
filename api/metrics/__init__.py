@@ -67,9 +67,9 @@ class MetricRegistry:
 
         def wrapped_metric(output, output_true=None, **metric_params):
             # Metric computation
-            # @TODO: pass extra metric param ar class intialization!
+            # @TODO: pass extra metric param at class intialization!
             # @TODO: used named/dict metric_input instead of *args ?
-            metric = metric_class()
+            metric = metric_class(model=metric_params.get("model"))
             test_case = LLMTestCase(
                 **{
                     reverse_require_map[k]: v
@@ -79,7 +79,11 @@ class MetricRegistry:
                     if k in reverse_require_map
                 }
             )
-            metric.measure(test_case, model="gpt-4o", _show_indicator=False)
+            try:
+                metric.measure(test_case, _show_indicator=False)
+            except TypeError as e:  # External metric, like RAGAS does not have _show_indicator attr
+                metric.measure(test_case)
+
             if hasattr(metric, "reason"):
                 return metric.score, metric.reason
             return metric.score

@@ -1,13 +1,14 @@
 from datetime import datetime
 from enum import Enum
 from io import StringIO
-from typing import Any, Optional
+from typing import Any, Literal, Optional
 
 import pandas as pd
 from pydantic import BaseModel, ConfigDict, create_model
 from sqlalchemy.orm import Session
 
 import api.models as models
+from api.clients.llm import LlmApiModels
 from api.errors import SchemaError
 from api.metrics import metric_registry
 from api.utils import build_param_grid
@@ -201,6 +202,7 @@ class ExperimentBase(EgBaseModel):
     name: str
     readme: str | None = None
     experiment_set_id: int | None = None
+    judge_model: Literal[*LlmApiModels.openai] | None = None
 
     model_config = ConfigDict(from_attributes=True, protected_namespaces=())
 
@@ -357,13 +359,17 @@ class ExperimentSet(ExperimentSetBase):
     experiments: list[Experiment] | None
 
 
+# For the special `metrics` input
+class ExperimentSetExtra(ExperimentSet, ExperimentSetCreate):
+    pass
+
 ExperimentSetUpdate = create_model(
     "ExperimentSetUpdate",
     **{
         field_name: (Optional[field.annotation], None)
         for field_name, field in ExperimentSet.__fields__.items()
     },
-    __base__=ExperimentSet,
+    __base__=ExperimentSetExtra,
 )
 
 

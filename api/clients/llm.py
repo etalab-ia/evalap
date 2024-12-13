@@ -7,7 +7,10 @@ import requests
 
 from api.utils import log_and_raise_for_status, retry
 
-from .schemas.openai_rag import RagChatCompletionResponse
+from .schemas.openai_rag import RagChatCompletionResponse, Search, Chunk
+
+# @TODO: Will be obsolete when MFS will use albert-api to do RAG
+from api.config import MFS_API_KEY_V2
 
 
 @dataclass
@@ -32,9 +35,9 @@ LlmApiUrl = LlmApiUrl()  # headers_keys does not exist otherwise...
 
 @dataclass
 class LlmApiModels:
-    openai: set[str] = ("gpt-4o", "o1", "text-embedding-ada-002", "text-embedding-3-large", "text-embedding-3-small")  # fmt: off
+    openai: set[str] = ("o1", "gpt-4o", "gpt-4o-mini", "text-embedding-ada-002", "text-embedding-3-small", "text-embedding-3-large" )  # fmt: off
     anthropic: set[str] = ("claude",)
-    mistral: set[str] = ("mistral-embed",)
+    mistral: set[str] = ("mistral-large-latest", "pixtral-large-latest", "mistral-small-latest", "ministral-8b-latest", "ministral-3b-latest", "mistral-embed")  # fmt: off
 
 
 def get_api_url(model: str) -> (str | None, dict):
@@ -108,7 +111,35 @@ class LlmClient:
             return self._get_streaming_response(response)
 
         r = response.json()
-        return RagChatCompletionResponse(**r)
+        # @TODO catch base URL to switch-case the context decoding
+        chat = RagChatCompletionResponse(**r)
+        # MFS decoding
+        if hasattr(chat, "rag_context"):
+            refs = sum([x.references for x in chat.rag_context or []], [])
+            chunks = []
+            url, headers = self.get_url_and_headers(model)
+            headers = {"Authorization": f"Bearer {MFS_API_KEY_V2}"}
+
+            # From pyalbert
+            def doc_to_chunk(doc: dict) -> str:
+                context = ""
+                if "context" in doc:
+                    context = "  (" " > ".join(doc["context"]) + ")"
+
+                text = "\n".join([doc["title"] + context, doc["introduction"], doc["text"]])
+                return text
+
+            for chunkid in refs:
+                response = requests.get(
+                    url.removesuffix("/v1") + f"/v2/get_chunk/{chunkid}", headers=headers
+                )
+                log_and_raise_for_status(response, "MFS fetch chunk")
+                chunk = response.json()
+                chunks.append(doc_to_chunk(chunk))
+
+            chat.search_results = [Search(chunk=Chunk(content=chunk), score=1) for chunk in chunks]
+
+        return chat
 
     @retry(tries=3, delay=5)
     def create_embeddings(

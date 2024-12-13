@@ -6,10 +6,10 @@ from routes import get_page
 
 
 def display_adaptive_dataframe(df):
-    row_height = 35  
-    padding = 40 
+    row_height = 35
+    padding = 40
     num_rows = len(df)
-    height = min(num_rows * row_height + padding, 600)  
+    height = min(num_rows * row_height + padding, 600)
 
     st.dataframe(
         df,
@@ -72,10 +72,12 @@ def main():
                     st.session_state["experimentset"] = exp_set
                     st.rerun()
                 st.markdown(exp_set.get("readme", "No description available"))
-                col1, col2 = st.columns(2)
+                col1, col2, col3 = st.columns([1/6, 2/6, 3/6])
                 with col1:
-                    st.caption(f'Experiment: {len(exp_set["experiments"])} ')
+                    st.caption(f'id: {exp_set["id"]} ')
                 with col2:
+                    st.caption(f'Experiments: {len(exp_set["experiments"])} ')
+                with col3:
                     st.caption(f"Created the {when}")
 
 
