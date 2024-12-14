@@ -109,7 +109,7 @@ class Result(Base):
     experiment_id = Column(Integer, ForeignKey("experiments.id"))
     experiment = relationship("Experiment", back_populates="results")
     # Many
-    observation_table = relationship("ObservationTable", back_populates="result")
+    observation_table = relationship("ObservationTable", back_populates="result", cascade="all, delete-orphan")
 
 
 class ObservationTable(Base):
@@ -119,7 +119,7 @@ class ObservationTable(Base):
     score = Column(Float)
     observation = Column(JSON)
     num_line = Column(Integer)
-    error_msg = Column(String)
+    error_msg = Column(Text)
     execution_time = Column(Integer)
 
     # One
@@ -133,7 +133,7 @@ class Answer(Base):
     created_at = Column(DateTime, server_default=func.now())
     answer = Column(Text)
     num_line = Column(Integer)
-    error_msg = Column(String)
+    error_msg = Column(Text)
     execution_time = Column(Integer)
     nb_tokens_prompt = Column(Integer)
     nb_tokens_completion = Column(Integer)
@@ -155,12 +155,13 @@ class Experiment(Base):
     experiment_status = Column(String)
     num_try = Column(Integer, default=0)
     num_success = Column(Integer, default=0)
+    judge_model = Column(String)
 
     # One
     dataset_id = Column(Integer, ForeignKey("datasets.id"))
     dataset = relationship("Dataset")
     model_id = Column(Integer, ForeignKey("models.id"))
-    model = relationship("Model")
+    model = relationship("Model", cascade="all, delete-orphan", single_parent=True)
     experiment_set_id = Column(Integer, ForeignKey("experiment_sets.id"))
     experiment_set = relationship("ExperimentSet", back_populates="experiments")
     # Many

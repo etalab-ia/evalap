@@ -13,7 +13,7 @@ dotenv.load_dotenv()
 ### App metadata
 #######################################################################
 
-APP_NAME = "eg1" # redundant wuth pyproject.name
+APP_NAME = "eg1"  # redundant wuth pyproject.name
 APP_DESCRIPTION = "Albert Evaluations API"
 CONTACT = {
     "name": "Etalab - Datalab",
@@ -39,6 +39,16 @@ API_PREFIX = ""
 
 # Runners
 MAX_CONCURRENT_TASKS = 4  # 8 ok, 16 hard !
+DEFAULT_JUDGE_MODEL = "gpt-4o-mini"
+
+# Soon obsolete
+MFS_API_KEY_V2 = os.getenv("MFS_API_KEY_V2")
+
+#######################################################################
+### Auth
+#######################################################################
+ADMIN_TOKENS = [os.getenv("ADMIN_TOKEN")] if os.getenv("ADMIN_TOKEN") else []
+
 
 #######################################################################
 ### Environment specific
@@ -51,7 +61,9 @@ if ENV == "unittest":
 elif ENV == "dev":
     API_BASE_URL = "http://localhost:8000" + API_PREFIX
     DB_NAME = "eg1_dev"
-    DATABASE_URL = os.getenv("POSTGRES_URL", "postgresql+psycopg2://postgres:changeme@localhost:5432")
+    DATABASE_URL = os.getenv(
+        "POSTGRES_URL", "postgresql+psycopg2://postgres:changeme@localhost:5432"
+    )
     DATABASE_URI = DATABASE_URL.rstrip("/") + "/" + DB_NAME
 else:
     API_BASE_URL = "http://localhost:8000" + API_PREFIX

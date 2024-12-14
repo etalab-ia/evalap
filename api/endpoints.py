@@ -9,6 +9,7 @@ from api.db import get_db
 from api.errors import CustomIntegrityError, SchemaError
 from api.metrics import Metric, metric_registry
 from api.runners import dispatch_tasks
+from api.security import admin_only
 
 router = APIRouter()
 
@@ -128,11 +129,11 @@ def patch_experiment(
     return experiment
 
 
-@router.delete("/experiment/{id}", status_code=204)
+@router.delete("/experiment/{id}")
 def delete_experiment(id: int, db: Session = Depends(get_db)):
     if not crud.remove_experiment(db, id):
         raise HTTPException(status_code=404, detail="Experiment not found")
-    return
+    return "ok"
 
 
 @router.get(
@@ -204,14 +205,15 @@ def create_experimentset(experimentset: schemas.ExperimentSetCreate, db: Session
 def patch_experimentset(
     id: int, experimentset: schemas.ExperimentSetPatch, db: Session = Depends(get_db)
 ):
-    expset = experimentset.to_table_init(db)
     db_experimentset = crud.update_experimentset(db, id, experimentset)
     if db_experimentset is None:
         raise HTTPException(status_code=404, detail="Experiment not found")
 
+    expset = experimentset.to_table_init(db)
     for experiment in expset.get("experiments") or []:
         experiment["experiment_set_id"] = id
         # Respect the unique constraint for auto-naming experiment !
+        # -> add an increment suffix to the experiment name
         if re.search(r"__\d+$", experiment["name"]):
             parts = experiment["name"].split("__")
             parts[-1] = str(int(parts[-1]) + len(db_experimentset.experiments))
@@ -244,8 +246,8 @@ def read_experimentset(id: int, db: Session = Depends(get_db)):
     return experimentset
 
 
-@router.delete("/experiment_set/{id}", status_code=204)
-def delete_experimentset(id: int, db: Session = Depends(get_db)):
+@router.delete("/experiment_set/{id}")
+def delete_experimentset(id: int, db: Session = Depends(get_db), admin_check=Depends(admin_only)):
     if not crud.remove_experimentset(db, id):
         raise HTTPException(status_code=404, detail="ExperimentSet not found")
-    return
+    return "ok"

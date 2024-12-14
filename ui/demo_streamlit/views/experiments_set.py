@@ -41,16 +41,16 @@ def display_experiment_set_overview(experimentset):
     ])
     df.sort_values(by='Id', ascending=True, inplace=True)
 
-    row_height = 35  
-    header_height = 35  
-    border_padding = 5  
+    row_height = 35
+    header_height = 35
+    border_padding = 5
     dynamic_height = len(df) * row_height + header_height + border_padding
 
     st.dataframe(
         df,
         use_container_width=True,
         hide_index=True,
-        height=dynamic_height,  
+        height=dynamic_height,
         column_config={"Id": st.column_config.TextColumn(width="small")},
     )
     if df['Num success'].sum() != df['Num try'].sum() and (df['Status'] == 'finished').all():
@@ -71,9 +71,14 @@ def display_experiment_sets(experiment_sets):
                     st.session_state["experimentset"] = exp_set
                     st.rerun()
                 st.markdown(exp_set.get("readme", "No description available"))
-                col1, col2 = st.columns(2)
-                col1.caption(f'Experiment: {len(exp_set["experiments"])} ')
-                col2.caption(f"Created the {when}")
+
+                col1, col2, col3 = st.columns([1/6, 2/6, 3/6])
+                with col1:
+                    st.caption(f'id: {exp_set["id"]} ')
+                with col2:
+                    st.caption(f'Experiments: {len(exp_set["experiments"])} ')
+                with col3:
+                    st.caption(f"Created the {when}")
 
 def display_experiment_details(experiment_ids):
     selected_exp_id = st.selectbox("Select Experiment ID", experiment_ids)
@@ -93,9 +98,9 @@ def main():
         if st.button(":arrow_left: Go back", key="go_back"):
             st.session_state["experimentset"] = None
             st.rerun()
-        
+
         tab1, tab2, tab3 = st.tabs(["Set Overview", "Results", "Detail by experiment id"])
-        
+
         with tab1:
             overview_df = display_experiment_set_overview(experimentset)
 
@@ -105,14 +110,13 @@ def main():
                 st.warning("Results cannot be displayed as all experiments have failed.")
             with tab3:
                 st.warning("Details cannot be displayed as all experiments have failed.")
-        
+
         else:
             with tab2:
                 display_in_progress()
             with tab3:
                 experiment_ids = overview_df['Id'].tolist()
                 display_experiment_details(experiment_ids)
-
 
 
     else:

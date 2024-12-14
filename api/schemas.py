@@ -1,13 +1,15 @@
 from datetime import datetime
 from enum import Enum
 from io import StringIO
-from typing import Any, Optional
+from typing import Any, Literal, Optional
 
+import numpy as np
 import pandas as pd
 from pydantic import BaseModel, ConfigDict, create_model
 from sqlalchemy.orm import Session
 
 import api.models as models
+from api.clients.llm import LlmApiModels
 from api.errors import SchemaError
 from api.metrics import metric_registry
 from api.utils import build_param_grid
@@ -17,6 +19,15 @@ from api.utils import build_param_grid
 # Custom BaseModel
 #
 class EgBaseModel(BaseModel):
+    model_config = ConfigDict(
+        from_attributes=True,
+        protected_namespaces=(),
+        json_encoders={
+            # np.nan is not serializable !
+            float: lambda v: None if np.isnan(v) else v,
+        },
+    )
+
     def recurse_table_init(self, db: Session) -> dict:
         obj = self.model_dump()
         for k, v in obj.items():
@@ -63,8 +74,7 @@ class MetricStatus(str, Enum):
 
 class DatasetBase(EgBaseModel):
     name: str
-    readme: str 
-    model_config = ConfigDict(from_attributes=True)
+    readme: str
 
 
 class DatasetCreate(DatasetBase):
@@ -101,7 +111,7 @@ class Dataset(DatasetBase):
     has_output: bool
     has_output_true: bool
     size: int
-    
+
 
 
 class DatasetFull(DatasetBase):
@@ -120,8 +130,6 @@ class ModelBase(EgBaseModel):
     prompt_system: str | None = None
     sampling_params: dict | None = None
     extra_params: dict | None = None
-
-    model_config = ConfigDict(from_attributes=True)
 
 
 class ModelCreate(ModelBase):
@@ -145,8 +153,6 @@ class Answer(EgBaseModel):
     error_msg: str | None
     execution_time: int | None
 
-    model_config = ConfigDict(from_attributes=True)
-
 
 class Observation(EgBaseModel):
     id: int
@@ -157,13 +163,9 @@ class Observation(EgBaseModel):
     error_msg: str | None
     execution_time: int | None
 
-    model_config = ConfigDict(from_attributes=True)
-
 
 class ResultBase(EgBaseModel):
     metric_name: MetricEnum
-
-    model_config = ConfigDict(from_attributes=True)
 
 
 class ResultCreate(ResultBase):
@@ -202,8 +204,7 @@ class ExperimentBase(EgBaseModel):
     name: str
     readme: str | None = None
     experiment_set_id: int | None = None
-
-    model_config = ConfigDict(from_attributes=True, protected_namespaces=())
+    judge_model: Literal[*LlmApiModels.openai] | None = None
 
 
 class ExperimentCreate(ExperimentBase):
@@ -327,8 +328,6 @@ class ExperimentSetBase(EgBaseModel):
     name: str
     readme: str
 
-    model_config = ConfigDict(from_attributes=True)
-
 
 class ExperimentSetCreate(ExperimentSetBase):
     experiments: list[ExperimentCreate] | None = None
@@ -362,13 +361,18 @@ class ExperimentSet(ExperimentSetBase):
     experiments: list[Experiment] | None
 
 
+# For the special `metrics` input
+class ExperimentSetExtra(ExperimentSet, ExperimentSetCreate):
+    pass
+
+
 ExperimentSetUpdate = create_model(
     "ExperimentSetUpdate",
     **{
         field_name: (Optional[field.annotation], None)
         for field_name, field in ExperimentSet.__fields__.items()
     },
-    __base__=ExperimentSet,
+    __base__=ExperimentSetExtra,
 )
 
 
