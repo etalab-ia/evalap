@@ -107,7 +107,7 @@ class Result(Base):
     experiment_id = Column(Integer, ForeignKey("experiments.id"))
     experiment = relationship("Experiment", back_populates="results")
     # Many
-    observation_table = relationship("ObservationTable", back_populates="result")
+    observation_table = relationship("ObservationTable", back_populates="result", cascade="all, delete-orphan")
 
 
 class ObservationTable(Base):
@@ -159,7 +159,7 @@ class Experiment(Base):
     dataset_id = Column(Integer, ForeignKey("datasets.id"))
     dataset = relationship("Dataset")
     model_id = Column(Integer, ForeignKey("models.id"))
-    model = relationship("Model")
+    model = relationship("Model", cascade="all, delete-orphan", single_parent=True)
     experiment_set_id = Column(Integer, ForeignKey("experiment_sets.id"))
     experiment_set = relationship("ExperimentSet", back_populates="experiments")
     # Many
