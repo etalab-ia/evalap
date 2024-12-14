@@ -130,11 +130,15 @@ def get_experiment(db: Session, experiment_id: int) -> models.Experiment | None:
     return db.query(models.Experiment).get(experiment_id)
 
 
-def get_experiments(db: Session, set_id: int | None = None, limit:int=100) -> list[models.Experiment]:
+def get_experiments(
+    db: Session, set_id: int | None = None, limit: int = 100
+) -> list[models.Experiment]:
     limit = min(limit, 100)
     query = db.query(models.Experiment).filter_by(is_archived=False)
     if set_id:
-        query = query.filter(models.Experiment.experiment_set_id == set_id).order_by(models.Experiment.created_at.desc())
+        query = query.filter(models.Experiment.experiment_set_id == set_id).order_by(
+            models.Experiment.created_at.desc()
+        )
     return query.limit(limit).options(joinedload(models.Experiment.results)).all()
 
 
@@ -159,10 +163,18 @@ def remove_experiment(db: Session, experiment_id: int) -> bool:
     experiment = db.query(models.Experiment).get(experiment_id)
     if experiment is None:
         return False
-    # db.delete(experiment)
-    # db.commit()
-    # return True
-    update_experiment(db, experiment_id, dict(is_archived=True))
+
+    # Delete linked results
+    for result in experiment.results:
+        db.delete(result)
+
+    # Delete linked answers
+    for answer in experiment.answers:
+        db.delete(answer)
+
+    db.delete(experiment)
+    db.commit()
+    # update_experiment(db, experiment_id, dict(is_archived=True))
     return True
 
 
@@ -216,12 +228,11 @@ def remove_experimentset(db: Session, experimentset_id: int) -> bool:
     experimentset = db.query(models.ExperimentSet).get(experimentset_id)
     if experimentset is None:
         return False
-    # db.delete(experimentset)
-    # db.commit()
-    # return True
-    update_experimentset(db, experimentset_id, dict(is_archived=True))
-    for exp_id in experimentset.experiments:
-        update_experiment(db, exp_id, dict(is_archived=True))
+
+    for experiment in experimentset.experiments:
+        remove_experiment(db, experiment.id)
+    db.delete(experimentset)
+    db.commit()
     return True
 
 
