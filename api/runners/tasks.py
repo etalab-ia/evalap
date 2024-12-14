@@ -9,6 +9,7 @@ from sqlalchemy import update
 import api.crud as crud
 import api.models as models
 from api.clients import LlmClient
+from api.config import DEFAULT_JUDGE_MODEL
 from api.db import SessionLocal
 from api.metrics import metric_registry
 from api.runners import MessageType, dispatch_tasks
@@ -48,14 +49,10 @@ def generate_answer(message: dict):
                     model=model.name, messages=messages, **sampling_params_plus
                 )
             answer = result.choices[0].message.content
-            # Try to set the RAG metadata
-            # @DEBUG: Is subject to change to align with albert-api...
             retrieval_context = None
-            if hasattr(result, "rag_context"):
-                refs = result.rag_context.references
-                # @DEBUG: references are hash/is of chunks here.
-                #         To get the content of the hash we need to query the api franceservices.../api/v2/indexes
-                #         which need authentication. But authentication is painfull atm in this api. I will eventually make a PR to get the chunk content instead of the hashes...
+
+            if hasattr(result, "search_results"):
+                retrieval_context = [x.chunk.content for x in result.search_results]
 
             # Upsert answer
             crud.upsert_answer(
@@ -130,9 +127,10 @@ def generate_observation(message: dict):
             # Get the metric from registry
             metric = metric_registry.get_metric(msg.metric_name)
             metric_fun = metric_registry.get_metric_function(msg.metric_name)
-            metric_params = {"metadata": metadata}
             if not metric_fun:
                 raise ValueError(f"Metric {msg.metric_name} not found for experiment {msg.exp_id}")
+            metric_params = {"metadata": metadata}
+            # Add require in metric_params
             for require in metric.require:
                 # Add extra inputs required by the metric
                 if require in ["output", "output_true"]:
@@ -154,6 +152,8 @@ def generate_observation(message: dict):
                     raise ValueError(
                         f"The metric {msg.metric_name} require a non null {require} value."
                     )
+            # Extra metric params
+            metric_params["model"] = result.experiment.judge_model or DEFAULT_JUDGE_MODEL
 
             # Compute metric
             with Timer() as timer:
