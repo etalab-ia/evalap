@@ -74,6 +74,7 @@ class MetricStatus(str, Enum):
 
 class DatasetBase(EgBaseModel):
     name: str
+    readme: str
 
 
 class DatasetCreate(DatasetBase):
@@ -112,8 +113,9 @@ class Dataset(DatasetBase):
     size: int
 
 
-class DatasetFull(Dataset):
-    df: str  # from_json
+
+class DatasetFull(DatasetBase):
+    df: str # from_json
 
 
 #
@@ -284,8 +286,11 @@ class ExperimentWithAnswers(Experiment):
 
 
 class ExperimentFull(Experiment):
-    answers: list[Answer] | None
-    results: list[Result] | None
+    answers: list[Answer] | None = None
+    results: list[Result] | None = None
+
+class ExperimentFullWithDataset(ExperimentFull):
+    dataset: DatasetFull | None = None
 
 
 # For the special `metrics` input
@@ -307,6 +312,7 @@ class ExperimentPatch(ExperimentUpdate):
     rerun_answers: bool = False
 
 
+
 #
 # Experiment Set
 #
@@ -320,7 +326,7 @@ class GridCV(BaseModel):
 
 class ExperimentSetBase(EgBaseModel):
     name: str
-    readme: str | None = None
+    readme: str
 
 
 class ExperimentSetCreate(ExperimentSetBase):
