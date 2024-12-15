@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException
 import re
+
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -8,10 +9,16 @@ import api.schemas as schemas
 from api.db import get_db
 from api.errors import CustomIntegrityError, SchemaError
 from api.metrics import Metric, metric_registry
-from api.runners import dispatch_tasks
+from api.runners import dispatch_tasks, dispatch_retries
 from api.security import admin_only
 
 router = APIRouter()
+
+
+def _needs_output(db_exp):
+    return not db_exp.dataset.has_output and any(
+        "output" in metric_registry.get_metric(r.metric_name).require for r in db_exp.results
+    )
 
 
 #
@@ -49,6 +56,15 @@ def read_dataset(id: int, with_df: bool = False, db: Session = Depends(get_db)):
     return schemas.Dataset.from_orm(dataset)
 
 
+@router.patch("/dataset/{id}", response_model=schemas.Dataset)
+def patch_dataset(id: int, dataset_patch: schemas.DatasetPatch, db: Session = Depends(get_db)):
+    db_dataset = crud.update_dataset(db, id, dataset_patch)
+    if db_dataset is None:
+        raise HTTPException(status_code=404, detail="Dataset not found")
+
+    return db_dataset
+
+
 #
 # Metrics
 #
@@ -75,7 +91,7 @@ def create_experiment(experiment: schemas.ExperimentCreate, db: Session = Depend
         needs_output = any(
             "output" in metric_registry.get_metric(m).require for m in experiment.metrics
         )
-        if needs_output and not db_exp.dataset.has_output:
+        if _needs_output(db_exp):
             dispatch_tasks(db, db_exp, "answers")
         else:
             dispatch_tasks(db, db_exp, "observations")
@@ -98,35 +114,35 @@ def create_experiment(experiment: schemas.ExperimentCreate, db: Session = Depend
 def patch_experiment(
     id: int, experiment_patch: schemas.ExperimentPatch, db: Session = Depends(get_db)
 ):
-    experiment = crud.update_experiment(db, id, experiment_patch)
-    if experiment is None:
+    db_exp = crud.update_experiment(db, id, experiment_patch)
+    if db_exp is None:
         raise HTTPException(status_code=404, detail="Experiment not found")
-    elif experiment.experiment_status not in [
+    elif db_exp.experiment_status not in [
         schemas.ExperimentStatus.pending,
         schemas.ExperimentStatus.finished,
     ]:
         raise HTTPException(
             status_code=400,
-            detail=f"Experiment is running ({experiment.experiment_status}), please try again later",
+            detail=f"Experiment is running ({db_exp.experiment_status}), please try again later",
         )
 
     # Rerun experiment
     # --
     # Initialize metric results
-    for metric in experiment_patch.metrics:
-        result = crud.get_result(db, experiment_id=experiment.id, metric_name=metric)
+    for metric in experiment_patch.metrics or []:
+        result = crud.get_result(db, experiment_id=db_exp.id, metric_name=metric)
         if result:
             crud.update_result(db, result.id, dict(metric_status="pending"))
         else:
-            result = schemas.ResultCreate(experiment_id=experiment.id, metric_name=metric)
+            result = schemas.ResultCreate(experiment_id=db_exp.id, metric_name=metric)
             crud.create_result(db, result)
     # Dispatch tasks
-    if experiment.dataset.has_output or not experiment_patch.rerun_answers:
-        dispatch_tasks(db, experiment, "observations")
-    else:
-        dispatch_tasks(db, experiment, "answers")
+    if experiment_patch.rerun_answers and _needs_output(db_exp):
+        dispatch_tasks(db, db_exp, "answers")
+    elif experiment_patch.rerun_metrics:
+        dispatch_tasks(db, db_exp, "observations")
 
-    return experiment
+    return db_exp
 
 
 @router.delete("/experiment/{id}")
@@ -138,14 +154,18 @@ def delete_experiment(id: int, db: Session = Depends(get_db)):
 
 @router.get(
     "/experiment/{id}",
-    response_model=schemas.Experiment | schemas.ExperimentWithResults | schemas.ExperimentWithAnswers | schemas.ExperimentFull | schemas.ExperimentFullWithDataset,
+    response_model=schemas.Experiment
+    | schemas.ExperimentWithResults
+    | schemas.ExperimentWithAnswers
+    | schemas.ExperimentFull
+    | schemas.ExperimentFullWithDataset,
 )
 def read_experiment(
     id: int,
     with_results: bool = False,
     with_answers: bool = False,
     with_dataset: bool = False,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     experiment = crud.get_experiment(db, id)
     if experiment is None:
@@ -171,8 +191,8 @@ def read_experiments(set_id: int | None = None, limit: int = 100, db: Session = 
         raise HTTPException(status_code=404, detail="No experiments found")
 
     return experiments
-  
-  
+
+
 #
 # Experiment Sets
 #
@@ -251,3 +271,33 @@ def delete_experimentset(id: int, db: Session = Depends(get_db), admin_check=Dep
     if not crud.remove_experimentset(db, id):
         raise HTTPException(status_code=404, detail="ExperimentSet not found")
     return "ok"
+
+
+@router.post(
+    "/retry/experiment_set/{id}",
+    response_model=schemas.RetryRuns,
+    description="Re-run failed runs.",
+)
+def retry_runs(id: int, db: Session = Depends(get_db)):
+    experimentset = crud.get_experimentset(db, id)
+    if experimentset is None:
+        raise HTTPException(status_code=404, detail="ExperimentSet not found")
+
+    rr = schemas.RetryRuns(experiment_ids=[], result_ids=[])
+    for exp in experimentset.experiments:
+        if exp.experiment_status != "finished":
+            continue
+
+        if exp.num_try != exp.num_success and _needs_output(exp):
+            rr.experiment_ids.append(exp.id)
+            continue
+
+        for result in exp.results:
+            if result.metric_status != "finished":
+                continue
+
+            if result.num_try != result.num_success:
+                rr.result_ids.append(result.id)
+
+    dispatch_retries(db, rr)
+    return rr

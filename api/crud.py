@@ -1,4 +1,4 @@
-from sqlalchemy.orm import joinedload, Session
+from sqlalchemy.orm import Session, joinedload
 
 import api.models as models
 import api.schemas as schemas
@@ -29,6 +29,23 @@ def get_dataset(db: Session, dataset_id: str) -> models.Dataset | None:
 
 def get_model(db: Session, model_id: int) -> models.Model | None:
     return db.query(models.Model).filter(models.Model.id == model_id).first()
+
+
+def update_dataset(
+    db: Session, dataset_id: int, dataset_update: schemas.DatasetUpdate | dict
+) -> models.Dataset | None:
+    if isinstance(dataset_update, dict):
+        dataset_update = schemas.DatasetUpdate(**dataset_update)
+
+    dataset = db.query(models.Dataset).get(dataset_id)
+    if dataset is None:
+        return None
+    # Update fields
+    for var, value in vars(dataset_update).items():
+        setattr(dataset, var, value) if value else None
+    db.commit()
+    db.refresh(dataset)
+    return dataset
 
 
 #

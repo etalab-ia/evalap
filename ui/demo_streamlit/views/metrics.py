@@ -7,6 +7,7 @@ from streamlit import session_state
 
 session_state.layout = "wide"
 
+
 def main():
     st.title("Metrics")
 
@@ -17,8 +18,8 @@ def main():
     main_content, right_menu = st.columns([8, 2])
 
     # Group metrics by type
-    sorted_metrics = sorted(metrics, key=itemgetter('type'))
-    grouped_metrics = {k: list(v) for k, v in groupby(sorted_metrics, key=itemgetter('type'))}
+    sorted_metrics = sorted(metrics, key=itemgetter("type"))
+    grouped_metrics = {k: list(v) for k, v in groupby(sorted_metrics, key=itemgetter("type"))}
 
     # Main content
     with main_content:
@@ -34,9 +35,14 @@ def main():
             st.header(f"{metric_type.capitalize()} Metrics")
             for metric in metrics_group:
                 with st.container():
-                    st.markdown(f"<div id='{metric['name'].lower().replace(' ', '-')}'></div>", unsafe_allow_html=True)
+                    st.markdown(
+                        f"<div id='{metric['name'].lower().replace(' ', '-')}'></div>",
+                        unsafe_allow_html=True,
+                    )
                     st.subheader(metric["name"])
-                    st.write(f"Required fields: {', '.join(map(lambda x: '**' + x + '**', metric['require']))}")
+                    st.write(
+                        f"Required fields: {', '.join(map(lambda x: '**' + x + '**', metric['require']))}"
+                    )
                     st.write(metric["description"])
                     st.divider()
 
@@ -47,10 +53,15 @@ def main():
             metric_id = metric_type.lower()
 
             # Create a button for each metric type
-            st.markdown(f"""
+            st.markdown(
+                f"""
                 <a href="#{metric_type}" style="color:grey;"
                    onclick="document.getElementById('{metric_id}').scrollIntoView({{behavior: 'smooth'}});">
                     {metric_type} metrics
                 </a><br>
-            """, unsafe_allow_html=True)
+            """,
+                unsafe_allow_html=True,
+            )
+
+
 main()
