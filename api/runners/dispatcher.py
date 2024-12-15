@@ -147,6 +147,8 @@ def dispatch_retries(db, retry_runs: schemas.RetryRuns):
             answer = crud.get_answer(db, experiment_id=db_exp.id, num_line=obs.num_line)
             if not answer:
                 answer = df.iloc[obs.num_line].get("output")
+            else:
+                answer = answer.answer
 
             socket.send_json(
                 {
