@@ -166,6 +166,10 @@ def generate_observation(message: dict):
             else:
                 score = metric_result
 
+            if isinstance(score, float):
+                # Fix SQL schema error with np.float64 !
+                score = float(score)
+
             # Upsert obsevation
             crud.upsert_observation(
                 db,
