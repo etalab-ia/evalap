@@ -144,13 +144,21 @@ def dispatch_retries(db, retry_runs: schemas.RetryRuns):
             if obs.score is not None and not obs.error_msg:  # @TODO: add a is_failed columns !
                 continue
 
+            answer = (
+                db.query(schemas.Answer)
+                .filter_by(num_line=obs.num_line, experiment_id=db_exp.id)
+                .first()
+            )
+            if not answer:
+                answer = df.iloc[obs.num_line].get("output")
+
             socket.send_json(
                 {
                     "message_type": MessageType.observation,
                     "exp_id": db_exp.id,
                     "line_id": obs.num_line,
                     "metric_name": result.metric_name,
-                    "output": df.iloc[obs.num_line].get("output"),
+                    "output": answer,
                     "output_true": df.iloc[obs.num_line].get("output_true"),
                 }
             )
