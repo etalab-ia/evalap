@@ -46,7 +46,7 @@ def display_experiment_set_overview(expset, experiments_df):
     )
 
 
-def display_in_progress(expset, experiments_df):
+def display_experiment_set_result(expset, experiments_df):
     st.write("## En cours")
 
 
@@ -108,19 +108,24 @@ def main():
 
         tab1, tab2, tab3 = st.tabs(["Set Overview", "Results", "Detail by experiment id"])
 
+        def show_warning_in_tabs(message):
+            with tab1:
+                st.warning(message)
+            with tab2:
+                st.warning(message)
+            with tab3:
+                st.warning(message)
+
         df = experiments_df  # alias
         if df["Num success"].sum() != df["Num try"].sum() and (df["Status"] == "finished").all():
-            with tab1:
-                st.warning("Warning: some experiments are failed.")
-            with tab2:
-                st.warning("Warning: some experiments are failed.")
-            with tab3:
-                st.warning("Warning: some experiments are failed.")
+            show_warning_in_tabs("Warning: some experiments are failed.")
+        if not (df["Status"] == "finished").all():
+            show_warning_in_tabs("Warning: some experiments are not finished.")
 
         with tab1:
             display_experiment_set_overview(experimentset, experiments_df)
         with tab2:
-            display_in_progress(experimentset, experiments_df)
+            display_experiment_set_result(experimentset, experiments_df)
         with tab3:
             display_experiment_details(experimentset, experiments_df)
 
