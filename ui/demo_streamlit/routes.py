@@ -56,5 +56,7 @@ def get_page(route: str | dict):
     if route is None:
         raise ValueError("Route not found: %s" % route)
 
-    page = st.Page(route["path"], title=route["title"], icon=route.get("icon"), url_path=route["id"])
+    page = st.Page(
+        route["path"], title=route["title"], icon=route.get("icon"), url_path=route["id"]
+    )
     return page

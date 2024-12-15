@@ -26,6 +26,7 @@ class EgBaseModel(BaseModel):
             # np.nan is not serializable !
             float: lambda v: None if np.isnan(v) else v,
         },
+        extra="forbid"  # Do not allow unknow field
     )
 
     def recurse_table_init(self, db: Session) -> dict:
@@ -101,22 +102,45 @@ class DatasetCreate(DatasetBase):
             "has_output": has_output,
             "has_output_true": has_output_true,
             "size": len(df),
+            "columns": list(df.columns),
             **obj,
         }
 
 
 class Dataset(DatasetBase):
     id: int
+    created_at: datetime
     has_query: bool
     has_output: bool
     has_output_true: bool
     size: int
-
+    columns: list[str]
 
 
 class DatasetFull(DatasetBase):
-    df: str # from_json
+    df: str  # from_json
 
+
+DatasetUpdate = create_model(
+    "DatasetUpdate",
+    **{
+        field_name: (Optional[field.annotation], None)
+        for field_name, field in Dataset.__fields__.items()
+    },
+    __base__=Dataset,
+)
+
+
+# Do not allow to update the content of a dataset to prevent breaking
+# expriment alignement with num_line
+DatasetPatch = create_model(
+    "DatasetPatch",
+    **{
+        field_name: (Optional[field.annotation], None)
+        for field_name, field in Dataset.__fields__.items()
+    },
+    __base__=DatasetBase,
+)
 
 #
 # Model
@@ -289,6 +313,7 @@ class ExperimentFull(Experiment):
     answers: list[Answer] | None = None
     results: list[Result] | None = None
 
+
 class ExperimentFullWithDataset(ExperimentFull):
     dataset: DatasetFull | None = None
 
@@ -310,7 +335,7 @@ ExperimentUpdate = create_model(
 
 class ExperimentPatch(ExperimentUpdate):
     rerun_answers: bool = False
-
+    rerun_metrics: bool = False # metrics are automatically run after answers atm
 
 
 #
@@ -378,3 +403,10 @@ ExperimentSetUpdate = create_model(
 
 class ExperimentSetPatch(ExperimentSetUpdate):
     pass
+
+
+class RetryRuns(EgBaseModel):
+    # List of experiment to retry
+    experiment_ids: list[str]
+    # List of results/metrics to retry
+    result_ids: list[str]
