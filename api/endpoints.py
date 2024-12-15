@@ -106,7 +106,7 @@ def create_experiment(experiment: schemas.ExperimentCreate, db: Session = Depend
 @router.patch(
     "/experiment/{id}",
     response_model=schemas.Experiment,
-    description="Update an experiments. The given metrics will be added to the existing results for this experiments. Use rerun_answers if want to re-generate the answers/output.",
+    description="Update an experiment. The given metrics will be added (or rerun) to the existing results for this experiments. Use rerun_answers if want to re-generate the answers/output.",
 )
 def patch_experiment(
     id: int, experiment_patch: schemas.ExperimentPatch, db: Session = Depends(get_db)
@@ -217,25 +217,25 @@ def create_experimentset(experimentset: schemas.ExperimentSetCreate, db: Session
 @router.patch(
     "/experiment_set/{id}",
     response_model=schemas.ExperimentSet,
-    description="Update an experimentset: New experiment will be added to the run queue.",
+    description="Update an experimentset: New experiments will be added to the runner queue.",
 )
 def patch_experimentset(
-    id: int, experimentset: schemas.ExperimentSetPatch, db: Session = Depends(get_db)
+    id: int, experimentset_patch: schemas.ExperimentSetPatch, db: Session = Depends(get_db)
 ):
-    db_experimentset = crud.update_experimentset(db, id, experimentset)
-    if db_experimentset is None:
+    db_expset = crud.update_experimentset(db, id, experimentset_patch)
+    if db_expset is None:
         raise HTTPException(status_code=404, detail="Experiment not found")
 
-    expset = experimentset.to_table_init(db)
+    expset = experimentset_patch.to_table_init(db)
     for experiment in expset.get("experiments") or []:
         experiment["experiment_set_id"] = id
         # Respect the unique constraint for auto-naming experiment !
         # -> add an increment suffix to the experiment name
         if re.search(r"__\d+$", experiment["name"]):
             parts = experiment["name"].split("__")
-            parts[-1] = str(int(parts[-1]) + len(db_experimentset.experiments))
+            parts[-1] = str(int(parts[-1]) + len(db_expset.experiments))
             if parts[0] == "None":
-                parts[0] = db_experimentset.name
+                parts[0] = db_expset.name
             experiment["name"] = "__".join(parts)
         db_exp = crud.create_experiment(db, experiment)
         if _needs_output(db_exp):
@@ -243,7 +243,7 @@ def patch_experimentset(
         else:
             dispatch_tasks(db, db_exp, "observations")
 
-    return db_experimentset
+    return db_expset
 
 
 @router.get("/experiment_sets", response_model=list[schemas.ExperimentSet])

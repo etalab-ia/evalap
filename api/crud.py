@@ -37,15 +37,15 @@ def update_dataset(
     if isinstance(dataset_update, dict):
         dataset_update = schemas.DatasetUpdate(**dataset_update)
 
-    dataset = db.query(models.Dataset).get(dataset_id)
-    if dataset is None:
+    db_dataset = db.query(models.Dataset).get(dataset_id)
+    if db_dataset is None:
         return None
     # Update fields
-    for var, value in vars(dataset_update).items():
-        setattr(dataset, var, value) if value else None
+    for key, value in vars(dataset_update).items():
+        setattr(db_dataset, key, value) if value else None
     db.commit()
-    db.refresh(dataset)
-    return dataset
+    db.refresh(db_dataset)
+    return db_dataset
 
 
 #
@@ -116,15 +116,15 @@ def update_result(
     if isinstance(result_update, dict):
         result_update = schemas.ResultUpdate(**result_update)
 
-    result = db.query(models.Result).get(result_id)
-    if result is None:
+    db_result = db.query(models.Result).get(result_id)
+    if db_result is None:
         return None
     # Update fields
-    for var, value in vars(result_update).items():
-        setattr(result, var, value) if value else None
+    for key, value in vars(result_update).items():
+        setattr(db_result, key, value) if value else None
     db.commit()
-    db.refresh(result)
-    return result
+    db.refresh(db_result)
+    return db_result
 
 
 #
@@ -165,33 +165,37 @@ def update_experiment(
     if isinstance(experiment_update, dict):
         experiment_update = schemas.ExperimentUpdate(**experiment_update)
 
-    experiment = db.query(models.Experiment).get(experiment_id)
-    if experiment is None:
+    db_exp = db.query(models.Experiment).get(experiment_id)
+    if db_exp is None:
         return None
     # Update fields
-    for var, value in vars(experiment_update).items():
-        setattr(experiment, var, value) if value else None
+    for key, value in vars(experiment_update).items():
+        setattr(db_exp, key, value) if value else None
+        # If experiment_status is set to finished, update all result status too.
+        if key == "experiment_status" and value == schemas.ExperimentStatus.finished:
+            for result in db_exp.results:
+                result.metric_status = schemas.MetricStatus.finished
     db.commit()
-    db.refresh(experiment)
-    return experiment
+    db.refresh(db_exp)
+    return db_exp
 
 
 def remove_experiment(db: Session, experiment_id: int) -> bool:
-    experiment = db.query(models.Experiment).get(experiment_id)
-    if experiment is None:
+    db_exp = db.query(models.Experiment).get(experiment_id)
+    if db_exp is None:
         return False
 
     # Delete linked results
-    for result in experiment.results:
+    for result in db_exp.results:
         db.delete(result)
 
     # Delete linked answers
-    for answer in experiment.answers:
+    for answer in db_exp.answers:
         db.delete(answer)
 
-    db.delete(experiment)
+    db.delete(db_exp)
     db.commit()
-    # update_experiment(db, experiment_id, dict(is_archived=True))
+    # update_db_exp(db, experiment_id, dict(is_archived=True))
     return True
 
 
@@ -230,25 +234,25 @@ def update_experimentset(
     if isinstance(experimentset_update, dict):
         experimentset_update = schemas.ExperimentSetUpdate(**experimentset_update)
 
-    experimentset = db.query(models.ExperimentSet).get(experimentset_id)
-    if experimentset is None:
+    db_expset = db.query(models.ExperimentSet).get(experimentset_id)
+    if db_expset is None:
         return None
     # Update fields
-    for var, value in vars(experimentset_update).items():
-        setattr(experimentset, var, value) if value else None
+    for key, value in vars(experimentset_update).items():
+        setattr(db_expset, key, value) if value else None
     db.commit()
-    db.refresh(experimentset)
-    return experimentset
+    db.refresh(db_expset)
+    return db_expset
 
 
-def remove_experimentset(db: Session, experimentset_id: int) -> bool:
-    experimentset = db.query(models.ExperimentSet).get(experimentset_id)
-    if experimentset is None:
+def remove_db_expset(db: Session, experimentset_id: int) -> bool:
+    db_expset = db.query(models.ExperimentSet).get(experimentset_id)
+    if db_expset is None:
         return False
 
-    for experiment in experimentset.experiments:
+    for experiment in db_expset.experiments:
         remove_experiment(db, experiment.id)
-    db.delete(experimentset)
+    db.delete(db_expset)
     db.commit()
     return True
 
