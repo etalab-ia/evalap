@@ -144,11 +144,7 @@ def dispatch_retries(db, retry_runs: schemas.RetryRuns):
             if obs.score is not None and not obs.error_msg:  # @TODO: add a is_failed columns !
                 continue
 
-            answer = (
-                db.query(schemas.Answer)
-                .filter_by(num_line=obs.num_line, experiment_id=db_exp.id)
-                .first()
-            )
+            answer = crud.get_answer(db, experiment_id=db_exp.id, num_line=obs.num_line)
             if not answer:
                 answer = df.iloc[obs.num_line].get("output")
 
