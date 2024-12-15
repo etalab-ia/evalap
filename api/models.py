@@ -72,14 +72,15 @@ class Dataset(Base):
     __tablename__ = "datasets"
 
     id = Column(Integer, primary_key=True)
+    created_at = Column(DateTime, server_default=func.now())
     name = Column(Text, unique=True)
-    df = Column(JSON)
+    df = Column(JSON)  # df
+    columns = Column(JSON)  # list[str]
     has_query = Column(Boolean)
     has_output = Column(Boolean)
     has_output_true = Column(Boolean)
     size = Column(Integer)
     readme = Column(Text)
-
 
 
 class Model(Base):
@@ -109,7 +110,9 @@ class Result(Base):
     experiment_id = Column(Integer, ForeignKey("experiments.id"))
     experiment = relationship("Experiment", back_populates="results")
     # Many
-    observation_table = relationship("ObservationTable", back_populates="result", cascade="all, delete-orphan")
+    observation_table = relationship(
+        "ObservationTable", back_populates="result", cascade="all, delete-orphan"
+    )
 
 
 class ObservationTable(Base):
@@ -137,7 +140,7 @@ class Answer(Base):
     execution_time = Column(Integer)
     nb_tokens_prompt = Column(Integer)
     nb_tokens_completion = Column(Integer)
-    retrieval_context = Column(JSON) # list[str]
+    retrieval_context = Column(JSON)  # list[str]
 
     # One
     experiment_id = Column(Integer, ForeignKey("experiments.id"))
