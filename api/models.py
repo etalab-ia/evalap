@@ -129,6 +129,10 @@ class ObservationTable(Base):
     result_id = Column(Integer, ForeignKey("results.id"))
     result = relationship("Result", back_populates="observation_table")
 
+    __table_args__ = (
+        UniqueConstraint('num_line', 'result_id', name='_metric_num_line_unique_constraint'),
+    )
+
 
 class Answer(Base):
     __tablename__ = "answers"
@@ -145,6 +149,10 @@ class Answer(Base):
     # One
     experiment_id = Column(Integer, ForeignKey("experiments.id"))
     experiment = relationship("Experiment", back_populates="answers")
+
+    __table_args__ = (
+        UniqueConstraint('num_line', 'experiment_id', name='_answer_num_line_unique_constraint'),
+    )
 
 
 class Experiment(Base):
