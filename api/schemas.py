@@ -409,6 +409,6 @@ class ExperimentSetPatch(ExperimentSetUpdate):
 
 class RetryRuns(EgBaseModel):
     # List of experiment to retry
-    experiment_ids: list[str]
+    experiment_ids: list[int]
     # List of results/metrics to retry
-    result_ids: list[str]
+    result_ids: list[int]
