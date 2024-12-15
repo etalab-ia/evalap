@@ -150,18 +150,20 @@ DatasetPatch = create_model(
 class ModelBase(EgBaseModel):
     name: str
     base_url: str
-    api_key: str
     prompt_system: str | None = None
     sampling_params: dict | None = None
     extra_params: dict | None = None
 
 
 class ModelCreate(ModelBase):
-    pass
+    api_key: str
 
 
 class Model(ModelBase):
     id: int
+
+class ModelWithKeys(Model):
+    api_key: str
 
 
 #

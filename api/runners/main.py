@@ -49,7 +49,7 @@ def main():
 
     # Launch pool of worker threads
     for i in range(MAX_CONCURRENT_TASKS):
-        thread = threading.Thread(target=worker_routine, args=(url_worker, context,))
+        thread = threading.Thread(target=worker_routine, args=(url_worker, context))
         thread.start()
 
     logger.info(f"ZeroMQ is listening at {url_worker} | {url_client}")
