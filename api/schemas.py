@@ -26,7 +26,7 @@ class EgBaseModel(BaseModel):
             # np.nan is not serializable !
             float: lambda v: None if np.isnan(v) else v,
         },
-        extra="forbid"  # Do not allow unknow field
+        extra="forbid",  # Do not allow unknow field
     )
 
     def recurse_table_init(self, db: Session) -> dict:
@@ -335,7 +335,7 @@ ExperimentUpdate = create_model(
 
 class ExperimentPatch(ExperimentUpdate):
     rerun_answers: bool = False
-    rerun_metrics: bool = False # metrics are automatically run after answers atm
+    rerun_metrics: bool = False  # metrics are automatically run after answers atm
 
 
 #
