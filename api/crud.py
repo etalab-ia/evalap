@@ -173,9 +173,7 @@ def update_experiment(
         setattr(db_exp, key, value) if value else None
         # If experiment_status is set to finished, update all result status too.
         if key == "experiment_status" and value == schemas.ExperimentStatus.finished:
-            print("heeere 1")
             for result in db_exp.results:
-                print("heeere 2")
                 result.metric_status = schemas.MetricStatus.finished
     db.commit()
     db.refresh(db_exp)
