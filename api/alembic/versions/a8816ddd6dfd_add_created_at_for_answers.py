@@ -23,7 +23,7 @@ def upgrade() -> None:
     op.add_column('answers', sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=True))
     # ### end Alembic commands ###
 
-     # Update existing rows to set the created_at field to the current timestamp
+    # Update existing rows to set the created_at field to the current timestamp
     op.execute(
         sa.text("UPDATE answers SET created_at = NOW() WHERE created_at IS NULL")
     )
