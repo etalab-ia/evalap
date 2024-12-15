@@ -9,7 +9,7 @@ import api.schemas as schemas
 from api.db import get_db
 from api.errors import CustomIntegrityError, SchemaError
 from api.metrics import Metric, metric_registry
-from api.runners import dispatch_tasks, dispatch_retries
+from api.runners import dispatch_retries, dispatch_tasks
 from api.security import admin_only
 
 router = APIRouter()
@@ -88,9 +88,6 @@ def read_metrics(db: Session = Depends(get_db)):
 def create_experiment(experiment: schemas.ExperimentCreate, db: Session = Depends(get_db)):
     try:
         db_exp = crud.create_experiment(db, experiment)
-        needs_output = any(
-            "output" in metric_registry.get_metric(m).require for m in experiment.metrics
-        )
         if _needs_output(db_exp):
             dispatch_tasks(db, db_exp, "answers")
         else:
@@ -203,10 +200,10 @@ def create_experimentset(experimentset: schemas.ExperimentSetCreate, db: Session
     try:
         db_expset = crud.create_experimentset(db, experimentset)
         for db_exp in db_expset.experiments:
-            if db_exp.dataset.has_output:
-                dispatch_tasks(db, db_exp, "observations")
-            else:
+            if _needs_output(db_exp):
                 dispatch_tasks(db, db_exp, "answers")
+            else:
+                dispatch_tasks(db, db_exp, "observations")
 
         return db_expset
     except SchemaError as e:
@@ -241,10 +238,10 @@ def patch_experimentset(
                 parts[0] = db_experimentset.name
             experiment["name"] = "__".join(parts)
         db_exp = crud.create_experiment(db, experiment)
-        if db_exp.dataset.has_output:
-            dispatch_tasks(db, db_exp, "observations")
-        else:
+        if _needs_output(db_exp):
             dispatch_tasks(db, db_exp, "answers")
+        else:
+            dispatch_tasks(db, db_exp, "observations")
 
     return db_experimentset
 

@@ -5,9 +5,8 @@ import pandas as pd
 import zmq
 
 import api.crud as crud
-from api.metrics import metric_registry
 import api.schemas as schemas
-
+from api.metrics import metric_registry
 
 
 class MessageType(str, Enum):
@@ -16,6 +15,7 @@ class MessageType(str, Enum):
 
     # @CODEFACTOR: for observation message, it is actually useless to pass
     # output and output_true as the df is loaded anyway to load the "require" fields...
+
 
 def dispatch_tasks(db, db_exp, message_type: MessageType):
     context = zmq.Context()
@@ -114,10 +114,12 @@ def dispatch_retries(db, retry_runs: schemas.RetryRuns):
         if db_exp is None:
             raise ValueError("should never happen: dprexpnotfound1")
 
-        crud.update_experiment(db, db_exp.id, dict(experiment_status="running_answers", num_try=db_exp.num_success))
+        crud.update_experiment(
+            db, db_exp.id, dict(experiment_status="running_answers", num_try=db_exp.num_success)
+        )
         df = pd.read_json(StringIO(db_exp.dataset.df))
         for answer in db_exp.answers:
-            if answer.answer and not answer.error_msg: # @TODO: add a is_failed columns !
+            if answer.answer and not answer.error_msg:  # @TODO: add a is_failed columns !
                 continue
 
             socket.send_json(
@@ -130,7 +132,6 @@ def dispatch_retries(db, retry_runs: schemas.RetryRuns):
                 }
             )
 
-
     for resultid in retry_runs.result_ids:
         result = crud.get_result(db, resultid)
         db_exp = result.experiment
@@ -140,7 +141,7 @@ def dispatch_retries(db, retry_runs: schemas.RetryRuns):
         db.commit()
         df = pd.read_json(StringIO(db_exp.dataset.df))
         for obs in result.observation_table:
-            if obs.score is not None and not obs.error_msg: # @TODO: add a is_failed columns !
+            if obs.score is not None and not obs.error_msg:  # @TODO: add a is_failed columns !
                 continue
 
             socket.send_json(
@@ -156,4 +157,3 @@ def dispatch_retries(db, retry_runs: schemas.RetryRuns):
 
     socket.close()
     context.term()
-
