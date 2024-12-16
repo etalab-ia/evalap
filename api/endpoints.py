@@ -1,6 +1,7 @@
 import re
 
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import ValidationError
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -31,7 +32,7 @@ def create_dataset(dataset: schemas.DatasetCreate, db: Session = Depends(get_db)
     try:
         db_dataset = crud.create_dataset(db, dataset)
         return db_dataset
-    except SchemaError as e:
+    except (SchemaError, ValidationError) as e:
         raise HTTPException(status_code=400, detail=str(e))
     except IntegrityError as e:
         return CustomIntegrityError.from_integrity_error(e.orig).to_http_response()
@@ -95,7 +96,7 @@ def create_experiment(experiment: schemas.ExperimentCreate, db: Session = Depend
 
         return db_exp
 
-    except SchemaError as e:
+    except (SchemaError, ValidationError) as e:
         raise HTTPException(status_code=400, detail=str(e))
     except IntegrityError as e:
         return CustomIntegrityError.from_integrity_error(e.orig).to_http_response()
@@ -206,7 +207,7 @@ def create_experimentset(experimentset: schemas.ExperimentSetCreate, db: Session
                 dispatch_tasks(db, db_exp, "observations")
 
         return db_expset
-    except SchemaError as e:
+    except (SchemaError, ValidationError) as e:
         raise HTTPException(status_code=400, detail=str(e))
     except IntegrityError as e:
         return CustomIntegrityError.from_integrity_error(e.orig).to_http_response()
