@@ -4,6 +4,7 @@ import streamlit as st
 from utils import fetch
 from io import StringIO
 
+
 def get_experiment_data(exp_id):
     response = fetch("get", f"/experiment/{exp_id}", {"with_dataset": "true"})
     if not response:
@@ -26,6 +27,7 @@ def get_experiment_data(exp_id):
 
     return df, dataset_name, model_name
 
+
 def display_experiment_set_overview(expset, experiments_df):
     st.write(f"## Overview of experiment set: {expset['name']}")
     st.write(f"experiment_set id: {expset['id']}")
@@ -43,17 +45,16 @@ def display_experiment_set_overview(expset, experiments_df):
         column_config={"Id": st.column_config.TextColumn(width="small")},
     )
 
+
 def display_experiment_set_result(expset, experiments_df):
     st.write("## Results of the Experiment Set")
-    
+
     total_experiments = len(experiments_df)
-    total_success = experiments_df['Num success'].sum()
-    
+    total_success = experiments_df["Num success"].sum()
+
     st.write(f"Total Experiments: {total_experiments}")
     st.write(f"Total Successful Experiments: {total_success}")
-    
-    if total_success < total_experiments:
-        st.warning("Some experiments did not succeed.")
+
 
 def display_experiment_sets(experiment_sets):
     cols = st.columns(3)
@@ -74,10 +75,10 @@ def display_experiment_sets(experiment_sets):
                 with col3:
                     st.caption(f"Created on {when}")
 
+
 def display_experiment_details(experimentset, experiments_df):
     experiment_ids = experiments_df["Id"].tolist()
     selected_exp_id = st.selectbox("Select Experiment ID", experiment_ids)
-    
     if selected_exp_id:
         df_with_results, dataset_name, model_name = get_experiment_data(selected_exp_id)
         if df_with_results is not None:
@@ -88,59 +89,39 @@ def display_experiment_details(experimentset, experiments_df):
         else:
             st.error("Failed to fetch experiment data")
 
-def main():
-    if 'experimentset' not in st.session_state:
-        st.session_state['experimentset'] = None
 
+def main():
     if st.session_state.get("experimentset"):
         experimentset = st.session_state["experimentset"]
-        
-        if 'experiments_df' not in st.session_state:
-            experiments_df = pd.DataFrame(
-                [
-                    {
-                        "Id": exp["id"],
-                        "Name": exp["name"],
-                        "Status": exp["experiment_status"],
-                        "Created at": exp["created_at"],
-                        "Num try": exp["num_try"],
-                        "Num success": exp["num_success"],
-                    }
-                    for exp in experimentset["experiments"]
-                ]
-            )
-            experiments_df.sort_values(by="Id", ascending=True, inplace=True)
-            st.session_state['experiments_df'] = experiments_df
-        else:
-            experiments_df = st.session_state['experiments_df']
-
-        col1, col2 = st.columns([2, 1])  
-
+        col1, col2 = st.columns([2, 1])
         with col1:
             if st.button(":arrow_left: Go back", key="go_back"):
                 st.session_state["experimentset"] = None
-                del st.session_state['experiments_df']
                 st.rerun()
 
         with col2:
             if st.button("🔄 Refresh Data"):
-                updated_experimentset = fetch("get", f"/experiment_set/{experimentset['id']}")
-                if updated_experimentset:
-                    experiments_df = pd.DataFrame(
-                        [
-                            {
-                                "Id": exp["id"],
-                                "Name": exp["name"],
-                                "Status": exp["experiment_status"],
-                                "Created at": exp["created_at"],
-                                "Num try": exp["num_try"],
-                                "Num success": exp["num_success"],
-                            }
-                            for exp in updated_experimentset.get("experiments", [])
-                        ]
-                    )
-                    experiments_df.sort_values(by="Id", ascending=True, inplace=True)
-                    st.session_state['experiments_df'] = experiments_df
+                expid = experimentset["id"]
+                experimentset = fetch("get", f"/experiment_set/{expid}")
+                if not experimentset:
+                    raise ValueError("experimentset not found: %s" % expid)
+                st.session_state["experimentset"] = experimentset
+
+        # Build the expset dataframe
+        experiments_df = pd.DataFrame(
+            [
+                {
+                    "Id": exp["id"],
+                    "Name": exp["name"],
+                    "Status": exp["experiment_status"],
+                    "Created at": exp["created_at"],
+                    "Num try": exp["num_try"],
+                    "Num success": exp["num_success"],
+                }
+                for exp in experimentset.get("experiments", [])
+            ]
+        )
+        experiments_df.sort_values(by="Id", ascending=True, inplace=True)
 
         tab1, tab2, tab3 = st.tabs(["Set Overview", "Results", "Detail by experiment id"])
 
@@ -169,6 +150,8 @@ def main():
         st.title("Experiments (Set)")
         experiment_sets = fetch("get", "/experiment_sets")
         if experiment_sets:
+            display_experiment_sets(experiment_sets)
+
             display_experiment_sets(experiment_sets)
 
 main()
