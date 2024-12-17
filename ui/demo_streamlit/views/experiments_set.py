@@ -152,6 +152,5 @@ def main():
         if experiment_sets:
             display_experiment_sets(experiment_sets)
 
-            display_experiment_sets(experiment_sets)
 
 main()
