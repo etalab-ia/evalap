@@ -50,33 +50,34 @@ def display_experiment_set_result(expset, experiments_df):
     st.write("## En cours")
 
 
-
 def display_experiment_sets(experiment_sets):
     cols = st.columns(3)
     for idx, exp_set in enumerate(experiment_sets):
-        total_tries = sum(exp['num_try'] for exp in exp_set['experiments'])
-        total_successes = sum(exp['num_success'] for exp in exp_set['experiments'])
-        
+        total_tries = sum(exp["num_try"] for exp in exp_set["experiments"])
+        total_successes = sum(exp["num_success"] for exp in exp_set["experiments"])
+
         status = "OK" if total_tries == total_successes else "FAILURE"
         status_color = "green" if status == "OK" else "orange"
-        
+
         when = datetime.fromisoformat(exp_set["created_at"]).strftime("%d %B %Y")
-        
+
         with cols[idx % 3]:
             with st.container(border=True):
-                st.markdown(f"<div style='position: absolute; top: 10px; right: 10px; "
-                            f"width: 10px; height: 10px; border-radius: 50%; "
-                            f"background-color: {status_color};' "
-                            f"title='{status}'></div>", 
-                            unsafe_allow_html=True)
-                
+                st.markdown(
+                    f"<div style='position: absolute; top: 10px; right: 10px; "
+                    f"width: 10px; height: 10px; border-radius: 50%; "
+                    f"background-color: {status_color};' "
+                    f"title='{status}'></div>",
+                    unsafe_allow_html=True,
+                )
+
                 if st.button(f"{exp_set['name']}", key=f"exp_set_{idx}"):
                     st.session_state["experimentset"] = exp_set
                     st.rerun()
-                
+
                 st.markdown(exp_set.get("readme", "No description available"))
-                
-                col1, col2, col3 = st.columns([1/6, 2/6, 3/6])
+
+                col1, col2, col3 = st.columns([1 / 6, 2 / 6, 3 / 6])
                 with col1:
                     st.caption(f'id: {exp_set["id"]} ')
                 with col2:
@@ -85,14 +86,11 @@ def display_experiment_sets(experiment_sets):
                     st.caption(f"Created the {when}")
 
                 if status == "FAILURE":
-                    with st.expander("Failure Analysis", expanded=False):  
-                        for exp in exp_set['experiments']:
-                            exp_status = "Success" if exp['num_try'] == exp['num_success'] else "Partial/Failure"
-                            st.write(f"**{exp['name']}**: {exp_status}")
-                            if exp['num_try'] != exp['num_success']:
-                                st.write(f"  - Tries: {exp['num_try']}")
-                                st.write(f"  - Successes: {exp['num_success']}")
-
+                    with st.expander("Failure Analysis", expanded=False):
+                        for exp in exp_set["experiments"]:
+                            if exp["num_try"] == exp["num_success"]:
+                                continue
+                            st.write(f"{exp['id']} {exp['name']}")
 
 
 def display_experiment_details(experimentset, experiments_df):
