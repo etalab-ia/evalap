@@ -47,7 +47,13 @@ def display_experiment_set_overview(expset, experiments_df):
 
 
 def display_experiment_set_result(expset, experiments_df):
-    st.write("## En cours")
+    st.write("## Results of the Experiment Set")
+
+    total_experiments = len(experiments_df)
+    total_success = experiments_df["Num success"].sum()
+
+    st.write(f"Total Experiments: {total_experiments}")
+    st.write(f"Total Successful Experiments: {total_success}")
 
 
 def display_experiment_sets(experiment_sets):
@@ -67,7 +73,7 @@ def display_experiment_sets(experiment_sets):
                 with col2:
                     st.caption(f'Experiments: {len(exp_set["experiments"])} ')
                 with col3:
-                    st.caption(f"Created the {when}")
+                    st.caption(f"Created on {when}")
 
 
 def display_experiment_details(experimentset, experiments_df):
@@ -87,6 +93,21 @@ def display_experiment_details(experimentset, experiments_df):
 def main():
     if st.session_state.get("experimentset"):
         experimentset = st.session_state["experimentset"]
+        col1, col2 = st.columns([2, 1])
+        with col1:
+            if st.button(":arrow_left: Go back", key="go_back"):
+                st.session_state["experimentset"] = None
+                st.rerun()
+
+        with col2:
+            if st.button("🔄 Refresh Data"):
+                expid = experimentset["id"]
+                experimentset = fetch("get", f"/experiment_set/{expid}")
+                if not experimentset:
+                    raise ValueError("experimentset not found: %s" % expid)
+                st.session_state["experimentset"] = experimentset
+
+        # Build the expset dataframe
         experiments_df = pd.DataFrame(
             [
                 {
@@ -97,14 +118,10 @@ def main():
                     "Num try": exp["num_try"],
                     "Num success": exp["num_success"],
                 }
-                for exp in experimentset["experiments"]
+                for exp in experimentset.get("experiments", [])
             ]
         )
         experiments_df.sort_values(by="Id", ascending=True, inplace=True)
-
-        if st.button(":arrow_left: Go back", key="go_back"):
-            st.session_state["experimentset"] = None
-            st.rerun()
 
         tab1, tab2, tab3 = st.tabs(["Set Overview", "Results", "Detail by experiment id"])
 
