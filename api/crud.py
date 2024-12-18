@@ -23,8 +23,8 @@ def get_datasets(db: Session) -> list[models.Dataset]:
     return db.query(models.Dataset).all()
 
 
-def get_dataset(db: Session, dataset_id: str) -> models.Dataset | None:
-    return db.query(models.Dataset).filter(models.Dataset.name == dataset_id).first()
+def get_dataset(db: Session, dataset_id: int) -> models.Dataset | None:
+    return db.query(models.Dataset).filter(models.Dataset.id == dataset_id).first()
 
 
 def get_model(db: Session, model_id: int) -> models.Model | None:
@@ -65,7 +65,7 @@ def get_metrics(db: Session) -> list[Metric]:
 def get_answer(
     db: Session,
     answer_id: int | None = None,
-    experiment_id: str | None = None,
+    experiment_id: int | None = None,
     num_line: int | None = None,
 ) -> models.Answer | None:
     if answer_id:
@@ -83,7 +83,7 @@ def get_answer(
 def get_result(
     db: Session,
     result_id: int | None = None,
-    experiment_id: str | None = None,
+    experiment_id: int | None = None,
     metric_name: str | None = None,
 ) -> models.Result | None:
     if result_id:
@@ -262,7 +262,7 @@ def remove_db_expset(db: Session, experimentset_id: int) -> bool:
 #
 
 
-def upsert_answer(db: Session, experiment_id: str, num_line: int, answer: dict) -> models.Answer:
+def upsert_answer(db: Session, experiment_id: int, num_line: int, answer: dict) -> models.Answer:
     # Check if the record already exists
     db_answer = (
         db.query(models.Answer).filter_by(num_line=num_line, experiment_id=experiment_id).first()
@@ -283,7 +283,7 @@ def upsert_answer(db: Session, experiment_id: str, num_line: int, answer: dict) 
 
 
 def upsert_observation(
-    db: Session, result_id: str, num_line: int, observation: dict
+    db: Session, result_id: int, num_line: int, observation: dict
 ) -> models.Answer:
     # Check if the record already exists
     db_observation = (
