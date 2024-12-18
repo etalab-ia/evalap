@@ -124,7 +124,7 @@ def main():
 
         with col2:
             if st.button("🔄 Refresh Data"):
-                expid = experimentset["id"]
+                expid = experimentset['id']
                 experimentset = fetch("get", f"/experiment_set/{expid}")
                 if not experimentset:
                     raise ValueError("experimentset not found: %s" % expid)
