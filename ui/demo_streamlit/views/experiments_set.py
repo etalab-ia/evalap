@@ -53,16 +53,6 @@ def display_experiment_set_overview(expset, experiments_df):
     )
 
 
-def display_experiment_set_result_(expset, experiments_df):
-    st.write("## Results of the Experiment Set")
-
-    total_experiments = len(experiments_df)
-    total_success = experiments_df["Num success"].sum()
-
-    st.write(f"Total Experiments: {total_experiments}")
-    st.write(f"Total Successful Experiments: {total_success}")
-
-
 def display_experiment_sets(experiment_sets):
     """
     returns the list of experiments set, with their status/info
