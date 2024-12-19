@@ -106,7 +106,7 @@ def display_experiment_sets(experiment_sets):
                         for exp in exp_set["experiments"]:
                             if exp["num_try"] == exp["num_success"]:
                                 continue
-                            st.write(f"{exp['id']} {exp['name']}")
+                            st.write(f"n° {exp['id']} - {exp['name']}")
 
 
 def display_experiment_details(experimentset, experiments_df):
@@ -220,18 +220,18 @@ def display_experiment_results(experimentset):
         st.write("## Experiment Results")
         st.dataframe(results_df)
 
-
 def display_experiment_set_result(experimentset, experiments_df):
     st.write("## Results of the Experiment Set")
 
-    if experiments_df["Num success"].sum() == experiments_df["Num try"].sum():
+    total_experiments = len(experiments_df)
+    all_successful = (experiments_df["Num try"] == experiments_df["Num success"]).all()
+
+    if all_successful:
         display_experiment_results(experimentset)
-        total_experiments = len(experiments_df)
-        total_success = experiments_df["Num success"].sum()
-        st.write(f"Total Experiments: {total_experiments}")
-        st.write(f"Total Successful Experiments: {total_success}")
     else:
-        st.error("Results cannot be displayed as not all experiments are in Success")
+        st.error("Detailed results cannot be displayed as not all experiments are successful")
+        st.write(f"Total Experiments: {total_experiments}")
+        st.write(f"Failure Experiments: {total_experiments - (experiments_df['Num success'] > 0).sum()}")
 
 
 def main():
@@ -277,7 +277,7 @@ def main():
             with tab3:
                 st.warning(message)
 
-        df = experiments_df  # alias
+        df = experiments_df  
         if df["Num success"].sum() != df["Num try"].sum() and (df["Status"] == "finished").all():
             show_warning_in_tabs("Warning: some experiments are failed.")
         if not (df["Status"] == "finished").all():
