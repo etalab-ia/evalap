@@ -125,48 +125,35 @@ def display_experiment_details(experimentset, experiments_df):
 
 def process_experiment_results(experimentset):
     """
-    Process experiment results dynamically across different experiment types.
-    
-    Args:
-        experimentset (dict): The experiment set containing experiment details
-
-    Returns:
-        pd.DataFrame: A processed DataFrame with experiment results
+    process experiment results dynamically across different experiment types.
     """
     rows = []
-    metrics = set() 
+    metrics = set()
+    experiment_names = [exp["name"] for exp in experimentset.get("experiments", [])]
+    
+    is_repeat_mode = _check_repeat_mode(experiment_names)
 
     for exp in experimentset.get("experiments", []):
         if exp["experiment_status"] != "finished":
             st.warning(f"Warning: experiment {exp['id']} is not finished yet...")
-        
-        response = fetch("get", f"/experiment/{exp['id']}", {"with_dataset": "true"})
+            continue
 
+        response = fetch("get", f"/experiment/{exp['id']}?with_results=true")
         if not response:
             continue
 
         model_name = response["model"]["name"]
         extra_params = response["model"].get("extra_params", {})
-
-        # Determine experiment variant (e.g., RAG limit, repeat, etc.)
         variant = _extract_experiment_variant(extra_params)
-
         row = {"model": f"{model_name}_{variant}" if variant else model_name}
 
         for metric_results in response.get("results", []):
             metric = metric_results["metric_name"]
             metrics.add(metric)
-
-            scores = np.array([
-                x["score"] for x in metric_results["observation_table"] 
-                if pd.notna(x.get("score"))
-            ])
-
-            if len(scores) > 0:
+            scores = [x["score"] for x in metric_results["observation_table"] if pd.notna(x.get("score"))]
+            if scores:
                 row[f"{metric}_mean"] = np.mean(scores)
                 row[f"{metric}_std"] = np.std(scores)
-                row[f"{metric}_median"] = np.median(scores)
-                row[f"{metric}_mean_std"] = f"{scores.mean():.2f} ± {scores.std():.2f}"
                 row[f"{metric}_support"] = len(scores)
 
         rows.append(row)
@@ -177,15 +164,34 @@ def process_experiment_results(experimentset):
 
     df = pd.DataFrame(rows)
     
-    default_sort_metric = _find_default_sort_metric(metrics)
-    if default_sort_metric and default_sort_metric in df.columns:
-        df = df.sort_values(by=default_sort_metric, ascending=False)
+    if is_repeat_mode:
+        df = df.groupby("model").agg({col: ['mean', 'std'] for col in df.columns if col.endswith('_mean')})
+        df.columns = [f"{col[0]}_{col[1]}" for col in df.columns]
+    else:
+        default_sort_metric = _find_default_sort_metric(metrics)
+        if default_sort_metric and f"{default_sort_metric}_mean" in df.columns:
+            df = df.sort_values(by=f"{default_sort_metric}_mean", ascending=False)
 
     return df
 
+def _check_repeat_mode(experiment_names):
+    """
+    check whether the experiment is related to a repetition
+    """
+    if len(experiment_names) <= 1:
+        return False
+    
+    base_names = [name.rsplit('_', 1)[0] for name in experiment_names]
+    
+    if len(set(base_names)) == 1:
+        suffixes = [name.split('_')[-1] for name in experiment_names]
+        return all(suffix.isdigit() for suffix in suffixes)
+    
+    return False
+
 def _extract_experiment_variant(extra_params: dict):
     """
-    Extract a meaningful variant identifier from extra parameters.
+    extract a meaningful variant identifier from extra parameters.
     """
     if not extra_params:
         return ""
@@ -198,7 +204,7 @@ def _extract_experiment_variant(extra_params: dict):
 
 def _find_default_sort_metric(metrics):
     """
-    Find a sensible default metric for sorting results.
+    find a sensible default metric for sorting results.
     """
     preferred_metrics = ['judge_exactness', 'contextual_relevancy']
     for metric in preferred_metrics:
