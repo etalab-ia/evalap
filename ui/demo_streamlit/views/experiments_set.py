@@ -36,8 +36,8 @@ def display_experiment_set_overview(expset, experiments_df):
     """
     returns a dataframe with the list of Experiments and the associated status
     """
-    st.write(f"## Overview of experiment set: {expset['name']}")
-    st.write(f"experiment_set id: {expset['id']}")
+    st.write(f"## Overview of experiment set:")
+    st.write(f"### experiment_set n° {expset['id']} ~~ {expset['name']}  ~~")
 
     row_height = 35
     header_height = 35
@@ -105,9 +105,13 @@ def display_experiment_details(experimentset, experiments_df):
     if selected_exp_id:
         df_with_results, dataset_name, model_name = get_experiment_data(selected_exp_id)
         if df_with_results is not None:
-            st.write(f"### Detailed results of the experiment id={selected_exp_id} ")
-            st.write(f"**Dataset:** {dataset_name}")
-            st.write(f"**Model:** {model_name}")
+            cols = st.columns(4)
+            with cols[0]:
+                st.write(f"**experiment_id** n° {selected_exp_id}")
+            with cols[1]:
+                st.write(f"**Dataset:** {dataset_name}")
+            with cols[2]:
+                st.write(f"**Model:** {model_name}")
             st.dataframe(df_with_results)
         else:
             st.error("Failed to fetch experiment data")
@@ -207,7 +211,7 @@ def display_experiment_results(experimentset):
     results_df = process_experiment_results(experimentset)
     
     if results_df is not None:
-        st.write("## Experiment Results")
+        st.write("### Experiment Results")
         st.dataframe(results_df)
 
 def display_experiment_set_result(experimentset, experiments_df):
@@ -220,8 +224,11 @@ def display_experiment_set_result(experimentset, experiments_df):
         display_experiment_results(experimentset)
     else:
         st.error("Detailed results cannot be displayed as not all experiments are successful")
-        st.write(f"Total Experiments: {total_experiments}")
-        st.write(f"Failure Experiments: {total_experiments - (experiments_df['Num success'] > 0).sum()}")
+        cols = st.columns(6)
+        with cols[0]:
+            st.write(f"Total Experiments: {total_experiments}")
+        with cols[1]:
+            st.write(f"Failure Experiments: {total_experiments - (experiments_df['Num success'] > 0).sum()}")
 
 
 def main():
