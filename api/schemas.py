@@ -424,7 +424,7 @@ class LeaderboardEntry(EgBaseModel):
     experiment_id: int
     model_name: str
     dataset_name: str
-    judge_notator_score: float | None
+    main_metric_score: float | None
     other_metrics: dict[str, float | None]
 
 class Leaderboard(EgBaseModel):

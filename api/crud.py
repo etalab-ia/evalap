@@ -313,30 +313,34 @@ def upsert_observation(
 #
 
 
-def get_leaderboard(db: Session):
+def get_leaderboard(db: Session, metric_name: str = "judge_notator", limit: int = 100):
     entries = []
     experiments = db.query(models.Experiment).all()
     
     for exp in experiments:
-        judge_notator_score = None
+        main_metric_score = None
         other_metrics = {}
         
         for result in exp.results:
-            if result.metric_name == "judge_notator":
-                judge_notator_score = result.observation_table[0].score if result.observation_table else None
+            if result.metric_name == metric_name:
+                main_metric_score = result.observation_table[0].score if result.observation_table else None
             else:
                 other_metrics[result.metric_name] = result.observation_table[0].score if result.observation_table else None
         
-        entry = schemas.LeaderboardEntry(
-            experiment_id=exp.id,
-            model_name=exp.model.name if exp.model else "N/A",
-            dataset_name=exp.dataset.name,
-            judge_notator_score=judge_notator_score,
-            other_metrics=other_metrics
-        )
-        entries.append(entry)
+        if main_metric_score is not None:
+            entry = schemas.LeaderboardEntry(
+                experiment_id=exp.id,
+                model_name=exp.model.name if exp.model else "N/A",
+                dataset_name=exp.dataset.name,
+                main_metric_score=main_metric_score,
+                other_metrics=other_metrics
+            )
+            entries.append(entry)
     
-    return schemas.Leaderboard(entries=entries)
-
+    sorted_entries = sorted(entries, key=lambda x: x.main_metric_score, reverse=True)
+    
+    limited_entries = sorted_entries[:limit]
+    
+    return schemas.Leaderboard(entries=limited_entries)
 
 
