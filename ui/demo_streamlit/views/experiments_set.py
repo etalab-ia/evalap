@@ -39,6 +39,9 @@ def display_experiment_set_overview(expset, experiments_df):
     st.write(f"## Overview of experiment set:")
     st.write(f"### experiment_set n° {expset['id']} ~~ {expset['name']}  ~~")
 
+    if "readme" in expset:
+        st.write(expset["readme"] if expset["readme"] else "No README available.")
+
     row_height = 35
     header_height = 35
     border_padding = 5
