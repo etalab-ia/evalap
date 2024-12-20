@@ -164,9 +164,17 @@ class Experiment(Base):
     is_archived = Column(Boolean, default=False)  # do not allow user to remove without IAM.
     created_at = Column(DateTime, server_default=func.now())
     experiment_status = Column(String)
+    judge_model = Column(String)
     num_try = Column(Integer, default=0)
     num_success = Column(Integer, default=0)
-    judge_model = Column(String)
+
+    @property
+    def num_observation_try(self):
+        return sum(result.num_try for result in self.results)
+
+    @property
+    def num_observation_success(self):
+        return sum(result.num_success for result in self.results)
 
     # One
     dataset_id = Column(Integer, ForeignKey("datasets.id"))
