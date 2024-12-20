@@ -170,7 +170,6 @@ def generate_observation(message: dict):
                 # Fix SQL schema error with np.float64 !
                 score = float(score)
             elif score is not None:
-                score = None
                 raise ValueError("Unsuported score type: %s %s" % (type(score), score))
 
             # Upsert obsevation
