@@ -309,6 +309,9 @@ class Experiment(ExperimentBase):
     num_observation_success: int = Field(
         description="How many metric observations were successfully generated."
     )
+    num_metrics: int = Field(
+        description="How many metrics are associated to this experiment. See the query parameter `with_results` to get the results per metrics."
+    )
 
     dataset: Dataset
     model: Model | None

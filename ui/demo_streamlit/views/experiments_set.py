@@ -5,6 +5,33 @@ from utils import fetch
 from io import StringIO
 
 
+def _get_expset_status(expset: dict) -> tuple[dict, dict]:
+    status_codes = {
+        "pending": {"text": "Experiments did not start yet", "color": "yellow"},
+        "running": {"text": "Experiments are running", "color": "orange"},
+        "finished": {"text": "All experiments are finished", "color": "green"},
+    }
+
+    counts = dict(
+        total_answer_tries=sum(exp["num_try"] for exp in expset["experiments"]),
+        total_answer_successes=sum(exp["num_success"] for exp in expset["experiments"]),
+        total_observation_tries=sum(exp["num_observation_try"] for exp in expset["experiments"]),
+        total_observation_successes=sum(exp["num_observation_success"] for exp in expset["experiments"]),
+        answer_length=sum(exp["dataset"]["size"] for exp in expset["experiments"]),
+        observation_length=sum(exp["dataset"]["size"]*exp["num_metrics"] for exp in expset["experiments"]),
+    )  # fmt: skip
+
+    # Running status
+    if all(exp["experiment_status"] == "pending" for exp in expset["experiments"]):
+        status = status_codes["pending"]
+    elif all(exp["experiment_status"] == "finished" for exp in expset["experiments"]):
+        status = status_codes["finished"]
+    else:
+        status = status_codes["running"]
+
+    return status, counts
+
+
 def get_experiment_data(exp_id):
     response = fetch("get", f"/experiment/{exp_id}", {"with_dataset": "true"})
     if not response:
@@ -29,8 +56,20 @@ def get_experiment_data(exp_id):
 
 
 def display_experiment_set_overview(expset, experiments_df):
+    status, counts = _get_expset_status(expset)
     st.write(f"## Overview of experiment set: {expset['name']}")
     st.write(f"experiment_set id: {expset['id']}")
+    finished_ratio = counts["total_observation_successes"] // counts["observation_length"] * 100
+    st.markdown(f"Finished: {finished_ratio}%", unsafe_allow_html=True)
+    failure_ratio = (
+        (counts["total_observation_tries"] - counts["total_observation_successes"])
+        // counts["observation_length"]
+        * 100
+    )
+    if failure_ratio > 0:
+        st.markdown(
+            f"Failure: <span style='color:red;'>{failure_ratio}%</span>", unsafe_allow_html=True
+        )
 
     row_height = 35
     header_height = 35
@@ -58,31 +97,13 @@ def display_experiment_set_result(expset, experiments_df):
 
 def display_experiment_sets(experiment_sets):
     cols = st.columns(3)
-    status_codes = {
-        "pending": {"text": "Experiments did not start yet", "color": "yellow"},
-        "running": {"text": "Experiments are running", "color": "orange"},
-        "finished": {"text": "All experiments are finished", "color": "green"},
-    }
 
     for idx, exp_set in enumerate(experiment_sets):
-        total_answer_tries = sum(exp["num_try"] for exp in exp_set["experiments"])
-        total_answer_successes = sum(exp["num_success"] for exp in exp_set["experiments"])
-        total_observation_tries = sum(exp["num_observation_try"] for exp in exp_set["experiments"])
-        total_observation_successes = sum(
-            exp["num_observation_success"] for exp in exp_set["experiments"]
-        )
-
-        # Running status
-        if all(exp["experiment_status"] == "pending" for exp in exp_set["experiments"]):
-            status = status_codes["pending"]
-        elif all(exp["experiment_status"] == "finished" for exp in exp_set["experiments"]):
-            status = status_codes["finished"]
-        else:
-            status = status_codes["running"]
+        status, counts = _get_expset_status(exp_set)
 
         # Failure status
         has_failure = False
-        if total_observation_tries > total_observation_successes:
+        if counts["total_observation_tries"] > counts["total_observation_successes"]:
             has_failure = True
 
         status_description = status["text"]
@@ -120,11 +141,15 @@ def display_experiment_sets(experiment_sets):
                     with st.expander("Failure Analysis", expanded=False):
                         for exp in exp_set["experiments"]:
                             if exp["num_try"] != exp["num_success"]:
-                                st.write(f"id: {exp['id']} name: {exp['name']} (failed on output generation)")
+                                st.write(
+                                    f"id: {exp['id']} name: {exp['name']} (failed on output generation)"
+                                )
                                 continue
 
                             if exp["num_observation_try"] != exp["num_observation_success"]:
-                                st.write(f"id: {exp['id']} name: {exp['name']} (failed on score computation)")
+                                st.write(
+                                    f"id: {exp['id']} name: {exp['name']} (failed on score computation)"
+                                )
                                 continue
 
 
