@@ -104,6 +104,11 @@ def display_experiment_results(exp_id):
     if experiment["experiment_status"] != "finished":
         st.warning(f"Experiment {exp_id} is not finished yet...")
 
+    if experiment["num_success"] != experiment["num_try"]:
+        st.warning("Warning: some experiments are failed.")
+    if experiment["num_observation_success"] != experiment["num_observation_try"]:
+        st.warning("Warning: some metrics are failed.")
+
     results_df = process_experiment_results(experiment)
     df_with_results, dataset_name, model_name = get_experiment_data(exp_id)
             
