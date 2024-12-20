@@ -40,6 +40,8 @@ def main():
         df = pd.DataFrame([
             {
                 "Model": entry["model_name"],
+                "Sampling_param": entry["sampling_param"],
+                "Extra_param": entry["extra_param"],
                 "Dataset": entry["dataset_name"],
                 f"{metric_name.replace('_', ' ').title()} Score": entry["main_metric_score"],
                 **entry["other_metrics"]

@@ -437,6 +437,9 @@ class LeaderboardEntry(EgBaseModel):
     dataset_name: str
     main_metric_score: float | None
     other_metrics: dict[str, float | None]
+    sampling_param: dict[str, str | None]  
+    extra_param: dict[str, str | None]     
+
 
 class Leaderboard(EgBaseModel):
     entries: list[LeaderboardEntry]
