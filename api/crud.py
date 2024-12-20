@@ -304,3 +304,39 @@ def upsert_observation(
     db.commit()
     db.refresh(db_observation)
     return db_observation
+
+
+
+
+#
+# LeaderBoard
+#
+
+
+def get_leaderboard(db: Session):
+    entries = []
+    experiments = db.query(models.Experiment).all()
+    
+    for exp in experiments:
+        judge_notator_score = None
+        other_metrics = {}
+        
+        for result in exp.results:
+            if result.metric_name == "judge_notator":
+                judge_notator_score = result.observation_table[0].score if result.observation_table else None
+            else:
+                other_metrics[result.metric_name] = result.observation_table[0].score if result.observation_table else None
+        
+        entry = schemas.LeaderboardEntry(
+            experiment_id=exp.id,
+            model_name=exp.model.name if exp.model else "N/A",
+            dataset_name=exp.dataset.name,
+            judge_notator_score=judge_notator_score,
+            other_metrics=other_metrics
+        )
+        entries.append(entry)
+    
+    return schemas.Leaderboard(entries=entries)
+
+
+
