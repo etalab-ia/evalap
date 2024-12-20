@@ -251,7 +251,7 @@ class ExperimentCreate(ExperimentBase):
             dataset = models.Dataset(**obj["dataset"])
         obj["dataset"] = dataset
         if dataset.has_output:
-            df = pd.read_json(StringIO(dataset))
+            df = pd.read_json(StringIO(dataset.df))
             obj["num_try"] = dataset.size
             obj["num_success"] = df["output"].count()
 
