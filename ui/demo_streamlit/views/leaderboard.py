@@ -22,7 +22,8 @@ def main():
         st.error("Unable to fetch metrics. Please try again later.")
         return
 
-    sorted_metrics = sorted(metrics, key=itemgetter("type"))
+    filtered_metrics = [metric for metric in metrics if metric["type"] != "dataset"]
+    sorted_metrics = sorted(filtered_metrics, key=itemgetter("type"))
     grouped_metrics = {k: list(v) for k, v in groupby(sorted_metrics, key=itemgetter("type"))}
     
     available_metrics = [metric["name"] for metrics in grouped_metrics.values() for metric in metrics]
