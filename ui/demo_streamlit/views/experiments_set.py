@@ -120,11 +120,11 @@ def display_experiment_sets(experiment_sets):
                     with st.expander("Failure Analysis", expanded=False):
                         for exp in exp_set["experiments"]:
                             if exp["num_try"] != exp["num_success"]:
-                                st.write(f"{id: exp['id']} name: {exp['name']} (failed on output generation)")
+                                st.write(f"id: {exp['id']} name: {exp['name']} (failed on output generation)")
                                 continue
 
                             if exp["num_observation_try"] != exp["num_observation_success"]:
-                                st.write(f"{id: exp['id']} name: {exp['name']} (failed on score computation)")
+                                st.write(f"id: {exp['id']} name: {exp['name']} (failed on score computation)")
                                 continue
 
 
