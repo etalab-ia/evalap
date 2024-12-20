@@ -58,22 +58,47 @@ def display_experiment_set_result(expset, experiments_df):
 
 def display_experiment_sets(experiment_sets):
     cols = st.columns(3)
-    for idx, exp_set in enumerate(experiment_sets):
-        total_tries = sum(exp["num_try"] for exp in exp_set["experiments"])
-        total_successes = sum(exp["num_success"] for exp in exp_set["experiments"])
+    status_codes = {
+        "pending": {"text": "Experiments did not start yet", "color": "yellow"},
+        "running": {"text": "Experiments are running", "color": "orange"},
+        "finished": {"text": "All experiments are finished", "color": "green"},
+    }
 
-        status = "OK" if total_tries == total_successes else "FAILURE"
-        status_color = "green" if status == "OK" else "orange"
+    for idx, exp_set in enumerate(experiment_sets):
+        total_answer_tries = sum(exp["num_try"] for exp in exp_set["experiments"])
+        total_answer_successes = sum(exp["num_success"] for exp in exp_set["experiments"])
+        total_observation_tries = sum(exp["num_observation_try"] for exp in exp_set["experiments"])
+        total_observation_successes = sum(
+            exp["num_observation_success"] for exp in exp_set["experiments"]
+        )
+
+        # Running status
+        if all(exp["experiment_status"] == "pending" for exp in exp_set["experiments"]):
+            status = status_codes["pending"]
+        elif all(exp["experiment_status"] == "finished" for exp in exp_set["experiments"]):
+            status = status_codes["finished"]
+        else:
+            status = status_codes["running"]
+
+        # Failure status
+        has_failure = False
+        if total_observation_tries > total_observation_successes:
+            has_failure = True
+
+        status_description = status["text"]
+        status_color = status["color"]
+        if has_failure:
+            status_description += " with some failure"
+            status_color = f"linear-gradient(to right, {status_color} 50%, red 50%)"
 
         when = datetime.fromisoformat(exp_set["created_at"]).strftime("%d %B %Y")
-
         with cols[idx % 3]:
             with st.container(border=True):
                 st.markdown(
                     f"<div style='position: absolute; top: 10px; right: 10px; "
                     f"width: 10px; height: 10px; border-radius: 50%; "
-                    f"background-color: {status_color};' "
-                    f"title='{status}'></div>",
+                    f"background: {status_color};' "
+                    f"title='{status_description}'></div>",
                     unsafe_allow_html=True,
                 )
 
@@ -91,7 +116,7 @@ def display_experiment_sets(experiment_sets):
                 with col3:
                     st.caption(f"Created on {when}")
 
-                if status == "FAILURE":
+                if "fail" in status:
                     with st.expander("Failure Analysis", expanded=False):
                         for exp in exp_set["experiments"]:
                             if exp["num_try"] == exp["num_success"]:
@@ -115,20 +140,8 @@ def display_experiment_details(experimentset, experiments_df):
 
 def main():
     if st.session_state.get("experimentset"):
+        # Get the expet
         experimentset = st.session_state["experimentset"]
-        col1, col2 = st.columns([2, 1])
-        with col1:
-            if st.button(":arrow_left: Go back", key="go_back"):
-                st.session_state["experimentset"] = None
-                st.rerun()
-
-        with col2:
-            if st.button("🔄 Refresh Data"):
-                expid = experimentset['id']
-                experimentset = fetch("get", f"/experiment_set/{expid}")
-                if not experimentset:
-                    raise ValueError("experimentset not found: %s" % expid)
-                st.session_state["experimentset"] = experimentset
 
         # Build the expset dataframe
         experiments_df = pd.DataFrame(
@@ -140,12 +153,32 @@ def main():
                     "Created at": exp["created_at"],
                     "Num try": exp["num_try"],
                     "Num success": exp["num_success"],
+                    "Num observation try": exp["num_observation_try"],
+                    "Num observation success": exp["num_observation_success"],
                 }
                 for exp in experimentset.get("experiments", [])
             ]
         )
         experiments_df.sort_values(by="Id", ascending=True, inplace=True)
 
+        # Horizontal menu toolbar
+        # --
+        col1, col2 = st.columns([2, 1])
+        with col1:
+            if st.button(":arrow_left: Go back", key="go_back"):
+                st.session_state["experimentset"] = None
+                st.rerun()
+
+        with col2:
+            if st.button("🔄 Refresh Data"):
+                expid = experimentset["id"]
+                experimentset = fetch("get", f"/experiment_set/{expid}")
+                if not experimentset:
+                    raise ValueError("experimentset not found: %s" % expid)
+                st.session_state["experimentset"] = experimentset
+
+        # Display tabs
+        # --
         tab1, tab2, tab3 = st.tabs(["Set Overview", "Results", "Detail by experiment id"])
 
         def show_warning_in_tabs(message):
@@ -157,10 +190,12 @@ def main():
                 st.warning(message)
 
         df = experiments_df  # alias
-        if df["Num success"].sum() != df["Num try"].sum() and (df["Status"] == "finished").all():
-            show_warning_in_tabs("Warning: some experiments are failed.")
         if not (df["Status"] == "finished").all():
             show_warning_in_tabs("Warning: some experiments are not finished.")
+        if df["Num success"].sum() != df["Num try"].sum():
+            show_warning_in_tabs("Warning: some experiments are failed.")
+        if df["Num observation success"].sum() != df["Num observation try"].sum():
+            show_warning_in_tabs("Warning: some metrics are failed.")
 
         with tab1:
             display_experiment_set_overview(experimentset, experiments_df)

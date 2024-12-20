@@ -5,7 +5,7 @@ from typing import Any, Literal, Optional
 
 import numpy as np
 import pandas as pd
-from pydantic import BaseModel, ConfigDict, create_model
+from pydantic import BaseModel, ConfigDict, create_model, Field
 from sqlalchemy.orm import Session
 
 import api.models as models
@@ -162,6 +162,7 @@ class ModelCreate(ModelBase):
 class Model(ModelBase):
     id: int
 
+
 class ModelWithKeys(Model):
     api_key: str
 
@@ -249,6 +250,10 @@ class ExperimentCreate(ExperimentBase):
         else:
             dataset = models.Dataset(**obj["dataset"])
         obj["dataset"] = dataset
+        if dataset.has_output:
+            df = pd.read_json(StringIO(dataset))
+            obj["num_try"] = dataset.size
+            obj["num_success"] = df["output"].count()
 
         # Handle Results
         results = []
@@ -296,8 +301,14 @@ class Experiment(ExperimentBase):
     id: int
     created_at: datetime
     experiment_status: ExperimentStatus
-    num_try: int
-    num_success: int
+    num_try: int = Field(description="How many output/answers were attempted to be generated.")
+    num_success: int = Field(description="How many output/answers were successfully generated.")
+    num_observation_try: int = Field(
+        description="How many metric observations were attempted to be generated."
+    )
+    num_observation_success: int = Field(
+        description="How many metric observations were successfully generated."
+    )
 
     dataset: Dataset
     model: Model | None
