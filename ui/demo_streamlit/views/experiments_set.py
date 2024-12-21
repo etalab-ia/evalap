@@ -59,11 +59,11 @@ def display_experiment_set_overview(expset, experiments_df):
     status, counts = _get_expset_status(expset)
     st.write(f"## Overview of experiment set: {expset['name']}")
     st.write(f"experiment_set id: {expset['id']}")
-    finished_ratio = counts["total_observation_successes"] // counts["observation_length"] * 100
+    finished_ratio = int(counts["total_observation_successes"] / counts["observation_length"] * 100)
     st.markdown(f"Finished: {finished_ratio}%", unsafe_allow_html=True)
-    failure_ratio = (
+    failure_ratio = int(
         (counts["total_observation_tries"] - counts["total_observation_successes"])
-        // counts["observation_length"]
+        / counts["observation_length"]
         * 100
     )
     if failure_ratio > 0:
