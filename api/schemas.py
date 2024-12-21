@@ -92,7 +92,6 @@ class DatasetCreate(DatasetBase):
 
         has_query = "query" in df.columns
         has_output = "output" in df.columns
-        has_output_true = "output_true" in df.columns
 
         if not (has_query or has_output):
             raise SchemaError("Your dataset needs at least a column 'query' or 'ouput'.")
@@ -100,7 +99,6 @@ class DatasetCreate(DatasetBase):
         return {
             "has_query": has_query,
             "has_output": has_output,
-            "has_output_true": has_output_true,
             "size": len(df),
             "columns": list(df.columns),
             **obj,
@@ -112,7 +110,6 @@ class Dataset(DatasetBase):
     created_at: datetime
     has_query: bool
     has_output: bool
-    has_output_true: bool
     size: int
     columns: list[str]
 
@@ -262,12 +259,9 @@ class ExperimentCreate(ExperimentBase):
         obj["results"] = results
 
         # Validate Model and metric compatibility
+        # --
         mr = metric_registry
-        needs_query = any("query" in mr.get_metric(m).require for m in self.metrics)
         needs_output = any("output" in mr.get_metric(m).require for m in self.metrics)
-        needs_output_true = any("output_true" in mr.get_metric(m).require for m in self.metrics)
-        if needs_query and not dataset.has_query:
-            raise SchemaError("You need to provide a query for this metric. ")
         if needs_output and not self.model and not dataset.has_output:
             raise SchemaError(
                 "You need to provide an answer for this metric. "
@@ -278,18 +272,23 @@ class ExperimentCreate(ExperimentBase):
                 "You need to provide an answer for this metric. "
                 "Either provide a dataset with the 'query' field to generate the answer or with an 'output' field if have generated it yourself."
             )
-
-        if needs_output_true and not dataset.has_output_true:
-            raise SchemaError(
-                "You need to provide a ground truth for this metric. "
-                "Your dataset needs to have an 'output_true' field."
-            )
-
         if dataset.has_output and self.model:
             raise SchemaError(
                 "You can't give at the same time a model and a dataset with an answer ('output' column). "
                 "Gives either one or the other."
             )
+        # Schema validation on all require fields
+        require_fields = {
+            require for metric in self.metrics for require in mr.get_metric(metric).require
+        }
+        for require in require_fields:
+            if require in ["output"]:
+                continue
+            if require not in dataset.columns:
+                raise SchemaError(
+                    f"You need to provide a `{require}` for this metric. "
+                    f"Your dataset needs to have an `{require}` field."
+                )
 
         return {
             "experiment_status": "pending",
