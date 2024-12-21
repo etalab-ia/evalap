@@ -78,7 +78,6 @@ class Dataset(Base):
     columns = Column(JSON)  # list[str]
     has_query = Column(Boolean)
     has_output = Column(Boolean)
-    has_output_true = Column(Boolean)
     size = Column(Integer)
     readme = Column(Text)
 
