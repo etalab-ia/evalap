@@ -13,7 +13,8 @@ def main():
     datasets = fetch("get", "/datasets")
     if not datasets:
         return
-
+    
+    # Main content
     main_content, right_menu = st.columns([8, 2])
 
     with main_content:
