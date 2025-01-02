@@ -1,3 +1,4 @@
+import os
 import requests
 import streamlit as st
 
@@ -19,3 +20,7 @@ def fetch(method, endpoint, data=None):
     else:
         st.error(f"Failed to fetch data from {endpoint}.")
         return None
+
+def load_css(file_name):
+    with open(os.path.join("ui", "demo_streamlit", "static", "css", file_name)) as f:
+        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
