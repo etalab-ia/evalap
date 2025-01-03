@@ -78,7 +78,6 @@ class Dataset(Base):
     columns = Column(JSON)  # list[str]
     has_query = Column(Boolean)
     has_output = Column(Boolean)
-    has_output_true = Column(Boolean)
     size = Column(Integer)
     readme = Column(Text)
 
@@ -130,7 +129,7 @@ class ObservationTable(Base):
     result = relationship("Result", back_populates="observation_table")
 
     __table_args__ = (
-        UniqueConstraint('num_line', 'result_id', name='_metric_num_line_unique_constraint'),
+        UniqueConstraint("num_line", "result_id", name="_metric_num_line_unique_constraint"),
     )
 
 
@@ -151,7 +150,7 @@ class Answer(Base):
     experiment = relationship("Experiment", back_populates="answers")
 
     __table_args__ = (
-        UniqueConstraint('num_line', 'experiment_id', name='_answer_num_line_unique_constraint'),
+        UniqueConstraint("num_line", "experiment_id", name="_answer_num_line_unique_constraint"),
     )
 
 
@@ -175,6 +174,10 @@ class Experiment(Base):
     @property
     def num_observation_success(self):
         return sum(result.num_success for result in self.results)
+
+    @property
+    def num_metrics(self):
+        return len(self.results)
 
     # One
     dataset_id = Column(Integer, ForeignKey("datasets.id"))

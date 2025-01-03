@@ -13,10 +13,10 @@ def main():
     datasets = fetch("get", "/datasets")
     if not datasets:
         return
-
+    
+    # Main content
     main_content, right_menu = st.columns([8, 2])
 
-    # Main content
     with main_content:
         with st.container():
             st.write("""Avalaible datasets
@@ -25,7 +25,6 @@ def main():
         for dataset in datasets:
             when = datetime.fromisoformat(dataset["created_at"]).strftime("%d %B %Y")
             with st.container():
-                # Add an anchor for navigation
                 st.markdown(
                     f"<div id='{dataset['name'].lower().replace(' ', '-')}'></div>",
                     unsafe_allow_html=True,
@@ -44,7 +43,6 @@ def main():
                     st.caption(f"Created the {when}")
                 st.divider()
 
-    # Navigation menu
     with right_menu:
         st.markdown("###### Quick Navigation")
         for dataset in datasets:

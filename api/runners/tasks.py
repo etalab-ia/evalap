@@ -166,11 +166,10 @@ def generate_observation(message: dict):
             else:
                 score = metric_result
 
-            if isinstance(score, float):
-                # Fix SQL schema error with np.float64 !
-                score = float(score)
+            if isinstance(score, (float, int)):
+                # Fix SQL schema error with np.float64/int64
+                score = score.item() if hasattr(score, "item") else score
             elif score is not None:
-                score = None
                 raise ValueError("Unsuported score type: %s %s" % (type(score), score))
 
             # Upsert obsevation
