@@ -96,7 +96,7 @@ def main():
                 if metric_name != DEFAULT_METRIC or dataset_filter:
                     leaderboard_data = fetch_leaderboard(metric_name, dataset_filter)
                 
-                st.write(f"## 🏆 Top Performing LLMs Leaderboard - {metric_name.replace('_', ' ').title()}")
+                st.write(f"## 🏆 Top Performing LLMs - {metric_name.replace('_', ' ').title()}")
                 if dataset_filter:
                     st.write(f"Dataset: {dataset_filter}")
                 st.write("")
