@@ -164,6 +164,10 @@ class Model(ModelBase):
 class ModelWithKeys(Model):
     api_key: str
 
+class ModelRaw(EgBaseModel):
+    name: str
+    output: list[str]
+    retrieval_context: list[list[str]] | None = None
 
 #
 # Result
@@ -235,7 +239,7 @@ class ExperimentBase(EgBaseModel):
 class ExperimentCreate(ExperimentBase):
     metrics: list[MetricEnum]
     dataset: DatasetCreate | str
-    model: ModelCreate | None = None
+    model: ModelCreate | ModelRaw
 
     def to_table_init(self, db: Session) -> dict:
         obj = self.recurse_table_init(db)
