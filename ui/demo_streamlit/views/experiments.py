@@ -1,40 +1,37 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-from typing import Dict, List, Tuple, Optional
 from utils import fetch
 from io import StringIO
 
 # Constants for warning
+# @DEBUG this. The enum value for the available status should be used with literral from the api schema
+# or at least use the saùe interface than in experiments_set.py. see the variable `status_codes`
 FINISHED_STATUS = "finished"
-UNKNOWN_DATASET = "Unknown Dataset"
 UNKNOWN_MODEL = "Unknown Model"
 
 @st.cache_data
-def fetch_all_experiments() -> List[Dict]:
+def fetch_all_experiments() -> list[dict]:
     return fetch("get", "/experiments")
 
 @st.cache_data
-def fetch_experiment_results(exp_id: int) -> Dict:
+def fetch_experiment_results(exp_id: int) -> dict:
     return fetch("get", f"/experiment/{exp_id}", {"with_dataset": "true"})
 
-def process_experiment_data(response: Dict) -> Tuple[Optional[pd.DataFrame], str, str]:
-    if not response:
-        return None, UNKNOWN_DATASET, UNKNOWN_MODEL
+def process_experiment_results(experiment: dict) -> pd.DataFrame | None:
+    df = pd.read_json(StringIO(experiment["dataset"]["df"]))
 
-    df = pd.read_json(StringIO(response["dataset"]["df"]))
+    if "answers" in experiment:
+        df["answer"] = df.index.map({answer["num_line"]: answer["answer"] for answer in experiment["answers"]})
 
-    if "answers" in response:
-        df["answer"] = df.index.map({answer["num_line"]: answer["answer"] for answer in response["answers"]})
-
-    if "results" in response:
-        for result in response["results"]:
+    if "results" in experiment:
+        for result in experiment["results"]:
             metric_name = result["metric_name"]
             df[f"result_{metric_name}"] = df.index.map({obs["num_line"]: obs["score"] for obs in result["observation_table"]})
 
-    return df, response.get("dataset", {}).get("name", UNKNOWN_DATASET), response.get("model", {}).get("name", UNKNOWN_MODEL)
+    return df
 
-def calculate_metric_stats(arr: np.array) -> Dict[str, float]:
+def calculate_metric_stats(arr: np.array) -> dict[str, float]:
     return {
         "mean": np.mean(arr),
         "std": np.std(arr),
@@ -43,9 +40,9 @@ def calculate_metric_stats(arr: np.array) -> Dict[str, float]:
         "support": len(arr)
     }
 
-def process_experiment_results(experiment: Dict) -> pd.DataFrame:
+def process_experiment_aggregated_results(experiment: dict) -> pd.DataFrame:
     df_metrics = {
-        metric_results["metric_name"]: pd.DataFrame([calculate_metric_stats(np.array([x["score"] for x in metric_results["observation_table"] if pd.notna(x["score"])]))]) 
+        metric_results["metric_name"]: pd.DataFrame([calculate_metric_stats(np.array([x["score"] for x in metric_results["observation_table"] if pd.notna(x["score"])]))])
         for metric_results in experiment.get("results", [])
         if len([x["score"] for x in metric_results["observation_table"] if pd.notna(x["score"])]) > 0
     }
@@ -55,7 +52,7 @@ def process_experiment_results(experiment: Dict) -> pd.DataFrame:
     )
 
 @st.cache_data
-def preprocess_experiments(experiments: List[Dict]) -> pd.DataFrame:
+def preprocess_experiments(experiments: list[dict]) -> pd.DataFrame:
     formatted_experiments = [
         {
             "id": exp["id"],
@@ -76,17 +73,17 @@ def display_experiment_results(exp_id: int):
     if not experiment:
         st.error(f"No results found for experiment {exp_id}")
         return
-
     if experiment["experiment_status"] != FINISHED_STATUS:
         st.warning(f"Experiment {exp_id} is not finished yet...")
-
     if experiment["num_success"] != experiment["num_try"]:
         st.warning("Warning: some experiments have failed.")
     if experiment["num_observation_success"] != experiment["num_observation_try"]:
         st.warning("Warning: some metrics have failed.")
 
+    dataset_name = experiment["dataset"]["name"]
+    model_name =  experiment.get("model") or UNKNOWN_MODEL
+    aggregated_df = process_experiment_aggregated_results(experiment)
     results_df = process_experiment_results(experiment)
-    df_with_results, dataset_name, model_name = process_experiment_data(experiment)
 
     cols = st.columns(3)
     cols[0].write(f"**Dataset:** {dataset_name}")
@@ -94,10 +91,10 @@ def display_experiment_results(exp_id: int):
 
     if not results_df.empty:
         st.subheader("Aggregated Results")
-        st.dataframe(results_df)
-        
+        st.dataframe(aggregated_df)
+
         st.subheader("Detailed Results")
-        st.dataframe(df_with_results)
+        st.dataframe(results_df)
     else:
         st.info("No results available for this experiment.")
 
@@ -107,12 +104,12 @@ def main():
 
     st.subheader("All Experiments (finished)")
     experiments = fetch_all_experiments()
-    
+
     if not experiments:
         st.error("No experiments found.")
     else:
         df = preprocess_experiments(experiments)
-        
+
         metric_columns = [col for col in df.columns if col.endswith("_score")]
         df = df[df[metric_columns].notna().any(axis=1)]
 
