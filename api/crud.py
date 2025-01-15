@@ -246,7 +246,7 @@ def update_experimentset(
     return db_expset
 
 
-def remove_db_expset(db: Session, experimentset_id: int) -> bool:
+def remove_experimentset(db: Session, experimentset_id: int) -> bool:
     db_expset = db.query(models.ExperimentSet).get(experimentset_id)
     if db_expset is None:
         return False
@@ -354,7 +354,7 @@ def get_leaderboard(db: Session, metric_name: str = "judge_notator", dataset_nam
             .filter(and_(models.Result.experiment_id == result.experiment_id,
                          models.Result.metric_name != metric_name))\
             .all()
-        
+
         entry = schemas.LeaderboardEntry(
             experiment_id=result.experiment_id,
             model_name=result.model_name,
