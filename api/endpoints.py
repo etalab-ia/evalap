@@ -147,11 +147,14 @@ def patch_experiment(
     return db_exp
 
 
-@router.delete("/experiment/{id}")
+@router.delete(
+    "/experiment/{id}",
+    tags=["experiments"],
+)
 def delete_experiment(
     id: int,
     db: Session = Depends(get_db),
-    tags=["experiments"],
+    admin_check=Depends(admin_only),
 ):
     if not crud.remove_experiment(db, id):
         raise HTTPException(status_code=404, detail="Experiment not found")
@@ -335,11 +338,12 @@ def retry_runs(id: int, db: Session = Depends(get_db)):
 # LeaderBoard
 #
 
+
 @router.get("/leaderboard", response_model=schemas.Leaderboard, tags=["leaderboard"])
 def read_leaderboard(
     metric_name: str = "judge_notator",
     dataset_name: str = None,
     limit: int = 100,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     return crud.get_leaderboard(db, metric_name=metric_name, dataset_name=dataset_name, limit=limit)
