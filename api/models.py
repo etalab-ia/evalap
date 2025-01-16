@@ -206,3 +206,20 @@ class ExperimentSet(Base):
 
     # Many
     experiments = relationship("Experiment", back_populates="experiment_set")
+
+
+#
+# LOCUST
+#
+
+
+class LocustRun(Base):
+    __tablename__ = "locustrun"
+
+    id = Column(Integer, primary_key=True)
+    created_at = Column(DateTime, server_default=func.now())
+    scenario = Column(Text)
+    model = Column(Text)
+    api_url = Column(Text)
+    stats_df = Column(Text)
+    history_df = Column(Text)

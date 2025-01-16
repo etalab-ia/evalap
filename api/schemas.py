@@ -427,7 +427,6 @@ class RetryRuns(EgBaseModel):
     result_ids: list[int]
 
 
-
 #
 # LeaderBoard
 #
@@ -439,11 +438,34 @@ class LeaderboardEntry(EgBaseModel):
     dataset_name: str
     main_metric_score: float | None
     other_metrics: dict[str, float | None]
-    sampling_param: dict[str, str | None]  
-    extra_param: dict[str, str | None]     
+    sampling_param: dict[str, str | None]
+    extra_param: dict[str, str | None]
 
 
 class Leaderboard(EgBaseModel):
     entries: list[LeaderboardEntry]
 
 
+#
+# LOCUST
+#
+
+
+class LocustRunBase(EgBaseModel):
+    metric_name: MetricEnum
+    scenario: str = Field(..., description="The locust scenario name.")
+    model: str | None = Field(None, description="The LLM model name/id targeted if any.")
+    api_url: str = Field(..., description="The url targeted.")
+    stats_df: str = Field(..., description="The stats csv file serialzed as a dataframe.")
+    history_df: str = Field(
+        ..., description="The stats history CSV file serialized as a dataframe."
+    )
+
+
+class LocustRunCreate(LocustRunBase):
+    pass
+
+
+class LocustRun(LocustRunBase):
+    id: int
+    created_at: datetime

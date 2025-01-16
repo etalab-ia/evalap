@@ -347,3 +347,37 @@ def read_leaderboard(
     db: Session = Depends(get_db),
 ):
     return crud.get_leaderboard(db, metric_name=metric_name, dataset_name=dataset_name, limit=limit)
+
+
+#
+# LOCUST
+#
+
+
+@router.post(
+    "/locust",
+    response_model=schemas.LocustRun,
+    description="""Save a locust run.
+
+    To format the locust CSV as a dataframe, here is how you must convert it to a dataframe:
+    ```
+    import pandas as pd
+    import requests
+    stats_df = pd.read_csv("stats.csv").to_json()
+
+    # Then you can just pass the data in the POST request along the other parameters.
+    ```
+    """,
+    tags=["locust"],
+)
+def create_locustrun(run: schemas.LocustRunCreate, db: Session = Depends(get_db)):
+    try:
+        db_run = crud.create_locustrun(db, run)
+        return db_run
+
+    except (SchemaError, ValidationError) as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except IntegrityError as e:
+        return CustomIntegrityError.from_integrity_error(e.orig).to_http_response()
+    except Exception as e:
+        raise e
