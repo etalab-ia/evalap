@@ -307,18 +307,19 @@ def upsert_observation(
     return db_observation
 
 
-
-
 #
 # LeaderBoard
 #
 
 
-def get_leaderboard(db: Session, metric_name: str = "judge_notator", dataset_name: str = None, limit: int = 100):
+def get_leaderboard(
+    db: Session, metric_name: str = "judge_notator", dataset_name: str = None, limit: int = 100
+):
     # Filter Experiment by dataset and metric
     main_metric_subquery = (
-        db.query(models.Result.experiment_id,
-                 func.max(models.ObservationTable.score).label('main_score'))
+        db.query(
+            models.Result.experiment_id, func.max(models.ObservationTable.score).label("main_score")
+        )
         .join(models.ObservationTable)
         .filter(models.Result.metric_name == metric_name)
         .group_by(models.Result.experiment_id)
@@ -327,12 +328,14 @@ def get_leaderboard(db: Session, metric_name: str = "judge_notator", dataset_nam
 
     # Query
     query = (
-        db.query(models.Experiment.id.label('experiment_id'),
-                 models.Model.name.label('model_name'),
-                 models.Dataset.name.label('dataset_name'),
-                 main_metric_subquery.c.main_score.label('main_metric_score'),
-                 models.Model.sampling_params,
-                 models.Model.extra_params)
+        db.query(
+            models.Experiment.id.label("experiment_id"),
+            models.Model.name.label("model_name"),
+            models.Dataset.name.label("dataset_name"),
+            main_metric_subquery.c.main_score.label("main_metric_score"),
+            models.Model.sampling_params,
+            models.Model.extra_params,
+        )
         .join(models.Model)
         .join(models.Dataset)
         .join(main_metric_subquery, models.Experiment.id == main_metric_subquery.c.experiment_id)
@@ -341,7 +344,7 @@ def get_leaderboard(db: Session, metric_name: str = "judge_notator", dataset_nam
     if dataset_name:
         query = query.filter(models.Dataset.name == dataset_name)
 
-    query = query.order_by(desc('main_metric_score')).limit(limit)
+    query = query.order_by(desc("main_metric_score")).limit(limit)
 
     # Execute
     results = query.all()
@@ -349,11 +352,17 @@ def get_leaderboard(db: Session, metric_name: str = "judge_notator", dataset_nam
     # Fetch result in leaderboard
     entries = []
     for result in results:
-        other_metrics = db.query(models.Result.metric_name, models.ObservationTable.score)\
-            .join(models.ObservationTable)\
-            .filter(and_(models.Result.experiment_id == result.experiment_id,
-                         models.Result.metric_name != metric_name))\
+        other_metrics = (
+            db.query(models.Result.metric_name, models.ObservationTable.score)
+            .join(models.ObservationTable)
+            .filter(
+                and_(
+                    models.Result.experiment_id == result.experiment_id,
+                    models.Result.metric_name != metric_name,
+                )
+            )
             .all()
+        )
 
         entry = schemas.LeaderboardEntry(
             experiment_id=result.experiment_id,
@@ -362,9 +371,22 @@ def get_leaderboard(db: Session, metric_name: str = "judge_notator", dataset_nam
             main_metric_score=result.main_metric_score,
             other_metrics={metric: score for metric, score in other_metrics},
             sampling_param={k: str(v) for k, v in (result.sampling_params or {}).items()},
-            extra_param={k: str(v) for k, v in (result.extra_params or {}).items()}
+            extra_param={k: str(v) for k, v in (result.extra_params or {}).items()},
         )
         entries.append(entry)
 
     return schemas.Leaderboard(entries=entries)
 
+
+#
+# LOCUST
+#
+
+
+def create_locustrun(db: Session, run: schemas.LocustRunCreate) -> models.LocustRun:
+    run = run.to_table_init(db) if isinstance(run, schemas.EgBaseModel) else run
+    db_run = create_object_from_dict(db, models.LocustRun, run)
+    db.add(db_run)
+    db.commit()
+    db.refresh(db_run)
+    return db_run
