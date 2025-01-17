@@ -395,7 +395,7 @@ def create_locustrun(db: Session, run: schemas.LocustRunCreate) -> models.Locust
 def get_locustrun(db: Session, run_id: int) -> models.LocustRun | None:
     return db.query(models.LocustRun).filter(models.LocustRun.id == run_id).first()
 
-def get_chats(
+def get_locustruns(
     db: Session, skip: int = 0, limit: int = 100, backward: bool = False
 ) -> list[models.LocustRun]:
     query = db.query(models.LocustRun)
