@@ -452,20 +452,25 @@ class Leaderboard(EgBaseModel):
 
 
 class LocustRunBase(EgBaseModel):
-    metric_name: MetricEnum
     scenario: str = Field(..., description="The locust scenario name.")
     model: str | None = Field(None, description="The LLM model name/id targeted if any.")
     api_url: str = Field(..., description="The url targeted.")
+
+
+class LocustRunCreate(LocustRunBase):
     stats_df: str = Field(..., description="The stats csv file serialzed as a dataframe.")
     history_df: str = Field(
         ..., description="The stats history CSV file serialized as a dataframe."
     )
 
 
-class LocustRunCreate(LocustRunBase):
-    pass
-
-
 class LocustRun(LocustRunBase):
     id: int
     created_at: datetime
+
+
+class LocustRunFull(LocustRun):
+    stats_df: str = Field(..., description="The stats csv file serialzed as a dataframe.")
+    history_df: str = Field(
+        ..., description="The stats history CSV file serialized as a dataframe."
+    )

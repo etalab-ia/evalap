@@ -390,3 +390,17 @@ def create_locustrun(db: Session, run: schemas.LocustRunCreate) -> models.Locust
     db.commit()
     db.refresh(db_run)
     return db_run
+
+
+def get_locustrun(db: Session, run_id: int) -> models.LocustRun | None:
+    return db.query(models.LocustRun).filter(models.LocustRun.id == run_id).first()
+
+def get_chats(
+    db: Session, skip: int = 0, limit: int = 100, backward: bool = False
+) -> list[models.LocustRun]:
+    query = db.query(models.LocustRun)
+    if backward:
+        query = query.order_by(models.LocustRun.id.desc())
+    else:
+        query = query.order_by(models.LocustRun.id.asc())
+    return query.offset(skip).limit(limit).all()

@@ -381,3 +381,43 @@ def create_locustrun(run: schemas.LocustRunCreate, db: Session = Depends(get_db)
         return CustomIntegrityError.from_integrity_error(e.orig).to_http_response()
     except Exception as e:
         raise e
+
+
+@router.get(
+    "/locust/runs",
+    response_model=list[schemas.LocustRun],
+    description="Get the list of locust runs",
+    tags=["locust"],
+)
+def get_locustruns(
+    skip: int = 0, limit: int = 100, backward: bool = True, db: Session = Depends(get_db)
+):
+    try:
+        db_runs = crud.get_locustruns(db, skip=skip, limit=limit, backward=backward)
+        return db_runs
+
+    except (SchemaError, ValidationError) as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except IntegrityError as e:
+        return CustomIntegrityError.from_integrity_error(e.orig).to_http_response()
+    except Exception as e:
+        raise e
+
+
+@router.get(
+    "/locust/{id}",
+    response_model=schemas.LocustRunFull,
+    description="Get locust run with data.",
+    tags=["locust"],
+)
+def get_locustrun(run_id: int, db: Session = Depends(get_db)):
+    try:
+        db_run = crud.get_locustrun(db, run_id)
+        return db_run
+
+    except (SchemaError, ValidationError) as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except IntegrityError as e:
+        return CustomIntegrityError.from_integrity_error(e.orig).to_http_response()
+    except Exception as e:
+        raise e
