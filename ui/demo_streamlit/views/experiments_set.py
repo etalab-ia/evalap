@@ -67,7 +67,9 @@ def display_experiment_set_overview(expset, experiments_df):
     status, counts = _get_expset_status(expset)
     st.markdown(f"## Overview of experiment set: ~~ {expset['name']} ~~")
     st.markdown(f"experiment_set id: {expset['id']}")
-    finished_ratio = int(counts["total_observation_successes"] // counts["observation_length"] * 100)
+    finished_ratio = int(
+        counts["total_observation_successes"] // counts["observation_length"] * 100
+    )
     st.markdown(f"Finished: {finished_ratio}%", unsafe_allow_html=True)
     failure_ratio = int(
         (counts["total_observation_tries"] - counts["total_observation_successes"])
@@ -78,8 +80,7 @@ def display_experiment_set_overview(expset, experiments_df):
         st.markdown(
             f"Failure: <span style='color:red;'>{failure_ratio}%</span>", unsafe_allow_html=True
         )
-        
- 
+
     st.markdown(expset.get("readme", "No description available"))
 
     row_height = 35
@@ -182,7 +183,7 @@ def process_experiment_results(experimentset):
     rows = []
     metrics = set()
     experiment_names = [exp["name"] for exp in experimentset.get("experiments", [])]
-    
+
     is_repeat_mode = _check_repeat_mode(experiment_names)
 
     for exp in experimentset.get("experiments", []):
@@ -194,15 +195,19 @@ def process_experiment_results(experimentset):
         if not response:
             continue
 
-        model_name = response["model"]["name"]
-        extra_params = response["model"].get("extra_params", {})
+        if "model" in response:
+            model_name = response["model"]["name"]
+            extra_params = response["model"].get("extra_params")
+
         variant = _extract_experiment_variant(extra_params)
         row = {"model": f"{model_name}_{variant}" if variant else model_name}
 
         for metric_results in response.get("results", []):
             metric = metric_results["metric_name"]
             metrics.add(metric)
-            scores = [x["score"] for x in metric_results["observation_table"] if pd.notna(x.get("score"))]
+            scores = [
+                x["score"] for x in metric_results["observation_table"] if pd.notna(x.get("score"))
+            ]
             if scores:
                 row[f"{metric}_mean"] = np.mean(scores)
                 row[f"{metric}_std"] = np.std(scores)
@@ -215,9 +220,11 @@ def process_experiment_results(experimentset):
         return None
 
     df = pd.DataFrame(rows)
-    
-    if is_repeat_mode:
-        df = df.groupby("model").agg({col: ['mean', 'std'] for col in df.columns if col.endswith('_mean')})
+
+    if is_repeat_mode and "model":
+        df = df.groupby("model").agg(
+            {col: ["mean", "std"] for col in df.columns if col.endswith("_mean")}
+        )
         df.columns = [f"{col[0]}_{col[1]}" for col in df.columns]
     else:
         default_sort_metric = _find_default_sort_metric(metrics)
@@ -226,51 +233,56 @@ def process_experiment_results(experimentset):
 
     return df
 
-def _check_repeat_mode(experiment_names):
+
+def _check_repeat_mode(experiment_names) -> bool:
     """
     check whether the experiment is related to a repetition
     """
     if len(experiment_names) <= 1:
         return False
-    
-    base_names = [name.rsplit('_', 1)[0] for name in experiment_names]
-    
+
+    base_names = [name.rsplit("_", 1)[0] for name in experiment_names]
+
     if len(set(base_names)) == 1:
-        suffixes = [name.split('_')[-1] for name in experiment_names]
+        suffixes = [name.split("_")[-1] for name in experiment_names]
         return all(suffix.isdigit() for suffix in suffixes)
-    
+
     return False
 
-def _extract_experiment_variant(extra_params: dict):
+
+def _extract_experiment_variant(extra_params: dict | None) -> str | None:
     """
     extract a meaningful variant identifier from extra parameters.
     """
     if not extra_params:
-        return ""
-    
+        return None
+
     if "rag" in extra_params:
         if "limit" in extra_params["rag"]:
             return f"limit_{extra_params['rag']['limit']}"
-    
+
     return str(list(extra_params.keys())[0]) if extra_params else ""
+
 
 def _find_default_sort_metric(metrics):
     """
     find a sensible default metric for sorting results.
     """
-    preferred_metrics = ['judge_exactness', 'contextual_relevancy']
+    preferred_metrics = ["judge_exactness", "contextual_relevancy"]
     for metric in preferred_metrics:
         if metric in metrics:
             return f"{metric}_mean"
-    
+
     return list(metrics)[0] + "_mean" if metrics else None
+
 
 def display_experiment_results(experimentset):
     results_df = process_experiment_results(experimentset)
-    
+
     if results_df is not None:
         st.write("### Experiment Results")
         st.dataframe(results_df)
+
 
 def display_experiment_set_result(experimentset, experiments_df):
     st.write("## Results of the Experiment Set")
@@ -286,7 +298,9 @@ def display_experiment_set_result(experimentset, experiments_df):
         with cols[0]:
             st.write(f"Total Experiments: {total_experiments}")
         with cols[1]:
-            st.write(f"Failure Experiments: {total_experiments - (experiments_df['Num success'] > 0).sum()}")
+            st.write(
+                f"Failure Experiments: {total_experiments - (experiments_df['Num success'] > 0).sum()}"
+            )
 
 
 def main():
