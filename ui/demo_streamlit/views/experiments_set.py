@@ -195,12 +195,12 @@ def process_experiment_results(experimentset):
         if not response:
             continue
 
+        row = {}
         if response.get("model"):
             model_name = response["model"]["name"]
             extra_params = response["model"].get("extra_params")
-
-        variant = _extract_experiment_variant(extra_params)
-        row = {"model": f"{model_name}_{variant}" if variant else model_name}
+            variant = _extract_experiment_variant(extra_params)
+            row["model"] = f"{model_name}_{variant}" if variant else model_name
 
         for metric_results in response.get("results", []):
             metric = metric_results["metric_name"]
