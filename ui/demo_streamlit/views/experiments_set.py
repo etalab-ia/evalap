@@ -195,7 +195,7 @@ def process_experiment_results(experimentset):
         if not response:
             continue
 
-        if "model" in response:
+        if response.get("model"):
             model_name = response["model"]["name"]
             extra_params = response["model"].get("extra_params")
 
