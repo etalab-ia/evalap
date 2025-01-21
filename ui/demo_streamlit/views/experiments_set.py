@@ -171,7 +171,12 @@ def display_experiment_details(experimentset, experiments_df):
                 st.write(f"**Dataset:** {dataset_name}")
             with cols[2]:
                 st.write(f"**Model:** {model_name}")
-            st.dataframe(df_with_results)
+            st.dataframe(
+                df_with_results,
+                use_container_width=True,
+                hide_index=True,
+                column_config={"Id": st.column_config.TextColumn(width="small")},
+            )
         else:
             st.error("Failed to fetch experiment data")
 
@@ -229,6 +234,7 @@ def process_experiment_results(experimentset):
     else:
         df["Id"] = experiment_ids
         df["Name"] = experiment_names
+        df = df[["Id", "Name"] + [col for col in df.columns if col not in ["Id", "Name"]]]
         default_sort_metric = _find_default_sort_metric(metrics)
         if default_sort_metric and f"{default_sort_metric}_mean" in df.columns:
             df = df.sort_values(by=f"{default_sort_metric}_mean", ascending=False)
@@ -283,7 +289,12 @@ def display_experiment_results(experimentset):
 
     if results_df is not None:
         st.write("### Experiment Results")
-        st.dataframe(results_df)
+        st.dataframe(
+            results_df,
+            use_container_width=True,
+            hide_index=True,
+            column_config={"Id": st.column_config.TextColumn(width="small")},
+        )
 
 
 def display_experiment_set_result(experimentset, experiments_df):
