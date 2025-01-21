@@ -458,9 +458,12 @@ class LocustRunBase(EgBaseModel):
 
 
 class LocustRunCreate(LocustRunBase):
-    stats_df: str = Field(..., description="The stats csv file serialzed as a dataframe.")
+    stats_df: str = Field(..., description="The stats csv file serialized as a dataframe.")
     history_df: str = Field(
         ..., description="The stats history CSV file serialized as a dataframe."
+    )
+    custom_history_df: str | None = Field(
+        None, description="Extra stats history serialized as a dataframe."
     )
 
 
@@ -470,7 +473,10 @@ class LocustRun(LocustRunBase):
 
 
 class LocustRunFull(LocustRun):
-    stats_df: str = Field(..., description="The stats csv file serialzed as a dataframe.")
+    stats_df: str = Field(..., description="The stats csv file serialized as a dataframe.")
     history_df: str = Field(
         ..., description="The stats history CSV file serialized as a dataframe."
+    )
+    custom_history_df: str | None = Field(
+        None, description="Extra stats serialized as a dataframe."
     )

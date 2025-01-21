@@ -223,3 +223,4 @@ class LocustRun(Base):
     api_url = Column(Text)
     stats_df = Column(Text)
     history_df = Column(Text)
+    custom_history_df = Column(Text)
