@@ -182,8 +182,8 @@ def process_experiment_results(experimentset):
     """
     rows = []
     metrics = set()
+    experiment_ids = [exp["id"] for exp in experimentset.get("experiments", [])]
     experiment_names = [exp["name"] for exp in experimentset.get("experiments", [])]
-
     is_repeat_mode = _check_repeat_mode(experiment_names)
 
     for exp in experimentset.get("experiments", []):
@@ -227,6 +227,8 @@ def process_experiment_results(experimentset):
         )
         df.columns = [f"{col[0]}_{col[1]}" for col in df.columns]
     else:
+        df["Id"] = experiment_ids
+        df["Name"] = experiment_names
         default_sort_metric = _find_default_sort_metric(metrics)
         if default_sort_metric and f"{default_sort_metric}_mean" in df.columns:
             df = df.sort_values(by=f"{default_sort_metric}_mean", ascending=False)
@@ -290,10 +292,8 @@ def display_experiment_set_result(experimentset, experiments_df):
     total_experiments = len(experiments_df)
     all_successful = (experiments_df["Num try"] == experiments_df["Num success"]).all()
 
-    if all_successful:
-        display_experiment_results(experimentset)
-    else:
-        st.error("Detailed results cannot be displayed as not all experiments are successful")
+    if not all_successful:
+        st.warning("Some experiments are not finished or have errors")
         cols = st.columns(6)
         with cols[0]:
             st.write(f"Total Experiments: {total_experiments}")
@@ -301,6 +301,8 @@ def display_experiment_set_result(experimentset, experiments_df):
             st.write(
                 f"Failure Experiments: {total_experiments - (experiments_df['Num success'] > 0).sum()}"
             )
+
+    display_experiment_results(experimentset)
 
 
 def main():
