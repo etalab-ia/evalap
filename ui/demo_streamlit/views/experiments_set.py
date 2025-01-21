@@ -53,8 +53,8 @@ def _get_experiment_data(exp_id):
             observations = {obs["num_line"]: obs["score"] for obs in result["observation_table"]}
             df[f"result_{metric_name}"] = df.index.map(observations)
 
-    dataset_name = response.get("dataset", {}).get("name", "Unknown Dataset")
-    model_name = response.get("model", {}).get("name", "Unknown Model")
+    dataset_name = response["dataset"]["name"]
+    model_name = response.get("model") or "Unknown Model"
 
     return df, dataset_name, model_name
 
