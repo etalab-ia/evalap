@@ -149,15 +149,25 @@ def get_experiment(db: Session, experiment_id: int) -> models.Experiment | None:
 
 
 def get_experiments(
-    db: Session, set_id: int | None = None, limit: int = 100
+    db: Session,
+    skip: int = 0,
+    limit: int = 100,
+    backward: bool = False,
+    set_id: int | None = None,
+    orphan: bool = False,
 ) -> list[models.Experiment]:
     limit = min(limit, 100)
     query = db.query(models.Experiment).filter_by(is_archived=False)
+    if backward:
+        query = query.order_by(models.Experiment.id.desc())
+    else:
+        query = query.order_by(models.Experiment.id.asc())
+
     if set_id:
-        query = query.filter(models.Experiment.experiment_set_id == set_id).order_by(
-            models.Experiment.created_at.desc()
-        )
-    return query.limit(limit).options(joinedload(models.Experiment.results)).all()
+        query = query.filter(models.Experiment.experiment_set_id == set_id)
+    if orphan:
+        query = query.filter(models.Experiment.experiment_set_id == None)
+    return query.offset(skip).limit(limit).options(joinedload(models.Experiment.results)).all()
 
 
 def update_experiment(
@@ -394,6 +404,7 @@ def create_locustrun(db: Session, run: schemas.LocustRunCreate) -> models.Locust
 
 def get_locustrun(db: Session, run_id: int) -> models.LocustRun | None:
     return db.query(models.LocustRun).filter(models.LocustRun.id == run_id).first()
+
 
 def get_locustruns(
     db: Session, skip: int = 0, limit: int = 100, backward: bool = False
