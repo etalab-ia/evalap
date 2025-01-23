@@ -1,6 +1,6 @@
 import re
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import ValidationError
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -198,8 +198,17 @@ def read_experiment(
     response_model=list[schemas.ExperimentWithResults],
     tags=["experiments"],
 )
-def read_experiments(set_id: int | None = None, limit: int = 100, db: Session = Depends(get_db)):
-    experiments = crud.get_experiments(db, set_id=set_id, limit=limit)
+def read_experiments(
+    skip: int = 0,
+    limit: int = 100,
+    backward: bool = True,
+    set_id: int | None = None,
+    orphan: bool = True,
+    db: Session = Depends(get_db),
+):
+    experiments = crud.get_experiments(
+        db, skip=skip, limit=limit, backward=backward, set_id=set_id, orphan=orphan
+    )
 
     if not experiments:
         raise HTTPException(status_code=404, detail="No experiments found")
@@ -309,14 +318,18 @@ def delete_experimentset(id: int, db: Session = Depends(get_db), admin_check=Dep
     description="Re-run failed runs.",
     tags=["experiment_set"],
 )
-def retry_runs(id: int, db: Session = Depends(get_db)):
+def retry_runs(id: int, force: bool = Query(
+        default=False,
+        description="Force retry of all unfinished runs, by resetting their status to pending."
+    )
+               , db: Session = Depends(get_db)):
     experimentset = crud.get_experimentset(db, id)
     if experimentset is None:
         raise HTTPException(status_code=404, detail="ExperimentSet not found")
 
     rr = schemas.RetryRuns(experiment_ids=[], result_ids=[])
     for exp in experimentset.experiments:
-        if exp.experiment_status != "finished":
+        if exp.experiment_status != "finished" and not force:
             continue
 
         if exp.num_try != exp.num_success and _needs_output(exp):
@@ -324,7 +337,7 @@ def retry_runs(id: int, db: Session = Depends(get_db)):
             continue
 
         for result in exp.results:
-            if result.metric_status != "finished":
+            if result.metric_status != "finished" and not force:
                 continue
 
             if result.num_try != result.num_success:
