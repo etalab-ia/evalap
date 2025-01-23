@@ -99,36 +99,36 @@ def main():
     tabs = st.tabs(list(grouped_datasets.keys()))
 
     for group_index, (group_label, datasets_in_group) in enumerate(grouped_datasets.items()):
-        with tabs[group_index]: 
+        with tabs[group_index]:
             leaderboard_data = fetch_leaderboard(DEFAULT_METRIC)
-            
+
             group_entries = [
                 entry for entry in leaderboard_data.get("entries", [])
-                if entry["dataset_name"].startswith(group_label) 
+                if entry["dataset_name"].startswith(group_label)
             ]
-            
+
             if group_entries:
                 metric_name, dataset_name, current_page_input, rows_per_page = create_ui_elements(group_label.split()[0], available_metrics, datasets_in_group, group_index)
-                
+
                 dataset_filter = None if dataset_name == "All" else dataset_name
-                
+
                 if metric_name != DEFAULT_METRIC or dataset_filter:
                     leaderboard_data = fetch_leaderboard(metric_name, dataset_filter)
-                
+
                 st.write(f"## 🏆 Top Performing LLMs - {metric_name.replace('_', ' ').title()}")
                 if dataset_filter:
                     st.write(f"Dataset: {dataset_filter}")
-                
+
                 df = process_leaderboard_data(leaderboard_data, group_label.split()[0], metric_name)
 
                 if df is not None and not df.empty:
                     total_entries = len(df)
-                    num_pages = (total_entries - 1) // rows_per_page + 1  
-                    current_page = min(current_page_input, num_pages)  
+                    num_pages = (total_entries - 1) // rows_per_page + 1
+                    current_page = min(current_page_input, num_pages)
                     st.session_state[f'page_{group_label.split()[0]}'] = current_page
-                    
-                    start_idx = (current_page - 1) * rows_per_page  
-                    end_idx = start_idx + rows_per_page  
+
+                    start_idx = (current_page - 1) * rows_per_page
+                    end_idx = start_idx + rows_per_page
 
                     st.dataframe(
                         df.iloc[start_idx:end_idx],

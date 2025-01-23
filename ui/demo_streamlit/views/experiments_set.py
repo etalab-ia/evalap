@@ -1,9 +1,14 @@
+import json
+import re
+from collections import defaultdict
+from copy import deepcopy
+from datetime import datetime
+from io import StringIO
+
 import numpy as np
 import pandas as pd
-from datetime import datetime
 import streamlit as st
 from utils import fetch
-from io import StringIO
 
 
 def _get_expset_status(expset: dict) -> tuple[dict, dict]:
@@ -37,64 +42,23 @@ def _get_experiment_data(exp_id):
     """
     for each exp_id, returns query, answer true, answer llm and metrics
     """
-    response = fetch("get", f"/experiment/{exp_id}", {"with_dataset": "true"})
-    if not response:
+    exp = fetch("get", f"/experiment/{exp_id}", {"with_dataset": "true"})
+    if not exp:
         return None
 
-    df = pd.read_json(StringIO(response["dataset"]["df"]))
+    df = pd.read_json(StringIO(exp["dataset"]["df"]))
 
-    if "answers" in response:
-        answers = {answer["num_line"]: answer["answer"] for answer in response["answers"]}
+    if "answers" in exp:
+        answers = {answer["num_line"]: answer["answer"] for answer in exp["answers"]}
         df["answer"] = df.index.map(answers)
 
-    if "results" in response:
-        for result in response["results"]:
+    if "results" in exp:
+        for result in exp["results"]:
             metric_name = result["metric_name"]
             observations = {obs["num_line"]: obs["score"] for obs in result["observation_table"]}
             df[f"result_{metric_name}"] = df.index.map(observations)
 
-    dataset_name = response["dataset"]["name"]
-    model_name = response.get("model") or "Unknown Model"
-
-    return df, dataset_name, model_name
-
-
-def display_experiment_set_overview(expset, experiments_df):
-    """
-    returns a dataframe with the list of Experiments and the associated status
-    """
-
-    status, counts = _get_expset_status(expset)
-    st.markdown(f"## Overview of experiment set: ~~ {expset['name']} ~~")
-    st.markdown(f"experiment_set id: {expset['id']}")
-    finished_ratio = int(
-        counts["total_observation_successes"] // counts["observation_length"] * 100
-    )
-    st.markdown(f"Finished: {finished_ratio}%", unsafe_allow_html=True)
-    failure_ratio = int(
-        (counts["total_observation_tries"] - counts["total_observation_successes"])
-        / counts["observation_length"]
-        * 100
-    )
-    if failure_ratio > 0:
-        st.markdown(
-            f"Failure: <span style='color:red;'>{failure_ratio}%</span>", unsafe_allow_html=True
-        )
-
-    st.markdown(expset.get("readme", "No description available"))
-
-    row_height = 35
-    header_height = 35
-    border_padding = 5
-    dynamic_height = len(experiments_df) * row_height + header_height + border_padding
-
-    st.dataframe(
-        experiments_df,
-        use_container_width=True,
-        hide_index=True,
-        height=dynamic_height,
-        column_config={"Id": st.column_config.TextColumn(width="small")},
-    )
+    return df
 
 
 def display_experiment_sets(experiment_sets):
@@ -158,18 +122,45 @@ def display_experiment_sets(experiment_sets):
                                 continue
 
 
+def display_experiment_set_overview(expset, experiments_df):
+    """
+    returns a dataframe with the list of Experiments and the associated status
+    """
+    row_height = 35
+    header_height = 35
+    border_padding = 5
+    dynamic_height = len(experiments_df) * row_height + header_height + border_padding
+
+    st.dataframe(
+        experiments_df,
+        use_container_width=True,
+        hide_index=True,
+        height=dynamic_height,
+        column_config={"Id": st.column_config.TextColumn(width="small")},
+    )
+
+
 def display_experiment_details(experimentset, experiments_df):
     experiment_ids = experiments_df["Id"].tolist()
     selected_exp_id = st.selectbox("Select Experiment ID", experiment_ids)
-    if selected_exp_id:
-        df_with_results, dataset_name, model_name = _get_experiment_data(selected_exp_id)
+    experiment = next(
+        (exp for exp in experimentset.get("experiments", []) if exp["id"] == selected_exp_id), None
+    )
+    if experiment:
+        df_with_results = _get_experiment_data(experiment["id"])
+        expe_name = experiment["name"]
+        readme = experiment["readme"]
+        dataset_name = experiment["dataset"]["name"]
+        model_name = experiment.get("model") or "Unknown Model"
+
         if df_with_results is not None:
-            cols = st.columns(4)
+            st.write(f"**experiment_id** n° {selected_exp_id}")
+            st.write(f"**Name:** {expe_name}")
+            st.write(f"**Readme:** {readme}")
+            cols = st.columns(2)
             with cols[0]:
-                st.write(f"**experiment_id** n° {selected_exp_id}")
-            with cols[1]:
                 st.write(f"**Dataset:** {dataset_name}")
-            with cols[2]:
+            with cols[1]:
                 st.write(f"**Model:** {model_name}")
             st.dataframe(
                 df_with_results,
@@ -181,145 +172,256 @@ def display_experiment_details(experimentset, experiments_df):
             st.error("Failed to fetch experiment data")
 
 
-def process_experiment_results(experimentset):
-    """
-    process experiment results dynamically across different experiment types.
-    """
-    rows = []
-    metrics = set()
-    experiment_ids = [exp["id"] for exp in experimentset.get("experiments", [])]
-    experiment_names = [exp["name"] for exp in experimentset.get("experiments", [])]
-    is_repeat_mode = _check_repeat_mode(experiment_names)
+def _all_equal(lst):
+    return all(x == lst[0] for x in lst)
 
-    for exp in experimentset.get("experiments", []):
-        if exp["experiment_status"] != "finished":
-            st.warning(f"Warning: experiment {exp['id']} is not finished yet...")
+
+def _remove_commons_items(model_params: list[dict], first=True) -> list[dict]:
+    if first:
+        model_params = deepcopy(model_params)
+
+    common_keys = set.intersection(*(set(d.keys()) for d in model_params))
+    for k in common_keys:
+        if _all_equal([d[k] for d in model_params]):
+            _ = [d.pop(k) for d in model_params]
+        elif all(isinstance(d[k], dict) for d in model_params):
+            # improves: works with any instead of all
+            # take all dict value (recurse)
+            # reinsert dict value in same order
+            x = [(i, d[k]) for i, d in enumerate(model_params) if isinstance(d[k], dict)]
+            idx, params = zip(*x)
+            params = _remove_commons_items(list(params), first=False)
+            for i, _id in enumerate(idx):
+                if not params[i]:
+                    model_params[_id].pop(k)
+                model_params[_id][k] = params[i]
+        elif all(isinstance(d[k], list) for d in model_params):
+            # @improves: works with any instead of all
+            # take all dict value in  list value (recurse)
+            # reinsert dict value in same order
+            pass
+
+    return model_params
+
+
+def _rename_model_variants(experiments: list) -> list:
+    """
+    Inplace add a _name attribute to experiment several model name are equal to help
+    distinguish them
+    """
+    names = [exp["model"]["name"] for exp in experiments if exp.get("model")]
+    if len(set(names)) == len(names):
+        return experiments
+
+    names = []
+    for i, exp in enumerate(experiments):
+        if not exp.get("model"):
             continue
 
-        response = fetch("get", f"/experiment/{exp['id']}?with_results=true")
-        if not response:
-            continue
+        name = exp["model"]["name"]
+        _name = name
+        suffix = ""
+        if re.search(r"__\d+$", name):
+            parts = name.rsplit("__", 1)
+            _name = parts[0]
+            suffix = parts[1]
 
-        row = {}
-        if response.get("model"):
-            model_name = response["model"]["name"]
-            extra_params = response["model"].get("extra_params")
-            variant = _extract_experiment_variant(extra_params)
-            row["model"] = f"{model_name}_{variant}" if variant else model_name
-
-        for metric_results in response.get("results", []):
-            metric = metric_results["metric_name"]
-            metrics.add(metric)
-            scores = [
-                x["score"] for x in metric_results["observation_table"] if pd.notna(x.get("score"))
-            ]
-            if scores:
-                row[f"{metric}_mean"] = np.mean(scores)
-                row[f"{metric}_std"] = np.std(scores)
-                row[f"{metric}_support"] = len(scores)
-
-        rows.append(row)
-
-    if not rows:
-        st.error("No valid experiment results found")
-        return None
-
-    df = pd.DataFrame(rows)
-
-    if is_repeat_mode and "model":
-        df = df.groupby("model").agg(
-            {col: ["mean", "std"] for col in df.columns if col.endswith("_mean")}
+        names.append(
+            {
+                "pos": i,
+                "name": name,
+                "_name": _name,
+                "suffix": suffix,
+            }
         )
-        df.columns = [f"{col[0]}_{col[1]}" for col in df.columns]
-    else:
-        df["Id"] = experiment_ids
-        df["Name"] = experiment_names
-        df = df[["Id", "Name"] + [col for col in df.columns if col not in ["Id", "Name"]]]
-        default_sort_metric = _find_default_sort_metric(metrics)
-        if default_sort_metric and f"{default_sort_metric}_mean" in df.columns:
-            df = df.sort_values(by=f"{default_sort_metric}_mean", ascending=False)
 
-    return df
+    # Find the experiments that have an equal _model name
+    model_names = defaultdict(list)
+    for item in names:
+        if not item:
+            continue
+        model_names[item["_name"]].append(item["pos"])
 
+    # Canonize model names
+    for _name, ids in model_names.items():
+        if len(ids) <= 1:
+            continue
 
-def _check_repeat_mode(experiment_names) -> bool:
-    """
-    check whether the experiment is related to a repetition
-    """
-    if len(experiment_names) <= 1:
-        return False
+        # List of model params
+        model_params = [
+            (experiments[i]["model"].get("sampling_params") or {})
+            | (experiments[i]["model"].get("extra_params") or {})
+            for i in ids
+        ]
 
-    base_names = [name.rsplit("_", 1)[0] for name in experiment_names]
+        # remove commons parameters
+        model_diff_params = _remove_commons_items(model_params)
 
-    if len(set(base_names)) == 1:
-        suffixes = [name.split("_")[-1] for name in experiment_names]
-        return all(suffix.isdigit() for suffix in suffixes)
+        for model in names:
+            pos = next((x for x in ids if model["pos"] == x), None)
+            if not pos:
+                continue
 
-    return False
+            # Finally renamed it !
+            variant = model_diff_params[ids.index(pos)]
+            if variant:
+                variant = json.dumps(variant)
+                variant = variant.replace('"', "").replace(" ", "")
 
-
-def _extract_experiment_variant(extra_params: dict | None) -> str | None:
-    """
-    extract a meaningful variant identifier from extra parameters.
-    """
-    if not extra_params:
-        return None
-
-    if "rag" in extra_params:
-        if "limit" in extra_params["rag"]:
-            return f"limit_{extra_params['rag']['limit']}"
-
-    return str(list(extra_params.keys())[0]) if extra_params else ""
+                experiments[pos]["_model"] = "#".join([_name, variant]) + model["suffix"]
 
 
-def _find_default_sort_metric(metrics):
+def _find_default_sort_metric(columns):
     """
     find a sensible default metric for sorting results.
     """
     preferred_metrics = ["judge_exactness", "contextual_relevancy"]
     for metric in preferred_metrics:
-        if metric in metrics:
-            return f"{metric}_mean"
+        if metric in columns:
+            return f"{metric}"
 
-    return list(metrics)[0] + "_mean" if metrics else None
-
-
-def display_experiment_results(experimentset):
-    results_df = process_experiment_results(experimentset)
-
-    if results_df is not None:
-        st.write("### Experiment Results")
-        st.dataframe(
-            results_df,
-            use_container_width=True,
-            hide_index=True,
-            column_config={"Id": st.column_config.TextColumn(width="small")},
-        )
+    return list(columns)[0] if len(columns) > 0 else None
 
 
-def display_experiment_set_result(experimentset, experiments_df):
-    st.write("## Results of the Experiment Set")
+def _sort_columns(df: pd.DataFrame, first_columns: list) -> pd.DataFrame:
+    first_columns = []
+    new_column_order = (
+        sorted(first_columns)  # Sort the first group of columns
+        + sorted([col for col in df.columns if col not in first_columns])  # Sort remaining columns
+    )
+    return df[new_column_order]
 
-    total_experiments = len(experiments_df)
-    all_successful = (experiments_df["Num try"] == experiments_df["Num success"]).all()
 
-    if not all_successful:
-        st.warning("Some experiments are not finished or have errors")
-        cols = st.columns(6)
-        with cols[0]:
-            st.write(f"Total Experiments: {total_experiments}")
-        with cols[1]:
-            st.write(
-                f"Failure Experiments: {total_experiments - (experiments_df['Num success'] > 0).sum()}"
-            )
+def _check_repeat_mode(experiments: list) -> bool:
+    """
+    check whether the experiment is related to a repetition
+    """
+    for exp in experiments:
+        name = exp["name"]
+        if re.search(r"__\d+$", name):
+            return True
 
-    display_experiment_results(experimentset)
+    return False
+
+
+def _format_experimentd_score_df(experiments: list, df: pd.DataFrame):
+    experiment_ids = [exp["id"] for exp in experiments]
+    experiment_names = [exp["name"] for exp in experiments]
+    is_repeat_mode = _check_repeat_mode(experiments)
+
+    if is_repeat_mode and df["model"].notna().all():
+        # Lost repetition trailing code.
+        df["model"] = df["model"].str.replace(r"__\d+$", "", regex=True)
+        # Group by 'model' and calculate mean and std for all numeric columns
+        grouped = df.groupby("model").agg(["mean", "std"]).reset_index()
+
+        # Create a new DataFrame to store the results
+        result = pd.DataFrame()
+        result["model"] = grouped["model"]
+
+        # Iterate over each column (except 'model') to format mean ± std
+        for column in df.columns:
+            if column not in ["model"]:
+                # Format the score as "mean ± std"
+                result[column] = (
+                    grouped[(column, "mean")].round(2).astype(str)
+                    + " ± "
+                    + grouped[(column, "std")].round(2).astype(str)
+                )
+
+        df = result
+    else:
+        df["Id"] = experiment_ids
+        df["Name"] = experiment_names
+        df = df[["Id", "Name"] + [col for col in df.columns if col not in ["Id", "Name"]]]
+
+    default_sort_metric = _find_default_sort_metric(df.columns)
+    if default_sort_metric in df.columns:
+        df = df.sort_values(by=f"{default_sort_metric}", ascending=False)
+
+    return df
+
+
+def display_experiment_set_score(experimentset, experiments_df):
+    """
+    process experiment results dynamically across different experiment types.
+    """
+
+    rows = []
+    rows_support = []
+    experiments = experimentset.get("experiments", [])
+    _rename_model_variants(experiments)
+
+    for exp in experiments:
+        row = {}
+        row_support = {}
+        if exp.get("_model") or exp.get("model"):
+            row["model"] = exp.get("_model") or exp["model"]["name"]
+            row_support["model"] = exp.get("_model") or exp["model"]["name"]
+
+        exp = fetch("get", f"/experiment/{exp['id']}?with_results=true")
+        if not exp:
+            continue
+
+        for metric_results in exp.get("results", []):
+            metric = metric_results["metric_name"]
+            scores = [
+                x["score"] for x in metric_results["observation_table"] if pd.notna(x.get("score"))
+            ]
+            if scores:
+                row[f"{metric}"] = np.mean(scores)
+                row_support[f"{metric}_support"] = len(scores)
+
+        rows.append(row)
+        rows_support.append(row_support)
+
+    if not rows:
+        st.error("No valid experiment results found")
+        return
+
+    df = pd.DataFrame(rows)
+    df = _sort_columns(df, [])
+    df = _format_experimentd_score_df(experiments, df)
+
+    df_support = pd.DataFrame(rows_support)
+    df_support = _sort_columns(df_support, [])
+    df_support = _format_experimentd_score_df(experiments, df_support)
+
+    st.write("**Score:** Averaged score on experiments metrics")
+    if _check_repeat_mode(experiments):
+        st.warning("Score are aggregated on model repetition.")
+    st.dataframe(
+        df,
+        use_container_width=True,
+        hide_index=True,
+        column_config={"Id": st.column_config.TextColumn(width="small")},
+    )
+
+    st.write("---")
+    st.write("**Support:** the number of item on wich the metrics is computed")
+    st.dataframe(
+        df_support,
+        use_container_width=True,
+        hide_index=True,
+        column_config={"Id": st.column_config.TextColumn(width="small")},
+    )
 
 
 def main():
+    experiment_sets = fetch("get", "/experiment_sets")
+
+    expid = st.query_params.get("expset")
+    if expid:
+        # st.session_state["experimentset"] = next((x for x in experiment_sets if x["id"] == expid), None)
+        experimentset = fetch("get", f"/experiment_set/{expid}")
+        if not experimentset:
+            raise ValueError("experimentset not found: %s" % expid)
+        st.session_state["experimentset"] = experimentset
+
     if st.session_state.get("experimentset"):
         # Get the expet
         experimentset = st.session_state["experimentset"]
+        st.query_params.expset = experimentset["id"]
 
         # Build the expset dataframe
         experiments_df = pd.DataFrame(
@@ -345,6 +447,7 @@ def main():
         with col1:
             if st.button(":arrow_left: Go back", key="go_back"):
                 st.session_state["experimentset"] = None
+                st.query_params.pop("expset")
                 st.rerun()
 
         with col2:
@@ -355,9 +458,54 @@ def main():
                     raise ValueError("experimentset not found: %s" % expid)
                 st.session_state["experimentset"] = experimentset
 
+        def show_header():
+            status, counts = _get_expset_status(experimentset)
+            st.markdown(f"## {experimentset['name']} ")
+            st.markdown(f"**experiment_set id**: {experimentset['id']}")
+            st.markdown(f'**Readme:** {experimentset.get("readme", "No description available")}')
+
+            finished_ratio = int(
+                counts["total_observation_successes"] / counts["observation_length"] * 100
+            )
+            st.markdown(f"Finished: {finished_ratio}%", unsafe_allow_html=True)
+            failure_ratio = int(
+                (counts["total_observation_tries"] - counts["total_observation_successes"])
+                / counts["observation_length"]
+                * 100
+            )
+            if failure_ratio > 0:
+                st.markdown(
+                    f"Failure: <span style='color:red;'>{failure_ratio}%</span>",
+                    unsafe_allow_html=True,
+                )
+
+        show_header()
+
         # Display tabs
         # --
-        tab1, tab2, tab3 = st.tabs(["Set Overview", "Results", "Detail by experiment id"])
+        tab_index = {
+            1: {"key": "scores", "title": "Scores", "func": display_experiment_set_score},
+            2: {
+                "key": "overview",
+                "title": "Set Overview",
+                "func": display_experiment_set_overview,
+            },
+            3: {
+                "key": "details",
+                "title": "Details by experiment id",
+                "func": display_experiment_details,
+            },
+        }
+        tab_reverse = {d["key"]: k for k, d in tab_index.items()}
+        # @TODO: how to catch the tab click in order to set the current url query to tab key ?
+
+        tab1, tab2, tab3 = st.tabs(
+            [
+                tab_index[1]["title"],
+                tab_index[2]["title"],
+                tab_index[3]["title"],
+            ]
+        )
 
         def show_warning_in_tabs(message):
             with tab1:
@@ -376,15 +524,14 @@ def main():
             show_warning_in_tabs("Warning: some metrics are failed.")
 
         with tab1:
-            display_experiment_set_overview(experimentset, experiments_df)
+            tab_index[1]["func"](experimentset, experiments_df)
         with tab2:
-            display_experiment_set_result(experimentset, experiments_df)
+            tab_index[2]["func"](experimentset, experiments_df)
         with tab3:
-            display_experiment_details(experimentset, experiments_df)
+            tab_index[3]["func"](experimentset, experiments_df)
 
     else:
         st.title("Experiments (Set)")
-        experiment_sets = fetch("get", "/experiment_sets")
         if experiment_sets:
             display_experiment_sets(experiment_sets)
 

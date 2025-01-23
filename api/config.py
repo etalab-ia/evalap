@@ -38,7 +38,7 @@ BACKEND_CORS_ORIGINS = ["*"]
 API_PREFIX = ""
 
 # Runners
-MAX_CONCURRENT_TASKS = 12  # 8 ok, 16 hard !
+MAX_CONCURRENT_TASKS = 8  # 8 ok, 16 hard !
 DEFAULT_JUDGE_MODEL = "gpt-4o-mini"
 
 # Soon obsolete
