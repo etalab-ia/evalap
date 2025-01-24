@@ -165,7 +165,7 @@ def display_experiment_details(experimentset, experiments_df):
             st.dataframe(
                 df_with_results,
                 use_container_width=True,
-                hide_index=True,
+                hide_index=False,
                 column_config={"Id": st.column_config.TextColumn(width="small")},
             )
         else:
