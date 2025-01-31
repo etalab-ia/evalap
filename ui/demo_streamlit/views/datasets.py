@@ -40,7 +40,7 @@ def main():
                 with col2:
                     st.caption(f"Rows: {dataset['size']}")
                 with col3:
-                    st.caption(f"Default_metric: {dataset['default_metric']}")
+                    st.caption(f"Default metric: {dataset['default_metric']}")
                 with col4:
                     st.caption(f"Created the {when}")
                 st.divider()
