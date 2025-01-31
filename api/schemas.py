@@ -76,6 +76,7 @@ class MetricStatus(str, Enum):
 class DatasetBase(EgBaseModel):
     name: str
     readme: str
+    default_metric: str
 
 
 class DatasetCreate(DatasetBase):
