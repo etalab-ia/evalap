@@ -448,6 +448,38 @@ class Leaderboard(EgBaseModel):
 
 
 #
+# Product
+#
+
+
+class ProductBase(EgBaseModel):
+    name: str
+
+class ProductCreate(ProductBase):
+    pass
+
+class ProductCreateList(EgBaseModel):
+    products: list[ProductCreate]
+
+class Product(ProductBase):
+    id: int
+
+class ProductDatasetBase(EgBaseModel):
+    product_id: int
+    dataset_id: int
+    evaluation_metrics: list[str]
+
+class ProductDatasetCreate(ProductDatasetBase):
+    pass
+
+class ProductDataset(ProductDatasetBase):
+    id: int
+
+class ProductDatasetUpdate(EgBaseModel):
+    evaluation_metrics: Optional[list[str]] = None
+
+
+#
 # LOCUST
 #
 

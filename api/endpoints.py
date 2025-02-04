@@ -363,6 +363,73 @@ def read_leaderboard(
 
 
 #
+# Product
+#
+
+
+@router.post("/product", response_model=schemas.Product, tags=["products"])
+def create_product(product: schemas.ProductCreate, db: Session = Depends(get_db)):
+    try:
+        db_product = crud.create_product(db, product)
+        return db_product
+    except ValueError as e:
+        raise HTTPException(status_code=409, detail=str(e))
+    except IntegrityError as e:
+        return CustomIntegrityError.from_integrity_error(e.orig).to_http_response()
+    except Exception as e:
+        raise e
+
+@router.post("/products", response_model=list[schemas.Product], tags=["products"])
+def create_products(products: schemas.ProductCreateList, db: Session = Depends(get_db)):
+    try:
+        db_products = crud.create_products(db, products.products)
+        return db_products
+    except IntegrityError as e:
+        return CustomIntegrityError.from_integrity_error(e.orig).to_http_response()
+    except Exception as e:
+        raise e
+
+@router.get("/products", response_model=list[schemas.Product], tags=["products"])
+def read_products(db: Session = Depends(get_db)):
+    return crud.get_products(db)
+
+@router.get("/product/{id}", response_model=schemas.Product, tags=["products"])
+def read_product(id: int, db: Session = Depends(get_db)):
+    product = crud.get_product(db, id)
+    if product is None:
+        raise HTTPException(status_code=404, detail="Product not found")
+    return product
+
+@router.post("/product_dataset", response_model=schemas.ProductDataset, tags=["product_datasets"])
+def create_product_dataset(product_dataset: schemas.ProductDatasetCreate, db: Session = Depends(get_db)):
+    try:
+        db_product_dataset = crud.create_product_dataset(db, product_dataset)
+        return db_product_dataset
+    except ValueError as e:
+        raise HTTPException(status_code=409, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="An unexpected error occurred")
+
+@router.get("/product_datasets", response_model=list[schemas.ProductDataset], tags=["product_datasets"])
+def read_product_datasets(db: Session = Depends(get_db)):
+    return crud.get_product_datasets(db)
+
+@router.get("/product_dataset/{id}", response_model=schemas.ProductDataset, tags=["product_datasets"])
+def read_product_dataset(id: int, db: Session = Depends(get_db)):
+    product_dataset = crud.get_product_dataset(db, id)
+    if product_dataset is None:
+        raise HTTPException(status_code=404, detail="ProductDataset not found")
+    return product_dataset
+
+@router.patch("/product_dataset/{id}", response_model=schemas.ProductDataset, tags=["product_datasets"])
+def update_product_dataset(id: int, update_data: schemas.ProductDatasetUpdate, db: Session = Depends(get_db)):
+    updated_product_dataset = crud.update_product_dataset(db, id, update_data)
+    if updated_product_dataset is None:
+        raise HTTPException(status_code=404, detail="ProductDataset not found")
+    return updated_product_dataset
+
+
+#
 # LOCUST
 #
 
