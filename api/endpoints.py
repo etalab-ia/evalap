@@ -404,7 +404,14 @@ def read_product(id: int, db: Session = Depends(get_db)):
 def create_product_dataset(product_dataset: schemas.ProductDatasetCreate, db: Session = Depends(get_db)):
     try:
         db_product_dataset = crud.create_product_dataset(db, product_dataset)
-        return db_product_dataset
+        return schemas.ProductDataset(
+            id=db_product_dataset.id,
+            product_id=db_product_dataset.product_id,
+            dataset_id=db_product_dataset.dataset_id,
+            evaluation_metrics=db_product_dataset.evaluation_metrics,
+            dataset_name=db_product_dataset.dataset.name,
+            dataset_default_metric=db_product_dataset.dataset.default_metric
+        )
     except ValueError as e:
         raise HTTPException(status_code=409, detail=str(e))
     except Exception as e:
@@ -412,21 +419,31 @@ def create_product_dataset(product_dataset: schemas.ProductDatasetCreate, db: Se
 
 @router.get("/product_datasets", response_model=list[schemas.ProductDataset], tags=["product_datasets"])
 def read_product_datasets(db: Session = Depends(get_db)):
-    return crud.get_product_datasets(db)
-
-@router.get("/product_dataset/{id}", response_model=schemas.ProductDataset, tags=["product_datasets"])
-def read_product_dataset(id: int, db: Session = Depends(get_db)):
-    product_dataset = crud.get_product_dataset(db, id)
-    if product_dataset is None:
-        raise HTTPException(status_code=404, detail="ProductDataset not found")
-    return product_dataset
+    product_datasets = crud.get_product_datasets(db)
+    return [
+        schemas.ProductDataset(
+            id=pd.id,
+            product_id=pd.product_id,
+            dataset_id=pd.dataset_id,
+            evaluation_metrics=pd.evaluation_metrics,
+            dataset_name=pd.dataset.name,
+            dataset_default_metric=pd.dataset.default_metric
+        ) for pd in product_datasets
+    ]
 
 @router.patch("/product_dataset/{id}", response_model=schemas.ProductDataset, tags=["product_datasets"])
 def update_product_dataset(id: int, update_data: schemas.ProductDatasetUpdate, db: Session = Depends(get_db)):
     updated_product_dataset = crud.update_product_dataset(db, id, update_data)
     if updated_product_dataset is None:
         raise HTTPException(status_code=404, detail="ProductDataset not found")
-    return updated_product_dataset
+    return schemas.ProductDataset(
+        id=updated_product_dataset.id,
+        product_id=updated_product_dataset.product_id,
+        dataset_id=updated_product_dataset.dataset_id,
+        evaluation_metrics=updated_product_dataset.evaluation_metrics,
+        dataset_name=updated_product_dataset.dataset.name,
+        dataset_default_metric=updated_product_dataset.dataset.default_metric
+    )
 
 
 #

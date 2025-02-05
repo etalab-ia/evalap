@@ -472,11 +472,21 @@ class ProductDatasetBase(EgBaseModel):
 class ProductDatasetCreate(ProductDatasetBase):
     pass
 
+class DatasetInfo(EgBaseModel):
+    name: str
+    default_metric: str
+
 class ProductDataset(ProductDatasetBase):
     id: int
+    dataset_name: str
+    dataset_default_metric: str
+
+    class Config:
+        orm_mode = True
+
 
 class ProductDatasetUpdate(EgBaseModel):
-    evaluation_metrics: Optional[list[str]] = None
+    evaluation_metrics: list[str]
 
 
 #

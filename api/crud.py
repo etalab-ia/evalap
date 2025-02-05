@@ -424,25 +424,25 @@ def create_product_dataset(db: Session, product_dataset: schemas.ProductDatasetC
         db.add(db_product_dataset)
         db.commit()
         db.refresh(db_product_dataset)
+        db.refresh(db_product_dataset, attribute_names=['dataset'])
         return db_product_dataset
     except IntegrityError:
         db.rollback()
         raise ValueError(f"ProductDataset with product_id {product_dataset.product_id} and dataset_id {product_dataset.dataset_id} already exists")
 
 def get_product_datasets(db: Session) -> list[models.ProductDataset]:
-    return db.query(models.ProductDataset).all()
-
-def get_product_dataset(db: Session, product_dataset_id: int) -> models.ProductDataset | None:
-    return db.query(models.ProductDataset).filter(models.ProductDataset.id == product_dataset_id).first()
+    return db.query(models.ProductDataset).options(
+        joinedload(models.ProductDataset.dataset)
+    ).all()
 
 def update_product_dataset(db: Session, product_dataset_id: int, update_data: schemas.ProductDatasetUpdate) -> models.ProductDataset | None:
     db_product_dataset = db.query(models.ProductDataset).filter(models.ProductDataset.id == product_dataset_id).first()
     if db_product_dataset:
-        update_dict = update_data.dict(exclude_unset=True)
-        for key, value in update_dict.items():
-            setattr(db_product_dataset, key, value)
+        db_product_dataset.evaluation_metrics = update_data.evaluation_metrics
         db.commit()
         db.refresh(db_product_dataset)
+        # Charger explicitement le dataset associé
+        db.refresh(db_product_dataset, attribute_names=['dataset'])
     return db_product_dataset
 
 
