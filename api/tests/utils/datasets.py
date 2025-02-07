@@ -8,6 +8,9 @@ ROOT_PATH = API_BASE_URL
 def read_dataset(client: TestClient):
     return client.get(f"{ROOT_PATH}/v1/datasets")
 
+def read_dataset_id(client: TestClient, id: int, with_df: bool = False):
+    params = {"with_df": with_df}
+    return client.get(f"{ROOT_PATH}/v1/dataset/{id}", params=params)
 
 def create_dataset(client: TestClient, name_dataset, df, readme, default_metric):
     data = {
