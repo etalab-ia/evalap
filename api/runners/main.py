@@ -1,9 +1,11 @@
+import asyncio
 import logging
 import threading
 
 import zmq
 
 from api.config import MAX_CONCURRENT_TASKS
+from api.mcp import MCPBridge
 
 from .tasks import process_task
 
@@ -19,13 +21,17 @@ def worker_routine(worker_url, context):
     socket = context.socket(zmq.PULL)
     socket.connect(worker_url)
 
+    # Initialize MCP clients
+    mcp_bridge = MCPBridge()
+    asyncio.run(mcp_bridge.initialize())
+
     while True:
         try:
             # Receive a task
             message = socket.recv_json()
 
             # Process the task
-            process_task(message)
+            process_task(message, mcp_bridge)
         except Exception as e:
             logger.exception("An error occurred in the ZMQ main loop: %s", e)
 

@@ -11,6 +11,7 @@ import api.models as models
 from api.clients import LlmClient
 from api.config import DEFAULT_JUDGE_MODEL
 from api.db import SessionLocal
+from api.mcp import MCPBridge
 from api.metrics import metric_registry
 from api.runners import MessageType, dispatch_tasks
 from api.utils import Timer, run_with_timeout
@@ -212,7 +213,7 @@ def generate_observation(message: dict):
                 print("$", end="", flush=True)
 
 
-def process_task(message: dict):
+def process_task(message: dict, mcp_bridge: MCPBridge):
     """Route and process message"""
     match message["message_type"]:
         case MessageType.answer:
@@ -222,4 +223,4 @@ def process_task(message: dict):
         case _:
             raise NotImplementedError("Message type Unknown")
 
-    return task(message)
+    return task(message, mcp_bridge)
