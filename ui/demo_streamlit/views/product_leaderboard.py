@@ -1,14 +1,13 @@
-import yaml
-from pathlib import Path
-from typing import Dict, Optional
-from operator import itemgetter
 from itertools import groupby
+from operator import itemgetter
+from pathlib import Path
+
 import pandas as pd
 import streamlit as st
+import yaml
 
 from utils import fetch, calculate_tokens_per_second
 
-# Constants
 DEFAULT_METRIC = "judge_exactness"
 CONFIG_PATH = Path(__file__).parent.parent.parent.parent / "config" / "products" / "product_config.yml"
 
@@ -16,7 +15,7 @@ CONFIG_PATH = Path(__file__).parent.parent.parent.parent / "config" / "products"
 # recup list mtetric du produit et n'afficher que les résultats dessus 
 
 
-def load_product_config() -> Dict:
+def load_product_config() -> dict:
     """Load product configuration from YAML file."""
     try:
         if not CONFIG_PATH.exists():
@@ -30,13 +29,13 @@ def load_product_config() -> Dict:
         return {"products": {}}
 
 
-def fetch_experiment_results(exp_id: int) -> Dict:
+def fetch_experiment_results(exp_id: int) -> dict:
     """Fetch results for a single experiment."""
     return fetch("get", f"/experiment/{exp_id}", {"with_dataset": "true"})
 
 
 @st.cache_data(ttl=300)
-def fetch_leaderboard(metric_name: str = DEFAULT_METRIC, dataset_name: Optional[str] = None) -> Dict:
+def fetch_leaderboard(metric_name: str = DEFAULT_METRIC, dataset_name: str | None = None) -> dict:
     """Fetch leaderboard data with caching."""
     endpoint = "/leaderboard"
     params = {"metric_name": metric_name}
@@ -45,11 +44,11 @@ def fetch_leaderboard(metric_name: str = DEFAULT_METRIC, dataset_name: Optional[
     return fetch("get", endpoint, params)
 
 
-def fetch_datasets() -> list[Dict]:
+def fetch_datasets() -> list[dict]:
     return fetch("get", "/datasets")
 
 
-def display_model_production(model_info: Dict) -> None:
+def display_model_production(model_info: dict) -> None:
     """Display production model information and metrics."""
     st.write("#### Production Model")
     current_model = model_info.get("current", {})
@@ -104,11 +103,11 @@ def display_model_production(model_info: Dict) -> None:
 
 
 def process_leaderboard_data(
-    leaderboard_data: Dict,
+    leaderboard_data: dict,
     metric_name: str,
     metrics_list_for_decision,
-    current_model_id: Optional[int] = None,
-) -> Optional[pd.DataFrame]:
+    current_model_id: int | None = None,
+) -> pd.DataFrame | None :
 
     entries = []
     for entry in leaderboard_data["entries"]:
@@ -163,7 +162,7 @@ def format_column_name(name: str) -> str:
     return name#.replace("_", " ").title()
 
 
-def display_dataset_and_metrics(product_info: Dict, datasets: list[Dict]) -> str:
+def display_dataset_and_metrics(product_info: dict, datasets: list[dict]) -> str:
     """Display dataset information and product metrics side by side."""
     col1, col2 = st.columns(2)
 

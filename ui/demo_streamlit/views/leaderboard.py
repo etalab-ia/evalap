@@ -1,19 +1,16 @@
+import ast
+import json
+from itertools import groupby
+from operator import itemgetter
 import pandas as pd
 import streamlit as st
 from utils import fetch, calculate_tokens_per_second
-
-from operator import itemgetter
-from itertools import groupby
-from typing import List, Dict, Optional, Tuple
-
-import json
-import ast
 
 
 DEFAULT_METRIC = "judge_notator"
 
 @st.cache_data(ttl=300)
-def fetch_leaderboard(metric_name: str = DEFAULT_METRIC, dataset_name: Optional[str] = None) -> Dict:
+def fetch_leaderboard(metric_name: str = DEFAULT_METRIC, dataset_name: str | None = None) -> dict:
     endpoint = "/leaderboard"
     params = {"metric_name": metric_name}
     if dataset_name:
@@ -21,19 +18,19 @@ def fetch_leaderboard(metric_name: str = DEFAULT_METRIC, dataset_name: Optional[
     return fetch("get", endpoint, params)
 
 @st.cache_data(ttl=3600)
-def fetch_metrics() -> List[Dict]:
+def fetch_metrics() -> list[dict]:
     return fetch("get", "/metrics")
 
-def fetch_datasets() -> List[Dict]:
+def fetch_datasets() -> list[dict]:
     return fetch("get", "/datasets")
 
 def format_column_name(name: str) -> str:
     return name.replace("_", " ").title()
 
-def group_datasets(datasets: List[str]) -> Dict[str, List[str]]:
+def group_datasets(datasets: list[str]) -> dict[str, list[str]]:
     return {k: sorted([v for v in datasets if v.startswith(k)]) for k in sorted(set(dataset.split('_')[0] for dataset in datasets))}
 
-def create_ui_elements(group: str, available_metrics: List[str], datasets_in_group: List[str], group_index: int, grouped_metrics: Dict[str, List[Dict]]) -> Tuple[str, str, int, int, Dict]:
+def create_ui_elements(group: str, available_metrics: list[str], datasets_in_group: list[str], group_index: int, grouped_metrics: dict[str, list[dict]]) -> tuple[str, str, int, int, dict]:
     col1, col2, _, col3, col4 = st.columns([3, 3, 3, 2, 1])
 
     with col1:
@@ -56,7 +53,7 @@ def create_ui_elements(group: str, available_metrics: List[str], datasets_in_gro
 
 
 
-def process_leaderboard_data(leaderboard_data: Dict, group: str, metric_name: str, grouped_metrics: Dict[str, List[Dict]]) -> Optional[pd.DataFrame]:
+def process_leaderboard_data(leaderboard_data: dict, group: str, metric_name: str, grouped_metrics: dict[str, list[dict]]) -> pd.DataFrame | None :
     tokens_completion_group = next((group for group, metrics in grouped_metrics.items() 
                                     if any(metric['name'] == 'nb_tokens_completion' for metric in metrics)), 
                                    'Ops')
