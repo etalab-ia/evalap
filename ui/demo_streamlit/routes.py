@@ -14,6 +14,13 @@ ROUTES = [
         "description": "Best models ranking list",
         "icon": ":material/trophy:",
     },
+        {
+        "id": "product_leaderboard",
+        "path": "views/product_leaderboard.py",
+        "title": "Product Leaderboard",
+        "description": "Best models ranking list",
+        "icon": ":material/storefront:",
+    },
     {
         "id": "experiments_set",
         "path": "views/experiments_set.py",
