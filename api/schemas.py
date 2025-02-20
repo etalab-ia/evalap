@@ -164,10 +164,21 @@ class Model(ModelBase):
 class ModelWithKeys(Model):
     api_key: str
 
+
 class ModelRaw(EgBaseModel):
     name: str
     output: list[str]
+    # Ops metrics
+    execution_time: int | None = None
+    nb_tokens_prompt: int | None = None
+    nb_tokens_completion: int | None = None
     retrieval_context: list[list[str]] | None = None
+    # ModelBase (opt)
+    model_name: str | None = None
+    prompt_system: str | None = None
+    sampling_params: dict | None = None
+    extra_params: dict | None = None
+
 
 #
 # Result
