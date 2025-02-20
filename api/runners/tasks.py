@@ -91,6 +91,7 @@ def generate_answer(message: dict):
                 crud.upsert_answer(db, exp.id, msg.line_id, dict(error_msg=error_msg))
 
         # Check if all the answer have been generated.
+        db.expire(exp, ['num_try'])
         if exp.num_try >= exp.dataset.size:
             dispatch_tasks(db, exp, MessageType.observation)
 
@@ -204,9 +205,11 @@ def generate_observation(message: dict):
                 crud.upsert_observation(db, result.id, msg.line_id, dict(error_msg=error_msg))
 
         # Check if all the answer have been generated.
+        db.expire(result, ['num_try'])
         if result.num_try >= result.experiment.dataset.size:
             result = crud.update_result(db, result.id, dict(metric_status="finished"))
             print("x", end="", flush=True)
+            db.expire(result.experiment, ['results'])
             if all(r.metric_status == "finished" for r in result.experiment.results):
                 crud.update_experiment(db, msg.exp_id, dict(experiment_status="finished"))
                 print("$", end="", flush=True)
