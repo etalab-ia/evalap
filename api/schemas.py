@@ -165,19 +165,20 @@ class ModelWithKeys(Model):
 
 
 class ModelRaw(EgBaseModel):
+    # ModelBase
     aliased_name: str
+    name: str = ""
+    base_url: str = ""
+    prompt_system: str | None = None
+    sampling_params: dict | None = None
+    extra_params: dict | None = None
+    # Answers
     output: list[str]
     # Ops metrics
     execution_time: list[int] | None = None
     nb_tokens_prompt: list[int] | None = None
     nb_tokens_completion: list[int] | None = None
     retrieval_context: list[list[str]] | None = None
-    # ModelBase (opt)
-    name: str = ""
-    base_url: str = ""
-    prompt_system: str | None = None
-    sampling_params: dict | None = None
-    extra_params: dict | None = None
 
 
 #
