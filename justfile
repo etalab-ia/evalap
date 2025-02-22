@@ -18,6 +18,9 @@ alembic-generate-revision name:
 alembic-upgrade:
   alembic -c api/alembic.ini upgrade head
 
+alembic-downgrade hash:
+  alembic -c api/alembic.ini downgrade {{hash}}
+
 alembic-history:
   alembic -c api/alembic.ini history
 
