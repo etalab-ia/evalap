@@ -165,15 +165,17 @@ class ModelWithKeys(Model):
 
 
 class ModelRaw(EgBaseModel):
+    # Answers
+    output: list[str]
     # ModelBase
-    aliased_name: str
+    aliased_name: str = Field(
+        description="A name to identify this model. The difference with the `name` parameter is that the latter must be used to identify the model name in the Openai API-compatible endpoint."
+    )
     name: str = ""
     base_url: str = ""
     prompt_system: str | None = None
     sampling_params: dict | None = None
     extra_params: dict | None = None
-    # Answers
-    output: list[str]
     # Ops metrics
     execution_time: list[int] | None = None
     nb_tokens_prompt: list[int] | None = None
@@ -265,16 +267,19 @@ class ExperimentCreate(ExperimentBase):
             dataset = models.Dataset(**obj["dataset"])
         obj["dataset"] = dataset
         if isinstance(self.model, ModelRaw):
-            df = pd.read_json(StringIO(self.model.df))
             obj["num_try"] = dataset.size
-            obj["num_success"] = int(df["output"].count())
+            obj["num_success"] = len(self.model.output)
+            if obj["num_try"] != obj["num_success"]:
+                raise SchemaError("The size of the model outputs must match the size of the dataset.")
 
         # Handle Model
+        has_raw_output = False
         if isinstance(self.model, ModelRaw):
             model = {
                 k: v for k, v in self.model.model_dump().items() if k in ModelCreate.model_fields
             }
-            model["has_raw_output"] = True
+            has_raw_output = True
+            model["has_raw_output"] = has_raw_output
             # Create Answers from ModelRaw
             # --
             answers = []
@@ -304,7 +309,7 @@ class ExperimentCreate(ExperimentBase):
         # Validate Model and metric compatibility
         # --
         needs_output = any("output" in metric_registry.get_metric(m).require for m in self.metrics)
-        if needs_output and not model.has_raw_output and not dataset.has_query:
+        if needs_output and not has_raw_output and not dataset.has_query:
             raise SchemaError(
                 "You need to provide an answer for this metric. "
                 "Either provide a dataset with the 'query' field to generate the answer or with an 'output' field if have generated it yourself."

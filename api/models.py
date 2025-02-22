@@ -87,13 +87,14 @@ class Model(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(Text)
+    aliased_name = Column(Text)
     base_url = Column(Text)
     api_key = Column(Text)
     prompt_system = Column(Text)
     # prompt_template = Column(Text) # rag, composition, multiagents ?
     sampling_params = Column(JSON)  # dict
     extra_params = Column(JSON)  # dict
-    has_raw_output = Column(Boolean)
+    has_raw_output = Column(Boolean, default=False)
 
 
 class Result(Base):
