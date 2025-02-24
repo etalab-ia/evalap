@@ -187,13 +187,12 @@ def display_dataset_and_metrics(product_info: dict, datasets: list[dict]) -> str
         if "metrics" not in product_info or not product_info["metrics"]:
             st.info("No metrics available for this product")
         else:
-            metrics_list = [metric.capitalize() for metric in product_info["metrics"]]
+            metrics_list = [metric.replace('_', ' ').capitalize() for metric in product_info["metrics"]]
             st.write(", ".join(metrics_list))
 
     return default_metric
 
 def main() -> None:
-    """Main function to run the Streamlit app."""
     st.title("Product Metrics Dashboard")
 
     product_config = load_product_config()
