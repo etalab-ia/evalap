@@ -1,4 +1,8 @@
 import os
+
+os.environ["ENV"] = "unittest"
+##We need to do this before importing config
+
 from pathlib import Path
 from typing import Generator
 
@@ -11,11 +15,12 @@ from api.tests.db.init_db import init_db as test_init_db
 from api.tests.db.base import Base
 from api.tests.db.session import engine
 
-os.environ["ENV"] = "unittest"
+
 # from db.create_admin_user import get_or_create_admin_user
 # from db.session import SessionLocal
 
 APP_FOLDER = Path(__file__).parents[2]
+
 
 def override_get_db():
     try:
@@ -24,12 +29,14 @@ def override_get_db():
     finally:
         db.close()
 
+
 @pytest.fixture(autouse=True)
 def setup_db():
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
     yield
     Base.metadata.drop_all(bind=engine)
+
 
 @pytest.fixture(scope="module")
 def client() -> Generator:
