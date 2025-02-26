@@ -3,7 +3,7 @@ products:
     name: "France_Service"
     dataset:
       id: 2
-      name: "mfs_dataset"
+      name: "MFS_questions_v01"
     metrics:
       - "judge_notator"
       - "judge_completude"
