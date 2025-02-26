@@ -50,7 +50,7 @@ def upgrade() -> None:
                         SET has_raw_output = :has_raw_output
                         WHERE id = (SELECT model_id FROM experiments WHERE id = :experiment_id)
                         """),
-                {"has_raw_output": True, "experiment_id": experiment["id"]},
+                {"has_raw_output": True, "experiment_id": experiment.id},
             )
 
             for num_line, row in df.iterrows():
