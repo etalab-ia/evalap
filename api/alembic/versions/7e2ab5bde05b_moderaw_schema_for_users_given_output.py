@@ -31,17 +31,17 @@ def upgrade() -> None:
     op.execute(sa.text("UPDATE models SET has_raw_output = FALSE WHERE has_raw_output IS NULL"))
     # Fix "output" datast
     db = op.get_bind()
-    result = db.execute(sa.text("SELECT id, df FROM datasets")).fetchall()
+    result = db.execute(sa.text("SELECT id, df FROM datasets"))
     for row in result:
-        df = pd.read_json(StringIO(row[1]))
+        df = pd.read_json(StringIO(row.df))
         if not ("output" in df.columns and df["output"].notna().any()):
             continue
 
         # Fetch experiments related to the current dataset
         experiments = db.execute(
             sa.text("SELECT id FROM experiments WHERE dataset_id = :dataset_id"),
-            {"dataset_id": row["id"]},
-        ).fetchall()
+            {"dataset_id": row.id},
+        )
 
         for experiment in experiments:
             db.execute(
