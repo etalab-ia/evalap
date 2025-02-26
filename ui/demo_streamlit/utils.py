@@ -13,7 +13,7 @@ def fetch(method, endpoint, data=None):
     elif data:
         kw["json"] = data
 
-        response = func(f"{API_BASE_URL}{endpoint}{q}", **kw)
+    response = func(f"{API_BASE_URL}{endpoint}{q}", **kw)
     if response.status_code == 200:
         return response.json()
     else:
