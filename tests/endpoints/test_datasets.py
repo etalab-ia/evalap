@@ -1,7 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
-from api.tests.utils import datasets 
-from api.tests.test_api import TestApi
+from tests.utils import datasets
+from tests.test_api import TestApi
 import pandas as pd
 
 class TestEndpointsDataset(TestApi):
@@ -23,7 +23,7 @@ class TestEndpointsDataset(TestApi):
     ])
     def test_create_dataset(self, client: TestClient, test_case):
         test_df = pd.DataFrame(test_case["df_data"])
-        
+
         response = datasets.create_dataset(
             client=client,
             name_dataset=f"test_dataset_{test_case['name']}",
@@ -31,7 +31,7 @@ class TestEndpointsDataset(TestApi):
             readme="dataset de test",
             default_metric="test_metric"
         )
-        
+
         assert response.status_code == 200
 
     def test_read_dataset(self, client: TestClient):
@@ -44,7 +44,7 @@ class TestEndpointsDataset(TestApi):
             'query': [1, 2],
             'output': ['A', 'B']
         })
-        
+
         create_response = datasets.create_dataset(
             client=client,
             name_dataset="test_dataset",
@@ -52,12 +52,12 @@ class TestEndpointsDataset(TestApi):
             readme="dataset de test",
             default_metric="test_metric"
         )
-        
+
         dataset_id = create_response.json()["id"]
-        
+
         response_without_df = datasets.read_dataset_id(client, dataset_id, with_df=False)
         assert response_without_df.status_code == 200
-        
+
         response_with_df = datasets.read_dataset_id(client, dataset_id, with_df=True)
         assert response_with_df.status_code == 200
 

@@ -111,4 +111,7 @@ def metric_name_metric(output:str, output_true:str, **kwargs) -> float:
 ## Unit Tests
 
 Tests can be found in api/tests.
-To run unit tests, use : ENV="unittest" PYTHONPATH=. pytest api/tests -v
+To run unit tests, use : 
+
+    pytest api/tests -v
+

@@ -35,7 +35,7 @@ test = ["pytest==8.3.3",
         "pre-commit==3.6.0"]
 
 [tool.pytest.ini_options]
-testpaths = ["api/tests"]
+testpaths = ["tests/"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
