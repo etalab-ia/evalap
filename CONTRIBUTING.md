@@ -110,4 +110,8 @@ def metric_name_metric(output:str, output_true:str, **kwargs) -> float:
 
 ## Unit Tests
 
-In development
+Tests can be found in api/tests.
+To run unit tests, use : 
+
+    pytest api/tests -v
+
