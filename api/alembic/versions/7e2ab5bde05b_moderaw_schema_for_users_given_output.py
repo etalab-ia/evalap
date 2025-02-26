@@ -63,7 +63,7 @@ def upgrade() -> None:
                     {
                         "answer": row["output"],
                         "num_line": num_line,
-                        "experiment_id": experiment["id"],
+                        "experiment_id": experiment.id,
                     },
                 )
 
