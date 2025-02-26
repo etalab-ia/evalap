@@ -78,7 +78,9 @@ def preprocess_experiments(experiments: list[dict]) -> pd.DataFrame:
             "id": exp["id"],
             "name": exp["name"],
             "dataset": exp["dataset"]["name"],
-            "model": exp["model"]["name"] if exp["model"] else "N/A",
+            "model": (exp["model"]["aliased_name"] or exp["model"]["name"])
+            if exp["model"]
+            else "N/A",
             **{
                 f"{result['metric_name']}_score": f"{sum(obs['score'] for obs in result['observation_table'] if obs['score'] is not None) / len([obs for obs in result['observation_table'] if obs['score'] is not None]):.2f}"
                 for result in exp.get("results", [])
