@@ -356,8 +356,8 @@ def display_experiment_set_score(experimentset, experiments_df):
         row = {}
         row_support = {}
         if exp.get("_model") or exp.get("model"):
-            row["model"] = exp.get("_model") or exp["model"]["name"]
-            row_support["model"] = exp.get("_model") or exp["model"]["name"]
+            row["model"] = exp.get("_model") or exp["model"]["aliased_name"] or exp["model"]["name"]
+            row_support["model"] = exp.get("_model") or exp["model"]["aliased_name"] or exp["model"]["name"]
 
         exp = fetch("get", f"/experiment/{exp['id']}?with_results=true")
         if not exp:
