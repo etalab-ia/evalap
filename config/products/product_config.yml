@@ -28,7 +28,7 @@ products:
     name: "Service_Public_+"
     dataset:
       id: 3
-      name: "spp_dataset"
+      name: "SPP_questions_v01"
     metrics:
       - "judge_notator"
       - "judge_completude"
