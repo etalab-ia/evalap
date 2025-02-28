@@ -37,7 +37,7 @@ class EgBaseModel(BaseModel):
                 obj[k] = sub_schema.to_table_init(db)
             elif isinstance(sub_schema, list):
                 obj[k] = [
-                    o.recurse_table_init(db) if isinstance(o, BaseModel) else o for o in sub_schema
+                    o.to_table_init(db) if isinstance(o, BaseModel) else o for o in sub_schema
                 ]
 
         return obj
@@ -166,7 +166,9 @@ class ModelWithKeys(Model):
 
 class ModelRaw(EgBaseModel):
     # Answers
-    output: list[str]
+    output: list[str] = Field(
+        description="The sequence of answers generated for this model, ordered as the 'query' input of the dataset you are working on."
+    )
     # ModelBase
     aliased_name: str = Field(
         description="A name to identify this model. The difference with the `name` parameter is that the latter must be used to identify the model name in the Openai API-compatible endpoint."
@@ -270,7 +272,9 @@ class ExperimentCreate(ExperimentBase):
             obj["num_try"] = dataset.size
             obj["num_success"] = len(self.model.output)
             if obj["num_try"] != obj["num_success"]:
-                raise SchemaError("The size of the model outputs must match the size of the dataset.")
+                raise SchemaError(
+                    "The size of the model outputs must match the size of the dataset."
+                )
 
         # Handle Model
         has_raw_output = False
@@ -284,6 +288,12 @@ class ExperimentCreate(ExperimentBase):
             # --
             answers = []
             m = self.model
+            df = pd.read_json(StringIO(dataset.df))
+            if len(df) != len(m.output):
+                raise SchemaError(
+                    "The size of the model outputs must match the size of the dataset."
+                )
+
             for i in range(len(m.output)):
                 answers.append(
                     dict(
