@@ -1,0 +1,46 @@
+products:
+  product_1:
+    name: "France_Service"
+    dataset:
+      id: 1
+      name: "MFS_questions_v01"
+    metrics:
+      - "judge_notator"
+      - "judge_completude"
+      - "judge_exactness"
+      - "tokens_per_second"
+    production_model:
+      current:
+        id: 262
+        name: "Guillaume Tell"
+        version: "2.1.0"
+        last_updated: "2024-10-07"
+      history:
+        - id: 3
+          name: "Guillaume Tell"
+          version: "2.O.0"
+          last_updated: "2024-09-25"
+        - id: 1
+          name: "Albert light"
+          version: "1.O.0"
+          last_updated: "2024-01-09"
+  product_2:
+    name: "Service_Public_+"
+    dataset:
+      id: 37
+      name: "SPP_questions_v01"
+    metrics:
+      - "judge_notator"
+      - "judge_completude"
+      - "judge_exactness"
+    production_model:
+      current:
+        id: 186
+        name: "SPP_Llama8B_3.1_LoRa_3264_3"
+        version: "2.0.0"
+        last_updated: "2025-01-30"
+      history:
+        - id: 6
+          name: "SPP"
+          version: "1.O.0"
+          last_updated: "2024-01-15"

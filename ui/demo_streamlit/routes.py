@@ -7,11 +7,18 @@ ROUTES = [
         "title": "Home",
         "icon": ":material/home:",
     },
-    {
+    # {
+    #     "id": "leaderboard",
+    #     "path": "views/leaderboard.py",
+    #     "title": "Leaderboard",
+    #     "description": "Best models ranking list",
+    #     "icon": ":material/trophy:",
+    # },
+        {
         "id": "leaderboard",
-        "path": "views/leaderboard.py",
+        "path": "views/product_leaderboard.py",
         "title": "Leaderboard",
-        "description": "Best models ranking list",
+        "description": "Best models ranking list (by products)",
         "icon": ":material/trophy:",
     },
     {
