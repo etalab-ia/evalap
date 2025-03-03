@@ -193,7 +193,7 @@ def display_dataset_and_metrics(product_info: dict, datasets: list[dict]) -> str
     return default_metric
 
 def main() -> None:
-    st.title("Product Metrics Dashboard")
+    st.title("Products Metrics Leaderboard")
 
     product_config = load_product_config()
 

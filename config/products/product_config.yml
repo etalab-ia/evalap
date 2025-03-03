@@ -2,7 +2,7 @@ products:
   product_1:
     name: "France_Service"
     dataset:
-      id: 2
+      id: 1
       name: "MFS_questions_v01"
     metrics:
       - "judge_notator"
@@ -11,7 +11,7 @@ products:
       - "tokens_per_second"
     production_model:
       current:
-        id: 2
+        id: 262
         name: "Guillaume Tell"
         version: "2.1.0"
         last_updated: "2024-10-07"
@@ -27,7 +27,7 @@ products:
   product_2:
     name: "Service_Public_+"
     dataset:
-      id: 3
+      id: 37
       name: "SPP_questions_v01"
     metrics:
       - "judge_notator"
@@ -35,12 +35,12 @@ products:
       - "judge_exactness"
     production_model:
       current:
-        id: 7
-        name: "Spp_"
+        id: 186
+        name: "SPP_Llama8B_3.1_LoRa_3264_3"
         version: "2.0.0"
-        last_updated: "2024-03-20"
+        last_updated: "2025-01-30"
       history:
         - id: 6
-          name: "Spp"
+          name: "SPP"
           version: "1.O.0"
           last_updated: "2024-01-15"
