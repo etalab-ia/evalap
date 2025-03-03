@@ -9,7 +9,6 @@ import yaml
 from utils import fetch, calculate_tokens_per_second
 
 DEFAULT_METRIC = "judge_exactness"
-CONFIG_PATH = Path(__file__).parent.parent.parent.parent / "config" / "products" / "product_config.yml"
 
 #TODO:
 # recup list mtetric du produit et n'afficher que les résultats dessus 
@@ -18,11 +17,13 @@ CONFIG_PATH = Path(__file__).parent.parent.parent.parent / "config" / "products"
 def load_product_config() -> dict:
     """Load product configuration from YAML file."""
     try:
-        if not CONFIG_PATH.exists():
-            st.error(f"Configuration file not found at: {CONFIG_PATH}")
+        config_path = Path("config") / "products" / "product_config.yml"
+        
+        if not config_path.exists():
+            st.error(f"Configuration file not found at: {config_path}")
             return {"products": {}}
 
-        with open(CONFIG_PATH, "r") as f:
+        with open(config_path, "r") as f:
             return yaml.safe_load(f)
     except Exception as e:
         st.error(f"Error loading configuration: {str(e)}")
