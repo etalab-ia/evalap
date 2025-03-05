@@ -4,8 +4,6 @@ on:
   push:
     branches:
       - main
-      - ajout_compilation_arm_github_actions
-
 env:
   IMAGE_NAME: ghcr.io/${{ github.repository }}/eg1
   IMAGE_TAG: ${{ github.sha }}
