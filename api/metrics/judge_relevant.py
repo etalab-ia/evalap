@@ -4,46 +4,54 @@ from api.utils import render_jinja
 from . import metric_registry
 
 _template = """
-Etant donnée la question A suivante :
+Analysez la question, la réponse standard et la réponse d'un autre agent fournie ci-dessous. Votre tâche est d'évaluer la PERTINENCE de la réponse de l'autre agent par rapport aux éléments essentiels de la réponse standard.
+
+Question posée :
 
 <A>
 {{query}}
 </A>
 
 
-Et étant donnée la bonne réponse B associée :
+Réponse standard (LA REFERENCE!) :
 
 <B>
 {{output_true}}
 </B>
 
 
-Et étant donnée la réponse C générée par un autre agent, à évaluer :
+Réponse générée par un autre agent à évaluer :
 
 <C>
 {{output}}
 </C>
 
 
-Indique si la réponse C de l'agent correspond bien à la vrai réponse B ? En d'autres termes, la réponse de l'agent est-elle similaire à la bonne réponse?
-Réponds 1 si oui ou 0 si non.
-Ne retourne que 1 ou 0, rien d'autre !
+Instructions :
+1. Identifiez les éléments essentiels dans la réponse standard.
+2. Vérifiez si ces éléments sont présents dans la réponse de l'autre agent.
+3. Attribuez une note de 1 à 10 pour la pertinence :
+- 10 : Tous les éléments essentiels sont présents
+- 1 : Aucun élément essentiel n'est présent
+
+Répondez UNIQUEMENT avec la note (ET RIEN D AUTRE) sous ce format :
+NOTE
 """.strip()
 
 _config = {
     "model": "gpt-4o",
     # "system_prompt": "Tu donnes...."
-       "sampling_params": {"temperature": 0.2, "max_token": 10},
+    "sampling_params": {"temperature": 0.2, "max_token": 10},
 }
 
 
 @metric_registry.register(
-    name="judge_exactness",
-    description="Binary similarity between output and output_true",
+    name="judge_relevant",
+    description="[1-10] relevance score between output and output_true",
     metric_type="llm",
     require=["output", "output_true", "query"],
 )
-def judge_exactness_metric(output, output_true, **kwargs):
+def judge_pertinence_metric(output, output_true, **kwargs):
     config = _config | {k: v for k, v in kwargs.items() if k in _config}
     messages = [
         {
