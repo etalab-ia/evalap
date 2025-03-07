@@ -360,7 +360,7 @@ def retry_runs(
 
         expected_output_len = exp.dataset.size
         actual_output_len = exp.num_try
-        if actual_output_len < expected_output_len:
+        if actual_output_len != expected_output_len:
             rr.unfinished_experiment_ids += [exp.id]
             continue
 
@@ -370,7 +370,7 @@ def retry_runs(
 
             expected_output_len = exp.dataset.size
             actual_output_len = result.num_try
-            if actual_output_len < expected_output_len:
+            if actual_output_len != expected_output_len:
                 rr.unfinished_result_ids += [result.id]
                 if force:
                     crud.update_result(db, result.id, dict(metric_status="finished"))

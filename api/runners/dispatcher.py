@@ -5,7 +5,7 @@ from io import StringIO
 
 import pandas as pd
 import zmq
-from sqlalchemy import func
+from sqlalchemy import func, case
 
 import api.crud as crud
 import api.models as models
@@ -25,7 +25,9 @@ def fix_answer_num_count(db, db_exp, commit=True):
     counts = (
         db.query(
             func.count(models.Answer.id).label("num_try"),
-            func.count(models.Answer.answer).label("num_success"),
+            func.count(
+                case(((models.Answer.answer != None) & (models.Answer.error_msg == None), 1))
+            ).label("num_success"),
         )
         .filter(models.Answer.experiment_id == db_exp.id)
         .one()
@@ -45,7 +47,15 @@ def fix_result_num_count(db, result, commit=True):
     counts = (
         db.query(
             func.count(models.ObservationTable.id).label("num_try"),
-            func.count(models.ObservationTable.score).label("num_success"),
+            func.count(
+                case(
+                    (
+                        (models.ObservationTable.score != None)
+                        & (models.ObservationTable.error_msg == None),
+                        1,
+                    )
+                )
+            ).label("num_success"),
         )
         .filter(models.ObservationTable.result_id == result.id)
         .one()
@@ -83,6 +93,7 @@ def dispatch_tasks(db, db_exp, message_type: MessageType):
             if r and r.answer and not r.error_msg:
                 continue
 
+            r.error_msg = None
             sender.send_json(
                 {
                     "message_type": MessageType.answer,
@@ -93,6 +104,7 @@ def dispatch_tasks(db, db_exp, message_type: MessageType):
                 }
             )
 
+        db.commit()
         # The runner will check when all answers are finished
         # and follow with the observations if needed.
     elif message_type == MessageType.observation:
@@ -126,6 +138,7 @@ def dispatch_tasks(db, db_exp, message_type: MessageType):
                 if r and r.score is not None and not r.error_msg:
                     continue
 
+                r.error_msg = None
                 row = df.iloc[a.num_line]
                 sender.send_json(
                     {
@@ -138,6 +151,7 @@ def dispatch_tasks(db, db_exp, message_type: MessageType):
                     }
                 )
 
+        db.commit()
     else:
         raise ValueError("Task unkown: %s" % message_type)
 
@@ -174,6 +188,7 @@ def dispatch_retries(db, retry_runs: schemas.RetryRuns):
             ):  # @TODO: add a is_failed columns !
                 continue
 
+            answer.error_msg = None
             sender.send_json(
                 {
                     "message_type": MessageType.answer,
@@ -184,6 +199,8 @@ def dispatch_retries(db, retry_runs: schemas.RetryRuns):
                 }
             )
             num_line_added + [answer.num_line]
+
+        db.commit()  # for obs.error_msg
 
         # unfinished
         num_lines = (
@@ -221,11 +238,12 @@ def dispatch_retries(db, retry_runs: schemas.RetryRuns):
             if obs.score is not None and not obs.error_msg:  # @TODO: add a is_failed columns !
                 continue
 
+            obs.error_msg = None
             answer = crud.get_answer(db, experiment_id=db_exp.id, num_line=obs.num_line)
             if not answer:
-                answer = df.iloc[obs.num_line].get("output")
+                output = df.iloc[obs.num_line].get("output")
             else:
-                answer = answer.answer
+                output = answer.answer
 
             sender.send_json(
                 {
@@ -233,11 +251,13 @@ def dispatch_retries(db, retry_runs: schemas.RetryRuns):
                     "exp_id": db_exp.id,
                     "line_id": obs.num_line,
                     "metric_name": result.metric_name,
-                    "output": answer,
+                    "output": output,
                     "output_true": df.iloc[obs.num_line].get("output_true"),
                 }
             )
             num_line_added + [answer.num_line]
+
+        db.commit()  # for obs.error_msg
 
         # Unfinished
         num_lines = (
@@ -252,9 +272,9 @@ def dispatch_retries(db, retry_runs: schemas.RetryRuns):
         for num_line in num_lines_missing:
             answer = crud.get_answer(db, experiment_id=db_exp.id, num_line=num_line)
             if not answer:
-                answer = df.iloc[num_line].get("output")
+                output = df.iloc[num_line].get("output")
             else:
-                answer = answer.answer
+                output = answer.answer
 
             sender.send_json(
                 {
@@ -262,10 +282,13 @@ def dispatch_retries(db, retry_runs: schemas.RetryRuns):
                     "exp_id": db_exp.id,
                     "line_id": num_line,
                     "metric_name": result.metric_name,
-                    "output": answer,
+                    "output": output,
                     "output_true": df.iloc[num_line].get("output_true"),
                 }
             )
+
+        if all(r.metric_status == "finished" for r in result.experiment.results):
+            crud.update_experiment(db, db_exp.id, dict(experiment_status="finished"))
 
     sender.close()
     context.term()
