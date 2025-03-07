@@ -43,7 +43,7 @@ def update_dataset(
         return None
     # Update fields
     for key, value in vars(dataset_update).items():
-        setattr(db_dataset, key, value) if value else None
+        setattr(db_dataset, key, value) if value is not None else None
     db.commit()
     db.refresh(db_dataset)
     return db_dataset
@@ -122,7 +122,7 @@ def update_result(
         return None
     # Update fields
     for key, value in vars(result_update).items():
-        setattr(db_result, key, value) if value else None
+        setattr(db_result, key, value) if value is not None else None
     db.commit()
     db.refresh(db_result)
     return db_result
@@ -181,7 +181,7 @@ def update_experiment(
         return None
     # Update fields
     for key, value in vars(experiment_update).items():
-        setattr(db_exp, key, value) if value else None
+        setattr(db_exp, key, value) if value is not None else None
         # If experiment_status is set to finished, update all result status too.
         if key == "experiment_status" and value == schemas.ExperimentStatus.finished:
             for result in db_exp.results:
@@ -250,7 +250,7 @@ def update_experimentset(
         return None
     # Update fields
     for key, value in vars(experimentset_update).items():
-        setattr(db_expset, key, value) if value else None
+        setattr(db_expset, key, value) if value is not None else None
     db.commit()
     db.refresh(db_expset)
     return db_expset

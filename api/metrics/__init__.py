@@ -145,7 +145,7 @@ for class_name, obj in zip(classes, imported_objs):
 
     name = inflection.underscore(class_name.replace("Metric", ""))
     description = "see https://docs.confident-ai.com/docs/metrics-introduction"
-    required_params = obj.get("required_params")
+    required_params = obj.get("required_params") or getattr(obj["obj"], "_required_params", None)
 
     # @DEBUG: Deepeval:RagasMetric does not have the required_params attribute set.
     if class_name == "RagasMetric":
