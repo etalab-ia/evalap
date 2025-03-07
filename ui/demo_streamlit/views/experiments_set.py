@@ -387,7 +387,11 @@ def display_experiment_set_score(experimentset, experiments_df):
 
     df = pd.DataFrame(rows)
     df = _sort_columns(df, [])
-    has_repeat, df = _format_experiments_score_df(experiments, df)
+    try:
+        has_repeat, df = _format_experiments_score_df(experiments, df)
+    except ValueError:
+        st.error("No result found yet, please try again later")
+        return
 
     df_support = pd.DataFrame(rows_support)
     df_support = _sort_columns(df_support, [])
