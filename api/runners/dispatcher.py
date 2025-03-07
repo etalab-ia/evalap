@@ -92,8 +92,9 @@ def dispatch_tasks(db, db_exp, message_type: MessageType):
             )
             if r and r.answer and not r.error_msg:
                 continue
+            elif r:
+                r.error_msg = None
 
-            r.error_msg = None
             sender.send_json(
                 {
                     "message_type": MessageType.answer,
@@ -137,8 +138,9 @@ def dispatch_tasks(db, db_exp, message_type: MessageType):
                 )
                 if r and r.score is not None and not r.error_msg:
                     continue
+                elif r:
+                    r.error_msg = None
 
-                r.error_msg = None
                 row = df.iloc[a.num_line]
                 sender.send_json(
                     {
