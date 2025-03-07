@@ -21,8 +21,8 @@ dependencies = [
     "jinja2==3.1.4",
     "pydantic==2.9.2",
     "inflection==0.5.1",
-    "deepeval==2.0.5",
-    "ragas==0.2.7",
+    "deepeval==2.4.9",
+    "ragas==0.2.13",
     # Front
     "streamlit==1.40.1"
 ]

@@ -100,9 +100,9 @@ def display_experiment_sets(experiment_sets):
 
                 col1, col2, col3 = st.columns([1 / 6, 2 / 6, 3 / 6])
                 with col1:
-                    st.caption(f'id: {exp_set["id"]} ')
+                    st.caption(f"id: {exp_set['id']} ")
                 with col2:
-                    st.caption(f'Experiments: {len(exp_set["experiments"])} ')
+                    st.caption(f"Experiments: {len(exp_set['experiments'])} ")
                 with col3:
                     st.caption(f"Created on {when}")
 
@@ -304,12 +304,14 @@ def _check_repeat_mode(experiments: list) -> bool:
     return False
 
 
-def _format_experimentd_score_df(experiments: list, df: pd.DataFrame):
+def _format_experiments_score_df(experiments: list, df: pd.DataFrame) -> (bool, pd.DataFrame):
     experiment_ids = [exp["id"] for exp in experiments]
     experiment_names = [exp["name"] for exp in experiments]
     is_repeat_mode = _check_repeat_mode(experiments)
+    result = None
 
     if is_repeat_mode and df["model"].notna().all():
+        has_repeat = True
         # Lost repetition trailing code.
         df["model"] = df["model"].str.replace(r"__\d+$", "", regex=True)
         # Group by 'model' and calculate mean and std for all numeric columns
@@ -329,17 +331,19 @@ def _format_experimentd_score_df(experiments: list, df: pd.DataFrame):
                     + grouped[(column, "std")].round(2).astype(str)
                 )
 
-        df = result
-    else:
+    if result is None or len(result) == len(df):
         df["Id"] = experiment_ids
         df["Name"] = experiment_names
         df = df[["Id", "Name"] + [col for col in df.columns if col not in ["Id", "Name"]]]
+        has_repeat = False
+    else:
+        df = result
 
     default_sort_metric = _find_default_sort_metric(df.columns)
     if default_sort_metric in df.columns:
         df = df.sort_values(by=f"{default_sort_metric}", ascending=False)
 
-    return df
+    return has_repeat, df
 
 
 def display_experiment_set_score(experimentset, experiments_df):
@@ -357,7 +361,9 @@ def display_experiment_set_score(experimentset, experiments_df):
         row_support = {}
         if exp.get("_model") or exp.get("model"):
             row["model"] = exp.get("_model") or exp["model"]["aliased_name"] or exp["model"]["name"]
-            row_support["model"] = exp.get("_model") or exp["model"]["aliased_name"] or exp["model"]["name"]
+            row_support["model"] = (
+                exp.get("_model") or exp["model"]["aliased_name"] or exp["model"]["name"]
+            )
 
         exp = fetch("get", f"/experiment/{exp['id']}?with_results=true")
         if not exp:
@@ -381,14 +387,14 @@ def display_experiment_set_score(experimentset, experiments_df):
 
     df = pd.DataFrame(rows)
     df = _sort_columns(df, [])
-    df = _format_experimentd_score_df(experiments, df)
+    has_repeat, df = _format_experiments_score_df(experiments, df)
 
     df_support = pd.DataFrame(rows_support)
     df_support = _sort_columns(df_support, [])
-    df_support = _format_experimentd_score_df(experiments, df_support)
+    _, df_support = _format_experiments_score_df(experiments, df_support)
 
     st.write("**Score:** Averaged score on experiments metrics")
-    if _check_repeat_mode(experiments):
+    if has_repeat:
         st.warning("Score are aggregated on model repetition.")
     st.dataframe(
         df,
@@ -462,7 +468,7 @@ def main():
             status, counts = _get_expset_status(experimentset)
             st.markdown(f"## {experimentset['name']} ")
             st.markdown(f"**experiment_set id**: {experimentset['id']}")
-            st.markdown(f'**Readme:** {experimentset.get("readme", "No description available")}')
+            st.markdown(f"**Readme:** {experimentset.get('readme', 'No description available')}")
 
             finished_ratio = int(
                 counts["total_observation_successes"] / counts["observation_length"] * 100

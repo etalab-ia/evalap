@@ -5,7 +5,7 @@ from typing import Any, Literal, Optional
 
 import numpy as np
 import pandas as pd
-from pydantic import BaseModel, ConfigDict, create_model, Field
+from pydantic import BaseModel, ConfigDict, Field, create_model
 from sqlalchemy.orm import Session
 
 import api.models as models
@@ -108,7 +108,7 @@ class Dataset(DatasetBase):
     id: int
     created_at: datetime
     has_query: bool
-    size: int
+    size: int = Field(description="Number of rows in the dataset (length of the dataframe)")
     columns: list[str]
 
 
@@ -474,6 +474,10 @@ class RetryRuns(EgBaseModel):
     experiment_ids: list[int]
     # List of results/metrics to retry
     result_ids: list[int]
+    # List of unfinished experiments to process
+    unfinished_experiment_ids: list[int]
+    # List of unfinished results to process
+    unfinished_result_ids: list[int]
 
 
 #
