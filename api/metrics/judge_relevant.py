@@ -41,7 +41,7 @@ NOTE
 _config = {
     "model": "gpt-4o",
     # "system_prompt": "Tu donnes...."
-    "sampling_params": {"temperature": 0.2, "max_token": 10},
+    "sampling_params": {"temperature": 0.2, "max_tokens": 10},
 }
 
 
