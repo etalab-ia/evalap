@@ -1,11 +1,16 @@
+import random
+import time
 from enum import Enum
 from io import StringIO
 
 import pandas as pd
 import zmq
+from sqlalchemy import func
 
 import api.crud as crud
+import api.models as models
 import api.schemas as schemas
+from api.logger import logger
 from api.metrics import metric_registry
 
 
@@ -13,23 +18,72 @@ class MessageType(str, Enum):
     answer = "answers"  # Ask to generate an answer
     observation = "observations"  # Ask to generate an observation
 
-    # @CODEFACTOR: for observation message, it is actually useless to pass
-    # output and output_true as the df is loaded anyway to load the "require" fields...
+
+def fix_answer_num_count(db, db_exp, commit=True):
+    # num_try: number of answers.
+    # num_success: number of answer where answer is not None.
+    counts = (
+        db.query(
+            func.count(models.Answer.id).label("num_try"),
+            func.count(models.Answer.answer).label("num_success"),
+        )
+        .filter(models.Answer.experiment_id == db_exp.id)
+        .one()
+    )
+
+    db_exp.num_try = counts.num_try
+    db_exp.num_success = counts.num_success
+    if commit:
+        db.commit()
+        db.refresh(db_exp)
+    return db_exp
+
+
+def fix_result_num_count(db, result, commit=True):
+    # num_try: number of computed result/metric
+    # num_success: number of metric where score is not None
+    counts = (
+        db.query(
+            func.count(models.ObservationTable.id).label("num_try"),
+            func.count(models.ObservationTable.score).label("num_success"),
+        )
+        .filter(models.ObservationTable.result_id == result.id)
+        .one()
+    )
+
+    result.num_try = counts.num_try
+    result.num_success = counts.num_success
+    if commit:
+        db.commit()
+        db.refresh(result)
+    return result
 
 
 def dispatch_tasks(db, db_exp, message_type: MessageType):
     context = zmq.Context()
-    socket = context.socket(zmq.PUSH)
-    socket.connect("tcp://localhost:5555")
+    sender = context.socket(zmq.PUSH)
+    sender.connect("tcp://localhost:5555")
 
     if message_type == MessageType.answer:
         # Generate answer
         # --
         # iterate the dataset
-        crud.update_experiment(db, db_exp.id, dict(experiment_status="running_answers", num_try=0))
+        db_exp.experiment_status = "running_answers"
+        db_exp = fix_answer_num_count(db, db_exp, commit=False)
+        db_exp.num_try = db_exp.num_success
+        db.commit()
         df = pd.read_json(StringIO(db_exp.dataset.df))
         for num_line, row in df.iterrows():
-            socket.send_json(
+            # Do not rerun if answer already exist with no error
+            r = (
+                db.query(models.Answer)
+                .filter_by(num_line=num_line, experiment_id=db_exp.id)
+                .first()
+            )
+            if r and r.answer and not r.error_msg:
+                continue
+
+            sender.send_json(
                 {
                     "message_type": MessageType.answer,
                     "exp_id": db_exp.id,
@@ -45,25 +99,35 @@ def dispatch_tasks(db, db_exp, message_type: MessageType):
         # Generate observation
         # --
         # iterate metrics and dataset
-        needs_output = any(  # to see if better to add a new table attribute to store this...
-            "output" in metric_registry.get_metric(r.metric_name).require for r in db_exp.results
-        )
         if len(db_exp.answers) == 0:
             raise NotImplementedError(
                 "No answers available to generate observations for this experiment: %s" % db_exp.id
             )
+        db_exp.experiment_status = "running_metrics"
+        db.commit()
         df = pd.read_json(StringIO(db_exp.dataset.df))
-        crud.update_experiment(db, db_exp.id, dict(experiment_status="running_metrics"))
         for result in db_exp.results:
-            if result.metric_status != "pending":
+            # wait a random time between 10 and 500 ms to avoid race condition
+            time.sleep(random.uniform(10, 500) / 1000)
+            db.expire(result, ["metric_status"])
+            if result.metric_status == "running":
                 continue
-            result.num_try = 0
-            result.num_success = 0
             result.metric_status = "running"
+            result = fix_result_num_count(db, result, commit=False)
+            result.num_try = result.num_success
             db.commit()
             for a in db_exp.answers:
+                # Do not rerun if score already exist with no error
+                r = (
+                    db.query(models.ObservationTable)
+                    .filter_by(num_line=a.num_line, result_id=result.id)
+                    .first()
+                )
+                if r and r.score is not None and not r.error_msg:
+                    continue
+
                 row = df.iloc[a.num_line]
-                socket.send_json(
+                sender.send_json(
                     {
                         "message_type": MessageType.observation,
                         "exp_id": db_exp.id,
@@ -77,29 +141,40 @@ def dispatch_tasks(db, db_exp, message_type: MessageType):
     else:
         raise ValueError("Task unkown: %s" % message_type)
 
-    socket.close()
+    sender.close()
     context.term()
 
 
 def dispatch_retries(db, retry_runs: schemas.RetryRuns):
     context = zmq.Context()
-    socket = context.socket(zmq.PUSH)
-    socket.connect("tcp://localhost:5555")
+    sender = context.socket(zmq.PUSH)
+    sender.connect("tcp://localhost:5555")
 
-    for expid in retry_runs.experiment_ids:
+    #
+    # Retry failed and unfinished expe
+    #
+
+    # Answers
+    for expid in set(retry_runs.experiment_ids + retry_runs.unfinished_experiment_ids):
         db_exp = crud.get_experiment(db, expid)
         if db_exp is None:
             raise ValueError("should never happen: dprexpnotfound1")
 
-        crud.update_experiment(
-            db, db_exp.id, dict(experiment_status="running_answers", num_try=db_exp.num_success)
-        )
+        db_exp.experiment_status = "running_answers"
+        db_exp = fix_answer_num_count(db, db_exp, commit=False)
+        db_exp.num_try = db_exp.num_success
+        db.commit()
         df = pd.read_json(StringIO(db_exp.dataset.df))
+
+        # Failed
+        num_line_added = []
         for answer in db_exp.answers:
-            if answer.answer and not answer.error_msg:  # @TODO: add a is_failed columns !
+            if (
+                answer.answer is not None and not answer.error_msg
+            ):  # @TODO: add a is_failed columns !
                 continue
 
-            socket.send_json(
+            sender.send_json(
                 {
                     "message_type": MessageType.answer,
                     "exp_id": db_exp.id,
@@ -108,15 +183,40 @@ def dispatch_retries(db, retry_runs: schemas.RetryRuns):
                     "query": df.iloc[answer.num_line]["query"],
                 }
             )
+            num_line_added + [answer.num_line]
 
-    for resultid in retry_runs.result_ids:
+        # unfinished
+        num_lines = (
+            db.query(models.Answer.num_line).filter(models.Answer.experiment_id == expid).all()
+        )
+        num_lines = [num_line[0] for num_line in num_lines]
+        num_lines_missing = [
+            i for i in range(db_exp.dataset.size) if i not in num_line_added and i not in num_lines
+        ]
+        for num_line in num_lines_missing:
+            sender.send_json(
+                {
+                    "message_type": MessageType.answer,
+                    "exp_id": db_exp.id,
+                    "model_id": db_exp.model.id,
+                    "line_id": num_line,
+                    "query": df.iloc[num_line]["query"],
+                }
+            )
+
+    # Metrics
+    for resultid in set(retry_runs.result_ids + retry_runs.unfinished_result_ids):
         result = crud.get_result(db, resultid)
         db_exp = result.experiment
-        crud.update_experiment(db, db_exp.id, dict(experiment_status="running_metrics"))
-        result.num_try -= result.num_success
+        db_exp.experiment_status = "running_metrics"
         result.metric_status = "running"
+        result = fix_result_num_count(db, result, commit=False)
+        result.num_try = result.num_success
         db.commit()
         df = pd.read_json(StringIO(db_exp.dataset.df))
+
+        # Failed
+        num_line_added = []
         for obs in result.observation_table:
             if obs.score is not None and not obs.error_msg:  # @TODO: add a is_failed columns !
                 continue
@@ -127,7 +227,7 @@ def dispatch_retries(db, retry_runs: schemas.RetryRuns):
             else:
                 answer = answer.answer
 
-            socket.send_json(
+            sender.send_json(
                 {
                     "message_type": MessageType.observation,
                     "exp_id": db_exp.id,
@@ -137,6 +237,35 @@ def dispatch_retries(db, retry_runs: schemas.RetryRuns):
                     "output_true": df.iloc[obs.num_line].get("output_true"),
                 }
             )
+            num_line_added + [answer.num_line]
 
-    socket.close()
+        # Unfinished
+        num_lines = (
+            db.query(models.ObservationTable.num_line)
+            .filter(models.ObservationTable.result_id == resultid)
+            .all()
+        )
+        num_lines = [num_line[0] for num_line in num_lines]
+        num_lines_missing = [
+            i for i in range(db_exp.dataset.size) if i not in num_line_added and i not in num_lines
+        ]
+        for num_line in num_lines_missing:
+            answer = crud.get_answer(db, experiment_id=db_exp.id, num_line=num_line)
+            if not answer:
+                answer = df.iloc[num_line].get("output")
+            else:
+                answer = answer.answer
+
+            sender.send_json(
+                {
+                    "message_type": MessageType.observation,
+                    "exp_id": db_exp.id,
+                    "line_id": num_line,
+                    "metric_name": result.metric_name,
+                    "output": answer,
+                    "output_true": df.iloc[num_line].get("output_true"),
+                }
+            )
+
+    sender.close()
     context.term()
