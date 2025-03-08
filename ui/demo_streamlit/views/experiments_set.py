@@ -322,16 +322,17 @@ def _format_experiments_score_df(experiments: list, df: pd.DataFrame) -> (bool, 
         result["model"] = grouped["model"]
 
         # Iterate over each column (except 'model') to format mean ± std
+        all_std = []
         for column in df.columns:
             if column not in ["model"]:
                 # Format the score as "mean ± std"
-                result[column] = (
-                    grouped[(column, "mean")].round(2).astype(str)
-                    + " ± "
-                    + grouped[(column, "std")].round(2).astype(str)
-                )
+                mean_ = grouped[(column, "mean")].round(2).astype(str)
+                std_ = grouped[(column, "std")].round(2).astype(str)
+                result[column] = mean_ + " ± " + std_
+                all_std.append(std_)
 
-    if result is None or len(result) == len(df):
+    dummy_std =  all(x is None or x == 0 or (isinstance(x, float) and np.isnan(x)) for x in all_std)
+    if result is None or len(result) == len(df) or dummy_std :
         df["Id"] = experiment_ids
         df["Name"] = experiment_names
         df = df[["Id", "Name"] + [col for col in df.columns if col not in ["Id", "Name"]]]
