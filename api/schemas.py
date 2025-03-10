@@ -325,17 +325,19 @@ class ExperimentCreate(ExperimentBase):
                 "Either provide a dataset with the 'query' field to generate the answer or with an 'output' field if have generated it yourself."
             )
         # Schema validation on all require fields
+        DEBUG_EXCEPTION_REQUIRE = ["retrieval_context"]
         require_fields = {
             require
             for metric in self.metrics
             for require in metric_registry.get_metric(metric).require
+            if require not in DEBUG_EXCEPTION_REQUIRE
         }
         for require in require_fields:
             if require in ["output"]:
                 continue
             if require not in dataset.columns:
                 raise SchemaError(
-                    f"You need to provide a `{require}` for this metric. "
+                    f"You need to provide a `{require}` for one of your metric. "
                     f"Your dataset needs to have an `{require}` field."
                 )
 
