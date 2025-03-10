@@ -330,7 +330,7 @@ def _format_experiments_score_df(experiments: list, df: pd.DataFrame) -> (bool, 
                 result[column] = mean_ + " ± " + std_
                 all_std.append(std_)
 
-    dummy_std = all(x is None or x == 0 or (isinstance(x, float) and np.isnan(x)) for x in all_std)
+    dummy_std = np.all(x is None or x == 0 or (isinstance(x, float) and np.isnan()) for x in all_std)
     if result is None or len(result) == len(df) or dummy_std:
         df["Id"] = experiment_ids
         df["Name"] = experiment_names
@@ -389,8 +389,10 @@ def display_experiment_set_score(experimentset, experiments_df):
     df = _sort_columns(df, [])
     try:
         has_repeat, df = _format_experiments_score_df(experiments, df)
-    except ValueError:
+    except ValueError as err:
         st.error("No result found yet, please try again later")
+        print("WARNING(experiment_set.py:_format_experiments_score_df):", str(err))
+        raise err
         return
 
     df_support = pd.DataFrame(rows_support)
