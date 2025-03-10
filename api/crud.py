@@ -320,15 +320,13 @@ def upsert_observation(
 #
 # LeaderBoard
 #
-
-
 def get_leaderboard(
     db: Session, metric_name: str = "judge_notator", dataset_name: str = None, limit: int = 100
 ):
     # Filter Experiment by dataset and metric
     main_metric_subquery = (
         db.query(
-            models.Result.experiment_id, func.max(models.ObservationTable.score).label("main_score")
+            models.Result.experiment_id, func.avg(models.ObservationTable.score).label("main_score")
         )
         .join(models.ObservationTable)
         .filter(models.Result.metric_name == metric_name)
@@ -363,23 +361,32 @@ def get_leaderboard(
     entries = []
     for result in results:
         other_metrics = (
-            db.query(models.Result.metric_name, models.ObservationTable.score)
+            db.query(
+                models.Result.metric_name,
+                func.avg(models.ObservationTable.score).label("avg_score")  
+            )
             .join(models.ObservationTable)
             .filter(
                 and_(
                     models.Result.experiment_id == result.experiment_id,
-                    models.Result.metric_name != metric_name,
+                    models.Result.metric_name != metric_name,  
                 )
             )
+            .group_by(models.Result.metric_name)  
             .all()
         )
+
+        other_metrics_dict = {
+            metric: float(score) if score is not None else None  
+            for metric, score in other_metrics
+        }
 
         entry = schemas.LeaderboardEntry(
             experiment_id=result.experiment_id,
             model_name=result.model_name,
             dataset_name=result.dataset_name,
-            main_metric_score=result.main_metric_score,
-            other_metrics={metric: score for metric, score in other_metrics},
+            main_metric_score=float(result.main_metric_score) if result.main_metric_score else None,
+            other_metrics=other_metrics_dict,
             sampling_param={k: str(v) for k, v in (result.sampling_params or {}).items()},
             extra_param={k: str(v) for k, v in (result.extra_params or {}).items()},
         )
