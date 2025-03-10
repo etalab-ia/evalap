@@ -296,7 +296,6 @@ def _format_experiments_score_df(experiments: list, df: pd.DataFrame) -> (bool, 
     experiment_names = [exp["name"] for exp in experiments]
     is_repeat_mode = _check_repeat_mode(experiments)
     result = None
-    all_std = []
     if is_repeat_mode and df["model"].notna().all():
         has_repeat = True
         # Lost repetition trailing code.
@@ -314,14 +313,15 @@ def _format_experiments_score_df(experiments: list, df: pd.DataFrame) -> (bool, 
                 # Format the score as "mean ± std"
                 mean_ = grouped[(column, "mean")].round(2).astype(str)
                 std_ = grouped[(column, "std")].round(2).astype(str)
-                result[column] = mean_ + " ± " + std_
-                all_std.append(std_)
+                if all(x is None or x == 0 or np.isnan(x) for x in std_.astype(float)):
+                    result[column] = mean_
+                else:
+                    result[column] = mean_ + " ± " + std_
 
-    dummy_std = np.all(x is None or x == 0 or (isinstance(x, float) and np.isnan()) for x in all_std)
-    if result is None or len(result) == len(df) or dummy_std:
+    if result is None or len(result) == len(df):
         df["Id"] = experiment_ids
-        df["Name"] = experiment_names
-        df = df[["Id", "Name"] + [col for col in df.columns if col not in ["Id", "Name"]]]
+        #df["name"] = experiment_names
+        df = df[["Id", "model"] + [col for col in df.columns if col not in ["Id", "model"]]]
         has_repeat = False
     else:
         df = result
