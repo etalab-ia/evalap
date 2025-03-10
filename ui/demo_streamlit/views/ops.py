@@ -23,7 +23,10 @@ def create_report(experiment_sets):
     for experiment in experiment_sets:
         for exp in experiment["experiments"]:
             data["unique_exp_ids"].add(exp["id"])
-            model_name = exp.get("model", {}).get("name") or exp.get("model", {}).get("aliased_name", "Unknown Model")
+            if exp.get("model"):
+                model_name = exp["model"]["aliased_name"] or exp["model"]["name"]
+            else:
+                model_name = "Unknow model"
             data["unique_model_name"].add(model_name)
             
             # Provider
