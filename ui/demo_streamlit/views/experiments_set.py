@@ -330,7 +330,8 @@ def _format_experiments_score_df(experiments: list, df: pd.DataFrame) -> (bool, 
     #default_sort_metric = _find_default_sort_metric(df.columns)
     #if default_sort_metric in df.columns:
     #    df = df.sort_values(by=f"{default_sort_metric}", ascending=False)
-    df = df.sort_values(by="Id", ascending=True)
+    # @DEBUG: Id does not exist for "repeat" case
+    #df = df.sort_values(by="Id", ascending=True)
 
     return has_repeat, df
 
