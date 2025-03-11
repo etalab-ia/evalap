@@ -34,12 +34,14 @@ def main():
                     f"Columns: {', '.join(map(lambda x: '**' + x + '**', dataset["columns"]))}"
                 )
                 st.markdown(dataset.get("readme", "No description available"))
-                col1, col2, col3 = st.columns([1 / 6, 2 / 6, 3 / 6])
+                col1, col2, col3, col4 = st.columns([1 / 8, 2 / 8, 2 / 8, 3 / 8])
                 with col1:
-                    st.caption(f'id: {dataset["id"]} ')
+                    st.caption(f'Id: {dataset["id"]} ')
                 with col2:
                     st.caption(f"Rows: {dataset['size']}")
                 with col3:
+                    st.caption(f"Default metric: {dataset['default_metric']}")
+                with col4:
                     st.caption(f"Created the {when}")
                 st.divider()
 

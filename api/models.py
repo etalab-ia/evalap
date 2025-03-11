@@ -77,9 +77,9 @@ class Dataset(Base):
     df = Column(JSON)  # df
     columns = Column(JSON)  # list[str]
     has_query = Column(Boolean)
-    has_output = Column(Boolean)
     size = Column(Integer)
     readme = Column(Text)
+    default_metric = Column(Text)
 
 
 class Model(Base):
@@ -87,12 +87,14 @@ class Model(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(Text)
+    aliased_name = Column(Text)
     base_url = Column(Text)
     api_key = Column(Text)
     prompt_system = Column(Text)
     # prompt_template = Column(Text) # rag, composition, multiagents ?
     sampling_params = Column(JSON)  # dict
     extra_params = Column(JSON)  # dict
+    has_raw_output = Column(Boolean, default=False)
 
 
 class Result(Base):
