@@ -1,1 +1,1 @@
-from .main import MCPBridgeClient
+from .main import MCPBridgeClient, multi_step_generate

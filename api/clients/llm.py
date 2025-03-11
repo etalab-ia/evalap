@@ -9,7 +9,6 @@ import requests
 from api.config import MFS_API_KEY_V2
 from api.utils import log_and_raise_for_status, retry
 
-from .schemas.openai import ChatCompletionResponse
 from .schemas.openai_rag import Chunk, RagChatCompletionResponse, Search
 
 

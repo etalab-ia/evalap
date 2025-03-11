@@ -17,7 +17,7 @@ class MCPBridgeClient:
         url = self.url
         path = "/mcp/tools"
         headers = {}
-        response = requests.post(
+        response = requests.get(
             url + path,
             headers=headers,
         )
