@@ -2,7 +2,7 @@ import json
 
 import requests
 
-from api.clients import LlmClient
+from api.clients import LlmClient, ChatCompletionResponse
 from api.logger import logger
 import api.models as models
 from api.utils import log_and_raise_for_status
@@ -59,7 +59,7 @@ class MCPBridgeClient:
                     "name": mcp_tool["name"],
                     "description": mcp_tool["description"],
                     "parameters": mcp_tool["inputSchema"],
-                    "strict": False,
+                    #"strict": False,
                 },
             }
             tools.append(tool)
@@ -70,10 +70,17 @@ class MCPBridgeClient:
 
 
 def multi_step_generate(
-    model: models.Model, messages: list, sampling_params_plus: dict, mcp_bridge: MCPBridgeClient
-):
+    model: models.Model,
+    messages: list,
+    sampling_params_plus: dict,
+    mcp_bridge: MCPBridgeClient,
+    max_step=10,
+) -> (ChatCompletionResponse, list[list[dict]]):
+    cpt = 0
+    steps: list[list[dict]] = []  # list of tools calls
     aiclient = LlmClient(base_url=model.base_url, api_key=model.api_key)
-    while True:
+    while cpt < max_step:
+        cpt += 1
         result = aiclient.generate(model=model.name, messages=messages, **sampling_params_plus)
         completion = result.choices[0]
 
@@ -86,8 +93,9 @@ def multi_step_generate(
         if completion.finish_reason not in ["tool_calls"]:
             logger.warning("Unknown LLM finish reason: %s" % completion.finish_reason)
         messages.append(completion.message)
-        # if tool_calls, loop over the tool and execute @FUTURE async.gather for concurent execution
-        for tool_call in completion.message.tools_calls or []:
+        # If tool_calls, loop over the tool and execute @FUTURE async.gather for concurent execution
+        substep = []
+        for tool_call in completion.message.tool_calls or []:
             tool_call_result = mcp_bridge.call_tool(
                 tool_call.function.name, tool_call.function.arguments
             )
@@ -113,6 +121,16 @@ def multi_step_generate(
                 }
             )
 
-            # TODO accumute tool call result to save it in answers result.
+            # Accumute tool call result to save it in answers result.
+            substep.append(
+                {
+                    "tool_name": tool_call.function.name,
+                    "tool_params": tool_call.function.arguments,
+                    "tool_result": tool_content,
+                }
+            )
 
-    return result
+        if substep:
+            steps.append(substep)
+
+    return result, steps
