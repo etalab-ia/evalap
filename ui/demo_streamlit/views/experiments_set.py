@@ -454,38 +454,38 @@ def report_global(exp_set):
     )
 
 
+EXPERIMENT_STATUSES = ["pending", "running_answers", "running_metrics", "finished"]
+METRIC_STATUSES = ["pending", "running", "finished"]
+
 def report_model_and_metric(experimentset):
     """Analyzes experiment statuses by model and metric, including failed experiments and failure rates."""
-    model_data = defaultdict(lambda: {"finished": 0, "running": 0, "pending": 0, "failed": 0, "no_failed": 0})
-    metric_data = defaultdict(lambda: {"finished": 0, "running": 0, "pending": 0, "failed": 0, "no_failed": 0})
+    model_data = defaultdict(lambda: {status: 0 for status in EXPERIMENT_STATUSES} | {"failed": 0, "no_failed": 0})
+    metric_data = defaultdict(lambda: {status: 0 for status in METRIC_STATUSES} | {"failed": 0, "no_failed": 0})
 
     for exp in experimentset["experiments"]:
         exp_id = exp["id"]
-
-        experiment =fetch("get", f"/experiment/{exp_id}", {"with_dataset": "true"})
+        experiment = fetch("get", f"/experiment/{exp_id}", {"with_dataset": "true"})
 
         if experiment:
-            # Determine model name
             model_name = experiment.get("model", {}).get("name") or experiment.get("model", {}).get("aliased_name", "Unknown Model")
-
-            # Check for errors in answers
             has_error = any(answer.get("error_msg") for answer in experiment.get("answers", []))
 
             if has_error:
                 model_data[model_name]["failed"] += 1
             else:
                 status = experiment["experiment_status"]
-                model_data[model_name][status] += 1
+                if status in EXPERIMENT_STATUSES:
+                    model_data[model_name][status] += 1
                 model_data[model_name]["no_failed"] += 1
 
-                # Process metrics analysis ONLY when there's no error
                 if "results" in experiment:
                     for result in experiment["results"]:
                         metric_name = result["metric_name"]
                         metric_status = result["metric_status"]
-                        metric_data[metric_name][metric_status] += 1
+                        if metric_status in METRIC_STATUSES:
+                            metric_data[metric_name][metric_status] += 1
                         metric_data[metric_name]["no_failed"] += 1
-                elif has_error:
+                else:
                     metric_data["Unknown"]["failed"] += 1
 
     def calculate_failure_rate(row):
@@ -493,40 +493,35 @@ def report_model_and_metric(experimentset):
         return row['failed'] / total if total > 0 else 0
 
     model_report = pd.DataFrame.from_dict(model_data, orient="index")
-    model_report["Total"] = model_report[["finished", "running", "pending"]].sum(axis=1)
+    model_report["Total"] = model_report[EXPERIMENT_STATUSES].sum(axis=1)
     model_report["Failure Rate"] = model_report.apply(calculate_failure_rate, axis=1)
 
-    columns_order = ["finished", "running", "pending", "Total", "failed", "no_failed", "Failure Rate"]
+    columns_order = EXPERIMENT_STATUSES + ["Total", "failed", "no_failed", "Failure Rate"]
     model_report = model_report[columns_order]
-    model_for_graph = model_report.copy()
-
-    model_report.columns = pd.MultiIndex.from_tuples([
-        ("Status", "finished"), ("Status", "running"), ("Status", "pending"), ("Status", "Total"),
-        ("Failure Analysis", "failed"), ("Failure Analysis", "no_failed"), ("Failure Analysis", "Failure Rate")
-    ])
 
     st.subheader("Experiment Status by Model")
     st.dataframe(model_report, use_container_width=True)
 
     fig_model = px.bar(
-        model_for_graph,
-        x=model_for_graph.index,
-        y=["finished", "running", "pending", "failed"],
+        model_report,
+        x=model_report.index,
+        y=EXPERIMENT_STATUSES + ["failed"],
         title="Experiment Status by Model",
         labels={"value": "Count", "index": "Model"},
     )
     st.plotly_chart(fig_model, use_container_width=True)
 
     metric_report = pd.DataFrame.from_dict(metric_data, orient="index")
-    metric_report["Total"] = metric_report[["finished", "running", "pending", "failed"]].sum(axis=1)
+    metric_report["Total"] = metric_report[METRIC_STATUSES + ["failed"]].sum(axis=1)
     metric_report["Failure Rate"] = metric_report.apply(calculate_failure_rate, axis=1)
+
     st.subheader("Experiment Status by Metric")
     st.dataframe(metric_report, use_container_width=True)
 
     fig_metric = px.bar(
         metric_report,
         x=metric_report.index,
-        y=["finished", "running", "pending", "failed"],
+        y=METRIC_STATUSES + ["failed"],
         title="Experiment Status by Metric",
         labels={"value": "Count", "index": "Metric"},
     )
