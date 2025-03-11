@@ -1,1 +1,1 @@
-from .main import MCPBridge
+from .main import MCPBridgeClient
