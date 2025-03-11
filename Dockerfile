@@ -5,6 +5,7 @@ WORKDIR /app
 COPY ./pyproject.toml /app
 COPY ./api /app/api
 COPY ./ui /app/ui
+COPY ./config /app/config
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Install dependency

@@ -5,7 +5,7 @@ from typing import Any, Literal, Optional
 
 import numpy as np
 import pandas as pd
-from pydantic import BaseModel, ConfigDict, create_model, Field
+from pydantic import BaseModel, ConfigDict, Field, create_model
 from sqlalchemy.orm import Session
 
 import api.models as models
@@ -37,7 +37,7 @@ class EgBaseModel(BaseModel):
                 obj[k] = sub_schema.to_table_init(db)
             elif isinstance(sub_schema, list):
                 obj[k] = [
-                    o.recurse_table_init(db) if isinstance(o, BaseModel) else o for o in sub_schema
+                    o.to_table_init(db) if isinstance(o, BaseModel) else o for o in sub_schema
                 ]
 
         return obj
@@ -76,6 +76,7 @@ class MetricStatus(str, Enum):
 class DatasetBase(EgBaseModel):
     name: str
     readme: str
+    default_metric: str
 
 
 class DatasetCreate(DatasetBase):
@@ -91,14 +92,12 @@ class DatasetCreate(DatasetBase):
             raise SchemaError("'df' should be a readable dataframe. Use df.to_json()...")
 
         has_query = "query" in df.columns
-        has_output = "output" in df.columns
 
-        if not (has_query or has_output):
-            raise SchemaError("Your dataset needs at least a column 'query' or 'ouput'.")
+        if not has_query:
+            raise SchemaError("Your dataset needs a column 'query'.")
 
         return {
             "has_query": has_query,
-            "has_output": has_output,
             "size": len(df),
             "columns": list(df.columns),
             **obj,
@@ -109,8 +108,7 @@ class Dataset(DatasetBase):
     id: int
     created_at: datetime
     has_query: bool
-    has_output: bool
-    size: int
+    size: int = Field(description="Number of rows in the dataset (length of the dataframe)")
     columns: list[str]
 
 
@@ -147,6 +145,7 @@ DatasetPatch = create_model(
 class ModelBase(EgBaseModel):
     name: str
     base_url: str
+    aliased_name: str | None = None
     prompt_system: str | None = None
     sampling_params: dict | None = None
     extra_params: dict | None = None
@@ -158,10 +157,32 @@ class ModelCreate(ModelBase):
 
 class Model(ModelBase):
     id: int
+    has_raw_output: bool = False
 
 
 class ModelWithKeys(Model):
     api_key: str
+
+
+class ModelRaw(EgBaseModel):
+    # Answers
+    output: list[str] = Field(
+        description="The sequence of answers generated for this model, ordered as the 'query' input of the dataset you are working on."
+    )
+    # ModelBase
+    aliased_name: str = Field(
+        description="A name to identify this model. The difference with the `name` parameter is that the latter must be used to identify the model name in the Openai API-compatible endpoint."
+    )
+    name: str = ""
+    base_url: str = ""
+    prompt_system: str | None = None
+    sampling_params: dict | None = None
+    extra_params: dict | None = None
+    # Ops metrics
+    execution_time: list[int] | None = None
+    nb_tokens_prompt: list[int] | None = None
+    nb_tokens_completion: list[int] | None = None
+    retrieval_context: list[list[str]] | None = None
 
 
 #
@@ -234,7 +255,7 @@ class ExperimentBase(EgBaseModel):
 class ExperimentCreate(ExperimentBase):
     metrics: list[MetricEnum]
     dataset: DatasetCreate | str
-    model: ModelCreate | None = None
+    model: ModelCreate | ModelRaw
 
     def to_table_init(self, db: Session) -> dict:
         obj = self.recurse_table_init(db)
@@ -247,10 +268,47 @@ class ExperimentCreate(ExperimentBase):
         else:
             dataset = models.Dataset(**obj["dataset"])
         obj["dataset"] = dataset
-        if dataset.has_output:
-            df = pd.read_json(StringIO(dataset.df))
+        if isinstance(self.model, ModelRaw):
             obj["num_try"] = dataset.size
-            obj["num_success"] = int(df["output"].count())
+            obj["num_success"] = len(self.model.output)
+            if obj["num_try"] != obj["num_success"]:
+                raise SchemaError(
+                    "The size of the model outputs must match the size of the dataset."
+                )
+
+        # Handle Model
+        has_raw_output = False
+        if isinstance(self.model, ModelRaw):
+            model = {
+                k: v for k, v in self.model.model_dump().items() if k in ModelCreate.model_fields
+            }
+            has_raw_output = True
+            model["has_raw_output"] = has_raw_output
+            # Create Answers from ModelRaw
+            # --
+            answers = []
+            m = self.model
+            df = pd.read_json(StringIO(dataset.df))
+            if len(df) != len(m.output):
+                raise SchemaError(
+                    "The size of the model outputs must match the size of the dataset."
+                )
+
+            for i in range(len(m.output)):
+                answers.append(
+                    dict(
+                        num_line=i,
+                        answer = m.output[i],
+                        execution_time=m.execution_time[i] if m.execution_time else None,
+                        nb_tokens_prompt=m.nb_tokens_prompt[i] if m.nb_tokens_prompt else None,
+                        nb_tokens_completion=m.nb_tokens_completion[i] if m.nb_tokens_completion else None,
+                        retrieval_context=m.retrieval_context[i] if m.retrieval_context else None,
+                    )
+                )  # fmt: skip
+            obj["answers"] = answers
+        else:
+            model = self.model
+        obj["model"] = model
 
         # Handle Results
         results = []
@@ -260,33 +318,26 @@ class ExperimentCreate(ExperimentBase):
 
         # Validate Model and metric compatibility
         # --
-        mr = metric_registry
-        needs_output = any("output" in mr.get_metric(m).require for m in self.metrics)
-        if needs_output and not self.model and not dataset.has_output:
-            raise SchemaError(
-                "You need to provide an answer for this metric. "
-                "Either set a model to generate it or provide a dataset with the 'output' field."
-            )
-        if needs_output and not dataset.has_output and not dataset.has_query:
+        needs_output = any("output" in metric_registry.get_metric(m).require for m in self.metrics)
+        if needs_output and not has_raw_output and not dataset.has_query:
             raise SchemaError(
                 "You need to provide an answer for this metric. "
                 "Either provide a dataset with the 'query' field to generate the answer or with an 'output' field if have generated it yourself."
             )
-        if dataset.has_output and self.model:
-            raise SchemaError(
-                "You can't give at the same time a model and a dataset with an answer ('output' column). "
-                "Gives either one or the other."
-            )
         # Schema validation on all require fields
+        DEBUG_EXCEPTION_REQUIRE = ["retrieval_context"]
         require_fields = {
-            require for metric in self.metrics for require in mr.get_metric(metric).require
+            require
+            for metric in self.metrics
+            for require in metric_registry.get_metric(metric).require
+            if require not in DEBUG_EXCEPTION_REQUIRE
         }
         for require in require_fields:
             if require in ["output"]:
                 continue
             if require not in dataset.columns:
                 raise SchemaError(
-                    f"You need to provide a `{require}` for this metric. "
+                    f"You need to provide a `{require}` for one of your metric. "
                     f"Your dataset needs to have an `{require}` field."
                 )
 
@@ -425,6 +476,10 @@ class RetryRuns(EgBaseModel):
     experiment_ids: list[int]
     # List of results/metrics to retry
     result_ids: list[int]
+    # List of unfinished experiments to process
+    unfinished_experiment_ids: list[int]
+    # List of unfinished results to process
+    unfinished_result_ids: list[int]
 
 
 #

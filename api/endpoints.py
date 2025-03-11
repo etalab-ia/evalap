@@ -9,6 +9,7 @@ import api.crud as crud
 import api.schemas as schemas
 from api.db import get_db
 from api.errors import CustomIntegrityError, SchemaError
+from api.logger import logger
 from api.metrics import Metric, metric_registry
 from api.runners import dispatch_retries, dispatch_tasks
 from api.security import admin_only
@@ -17,7 +18,7 @@ router = APIRouter()
 
 
 def _needs_output(db_exp):
-    return not db_exp.dataset.has_output and any(
+    return not db_exp.model.has_raw_output and any(
         "output" in metric_registry.get_metric(r.metric_name).require for r in db_exp.results
     )
 
@@ -315,25 +316,32 @@ def delete_experimentset(id: int, db: Session = Depends(get_db), admin_check=Dep
 @router.post(
     "/retry/experiment_set/{id}",
     response_model=schemas.RetryRuns,
-    description="Re-run failed runs.",
+    description="Re-run failed runs and continue unfinished answers or metrics.",
     tags=["experiment_set"],
 )
-def retry_runs(id: int, force: bool = Query(
+def retry_runs(
+    id: int,
+    force: bool = Query(
         default=False,
-        description="Force retry of all unfinished runs, by resetting their status to pending."
-    )
-               , db: Session = Depends(get_db)):
+        description="Force retry of all unfinished runs, by resetting their status to pending. <!> Warning this can cause incoherent num_try/num_success value if another runner work on the same experiments.",
+    ),
+    db: Session = Depends(get_db),
+):
     experimentset = crud.get_experimentset(db, id)
     if experimentset is None:
         raise HTTPException(status_code=404, detail="ExperimentSet not found")
 
-    rr = schemas.RetryRuns(experiment_ids=[], result_ids=[])
+    rr = schemas.RetryRuns(
+        experiment_ids=[], result_ids=[], unfinished_experiment_ids=[], unfinished_result_ids=[]
+    )
+
+    # Retry failed runs (answers and metrics)
     for exp in experimentset.experiments:
         if exp.experiment_status != "finished" and not force:
             continue
 
         if exp.num_try != exp.num_success and _needs_output(exp):
-            rr.experiment_ids.append(exp.id)
+            rr.experiment_ids += [exp.id]
             continue
 
         for result in exp.results:
@@ -341,7 +349,37 @@ def retry_runs(id: int, force: bool = Query(
                 continue
 
             if result.num_try != result.num_success:
-                rr.result_ids.append(result.id)
+                rr.result_ids += [result.id]
+                if force:
+                    crud.update_result(db, result.id, dict(metric_status="finished"))
+
+    # Unfinished business
+    for exp in experimentset.experiments:
+        if exp.experiment_status != "finished" and not force:
+            continue
+
+        expected_output_len = exp.dataset.size
+        actual_output_len = exp.num_try
+        if actual_output_len != expected_output_len:
+            rr.unfinished_experiment_ids += [exp.id]
+            continue
+
+        for result in exp.results:
+            if result.metric_status != "finished" and not force:
+                continue
+
+            expected_output_len = exp.dataset.size
+            actual_output_len = result.num_try
+            if actual_output_len != expected_output_len:
+                rr.unfinished_result_ids += [result.id]
+                if force:
+                    crud.update_result(db, result.id, dict(metric_status="finished"))
+
+    if (
+        force and len(set(rr.experiment_ids + rr.result_ids +rr.unfinished_experiment_ids + rr.unfinished_result_ids)) == 0
+    ):  # fmt: skip
+        for exp in experimentset.experiments:
+            crud.update_experiment(db, exp.id, dict(experiment_status="finished"))
 
     dispatch_retries(db, rr)
     return rr

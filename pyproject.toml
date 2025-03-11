@@ -21,21 +21,24 @@ dependencies = [
     "jinja2==3.1.4",
     "pydantic==2.10.1",
     "inflection==0.5.1",
-    "deepeval==2.0.5",
-    "ragas==0.2.7",
+    "deepeval==2.4.9",
+    "ragas==0.2.13",
     # MCP
     "mcp==1.2.1",
     # Front
-    "streamlit==1.40.1"
+    "streamlit==1.40.1",
+    "plotly==5.22.0"
 ]
 
 # Tests
 
 [project.optional-dependencies]
-test = ["pytest==8.3.3", "pytest-asyncio==0.24.0"]
+test = ["pytest==8.3.3", 
+        "pytest-asyncio==0.24.0",
+        "pre-commit==3.6.0"]
 
 [tool.pytest.ini_options]
-testpaths = ["api/tests"]
+testpaths = ["tests/"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
