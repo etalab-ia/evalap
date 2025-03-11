@@ -55,9 +55,12 @@ def generate_answer(message: dict, mcp_bridge: MCPBridgeClient):
             if model.prompt_system:
                 messages = [{"role": "system", "content": model.prompt_system}] + messages
             with Timer() as timer:
-                result = multi_step_generate(model, message, sampling_params_plus, mcp_bridge)
+                result, steps = multi_step_generate(
+                    model, message, sampling_params_plus, mcp_bridge
+                )
 
             answer = result.choices[0].message.content
+            steps = steps or None
             retrieval_context = None
             # MFS AD-HOC solution to get the retriever context
             if hasattr(result, "search_results"):
@@ -74,6 +77,7 @@ def generate_answer(message: dict, mcp_bridge: MCPBridgeClient):
                     nb_tokens_prompt=result.usage.prompt_tokens,
                     nb_tokens_completion=result.usage.completion_tokens,
                     retrieval_context=retrieval_context,
+                    tool_steps=steps,
                 ),
             )
 
