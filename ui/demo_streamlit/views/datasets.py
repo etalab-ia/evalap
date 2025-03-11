@@ -23,6 +23,10 @@ def main():
                      """)
 
         for dataset in datasets:
+            if "output" in dataset["columns"]:
+                # @DEBUG: dataset to be removed soon
+                continue
+
             when = datetime.fromisoformat(dataset["created_at"]).strftime("%d %B %Y")
             with st.container():
                 st.markdown(
@@ -31,12 +35,12 @@ def main():
                 )
                 st.subheader(dataset["name"])
                 st.write(
-                    f"Columns: {', '.join(map(lambda x: '**' + x + '**', dataset["columns"]))}"
+                    f"Columns: {', '.join(map(lambda x: '**' + x + '**', dataset['columns']))}"
                 )
                 st.markdown(dataset.get("readme", "No description available"))
                 col1, col2, col3, col4 = st.columns([1 / 8, 2 / 8, 2 / 8, 3 / 8])
                 with col1:
-                    st.caption(f'Id: {dataset["id"]} ')
+                    st.caption(f"Id: {dataset['id']} ")
                 with col2:
                     st.caption(f"Rows: {dataset['size']}")
                 with col3:
@@ -53,7 +57,7 @@ def main():
                 f"""
                 <a href="#{dataset_id}" style="color:grey;"
                    onclick="document.getElementById('{dataset_id}').scrollIntoView({{behavior: 'smooth'}});">
-                    {dataset['name']}
+                    {dataset["name"]}
                 </a><br>
             """,
                 unsafe_allow_html=True,

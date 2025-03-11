@@ -18,7 +18,7 @@ def _get_expset_status(expset: dict) -> tuple[dict, dict]:
         "running": {"text": "Experiments are running", "color": "orange"},
         "finished": {"text": "All experiments are finished", "color": "green"},
     }
-    
+
     counts = dict(
         total_answer_tries=sum(exp["num_try"] for exp in expset["experiments"]),
         total_answer_successes=sum(exp["num_success"] for exp in expset["experiments"]),
@@ -296,7 +296,6 @@ def _format_experiments_score_df(experiments: list, df: pd.DataFrame) -> (bool, 
     experiment_names = [exp["name"] for exp in experiments]
     is_repeat_mode = _check_repeat_mode(experiments)
     result = None
-    all_std = []
     if is_repeat_mode and df["model"].notna().all():
         has_repeat = True
         # Lost repetition trailing code.
@@ -314,21 +313,25 @@ def _format_experiments_score_df(experiments: list, df: pd.DataFrame) -> (bool, 
                 # Format the score as "mean ± std"
                 mean_ = grouped[(column, "mean")].round(2).astype(str)
                 std_ = grouped[(column, "std")].round(2).astype(str)
-                result[column] = mean_ + " ± " + std_
-                all_std.append(std_)
+                if all(x is None or x == 0 or np.isnan(x) for x in std_.astype(float)):
+                    result[column] = mean_
+                else:
+                    result[column] = mean_ + " ± " + std_
 
-    dummy_std = np.all(x is None or x == 0 or (isinstance(x, float) and np.isnan()) for x in all_std)
-    if result is None or len(result) == len(df) or dummy_std:
+    if result is None or len(result) == len(df):
         df["Id"] = experiment_ids
-        df["Name"] = experiment_names
-        df = df[["Id", "Name"] + [col for col in df.columns if col not in ["Id", "Name"]]]
+        #df["name"] = experiment_names
+        df = df[["Id", "model"] + [col for col in df.columns if col not in ["Id", "model"]]]
         has_repeat = False
     else:
         df = result
 
-    default_sort_metric = _find_default_sort_metric(df.columns)
-    if default_sort_metric in df.columns:
-        df = df.sort_values(by=f"{default_sort_metric}", ascending=False)
+    # @DEBUG: when +- is used, the sorting does not work.
+    #default_sort_metric = _find_default_sort_metric(df.columns)
+    #if default_sort_metric in df.columns:
+    #    df = df.sort_values(by=f"{default_sort_metric}", ascending=False)
+    # @DEBUG: Id does not exist for "repeat" case
+    #df = df.sort_values(by="Id", ascending=True)
 
     return has_repeat, df
 
@@ -433,7 +436,7 @@ def report_global(exp_set):
                             f"id: {exp['id']} name: {exp['name']} (failed on score computation)"
                         )
                         continue
-        
+
         report_data.append({
             "Experiment Set Name": exp_set["name"],
             "Status": status["text"],
@@ -527,7 +530,7 @@ def report_model_and_metric(experimentset):
     )
     st.plotly_chart(fig_metric, use_container_width=True)
 
-    
+
 def display_ops_analysis(experimentset):
     report_global(experimentset)
     report_model_and_metric(experimentset)
@@ -602,7 +605,7 @@ def main():
             metric_status = f"**Metric status:** Finished: {finished_ratio}%"
             if failure_ratio > 0:
                 metric_status += f" &nbsp;&nbsp;&nbsp; Failure: <span style='color:red;'>{failure_ratio}%</span>"
-            
+
             st.markdown(metric_status, unsafe_allow_html=True)
 
         show_header()
