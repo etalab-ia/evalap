@@ -1,8 +1,9 @@
+from sqlalchemy import and_, desc, func
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import func, desc, and_
 
 import api.models as models
 import api.schemas as schemas
+from api.errors import CustomIntegrityError, SchemaError
 from api.metrics import Metric, metric_registry
 from api.models import create_object_from_dict
 
@@ -47,6 +48,28 @@ def update_dataset(
     db.commit()
     db.refresh(db_dataset)
     return db_dataset
+
+
+def remove_dataset(db: Session, dataset_id: int) -> bool:
+    linked_experiments = (
+        db.query(func.count(models.Experiment.id))
+        .filter(models.Experiment.dataset_id == dataset_id)
+        .scalar()
+    )
+    if linked_experiments > 0:
+        raise SchemaError(
+            f"This dataset is linked to {linked_experiments} experiments.\n"
+            "You must either delete linked experiments or associated them to another dataset to remove this one."
+        )
+
+    db_dataset = db.query(models.Dataset).get(dataset_id)
+    if db_dataset is None:
+        return False
+
+    db.delete(db_dataset)
+    db.commit()
+    # update_db_exp(db, dataset_id, dict(is_archived=True))
+    return True
 
 
 #

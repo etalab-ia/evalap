@@ -69,6 +69,23 @@ def patch_dataset(id: int, dataset_patch: schemas.DatasetPatch, db: Session = De
     return db_dataset
 
 
+@router.delete(
+    "/dataset/{id}",
+    tags=["datasets"],
+)
+def delete_dataset(id: int, db: Session = Depends(get_db), admin_check=Depends(admin_only)):
+    try:
+        if not crud.remove_dataset(db, id):
+            raise HTTPException(status_code=404, detail="Dataset not found")
+        return "ok"
+    except (SchemaError, ValidationError) as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except IntegrityError as e:
+        return CustomIntegrityError.from_integrity_error(e.orig).to_http_response()
+    except Exception as e:
+        raise e
+
+
 #
 # Metrics
 #
