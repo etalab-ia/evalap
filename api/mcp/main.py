@@ -13,7 +13,7 @@ class MCPBridgeClient:
         self.url = "http://127.0.0.1:9092"
         self.refresh()
 
-    def fetch_tools(self):
+    def fetch_tools(self) -> dict:
         url = self.url
         path = "/mcp/tools"
         headers = {}
@@ -23,14 +23,17 @@ class MCPBridgeClient:
         )
         log_and_raise_for_status(response, "MCP bridge client error")
         tools = response.json()
-
-        self.tools = tools
         return tools
 
-    def get_tool(self, tool_name: str):
-        for tool in self.tools:
-            if tool_name == tool["name"]:
-                return tool
+    def get_tool(self, tool_name: str) -> list:
+        for tool_set_name, tools in self.tools.items():
+            if tool_set_name == tool_name:
+                return tools["tools"]
+
+            for tool in tools["tools"]:
+                if tool_name == tool["name"]:
+                    return [tool]
+
         raise ValueError("MCP tool not found")
 
     def call_tool(self, tool_name: str, params: str):
@@ -52,21 +55,22 @@ class MCPBridgeClient:
     def tools2openai(self, tool_names: list[str]):
         tools = []
         for tool_name in tool_names:
-            mcp_tool = self.get_tool(tool_name)
-            tool = {
-                "type": "function",
-                "function": {
-                    "name": mcp_tool["name"],
-                    "description": mcp_tool["description"],
-                    "parameters": mcp_tool["inputSchema"],
-                    #"strict": False,
-                },
-            }
-            tools.append(tool)
+            mcp_tools = self.get_tool(tool_name)
+            for mcp_tool in mcp_tools:
+                tool = {
+                    "type": "function",
+                    "function": {
+                        "name": mcp_tool["name"],
+                        "description": mcp_tool["description"],
+                        "parameters": mcp_tool["inputSchema"],
+                        # "strict": False,
+                    },
+                }
+                tools.append(tool)
         return tools
 
     def refresh(self):
-        self.tools: list = self.fetch_tools()
+        self.tools: dict = self.fetch_tools()
 
 
 def multi_step_generate(
@@ -92,27 +96,30 @@ def multi_step_generate(
         # Add the completion result to messages
         if completion.finish_reason not in ["tool_calls"]:
             logger.warning("Unknown LLM finish reason: %s" % completion.finish_reason)
-        messages.append(completion.message)
+        messages.append(completion.message.model_dump())
         # If tool_calls, loop over the tool and execute @FUTURE async.gather for concurent execution
-        substep = []
+        substeps = []
         for tool_call in completion.message.tool_calls or []:
+            # Run tool
             tool_call_result = mcp_bridge.call_tool(
                 tool_call.function.name, tool_call.function.arguments
             )
-            if tool_call is None:
-                continue
+            # Format result
+            if tool_call_result is None:
+                tool_content = []
+            else:
+                tool_content = [
+                    {"type": "text", "text": part["text"]}
+                    for part in filter(lambda x: x["type"] == "text", tool_call_result["content"])
+                ]
 
-            tool_content = [
-                {"type": "text", "text": part["text"]}
-                for part in filter(lambda x: x["type"] == "text", tool_call_result["content"])
-            ]
             if len(tool_content) == 0:
                 tool_content = [{"type": "text", "text": "the tool call result is empty"}]
-            elif len(tool_content > 1):
+            elif len(tool_content) > 1:
                 logger.warning(
                     "Tool call content size is greater than 1 for {tool_call.function.name}"
                 )
-            tool_content = "\n".join(tool_content)
+            tool_content = "\n".join([x["text"] for x in tool_content])
             messages.append(
                 {
                     "role": "tool",
@@ -122,7 +129,7 @@ def multi_step_generate(
             )
 
             # Accumute tool call result to save it in answers result.
-            substep.append(
+            substeps.append(
                 {
                     "tool_name": tool_call.function.name,
                     "tool_params": tool_call.function.arguments,
@@ -130,7 +137,6 @@ def multi_step_generate(
                 }
             )
 
-        if substep:
-            steps.append(substep)
+        steps.append(substeps)
 
     return result, steps

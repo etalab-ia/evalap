@@ -56,7 +56,7 @@ def generate_answer(message: dict, mcp_bridge: MCPBridgeClient):
                 messages = [{"role": "system", "content": model.prompt_system}] + messages
             with Timer() as timer:
                 result, steps = multi_step_generate(
-                    model, message, sampling_params_plus, mcp_bridge
+                    model, messages, sampling_params_plus, mcp_bridge
                 )
 
             answer = result.choices[0].message.content
