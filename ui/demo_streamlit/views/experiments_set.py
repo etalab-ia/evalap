@@ -383,7 +383,6 @@ def display_experiment_set_score(experimentset, experiments_df):
         has_repeat, df = _format_experiments_score_df(experiments, df)
     except ValueError as err:
         st.error("No result found yet, please try again later")
-        print("WARNING(experiment_set.py:_format_experiments_score_df):", str(err))
         raise err
         return
 
@@ -409,9 +408,6 @@ def display_experiment_set_score(experimentset, experiments_df):
         hide_index=True,
         column_config={"Id": st.column_config.TextColumn(width="small")},
     )
-
-
-
 
 
 def report_ops_global(exp_set):
@@ -459,10 +455,12 @@ def report_ops_global(exp_set):
         hide_index=True,
     )
 
+
 def process_experiment(exp):
     exp_id = exp["id"]
     experiment = fetch("get", f"/experiment/{exp_id}", {"with_dataset": "true"})
     return experiment
+
 
 def update_model_data(model_data, experiment):
     model_name = experiment.get("model", {}).get("name") or experiment.get("model", {}).get("aliased_name", "Unknown Model")
@@ -475,6 +473,7 @@ def update_model_data(model_data, experiment):
         model_data[model_name][status] += 1
         model_data[model_name]["no_failed"] += 1
 
+
 def update_metric_data(metric_data, experiment):
     has_error = any(answer.get("error_msg") for answer in experiment.get("answers", []))
     if "results" in experiment and not has_error:
@@ -486,9 +485,11 @@ def update_metric_data(metric_data, experiment):
     elif has_error:
         metric_data["Unknown"]["failed"] += 1
 
+
 def calculate_failure_rate(row):
     total = row['failed'] + row['no_failed']
     return row['failed'] / total if total > 0 else 0
+
 
 def report_model_and_metric(experimentset):
     """Analyzes experiment statuses by model and metric, including failed experiments and failure rates."""
@@ -553,6 +554,7 @@ def report_model_and_metric(experimentset):
     )
     st.plotly_chart(fig_metric, use_container_width=True)
 
+
 def display_ops_analysis(experimentset):
     report_ops_global(experimentset)
     report_model_and_metric(experimentset)
@@ -566,10 +568,12 @@ def main():
 
     if st.session_state["experimentset"]:
         col_head1, col_head2 = st.columns([1, 8])
+
         with col_head1:
             if st.button("← Go Back"):
                 st.session_state["experimentset"] = None
                 st.rerun()
+
         with col_head2:
             def show_header():
                 status, counts = _get_expset_status(st.session_state['experimentset'])
@@ -599,7 +603,6 @@ def main():
 
             show_header()
 
-
         tab1, tab2, tab3, tab4 = st.tabs([
             "⭐ Scores", 
             "📝 Details by Experiment Id", 
@@ -608,8 +611,6 @@ def main():
         ])
 
         experimentset = st.session_state["experimentset"]
-
-    
 
         experiments_df = pd.DataFrame([
             {"Id": exp["id"], "Name": exp["name"], "Status": exp["experiment_status"]}
@@ -624,7 +625,6 @@ def main():
                 if st.button("🔄 Refresh Scores", key="refresh_scores"):
                     st.cache_data.clear()
             display_experiment_set_score(experimentset, experiments_df)
-
 
         with tab2:
             col_detail1, col_detail2 = st.columns([4, 1])
@@ -654,15 +654,12 @@ def main():
             display_ops_analysis(experimentset)
 
     else:
-        # Vue principale avec bouton de refresh
         st.title("Experiment (Sets)")
         col_main1, col_main2 = st.columns([4, 1])
         with col_main2:
             if st.button("🔄 Refresh List", key="refresh_main"):
                 st.cache_data.clear()
         display_experiment_sets(experiment_sets)
-
-
 
 
 main()
