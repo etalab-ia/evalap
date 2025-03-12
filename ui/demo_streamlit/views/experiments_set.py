@@ -584,19 +584,29 @@ def show_header(experimentset):
 
     st.markdown(metric_status, unsafe_allow_html=True)
 
-
 def main():
     experiment_sets = fetch("get", "/experiment_sets?with_experiments=true")
 
     if "experimentset" not in st.session_state:
         st.session_state["experimentset"] = None
 
+    expid = st.query_params.get("expset")
+    if expid and not st.session_state["experimentset"]:
+        experimentset = next((x for x in experiment_sets if x["id"] == expid), None)
+        if experimentset:
+            st.session_state["experimentset"] = experimentset
+        else:
+            st.error(f"Experiment set with id {expid} not found.")
+
     if st.session_state["experimentset"]:
+        st.query_params.expset = st.session_state["experimentset"]["id"]
+
         col_head1, col_head2 = st.columns([1, 8])
 
         with col_head1:
             if st.button("← Go Back"):
                 st.session_state["experimentset"] = None
+                st.query_params.pop("expset")
                 st.rerun()
 
         with col_head2:
@@ -659,6 +669,5 @@ def main():
             if st.button("🔄 Refresh List", key="refresh_main"):
                 st.cache_data.clear()
         display_experiment_sets(experiment_sets)
-
 
 main()
