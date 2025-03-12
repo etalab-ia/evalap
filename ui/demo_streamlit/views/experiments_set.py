@@ -559,6 +559,31 @@ def display_ops_analysis(experimentset):
     report_ops_global(experimentset)
     report_model_and_metric(experimentset)
 
+def show_header(experimentset):
+    status, counts = _get_expset_status(experimentset)
+    st.markdown(f"## {experimentset['name']}")
+
+    col_showhead1, col_showhead2 = st.columns([1, 10])
+    with col_showhead1:
+        st.markdown(f"**Id**: {experimentset['id']}")
+    with col_showhead2:
+        st.markdown(f"**Readme:** {experimentset.get('readme', 'No description available')}")
+
+    finished_ratio = int(
+        counts["total_observation_successes"] / counts["observation_length"] * 100
+    )
+    failure_ratio = int(
+        (counts["total_observation_tries"] - counts["total_observation_successes"])
+        / counts["observation_length"]
+        * 100
+    )
+
+    metric_status = f"**Metric status:** Finished: {finished_ratio}%"
+    if failure_ratio > 0:
+        metric_status += f" &nbsp;&nbsp;&nbsp; Failure: <span style='color:red;'>{failure_ratio}%</span>"
+
+    st.markdown(metric_status, unsafe_allow_html=True)
+
 
 def main():
     experiment_sets = fetch("get", "/experiment_sets?with_experiments=true")
@@ -575,33 +600,7 @@ def main():
                 st.rerun()
 
         with col_head2:
-            def show_header():
-                status, counts = _get_expset_status(st.session_state['experimentset'])
-                st.markdown(f"## {st.session_state['experimentset']['name']}")
-
-                col_showhead1, col_showhead2 = st.columns([1, 10])
-                with col_showhead1:
-                    st.markdown(f"**Id**: {st.session_state['experimentset']['id']}")
-                with col_showhead2:
-                    st.markdown(f"**Readme:** {st.session_state['experimentset'].get('readme', 'No description available')}")
-                
-
-                finished_ratio = int(
-                    counts["total_observation_successes"] / counts["observation_length"] * 100
-                )
-                failure_ratio = int(
-                    (counts["total_observation_tries"] - counts["total_observation_successes"])
-                    / counts["observation_length"]
-                    * 100
-                )
-
-                metric_status = f"**Metric status:** Finished: {finished_ratio}%"
-                if failure_ratio > 0:
-                    metric_status += f" &nbsp;&nbsp;&nbsp; Failure: <span style='color:red;'>{failure_ratio}%</span>"
-
-                st.markdown(metric_status, unsafe_allow_html=True)
-
-            show_header()
+            show_header(st.session_state['experimentset'])
 
         tab1, tab2, tab3, tab4 = st.tabs([
             "⭐ Scores", 
