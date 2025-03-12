@@ -645,7 +645,7 @@ def main():
 
     else:
         # Vue principale avec bouton de refresh
-        st.title("Experiment Sets Manager")
+        st.title("Experiment (Sets)")
         col_main1, col_main2 = st.columns([4, 1])
         with col_main2:
             if st.button("🔄 Refresh List", key="refresh_main"):
