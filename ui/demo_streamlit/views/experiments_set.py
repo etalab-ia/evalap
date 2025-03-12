@@ -601,10 +601,10 @@ def main():
 
 
         tab1, tab2, tab3, tab4 = st.tabs([
-            "⭐ Score", 
-            "📝 Details", 
-            "📊 Overview", 
-            "🚨 Ops"
+            "⭐ Scores", 
+            "📝 Details by Experiment Id", 
+            "📊 Set Overview", 
+            "🚨 Ops Analysis"
         ])
 
         experimentset = st.session_state["experimentset"]
