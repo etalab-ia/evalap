@@ -368,6 +368,7 @@ def get_leaderboard(
             main_metric_subquery.c.main_score.label("main_metric_score"),
             models.Model.sampling_params,
             models.Model.extra_params,
+            models.Experiment.created_at.label("created_at"),
         )
         .join(models.Model, models.Experiment.model_id == models.Model.id)
         .join(models.Dataset, models.Experiment.dataset_id == models.Dataset.id)
@@ -417,6 +418,7 @@ def get_leaderboard(
             other_metrics=other_metrics_dict,
             sampling_param={k: str(v) for k, v in (result.sampling_params or {}).items()},
             extra_param={k: str(v) for k, v in (result.extra_params or {}).items()},
+            created_at=result.created_at,
         )
         entries.append(entry)
 
