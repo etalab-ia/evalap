@@ -121,6 +121,8 @@ def process_leaderboard_data(
             "Experiment ID": entry["experiment_id"],
             "Model": entry["model_name"],
             "Created at": entry["created_at"],
+            "experiment_set_id": entry["experiment_set_id"],
+            "experiment_set_name": entry["experiment_set_name"],
             "Parameters": params,
             f"{format_column_name(metric_name)} Score": entry["main_metric_score"],
         }
@@ -148,7 +150,8 @@ def process_leaderboard_data(
     df.reset_index(drop=True, inplace=True)
     df["Rank"] = df.index + 1
 
-    fixed_columns = ['Rank', 'Experiment ID', 'Created at', 'Model', 'Parameters', f"{format_column_name(metric_name)} Score"]
+    fixed_columns = ['Rank', 'Experiment ID', 'Created at', 'Model', 'Parameters',
+                     'experiment_set_id', 'experiment_set_name', f"{format_column_name(metric_name)} Score"]
     col_decision = [col for col in df.columns if col in metrics_list_for_decision]
     other_columns = [col for col in df.columns if col not in fixed_columns + col_decision]
 
@@ -194,7 +197,7 @@ def display_dataset_and_metrics(product_info: dict, datasets: list[dict]) -> str
 
     return default_metric
 
-def main_() -> None:
+def main() -> None:
     st.title("Products Metrics Leaderboard")
 
     product_config = load_product_config()
@@ -243,22 +246,4 @@ def main_() -> None:
                 st.write("No data available for the leaderboard.")
 
 
-def main():
-
-    data_df = pd.DataFrame({
-        "apps": [
-            "https://roadmap.streamlit.app",
-            "https://extras.streamlit.app",
-            "https://issues.streamlit.app",
-            "https://30days.streamlit.app",
-        ],
-    })
-
-    st.data_editor(
-        data_df,
-        column_config={
-            "apps": st.column_config.LinkColumn("Applications")
-        }
-    )
-
-main_()
+main()
