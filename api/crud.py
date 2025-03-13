@@ -343,6 +343,8 @@ def upsert_observation(
 #
 # LeaderBoard
 #
+
+
 def get_leaderboard(
     db: Session, metric_name: str = "judge_notator", dataset_name: str = None, limit: int = 100
 ):
@@ -416,6 +418,32 @@ def get_leaderboard(
         entries.append(entry)
 
     return schemas.Leaderboard(entries=entries)
+
+
+#
+# Ops 
+#
+
+
+def get_ops_metrics(db: Session):
+    experiment_sets_count = db.query(func.count(models.ExperimentSet.id)).scalar()
+    unique_experiments_count = db.query(func.count(models.Experiment.id)).scalar()
+    unique_answers_count = db.query(func.count(models.Answer.id)).scalar()
+    unique_metrics_count = db.query(func.count(models.Result.id)).scalar()
+    unique_observations_count = db.query(func.count(models.ObservationTable.id)).scalar()
+    
+    distinct_models = db.query(models.Model.name, models.Model.aliased_name).distinct().all()
+    distinct_models_list = [{"name": name, "aliased_name": aliased_name} for name, aliased_name in distinct_models]
+
+    return {
+        "experiment_sets": experiment_sets_count,
+        "unique_experiments": unique_experiments_count,
+        "unique_answers": unique_answers_count,
+        "unique_metrics": unique_metrics_count,
+        "unique_observations": unique_observations_count,
+        "distinct_models": distinct_models_list
+    }
+
 
 
 #

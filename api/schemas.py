@@ -502,6 +502,23 @@ class Leaderboard(EgBaseModel):
 
 
 #
+# Ops
+#
+
+class ModelInfo(BaseModel):
+    name: str
+    aliased_name: Optional[str]
+
+class OpsMetrics(BaseModel):
+    experiment_sets: int
+    unique_experiments: int
+    unique_answers: int
+    unique_metrics: int
+    unique_observations: int
+    distinct_models: list[ModelInfo]
+
+
+#
 # LOCUST
 #
 
