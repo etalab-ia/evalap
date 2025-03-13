@@ -495,6 +495,7 @@ class LeaderboardEntry(EgBaseModel):
     other_metrics: dict[str, float | None]
     sampling_param: dict[str, str | None]
     extra_param: dict[str, str | None]
+    created_at: datetime
 
 
 class Leaderboard(EgBaseModel):
