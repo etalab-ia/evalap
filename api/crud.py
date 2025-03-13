@@ -1,4 +1,4 @@
-from sqlalchemy import and_, desc, func
+from sqlalchemy import and_, desc, func, select, column
 from sqlalchemy.orm import Session, joinedload
 
 import api.models as models
@@ -346,22 +346,22 @@ def upsert_observation(
 
 
 def get_leaderboard(
-    db: Session, metric_name: str = "judge_notator", dataset_name: str = None, limit: int = 100
+    db: Session, metric_name: str = "judge_notator", dataset_name: str = None, limit: int = 100, offset: int = 0
 ):
-    # Filter Experiment by dataset and metric
+    # Subquery 
     main_metric_subquery = (
-        db.query(
-            models.Result.experiment_id, func.avg(models.ObservationTable.score).label("main_score")
+        select(
+            models.Result.experiment_id,
+            func.avg(models.ObservationTable.score).label("main_score")
         )
-        .join(models.ObservationTable)
-        .filter(models.Result.metric_name == metric_name)
+        .join(models.ObservationTable, models.Result.id == models.ObservationTable.result_id)
+        .where(models.Result.metric_name == metric_name)
         .group_by(models.Result.experiment_id)
-        .subquery()
+        .cte("main_metric")  
     )
 
-    # Query
     query = (
-        db.query(
+        select(
             models.Experiment.id.label("experiment_id"),
             models.Model.name.label("model_name"),
             models.Dataset.name.label("dataset_name"),
@@ -369,40 +369,43 @@ def get_leaderboard(
             models.Model.sampling_params,
             models.Model.extra_params,
         )
-        .join(models.Model)
-        .join(models.Dataset)
-        .join(main_metric_subquery, models.Experiment.id == main_metric_subquery.c.experiment_id)
+        .join(models.Model, models.Experiment.model_id == models.Model.id)
+        .join(models.Dataset, models.Experiment.dataset_id == models.Dataset.id)
+        .join(
+            main_metric_subquery,
+            models.Experiment.id == main_metric_subquery.c.experiment_id 
+        )
     )
 
     if dataset_name:
-        query = query.filter(models.Dataset.name == dataset_name)
+        query = query.where(models.Dataset.name == dataset_name)
 
-    query = query.order_by(desc("main_metric_score")).limit(limit)
+    query = query.order_by(desc("main_metric_score")).limit(limit).offset(offset)
 
-    # Execute
-    results = query.all()
+    results = db.execute(query).fetchall()
 
     # Fetch result in leaderboard
     entries = []
     for result in results:
-        other_metrics = (
-            db.query(
+        other_metrics_query = (
+            select(
                 models.Result.metric_name,
-                func.avg(models.ObservationTable.score).label("avg_score")  
+                func.avg(models.ObservationTable.score).label("avg_score")
             )
-            .join(models.ObservationTable)
-            .filter(
+            .join(models.ObservationTable, models.Result.id == models.ObservationTable.result_id)
+            .where(
                 and_(
                     models.Result.experiment_id == result.experiment_id,
-                    models.Result.metric_name != metric_name,  
+                    models.Result.metric_name != metric_name,
                 )
             )
-            .group_by(models.Result.metric_name)  
-            .all()
+            .group_by(models.Result.metric_name)
         )
+        
+        other_metrics = db.execute(other_metrics_query).fetchall()
 
         other_metrics_dict = {
-            metric: float(score) if score is not None else None  
+            metric: float(score) if score is not None else None
             for metric, score in other_metrics
         }
 
