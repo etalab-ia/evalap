@@ -487,15 +487,18 @@ class RetryRuns(EgBaseModel):
 #
 
 
-class LeaderboardEntry(EgBaseModel):
+class LeaderboardEntry(BaseModel):
     experiment_id: int
     model_name: str
     dataset_name: str
-    main_metric_score: float | None
-    other_metrics: dict[str, float | None]
-    sampling_param: dict[str, str | None]
-    extra_param: dict[str, str | None]
+    main_metric_score: Optional[float]
+    other_metrics: dict
+    sampling_param: dict
+    extra_param: dict
     created_at: datetime
+    experiment_set_id: Optional[int] = None
+    experiment_set_name: Optional[str] = None
+
 
 
 class Leaderboard(EgBaseModel):

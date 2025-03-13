@@ -369,6 +369,8 @@ def get_leaderboard(
             models.Model.sampling_params,
             models.Model.extra_params,
             models.Experiment.created_at.label("created_at"),
+            models.Experiment.experiment_set_id,
+            models.ExperimentSet.name.label("experiment_set_name")
         )
         .join(models.Model, models.Experiment.model_id == models.Model.id)
         .join(models.Dataset, models.Experiment.dataset_id == models.Dataset.id)
@@ -376,6 +378,7 @@ def get_leaderboard(
             main_metric_subquery,
             models.Experiment.id == main_metric_subquery.c.experiment_id 
         )
+        .outerjoin(models.ExperimentSet, models.Experiment.experiment_set_id == models.ExperimentSet.id)
     )
 
     if dataset_name:
@@ -419,10 +422,13 @@ def get_leaderboard(
             sampling_param={k: str(v) for k, v in (result.sampling_params or {}).items()},
             extra_param={k: str(v) for k, v in (result.extra_params or {}).items()},
             created_at=result.created_at,
+            experiment_set_id=result.experiment_set_id,
+            experiment_set_name=result.experiment_set_name
         )
         entries.append(entry)
 
     return schemas.Leaderboard(entries=entries)
+
 
 
 #
