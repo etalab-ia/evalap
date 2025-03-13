@@ -614,15 +614,23 @@ def main():
 
         tab1, tab2, tab3, tab4 = st.tabs([
             "⭐ Scores", 
-            "📝 Details by Experiment Id", 
             "📊 Set Overview", 
+            "📝 Details by Experiment Id", 
             "🚨 Ops Analysis"
         ])
 
         experimentset = st.session_state["experimentset"]
-
         experiments_df = pd.DataFrame([
-            {"Id": exp["id"], "Name": exp["name"], "Status": exp["experiment_status"]}
+            {     "Id": exp["id"],
+                    "Name": exp["name"],
+                    "Status": exp["experiment_status"],
+                    "Created at": exp["created_at"],
+                    "Num try": exp["num_try"],
+                    "Num success": exp["num_success"],
+                    "Num observation try": exp["num_observation_try"],
+                    "Num observation success": exp["num_observation_success"],
+ 
+             }
             for exp in experimentset["experiments"]
         ])
 
@@ -636,6 +644,15 @@ def main():
             display_experiment_set_score(experimentset, experiments_df)
 
         with tab2:
+            col_overview1, col_overview2 = st.columns([4, 1])
+            with col_overview1:
+                st.subheader("Overview")
+            with col_overview2:
+                if st.button("🔄 Refresh Overview", key="refresh_overview"):
+                    st.cache_data.clear()
+            display_experiment_set_overview(experimentset, experiments_df)
+            
+        with tab3:
             col_detail1, col_detail2 = st.columns([4, 1])
             with col_detail1:
                 st.subheader("Details")
@@ -644,14 +661,6 @@ def main():
                     st.cache_data.clear()
             display_experiment_details(experimentset, experiments_df)
 
-        with tab3:
-            col_overview1, col_overview2 = st.columns([4, 1])
-            with col_overview1:
-                st.subheader("Overview")
-            with col_overview2:
-                if st.button("🔄 Refresh Overview", key="refresh_overview"):
-                    st.cache_data.clear()
-            display_experiment_set_overview(experimentset, experiments_df)
 
         with tab4:
             col_report1, col_report2 = st.columns([4, 1])
