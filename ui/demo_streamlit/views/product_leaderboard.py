@@ -197,6 +197,16 @@ def display_dataset_and_metrics(product_info: dict, datasets: list[dict]) -> str
 
     return default_metric
 
+def get_base_url():
+    query_params = st.query_params
+    
+    base_url = f"{st.get_option('server.baseUrlPath')}"
+    
+    if not base_url:
+        base_url = "/"
+    
+    return base_url
+
 def main() -> None:
     st.title("Products Metrics Leaderboard")
 
@@ -239,9 +249,32 @@ def main() -> None:
                 leaderboard_data, default_metric, metrics_list_for_decision, current_model_id 
             )
 
-            if df_leaderboard is not None and not df_leaderboard.empty:
+            if df_leaderboard is not None:
+                base_url = get_base_url()
+                experiments_url = f"{base_url}experiments_set?expset="
+
+                def create_link(experiment_set_id):
+                    if pd.isna(experiment_set_id) or experiment_set_id == "" or experiment_set_id is None:
+                        return None
+                    else:
+                        try:
+                            return f"{experiments_url}{int(experiment_set_id)}"
+                        except (ValueError, TypeError):
+                            return None 
+
+                df_leaderboard["Experiment Set Link"] = df_leaderboard["experiment_set_id"].apply(create_link)
+
                 st.write("#### Leaderboard")
-                st.dataframe(df_leaderboard, use_container_width=True, hide_index=True)
+                st.data_editor(
+                    df_leaderboard,
+                    use_container_width=True,
+                    hide_index=True,
+                    column_config={
+                        "Experiment Set Link": st.column_config.LinkColumn(
+                            "Experiment Set Link"
+                        )
+                    },
+                )
             else:
                 st.write("No data available for the leaderboard.")
 
