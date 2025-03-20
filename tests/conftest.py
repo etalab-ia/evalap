@@ -8,9 +8,9 @@ from typing import Generator
 import pytest
 from fastapi.testclient import TestClient
 
-from api.main import app
+from eg1.api.main import app
 
-from api.db import SessionLocal
+from eg1.api.db import SessionLocal
 
 
 #

@@ -1,10 +1,10 @@
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, desc, and_
 
-import api.models as models
-import api.schemas as schemas
-from api.metrics import Metric, metric_registry
-from api.models import create_object_from_dict
+import eg1.api.models as models
+import eg1.api.schemas as schemas
+from eg1.api.metrics import Metric, metric_registry
+from eg1.api.models import create_object_from_dict
 
 #
 # Datasets

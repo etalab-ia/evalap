@@ -14,7 +14,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import RelationshipProperty, class_mapper, relationship
 from sqlalchemy.sql import func
 
-from api.schemas import EgBaseModel
+from eg1.api.schemas import EgBaseModel
 
 Base = declarative_base()
 

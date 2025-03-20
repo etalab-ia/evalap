@@ -2,10 +2,10 @@ import json
 
 import requests
 
-from api.clients import LlmClient, ChatCompletionResponse
-from api.logger import logger
-import api.models as models
-from api.utils import log_and_raise_for_status
+from eg1.api.clients import LlmClient, ChatCompletionResponse
+from eg1.api.logger import logger
+import eg1.api.models as models
+from eg1.api.utils import log_and_raise_for_status
 
 
 class MCPBridgeClient:

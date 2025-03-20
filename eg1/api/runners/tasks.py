@@ -6,15 +6,15 @@ from io import StringIO
 import pandas as pd
 from sqlalchemy import update
 
-import api.crud as crud
-import api.models as models
-from api.config import DEFAULT_JUDGE_MODEL
-from api.db import SessionLocal
-from api.logger import logger
-from api.mcp import MCPBridgeClient, multi_step_generate
-from api.metrics import metric_registry
-from api.runners import MessageType, dispatch_tasks
-from api.utils import Timer, run_with_timeout
+import eg1.api.crud as crud
+import eg1.api.models as models
+from eg1.api.config import DEFAULT_JUDGE_MODEL
+from eg1.api.db import SessionLocal
+from eg1.api.logger import logger
+from eg1.api.mcp import MCPBridgeClient, multi_step_generate
+from eg1.api.metrics import metric_registry
+from eg1.api.runners import MessageType, dispatch_tasks
+from eg1.api.utils import Timer, run_with_timeout
 
 
 @dataclass

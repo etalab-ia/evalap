@@ -1,2 +1,2 @@
-from api.models import *
+from eg1.api.models import *
 

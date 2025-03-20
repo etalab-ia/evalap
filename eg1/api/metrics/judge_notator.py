@@ -1,5 +1,5 @@
-from api.clients import LlmClient
-from api.utils import render_jinja
+from eg1.api.clients import LlmClient
+from eg1.api.utils import render_jinja
 
 from . import metric_registry
 

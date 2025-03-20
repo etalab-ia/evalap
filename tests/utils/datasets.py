@@ -1,5 +1,5 @@
 from fastapi.testclient import TestClient
-from api.config import API_BASE_URL
+from eg1.api.config import API_BASE_URL
 
 
 ROOT_PATH = API_BASE_URL
