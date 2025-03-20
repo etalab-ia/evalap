@@ -363,6 +363,7 @@ def get_leaderboard(
     query = (
         select(
             models.Experiment.id.label("experiment_id"),
+            models.Experiment.name.label("experiment_name"),
             models.Model.name.label("model_name"),
             models.Dataset.name.label("dataset_name"),
             main_metric_subquery.c.main_score.label("main_metric_score"),
@@ -415,6 +416,7 @@ def get_leaderboard(
 
         entry = schemas.LeaderboardEntry(
             experiment_id=result.experiment_id,
+            experiment_name=result.experiment_name,
             model_name=result.model_name,
             dataset_name=result.dataset_name,
             main_metric_score=float(result.main_metric_score) if result.main_metric_score else None,
