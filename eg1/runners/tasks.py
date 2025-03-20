@@ -11,10 +11,10 @@ import eg1.api.models as models
 from eg1.api.config import DEFAULT_JUDGE_MODEL
 from eg1.api.db import SessionLocal
 from eg1.api.logger import logger
-from eg1.api.mcp import MCPBridgeClient, multi_step_generate
+from eg1.mcp import MCPBridgeClient, multi_step_generate
 from eg1.api.metrics import metric_registry
-from eg1.api.runners import MessageType, dispatch_tasks
-from eg1.api.utils import Timer, run_with_timeout
+from eg1.runners import MessageType, dispatch_tasks
+from eg1.utils import Timer, run_with_timeout
 
 
 @dataclass

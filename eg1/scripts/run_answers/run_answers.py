@@ -119,7 +119,7 @@ async def run_model(args):
     dataset = response.json()
 
     # Parse the dataframe
-    df = pd.read_json(dataset["df"])
+    df = pd.read_json(StringIO(dataset["df"]))
     if "query" not in df.columns:
         print("Error: Dataframe doesn't have a 'query' column")
         return

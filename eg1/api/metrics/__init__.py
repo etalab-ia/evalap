@@ -6,7 +6,7 @@ from enum import Enum
 import inflection
 from deepeval.key_handler import KEY_FILE_HANDLER
 
-from eg1.api.utils import import_classes
+from eg1.utils import import_classes
 
 # FIX deepeval: OSError: [Errno 24] Too many open files: '.deepeval'
 KEY_FILE_HANDLER.fetch_data = lambda x: None

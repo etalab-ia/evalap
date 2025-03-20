@@ -9,10 +9,10 @@ from pydantic import BaseModel, ConfigDict, Field, create_model
 from sqlalchemy.orm import Session
 
 import eg1.api.models as models
-from eg1.api.clients.llm import LlmApiModels
+from eg1.clients.llm import LlmApiModels
 from eg1.api.errors import SchemaError
 from eg1.api.metrics import metric_registry
-from eg1.api.utils import build_param_grid
+from eg1.utils import build_param_grid
 
 
 #
