@@ -489,6 +489,7 @@ class RetryRuns(EgBaseModel):
 
 class LeaderboardEntry(BaseModel):
     experiment_id: int
+    experiment_name: str
     model_name: str
     dataset_name: str
     main_metric_score: Optional[float]
