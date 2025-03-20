@@ -11,7 +11,7 @@ from eg1.api.db import get_db
 from eg1.api.errors import CustomIntegrityError, SchemaError
 from eg1.api.logger import logger
 from eg1.api.metrics import Metric, metric_registry
-from eg1.api.runners import dispatch_retries, dispatch_tasks
+from eg1.runners import dispatch_retries, dispatch_tasks
 from eg1.api.security import admin_only
 
 router = APIRouter()

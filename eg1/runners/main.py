@@ -7,7 +7,7 @@ from eg1.api.config import MAX_CONCURRENT_TASKS
 
 from .tasks import process_task
 from eg1.api.logger import logger
-from eg1.api.mcp import MCPBridgeClient
+from eg1.mcp import MCPBridgeClient
 
 logging.getLogger("httpx").setLevel(logging.WARNING)
 

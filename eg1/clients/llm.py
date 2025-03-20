@@ -7,7 +7,7 @@ import requests
 
 # @TODO: Will be obsolete when MFS will use albert-api to do RAG
 from eg1.api.config import MFS_API_KEY_V2
-from eg1.api.utils import log_and_raise_for_status, retry
+from eg1.utils import log_and_raise_for_status, retry
 
 from .schemas.openai_rag import Chunk, RagChatCompletionResponse, Search
 

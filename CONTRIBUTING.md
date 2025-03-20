@@ -63,9 +63,9 @@ The environement variables can also be defined in a `.env` file at the root of t
 ```
 3. Launch the runner:
 ```
-    PYTHONPATH="." python -m eg1.api.runners
+    PYTHONPATH="." python -m eg1.runners
     # To change the default loggin level you can do:
-    #LOG_LEVEL="DEBUG" PYTHONPATH="." python -m eg1.api.runners
+    #LOG_LEVEL="DEBUG" PYTHONPATH="." python -m eg1.runners
 ```
 
 ## Swagger
