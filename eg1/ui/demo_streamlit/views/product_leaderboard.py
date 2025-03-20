@@ -11,14 +11,14 @@ from utils import fetch, calculate_tokens_per_second
 DEFAULT_METRIC = "judge_exactness"
 
 #TODO:
-# recup list mtetric du produit et n'afficher que les résultats dessus 
+# recup list mtetric du produit et n'afficher que les résultats dessus
 
 
 def load_product_config() -> dict:
     """Load product configuration from YAML file."""
     try:
-        config_path = Path("config") / "products" / "product_config.yml"
-        
+        config_path = Path("eg1") / "config" / "products" / "product_config.yml"
+
         if not config_path.exists():
             st.error(f"Configuration file not found at: {config_path}")
             return {"products": {}}
@@ -131,7 +131,7 @@ def process_leaderboard_data(
             entry["other_metrics"].get("generation_time"),
         )
         processed_entry["tokens_per_second"] = tokens_per_second
-            
+
         entries.append(processed_entry)
 
     if not entries:
@@ -230,9 +230,9 @@ def main() -> None:
             product_dataset_name = product_info.get("dataset", {}).get("name")
             metrics_list_for_decision = ", ".join([metric for metric in product_info["metrics"]])
 
-            leaderboard_data = fetch_leaderboard(default_metric, product_dataset_name) 
+            leaderboard_data = fetch_leaderboard(default_metric, product_dataset_name)
             df_leaderboard = process_leaderboard_data(
-                leaderboard_data, default_metric, metrics_list_for_decision, current_model_id 
+                leaderboard_data, default_metric, metrics_list_for_decision, current_model_id
             )
 
             if df_leaderboard is not None and not df_leaderboard.empty:
