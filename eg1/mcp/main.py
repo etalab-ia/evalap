@@ -74,21 +74,23 @@ class MCPBridgeClient:
 
 
 def multi_step_generate(
-    model: models.Model,
+    model_base_url: str,
+    model_api_key: str,
+    model_name: str,
     messages: list,
-    sampling_params_plus: dict,
-    mcp_bridge: MCPBridgeClient,
+    sampling_params: dict,
+    mcp_bridge: MCPBridgeClient | None = None,
     max_step=10,
 ) -> (ChatCompletionResponse, list[list[dict]]):
     cpt = 0
     steps: list[list[dict]] = []  # list of tools calls
-    aiclient = LlmClient(base_url=model.base_url, api_key=model.api_key)
+    aiclient = LlmClient(base_url=model_base_url, api_key=model_api_key)
     while cpt < max_step:
         cpt += 1
-        result = aiclient.generate(model=model.name, messages=messages, **sampling_params_plus)
+        result = aiclient.generate(model=model_name, messages=messages, **sampling_params)
         completion = result.choices[0]
 
-        if completion.finish_reason in [None, "", "stop", "length"]:
+        if completion.finish_reason in [None, "", "stop", "length"] or mcp_bridge is None:
             break
 
         # MCP/toolings loop
