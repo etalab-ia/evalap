@@ -5,14 +5,14 @@ from pydantic import ValidationError
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-import api.crud as crud
-import api.schemas as schemas
-from api.db import get_db
-from api.errors import CustomIntegrityError, SchemaError
-from api.logger import logger
-from api.metrics import Metric, metric_registry
-from api.runners import dispatch_retries, dispatch_tasks
-from api.security import admin_only
+import eg1.api.crud as crud
+import eg1.api.schemas as schemas
+from eg1.api.db import get_db
+from eg1.api.errors import CustomIntegrityError, SchemaError
+from eg1.api.logger import logger
+from eg1.api.metrics import Metric, metric_registry
+from eg1.api.runners import dispatch_retries, dispatch_tasks
+from eg1.api.security import admin_only
 
 router = APIRouter()
 

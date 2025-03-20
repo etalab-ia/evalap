@@ -1,6 +1,6 @@
 from fastapi import Header, HTTPException
 
-from api.config import ADMIN_TOKENS
+from eg1.api.config import ADMIN_TOKENS
 
 
 async def admin_only(x_eg1_admin: str = Header(default=None)):

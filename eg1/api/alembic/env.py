@@ -3,9 +3,9 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
-from api.base import Base
-from api.config import DATABASE_URI
-from api.db import create_database_if_not_exists
+from eg1.api.base import Base
+from eg1.api.config import DATABASE_URI
+from eg1.api.db import create_database_if_not_exists
 
 create_database_if_not_exists()
 

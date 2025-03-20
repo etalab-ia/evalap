@@ -8,11 +8,11 @@ import pandas as pd
 from pydantic import BaseModel, ConfigDict, Field, create_model
 from sqlalchemy.orm import Session
 
-import api.models as models
-from api.clients.llm import LlmApiModels
-from api.errors import SchemaError
-from api.metrics import metric_registry
-from api.utils import build_param_grid
+import eg1.api.models as models
+from eg1.api.clients.llm import LlmApiModels
+from eg1.api.errors import SchemaError
+from eg1.api.metrics import metric_registry
+from eg1.api.utils import build_param_grid
 
 
 #

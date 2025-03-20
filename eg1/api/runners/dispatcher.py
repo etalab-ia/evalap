@@ -7,11 +7,11 @@ import pandas as pd
 import zmq
 from sqlalchemy import func, case
 
-import api.crud as crud
-import api.models as models
-import api.schemas as schemas
-from api.logger import logger
-from api.metrics import metric_registry
+import eg1.api.crud as crud
+import eg1.api.models as models
+import eg1.api.schemas as schemas
+from eg1.api.logger import logger
+from eg1.api.metrics import metric_registry
 
 
 class MessageType(str, Enum):

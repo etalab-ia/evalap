@@ -4,7 +4,7 @@ from fastapi import APIRouter, FastAPI
 from fastapi.responses import RedirectResponse
 from starlette.middleware.cors import CORSMiddleware
 
-from api.config import (
+from eg1.api.config import (
     API_PREFIX,
     APP_DESCRIPTION,
     APP_NAME,
@@ -12,7 +12,7 @@ from api.config import (
     BACKEND_CORS_ORIGINS,
     CONTACT,
 )
-from api.endpoints import router as router_v1
+from eg1.api.endpoints import router as router_v1
 
 app = FastAPI(
     title=APP_NAME,

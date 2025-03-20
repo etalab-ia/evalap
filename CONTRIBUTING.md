@@ -6,11 +6,14 @@ The project includes an UI/UX based on Streamlit [WIP].
 
 ```
 eg1/
-├── justfile    --> just is a handy way to save and run project-specific commands. see https://just.systems
-├── api/        --> The evaluation API source code
-├── tests/      --> The api tests
-├── notebooks/  --> Example and demo notebooks
-└── ui/         --> [WIP] The user interface code source
+├── justfile    --> just is a handy way to save and run project-specific commands. See https://just.systems
+├── eg1/        --> The eg1 code source
+│   ├── api/        --> The evaluation API source code
+│   ├── runner/     --> The runner (message passing) source code
+│   ├── mcp/        --> The MCP client.
+│   └── ui/         --> [WIP] The user interface code source
+├── tests/      --> The tests
+└── notebooks/  --> Example and demo notebooks
 ```
 
 ## Environment
@@ -21,7 +24,7 @@ The project needs the following API key to be set perform LLM based metrics:
 export OPENAI_API_KEY="You secret key"
 ```
 
-All the project global settings and environmant variables are handled in `api/config.py`.
+All the project global settings and environmant variables are handled in `eg1/api/config.py`.
 
 The environement variables can also be defined in a `.env` file at the root of the project.
 
@@ -35,17 +38,17 @@ The environement variables can also be defined in a `.env` file at the root of t
 
 2. Create the first migration script:
 ```
-    alembic -c api/alembic.ini revision --autogenerate -m "Table Initialization"
+    alembic -c eg1/api/alembic.ini revision --autogenerate -m "Table Initialization"
 ```
 
 3. Initialize/Update the database schema:
 ```
-    alembic -c api/alembic.ini upgrade head
+    alembic -c eg1/api/alembic.ini upgrade head
 ```
 4. If you modify the schema :
 ```
-    alembic -c api/alembic.ini revision --autogenerate -m "text explication"
-    alembic -c api/alembic.ini upgrade head  
+    alembic -c eg1/api/alembic.ini revision --autogenerate -m "text explication"
+    alembic -c eg1/api/alembic.ini upgrade head  
 ```
 
 ## Run API
@@ -56,13 +59,13 @@ The environement variables can also be defined in a `.env` file at the root of t
 ```
 2. Launch the API:
 ```
-    uvicorn api.main:app --reload
+    uvicorn eg1.api.main:app --reload
 ```
 3. Launch the runner:
 ```
-    PYTHONPATH="." python -m api.runners
+    PYTHONPATH="." python -m eg1.api.runners
     # To change the default loggin level you can do:
-    #LOG_LEVEL="DEBUG" PYTHONPATH="." python -m api.runners
+    #LOG_LEVEL="DEBUG" PYTHONPATH="." python -m eg1.api.runners
 ```
 
 ## Swagger
@@ -84,7 +87,7 @@ The `notebook/` directory contains examples of API usage.
 
 ## Adding new metrics
 
-Each single metric should be defined in a file in `api/metrics/{metric_name}.py`.
+Each single metric should be defined in a file in `eg1/api/metrics/{metric_name}.py`.
 The file should be self-contained, i.e contains the eventual prompt and settings related to the metric.
 The metric should be decorated as followinf example to be registed as a known metric of EG1: 
 
@@ -113,5 +116,10 @@ def metric_name_metric(output:str, output_true:str, **kwargs) -> float:
 Tests can be found in api/tests.
 To run unit tests, use : 
 
-    pytest api/tests -v
+    pytest
 
+
+## Install python package
+
+    python -m pip install build twine
+    twine upload dist/*
