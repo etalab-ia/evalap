@@ -317,9 +317,11 @@ def process_leaderboard_data(
     score_column = f"{format_column_name(metric_name)} Score"
 
     # Separate repeat and non-repeat experiments
-    df_repeat_true = df[df["repeat"] == True]
     df_repeat_false = df[df["repeat"] == False]
     df_repeat_false[f"{score_column}_mean"] = df_repeat_false[score_column]
+    df_repeat_false['count'] = 1
+
+    df_repeat_true = df[df["repeat"] == True]
 
     # Aggregate repeated experiments
     if not df_repeat_true.empty:
@@ -338,14 +340,17 @@ def process_leaderboard_data(
                 **{col: "first" for col in first_columns},
                 **{
                     col: ["mean", "std"] for col in numeric_columns if col not in first_columns
-                },  # Corrected this line
+                }, 
             }
         )
+        grouped['count'] = df_repeat_true.groupby("Model_renamed").size()
 
         result_repeat_true = pd.DataFrame()
 
         for col in first_columns:
             result_repeat_true[col] = grouped[col]
+
+        result_repeat_true['count'] = grouped['count']  
 
         for column in numeric_columns:
             if column not in first_columns:
@@ -358,7 +363,7 @@ def process_leaderboard_data(
     else:
         result_repeat_true = pd.DataFrame()
 
-    # Concatenate results
+    # Concatenate results 
     final_df = pd.concat([df_repeat_false, result_repeat_true], ignore_index=True)
 
     # Sort by metric
