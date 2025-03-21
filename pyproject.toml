@@ -39,6 +39,7 @@ Documentation = "https://github.com/etalab-ia/eg1"
 
 [project.scripts]
 eg1_generate_answers = "eg1.scripts.run_answers.run_answers:main"
+eg1_run_expe = "eg1.scripts.run_expe.run_expe:main"
 
 # Packaging
 
