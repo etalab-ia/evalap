@@ -515,3 +515,4 @@ def get_locustrun(run_id: int, db: Session = Depends(get_db)):
         return CustomIntegrityError.from_integrity_error(e.orig).to_http_response()
     except Exception as e:
         raise e
+
