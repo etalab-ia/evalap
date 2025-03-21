@@ -21,12 +21,10 @@ Options:
 
 import asyncio
 import concurrent.futures
-import json
 import os
 import time
 from io import StringIO
 
-import aiohttp
 import pandas as pd
 import requests
 from docopt import docopt
@@ -64,17 +62,15 @@ def process_query(
     }
 
     try:
-        result, steps = multi_step_generate(
+        r, steps = multi_step_generate(
             model_base_url=model_base_url,
             model_api_key=model_api_key,
             model_name=model_name,
             messages=messages,
-            sampling_params=sampling_params,
+            sampling_params=sampling_params or {},
             mcp_bridge=None,
         )
-
-        answer = result.choices[0].message.content
-
+        answer = r.choices[0].message.content
         result["success"] = True
         result["output"] = answer
     except Exception as e:
@@ -85,7 +81,7 @@ def process_query(
     return result
 
 
-async def run_model(args):
+def run_model(args):
     """Main function to process the entire dataset."""
     base_url = args["--base-url"].rstrip("/")
     model = args["--model"]
@@ -147,13 +143,14 @@ async def run_model(args):
         results_df = pd.DataFrame(results)
 
         # Save results
-        results_df.to_json(f"results/{dataset_name}_processed.json", orient="records", indent=2)
+        os.makedirs('results', exist_ok=True)
+        results_df.to_json(f"results/{dataset_name}_processed.json", orient="records", indent=2, force_ascii=False)
         print(f"Processing complete. Results saved to results/{dataset_name}_processed.json")
 
 
 def main():
     args = docopt(__doc__)
-    asyncio.run(run_model(args))
+    run_model(args)
 
 
 if __name__ == "__main__":
