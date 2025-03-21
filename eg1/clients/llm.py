@@ -54,7 +54,7 @@ def get_api_url(model: str) -> (str | None, dict):
                 headers[h] = t.format(**{match.group(1): os.getenv(match.group(1))})
 
             return getattr(LlmApiUrl, provider), headers
-    return None
+    return None, {}
 
 
 class LlmClient:
@@ -73,7 +73,8 @@ class LlmClient:
         if self.api_key:
             headers["Authorization"] = f"Bearer {self.api_key}"
         else:
-            url, h = get_api_url(model)
+            _url, h = get_api_url(model)
+            url = _url or url
             headers.update(h)
 
         return url, headers
