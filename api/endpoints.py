@@ -516,3 +516,4 @@ def get_locustrun(run_id: int, db: Session = Depends(get_db)):
     except Exception as e:
         raise e
 
+
