@@ -67,6 +67,7 @@ def run_expe(args):
         "dataset": model_raw.pop("dataset", "unknown_dataset"),
         "model": model_raw,
         "metrics": metrics,
+        "judge_model": "gpt-4o",
     }
 
     grid_params = {
