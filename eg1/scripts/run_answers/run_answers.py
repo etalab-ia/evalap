@@ -21,7 +21,7 @@ Options:
     -h --help                     Show this help message and exit.
 
 Examples:
-    eg1_generate_answers --base-url http://localhost:9191/v1 --model google/gemma-3-27b-it --dataset MFS_questions_v01 --repeat 4--run-name gemma-3-27b_mfs
+    eg1_generate_answers --base-url http://localhost:9191/v1 --model google/gemma-3-27b-it --dataset MFS_questions_v01 --repeat 4 --run-name gemma-3-27b_mfs
 """
 
 import concurrent.futures
