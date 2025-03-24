@@ -39,13 +39,22 @@ def _get_expset_status(expset: dict) -> tuple[dict, dict]:
 
     return status, counts
 
+if "fetched_data" not in st.session_state:
+    st.session_state["fetched_data"]={}
+
+def cached_fetch_experiment(exp_id, with_dataset=True, with_results=True):
+    key = (exp_id, with_dataset)
+    if key in st.session_state["fetched_data"]:
+        return st.session_state["fetched_data"][key]
+    st.session_state["fetched_data"][key] = fetch("get", f"/experiment/{exp_id}", {"with_dataset": str(with_dataset), "with_results": str(with_results)})
+    return st.session_state["fetched_data"][key]
 
 @st.cache_data
 def _get_experiment_data(exp_id):
     """
     for each exp_id, returns query, answer true, answer llm and metrics
     """
-    exp = fetch("get", f"/experiment/{exp_id}", {"with_dataset": "true"})
+    exp = cached_fetch_experiment(exp_id, with_dataset=True) #fetch("get", f"/experiment/{exp_id}", {"with_dataset": "true"})
     if not exp:
         return None
 
@@ -110,7 +119,7 @@ def display_experiment_sets(experiment_sets):
                     st.caption(f"Created on {when}")
 
 
-def display_experiment_set_overview(experimentset, experiments_df):
+def display_experiment_set_overview(experiments_df):
     """
     returns a dataframe with the list of Experiments and the associated status
     """
@@ -357,7 +366,7 @@ def display_experiment_set_score(experimentset, experiments_df):
                 exp.get("_model") or exp["model"]["aliased_name"] or exp["model"]["name"]
             )
 
-        exp = fetch("get", f"/experiment/{exp['id']}?with_results=true")
+        exp = cached_fetch_experiment(exp['id'], with_dataset=False, with_results=True)#fetch("get", f"/experiment/{exp['id']}?with_results=true")
         if not exp:
             continue
 
@@ -458,7 +467,7 @@ def report_ops_global(exp_set):
 
 def process_experiment(exp):
     exp_id = exp["id"]
-    experiment = fetch("get", f"/experiment/{exp_id}", {"with_dataset": "true"})
+    experiment = cached_fetch_experiment(exp_id, with_dataset=True) #fetch("get", f"/experiment/{exp_id}", {"with_dataset": "true"})
     return experiment
 
 
@@ -640,6 +649,7 @@ def main():
             with col_score2:
                 if st.button("🔄 Refresh Scores", key="refresh_scores"):
                     st.cache_data.clear()
+                    st.session_state["fetched_data"]={}
             display_experiment_set_score(experimentset, experiments_df)
 
         with tab2:
@@ -649,7 +659,7 @@ def main():
             with col_overview2:
                 if st.button("🔄 Refresh Overview", key="refresh_overview"):
                     st.cache_data.clear()
-            display_experiment_set_overview(experimentset, experiments_df)
+            display_experiment_set_overview(experiments_df)
             
         with tab3:
             col_detail1, col_detail2 = st.columns([4, 1])
