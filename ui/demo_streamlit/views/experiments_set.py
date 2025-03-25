@@ -138,7 +138,7 @@ def display_experiment_details(experimentset, experiments_df):
         expe_name = experiment["name"]
         readme = experiment["readme"]
         dataset_name = experiment["dataset"]["name"]
-        model_name = experiment.get("model") or "Unknown Model"
+        model_name = experiment.get("model") or "Undefined Model"
 
         if df_with_results is not None:
             st.write(f"**experiment_id** n° {selected_exp_id}")
@@ -350,11 +350,14 @@ def display_experiment_set_score(experimentset, experiments_df):
     for exp in experiments:
         row = {}
         row_support = {}
+
+        # Determine model name
         if exp.get("_model") or exp.get("model"):
-            row["model"] = exp.get("_model") or exp["model"]["aliased_name"] or exp["model"]["name"]
-            row_support["model"] = (
-                exp.get("_model") or exp["model"]["aliased_name"] or exp["model"]["name"]
-            )
+            model_name = exp.get("_model") or exp["model"]["aliased_name"] or exp["model"]["name"]
+        else:
+            model_name = f"Undefined model ({exp['name']})"
+        row["model"] = model_name
+        row_support["model"] = model_name
 
         exp = fetch("get", f"/experiment/{exp['id']}?with_results=true")
         if not exp:
@@ -472,7 +475,7 @@ def report_model_and_metric(experimentset):
             if exp.get("model"):
                 model_name = exp["model"]["aliased_name"] or exp["model"]["name"]
             else:
-                model_name = "Unknow model"
+                model_name = f"Undefined model ({exp['name']})"
 
             # Check for errors in answers
             has_error = any(answer.get("error_msg") for answer in experiment.get("answers", []))
