@@ -11,8 +11,7 @@ import eg1.api.crud as crud
 import eg1.api.models as models
 import eg1.api.schemas as schemas
 from eg1.api.config import ZMQ_SENDER_URL
-from eg1.api.logger import logger
-from eg1.api.metrics import metric_registry
+from eg1.logger import logger
 
 
 class MessageType(str, Enum):
