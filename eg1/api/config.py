@@ -43,9 +43,6 @@ DEFAULT_JUDGE_MODEL = "gpt-4o-mini"
 ZMQ_WORKER_URL = "tcp://localhost:5556"
 ZMQ_SENDER_URL = "tcp://localhost:5555"
 
-# MCP
-MCP_CONFIG_FILE = "mcp.json"
-
 # Soon obsolete
 MFS_API_KEY_V2 = os.getenv("MFS_API_KEY_V2")
 
