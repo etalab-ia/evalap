@@ -24,7 +24,7 @@ def main():
 
         for dataset in datasets:
             if "output" in dataset["columns"]:
-                # @DEBUG: dataset to be removed soon
+                # @DEBUG: dataset to be removed soon (linked old experiments with the "upstream" dataset)
                 continue
 
             when = datetime.fromisoformat(dataset["created_at"]).strftime("%d %B %Y")
@@ -52,6 +52,10 @@ def main():
     with right_menu:
         st.markdown("###### Quick Navigation")
         for dataset in datasets:
+            if "output" in dataset["columns"]:
+                # @DEBUG: dataset to be removed soon (linked old experiments with the "upstream" dataset)
+                continue
+
             dataset_id = dataset["name"].lower().replace(" ", "-")
             st.markdown(
                 f"""
