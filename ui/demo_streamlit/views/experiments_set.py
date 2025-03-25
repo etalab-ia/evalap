@@ -469,7 +469,10 @@ def report_model_and_metric(experimentset):
 
         if experiment:
             # Determine model name
-            model_name = experiment.get("model", {}).get("name") or experiment.get("model", {}).get("aliased_name", "Unknown Model")
+            if exp.get("model"):
+                model_name = exp["model"]["aliased_name"] or exp["model"]["name"]
+            else:
+                model_name = "Unknow model"
 
             # Check for errors in answers
             has_error = any(answer.get("error_msg") for answer in experiment.get("answers", []))
