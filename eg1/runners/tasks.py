@@ -29,7 +29,7 @@ class MessageAnswer:
     )  # launch the observation dispacher once anwsers have been generated.
 
 
-def generate_answer(message: dict, mcp_bridge: MCPBridgeClient):
+def generate_answer(message: dict, mcp_bridge: MCPBridgeClient | None):
     """Message is a MessageAnswer dict containing the necessary information to process data"""
     msg = MessageAnswer(**message)
     with SessionLocal() as db:
@@ -42,7 +42,7 @@ def generate_answer(message: dict, mcp_bridge: MCPBridgeClient):
 
         # Build tools input
         _tools = sampling_params_plus.pop("_tools_", None)
-        if _tools:
+        if _tools and mcp_bridge:
             tools = mcp_bridge.tools2openai(_tools)
             sampling_params_plus["tools"] = tools
 
@@ -237,7 +237,7 @@ def generate_observation(message: dict, mcp_bridge: MCPBridgeClient):
                 print("$", end="", flush=True)
 
 
-def process_task(message: dict, mcp_bridge: MCPBridgeClient):
+def process_task(message: dict, mcp_bridge: MCPBridgeClient|None):
     """Route and process message"""
     match message["message_type"]:
         case MessageType.answer:

@@ -2,6 +2,7 @@ import logging
 import threading
 
 import zmq
+import requests
 
 from eg1.api.config import MAX_CONCURRENT_TASKS, ZMQ_SENDER_URL, ZMQ_WORKER_URL
 from eg1.api.logger import logger
@@ -45,7 +46,14 @@ def main(worker_url=ZMQ_WORKER_URL, sender_url=ZMQ_SENDER_URL):
     distributor.bind(worker_url)
 
     # MCP Bridge client initalization
-    mcp_bridge = MCPBridgeClient()
+    try:
+        mcp_bridge = MCPBridgeClient()
+    except Exception as e:
+        logger.warning(
+            "MCP bridge is not responding, MCP will not be used."
+            f"Reason: {e}"
+        )  # fmt: skip
+        mcp_bridge = None
 
     # Launch pool of worker threads
     for i in range(MAX_CONCURRENT_TASKS):

@@ -20,6 +20,7 @@ class MCPBridgeClient:
         response = requests.get(
             url + path,
             headers=headers,
+            timeout=10,
         )
         log_and_raise_for_status(response, "MCP bridge client error")
         tools = response.json()
