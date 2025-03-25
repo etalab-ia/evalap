@@ -55,9 +55,9 @@ def read_dataset(id: int, with_df: bool = False, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Dataset not found")
 
     if with_df:
-        return schemas.DatasetFull.from_orm(dataset)
+        return schemas.DatasetFull.model_validate(dataset)
 
-    return schemas.Dataset.from_orm(dataset)
+    return schemas.Dataset.model_validate(dataset)
 
 
 @router.get("/dataset", response_model=schemas.Dataset | schemas.DatasetFull, tags=["datasets"])
@@ -79,9 +79,9 @@ def read_dataset_by_query(
 
     if dataset:
         if with_df:
-            return schemas.DatasetFull.from_orm(dataset)
+            return schemas.DatasetFull.model_validate(dataset)
 
-        return schemas.Dataset.from_orm(dataset)
+        return schemas.Dataset.model_validate(dataset)
 
     raise HTTPException(status_code=400, detail="No query parameters provided")
 
@@ -209,15 +209,15 @@ def read_experiment(
         raise HTTPException(status_code=404, detail="Experiment not found")
 
     if with_dataset:
-        return schemas.ExperimentFullWithDataset.from_orm(experiment)
+        return schemas.ExperimentFullWithDataset.model_validate(experiment)
     elif with_answers and with_results:
-        return schemas.ExperimentFull.from_orm(experiment)
+        return schemas.ExperimentFull.model_validate(experiment)
     elif with_results:
-        return schemas.ExperimentWithResults.from_orm(experiment)
+        return schemas.ExperimentWithResults.model_validate(experiment)
     elif with_answers:
-        return schemas.ExperimentWithAnswers.from_orm(experiment)
+        return schemas.ExperimentWithAnswers.model_validate(experiment)
 
-    return schemas.Experiment.from_orm(experiment)
+    return schemas.Experiment.model_validate(experiment)
 
 
 @router.get(
@@ -314,7 +314,7 @@ def read_experimentsets(db: Session = Depends(get_db)):
     if experimentsets is None:
         raise HTTPException(status_code=404, detail="ExperimentSets not found")
     return experimentsets
-    # return [schemas.ExperimentSet.from_orm(x) for x in experimentsets]
+    # return [schemas.ExperimentSet.model_validate(x) for x in experimentsets]
 
 
 @router.get(

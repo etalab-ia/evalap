@@ -40,6 +40,8 @@ API_PREFIX = ""
 # Runners
 MAX_CONCURRENT_TASKS = 8  # 8 ok, 16 hard !
 DEFAULT_JUDGE_MODEL = "gpt-4o-mini"
+ZMQ_WORKER_URL = "tcp://localhost:5556"
+ZMQ_SENDER_URL = "tcp://localhost:5555"
 
 # MCP
 MCP_CONFIG_FILE = "mcp.json"
@@ -61,6 +63,8 @@ if ENV == "unittest":
     API_BASE_URL = "http://localhost:8000" + API_PREFIX
     DB_NAME = "eg1-unittest"
     DATABASE_URI = "sqlite:///" + os.path.join(tempfile.gettempdir(), f"{DB_NAME}-sqlite3.db")
+    ZMQ_WORKER_URL = "tcp://localhost:5576"
+    ZMQ_SENDER_URL = "tcp://localhost:5575"
 elif ENV == "dev":
     API_BASE_URL = "http://localhost:8000" + API_PREFIX
     DB_NAME = "eg1_dev"

@@ -5,11 +5,12 @@ from io import StringIO
 
 import pandas as pd
 import zmq
-from sqlalchemy import func, case
+from sqlalchemy import case, func
 
 import eg1.api.crud as crud
 import eg1.api.models as models
 import eg1.api.schemas as schemas
+from eg1.api.config import ZMQ_SENDER_URL
 from eg1.api.logger import logger
 from eg1.api.metrics import metric_registry
 
@@ -72,7 +73,7 @@ def fix_result_num_count(db, result, commit=True):
 def dispatch_tasks(db, db_exp, message_type: MessageType):
     context = zmq.Context()
     sender = context.socket(zmq.PUSH)
-    sender.connect("tcp://localhost:5555")
+    sender.connect(ZMQ_SENDER_URL)
 
     if message_type == MessageType.answer:
         # Generate answer
@@ -164,7 +165,7 @@ def dispatch_tasks(db, db_exp, message_type: MessageType):
 def dispatch_retries(db, retry_runs: schemas.RetryRuns):
     context = zmq.Context()
     sender = context.socket(zmq.PUSH)
-    sender.connect("tcp://localhost:5555")
+    sender.connect(ZMQ_SENDER_URL)
 
     #
     # Retry failed and unfinished expe

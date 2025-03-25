@@ -120,7 +120,7 @@ DatasetUpdate = create_model(
     "DatasetUpdate",
     **{
         field_name: (Optional[field.annotation], None)
-        for field_name, field in Dataset.__fields__.items()
+        for field_name, field in Dataset.model_fields.items()
     },
     __base__=Dataset,
 )
@@ -132,7 +132,7 @@ DatasetPatch = create_model(
     "DatasetPatch",
     **{
         field_name: (Optional[field.annotation], None)
-        for field_name, field in Dataset.__fields__.items()
+        for field_name, field in Dataset.model_fields.items()
     },
     __base__=DatasetBase,
 )
@@ -236,7 +236,7 @@ ResultUpdate = create_model(
     "ResultUpdate",
     **{
         field_name: (Optional[field.annotation], None)
-        for field_name, field in Result.__fields__.items()
+        for field_name, field in Result.model_fields.items()
     },
     __base__=Result,
 )
@@ -385,7 +385,7 @@ class ExperimentFullWithDataset(ExperimentFull):
     dataset: DatasetFull | None = None
 
 
-# For the special `metrics` input
+# For the special `metrics` paramter passed at creation
 class ExperimentExtra(Experiment, ExperimentCreate):
     pass
 
@@ -394,7 +394,7 @@ ExperimentUpdate = create_model(
     "ExperimentUpdate",
     **{
         field_name: (Optional[field.annotation], None)
-        for field_name, field in ExperimentExtra.__fields__.items()
+        for field_name, field in ExperimentExtra.model_fields.items()
     },
     __base__=ExperimentExtra,
 )
@@ -453,23 +453,23 @@ class ExperimentSet(ExperimentSetBase):
     experiments: list[Experiment] | None
 
 
-# For the special `metrics` input
+# For the special `cv` parameters passed at creation
 class ExperimentSetExtra(ExperimentSet, ExperimentSetCreate):
-    pass
+    experiments: list[Experiment | ExperimentCreate] | None
 
 
 ExperimentSetUpdate = create_model(
     "ExperimentSetUpdate",
     **{
         field_name: (Optional[field.annotation], None)
-        for field_name, field in ExperimentSet.__fields__.items()
+        for field_name, field in ExperimentSet.model_fields.items()
     },
     __base__=ExperimentSetExtra,
 )
 
 
 class ExperimentSetPatch(ExperimentSetUpdate):
-    pass
+    experiments: list[Experiment | ExperimentCreate] | None = None
 
 
 class RetryRuns(EgBaseModel):

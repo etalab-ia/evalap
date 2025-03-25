@@ -125,7 +125,7 @@ def run_model(args):
         "base_url": base_url,
         "prompt_system": system_prompt,
         "sampling_params": sampling_params,
-        "dataset": dataset,
+        "dataset": dataset["name"],
     }
 
     with open(f"results/{run_name}__details.json", "w") as f:
