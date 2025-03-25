@@ -39,8 +39,10 @@ def _get_expset_status(expset: dict) -> tuple[dict, dict]:
 
     return status, counts
 
+
 if "fetched_data" not in st.session_state:
     st.session_state["fetched_data"]={}
+
 
 def cached_fetch_experiment(exp_id, with_dataset=True, with_results=True):
     key = (exp_id, with_dataset)
@@ -49,12 +51,13 @@ def cached_fetch_experiment(exp_id, with_dataset=True, with_results=True):
     st.session_state["fetched_data"][key] = fetch("get", f"/experiment/{exp_id}", {"with_dataset": str(with_dataset), "with_results": str(with_results)})
     return st.session_state["fetched_data"][key]
 
+
 @st.cache_data
 def _get_experiment_data(exp_id):
     """
     for each exp_id, returns query, answer true, answer llm and metrics
     """
-    exp = cached_fetch_experiment(exp_id, with_dataset=True) #fetch("get", f"/experiment/{exp_id}", {"with_dataset": "true"})
+    exp = cached_fetch_experiment(exp_id, with_dataset=True)
     if not exp:
         return None
 
@@ -347,68 +350,68 @@ def _format_experiments_score_df(experiments: list, df: pd.DataFrame) -> (bool, 
     return has_repeat, df
 
 
-def display_experiment_set_score(experimentset, experiments_df):
-    """
-    process experiment results dynamically across different experiment types.
-    """
+def _extract_experiment_data(exp):
+    """Extrait les données pertinentes d'un dictionnaire d'expériences."""
+    model_name = (
+        exp.get("_model") 
+        or (exp["model"]["aliased_name"] if exp.get("model") else None)
+        or (exp["model"]["name"] if exp.get("model") else None)
+        or exp["name"]  
+    )
+    
+    row = {"model": model_name}
+    row_support = {"model": model_name}
+    
+    exp = cached_fetch_experiment(exp['id'], with_dataset=False, with_results=True)
+    if not exp:
+        return None, None
+    
+    for metric_results in exp.get("results", []):
+        metric = metric_results["metric_name"]
+        scores = [x["score"] for x in metric_results["observation_table"] if pd.notna(x.get("score"))]
+        if scores:
+            row[f"{metric}"] = np.mean(scores)
+            row_support[f"{metric}_support"] = len(scores)
+            
+    return row, row_support
 
-    rows = []
-    rows_support = []
+
+def display_experiment_set_score(experimentset, experiments_df):
+    """Affiche les scores de l'ensemble d'expériences."""
     experiments = experimentset.get("experiments", [])
     _rename_model_variants(experiments)
     size = experiments[0]["dataset"]["size"]
+    
+    rows = []
+    rows_support = []
+    
     for exp in experiments:
-        row = {}
-        row_support = {}
+        row_data = _extract_experiment_data(exp)
+        if row_data[0] is not None and row_data[1] is not None:
+            rows.append(row_data[0])
+            rows_support.append(row_data[1])
         
-        # Modification de la logique de récupération du nom du modèle
-        model_name = (
-            exp.get("_model") 
-            or (exp["model"]["aliased_name"] if exp.get("model") else None)
-            or (exp["model"]["name"] if exp.get("model") else None)
-            or exp["name"]  # Fallback sur le nom de l'expérience
-        )
-        row["model"] = model_name
-        row_support["model"] = model_name
-
-        exp = cached_fetch_experiment(exp['id'], with_dataset=False, with_results=True)
-        if not exp:
-            continue
-
-        for metric_results in exp.get("results", []):
-            metric = metric_results["metric_name"]
-            scores = [
-                x["score"] for x in metric_results["observation_table"] if pd.notna(x.get("score"))
-            ]
-            if scores:
-                row[f"{metric}"] = np.mean(scores)
-                row_support[f"{metric}_support"] = len(scores)
-
-        rows.append(row)
-        rows_support.append(row_support)
-
     if not rows:
         st.error("No valid experiment results found")
         return
-
+        
     df = pd.DataFrame(rows)
     df = _sort_columns(df, [])
-
-    # Ajout d'une colonne "model" par défaut si elle n'existe pas
+    
     if "model" not in df.columns:
         df["model"] = [exp.get("name", "Unknown Model") for exp in experiments]
-
+        
     try:
         has_repeat, df = _format_experiments_score_df(experiments, df)
     except ValueError as err:
         st.error("No result found yet, please try again later")
         raise err
         return
-
+        
     df_support = pd.DataFrame(rows_support)
     df_support = _sort_columns(df_support, [])
     _, df_support = _format_experiments_score_df(experiments, df_support)
-
+    
     st.write("**Score:** Averaged score on experiments metrics")
     if has_repeat:
         st.warning("Score are aggregated on model repetition.")
@@ -418,7 +421,7 @@ def display_experiment_set_score(experimentset, experiments_df):
         hide_index=True,
         column_config={"Id": st.column_config.TextColumn(width="small")},
     )
-
+    
     st.write("---")
     st.write(f"**Support:** the number of item on wich the metrics is computed (size = {size})")
     st.dataframe(
@@ -477,7 +480,7 @@ def report_ops_global(exp_set):
 
 def process_experiment(exp):
     exp_id = exp["id"]
-    experiment = cached_fetch_experiment(exp_id, with_dataset=True) #fetch("get", f"/experiment/{exp_id}", {"with_dataset": "true"})
+    experiment = cached_fetch_experiment(exp_id, with_dataset=True)
     return experiment
 
 
