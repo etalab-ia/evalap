@@ -2,11 +2,10 @@ import logging
 import threading
 
 import zmq
-import requests
 
 from eg1.api.config import MAX_CONCURRENT_TASKS, ZMQ_SENDER_URL, ZMQ_WORKER_URL
-from eg1.api.logger import logger
-from eg1.mcp import MCPBridgeClient
+from eg1.clients import MCPBridgeClient
+from eg1.logger import logger
 
 from .tasks import process_task
 

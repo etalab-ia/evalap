@@ -34,7 +34,7 @@ import pandas as pd
 import requests
 from docopt import docopt
 
-from eg1.mcp import multi_step_generate
+from eg1.clients import multi_step_generate
 
 eg1_url = "https://eg1.dev.etalab.gouv.fr/v1"
 
