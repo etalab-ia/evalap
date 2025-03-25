@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 import plotly.express as px
 import streamlit as st
-from utils import fetch
+from utils import fetch, hash_string
 
 
 def _get_expset_status(expset: dict) -> tuple[dict, dict]:
@@ -106,7 +106,6 @@ def display_experiment_sets(experiment_sets):
                     st.caption(f"Experiments: {len(exp_set['experiments'])} ")
                 with col3:
                     st.caption(f"Created on {when}")
-
 
 
 def display_experiment_set_overview(expset, experiments_df):
@@ -241,6 +240,12 @@ def _rename_model_variants(experiments: list) -> list:
             for i in ids
         ]
 
+        # Manage prompt_system param by computing its hash
+        for i in ids:
+            if not experiments[i]["model"].get("prompt_system"):
+                continue
+            model_params[i]["sys_prompt"] = hash_string(experiments[i]["model"]["prompt_system"], 4)
+
         # remove commons parameters
         model_diff_params = _remove_commons_items(model_params)
 
@@ -320,18 +325,18 @@ def _format_experiments_score_df(experiments: list, df: pd.DataFrame) -> (bool, 
 
     if result is None or len(result) == len(df):
         df["Id"] = experiment_ids
-        #df["name"] = experiment_names
+        # df["name"] = experiment_names
         df = df[["Id", "model"] + [col for col in df.columns if col not in ["Id", "model"]]]
         has_repeat = False
     else:
         df = result
 
     # @DEBUG: when +- is used, the sorting does not work.
-    #default_sort_metric = _find_default_sort_metric(df.columns)
-    #if default_sort_metric in df.columns:
+    # default_sort_metric = _find_default_sort_metric(df.columns)
+    # if default_sort_metric in df.columns:
     #    df = df.sort_values(by=f"{default_sort_metric}", ascending=False)
     # @DEBUG: Id does not exist for "repeat" case
-    #df = df.sort_values(by="Id", ascending=True)
+    # df = df.sort_values(by="Id", ascending=True)
 
     return has_repeat, df
 
@@ -440,17 +445,18 @@ def report_global(exp_set):
                         )
                         continue
 
-        report_data.append({
-            "Experiment Set Name": exp_set["name"],
-            "Status": status["text"],
-            "Total Experiments": len(exp_set["experiments"]),
-            "Answer Tries": counts["total_answer_tries"],
-            "Answer Successes": counts["total_answer_successes"],
-            "Observation Tries": counts["total_observation_tries"],
-            "Observation Successes": counts["total_observation_successes"],
-            "Has Failure": has_failure,
-        })
-
+        report_data.append(
+            {
+                "Experiment Set Name": exp_set["name"],
+                "Status": status["text"],
+                "Total Experiments": len(exp_set["experiments"]),
+                "Answer Tries": counts["total_answer_tries"],
+                "Answer Successes": counts["total_answer_successes"],
+                "Observation Tries": counts["total_observation_tries"],
+                "Observation Successes": counts["total_observation_successes"],
+                "Has Failure": has_failure,
+            }
+        )
 
     report_df = pd.DataFrame(report_data)
     st.dataframe(
@@ -462,13 +468,25 @@ def report_global(exp_set):
 
 def report_model_and_metric(experimentset):
     """Analyzes experiment statuses by model and metric, including failed experiments and failure rates."""
-    model_data = defaultdict(lambda: {"finished": 0, "running":0, "running_answers": 0, "running_metrics": 0, "pending": 0, "failed": 0, "no_failed": 0})
-    metric_data = defaultdict(lambda: {"finished": 0, "running": 0, "pending": 0, "failed": 0, "no_failed": 0})
+    model_data = defaultdict(
+        lambda: {
+            "finished": 0,
+            "running": 0,
+            "running_answers": 0,
+            "running_metrics": 0,
+            "pending": 0,
+            "failed": 0,
+            "no_failed": 0,
+        }
+    )
+    metric_data = defaultdict(
+        lambda: {"finished": 0, "running": 0, "pending": 0, "failed": 0, "no_failed": 0}
+    )
 
     for exp in experimentset["experiments"]:
         exp_id = exp["id"]
 
-        experiment =fetch("get", f"/experiment/{exp_id}", {"with_dataset": "true"})
+        experiment = fetch("get", f"/experiment/{exp_id}", {"with_dataset": "true"})
 
         if experiment:
             # Determine model name
@@ -498,21 +516,36 @@ def report_model_and_metric(experimentset):
                     metric_data["Unknown"]["failed"] += 1
 
     def calculate_failure_rate(row):
-        total = row['failed'] + row['no_failed']
-        return row['failed'] / total if total > 0 else 0
+        total = row["failed"] + row["no_failed"]
+        return row["failed"] / total if total > 0 else 0
 
     model_report = pd.DataFrame.from_dict(model_data, orient="index")
     model_report["Total"] = model_report[["finished", "running", "pending"]].sum(axis=1)
     model_report["Failure Rate"] = model_report.apply(calculate_failure_rate, axis=1)
 
-    columns_order = ["finished", "running", "pending", "Total", "failed", "no_failed", "Failure Rate"]
+    columns_order = [
+        "finished",
+        "running",
+        "pending",
+        "Total",
+        "failed",
+        "no_failed",
+        "Failure Rate",
+    ]
     model_report = model_report[columns_order]
     model_for_graph = model_report.copy()
 
-    model_report.columns = pd.MultiIndex.from_tuples([
-        ("Status", "finished"), ("Status", "running"), ("Status", "pending"), ("Status", "Total"),
-        ("Failure Analysis", "failed"), ("Failure Analysis", "no_failed"), ("Failure Analysis", "Failure Rate")
-    ])
+    model_report.columns = pd.MultiIndex.from_tuples(
+        [
+            ("Status", "finished"),
+            ("Status", "running"),
+            ("Status", "pending"),
+            ("Status", "Total"),
+            ("Failure Analysis", "failed"),
+            ("Failure Analysis", "no_failed"),
+            ("Failure Analysis", "Failure Rate"),
+        ]
+    )
 
     st.subheader("Experiment Status by Model")
     st.dataframe(model_report, use_container_width=True)
@@ -615,12 +648,13 @@ def main():
 
             metric_status = f"**Metric status:** Finished: {finished_ratio}%"
             if failure_ratio > 0:
-                metric_status += f" &nbsp;&nbsp;&nbsp; Failure: <span style='color:red;'>{failure_ratio}%</span>"
+                metric_status += (
+                    f" &nbsp;&nbsp;&nbsp; Failure: <span style='color:red;'>{failure_ratio}%</span>"
+                )
 
             st.markdown(metric_status, unsafe_allow_html=True)
 
         show_header()
-
 
         # Display tabs
         # --
@@ -678,7 +712,6 @@ def main():
             tab_index[3]["func"](experimentset, experiments_df)
         with tab4:
             tab_index[4]["func"](experimentset)
-
 
     else:
         st.title("Experiments (Set)")
