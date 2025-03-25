@@ -3,11 +3,11 @@ import threading
 
 import zmq
 
-from eg1.api.config import MAX_CONCURRENT_TASKS
-
-from .tasks import process_task
+from eg1.api.config import MAX_CONCURRENT_TASKS, ZMQ_SENDER_URL, ZMQ_WORKER_URL
 from eg1.api.logger import logger
 from eg1.mcp import MCPBridgeClient
+
+from .tasks import process_task
 
 logging.getLogger("httpx").setLevel(logging.WARNING)
 
@@ -30,7 +30,7 @@ def worker_routine(worker_url, context, mcp_bridge):
             logger.exception("An error occurred in the ZMQ main loop: %s", e)
 
 
-def main(worker_url="tcp://localhost:5556", sender_url="tcp://localhost:5555"):
+def main(worker_url=ZMQ_WORKER_URL, sender_url=ZMQ_SENDER_URL):
     """server routine"""
 
     # Prepare our context and sockets

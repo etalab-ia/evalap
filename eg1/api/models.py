@@ -10,8 +10,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
 )
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import RelationshipProperty, class_mapper, relationship
+from sqlalchemy.orm import RelationshipProperty, class_mapper, declarative_base, relationship
 from sqlalchemy.sql import func
 
 from eg1.api.schemas import EgBaseModel

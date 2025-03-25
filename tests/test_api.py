@@ -12,3 +12,4 @@ class TestApi:
         Base.metadata.create_all(bind=engine)
         # eventually initialize db data.
         #db: Session = SessionLocal()
+

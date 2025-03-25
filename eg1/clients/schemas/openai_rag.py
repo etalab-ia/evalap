@@ -1,6 +1,6 @@
 from typing import List, Literal, Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from .openai import ChatCompletionResponse
 
@@ -12,8 +12,9 @@ class ChunkMetadata(BaseModel):
     document_part: int
     internet_query: str | None = None
 
-    class Config:
-        extra = "allow"
+    model_config = ConfigDict(
+        extra="allow",
+    )
 
 
 class Chunk(BaseModel):

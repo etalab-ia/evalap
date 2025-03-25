@@ -254,6 +254,10 @@ def update_experimentset(
         return None
     # Update fields
     for key, value in vars(experimentset_update).items():
+        if key in [
+            "experiments"
+        ]:  # Solve an sa_instance error  when patching an experiment_set with given experiments...
+            continue
         setattr(db_expset, key, value) if value is not None else None
     db.commit()
     db.refresh(db_expset)

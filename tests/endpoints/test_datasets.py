@@ -1,67 +1,40 @@
 import pytest
 from fastapi.testclient import TestClient
-from tests.utils import datasets
+
 from tests.test_api import TestApi
-import pandas as pd
+from tests.utils import datasets, log_and_assert
+
+dataset_cases = [
+    {
+        "name": "my_dataset",
+        "readme": "I am a readme",
+        "df": {"query": ["i am a query"] * 10, "column_xxx": [str(i) for i in range(10)]},
+        "default_metric": "judge_xxx",
+    },
+]
+
 
 class TestEndpointsDataset(TestApi):
-    @pytest.mark.parametrize("test_case", [
-        {
-            "name": "without_output",
-            "df_data": {
-                'query': [1, 2],
-                'colonne2': ['A', 'B']
-            }
-        },
-        {
-            "name": "with_output",
-            "df_data": {
-                'query': [1, 2],
-                'output': ['A', 'B']
-            }
-        }
-    ])
-    def test_create_dataset(self, client: TestClient, test_case):
-        test_df = pd.DataFrame(test_case["df_data"])
+    @pytest.mark.parametrize("dataset", dataset_cases)
+    def test_dataset(self, client: TestClient, dataset):
+        # Create dataset
+        response = datasets.create_dataset(client, dataset)
+        log_and_assert(response, 200)
+        dataset_id = response.json()["id"]
 
-        response = datasets.create_dataset(
-            client=client,
-            name_dataset=f"test_dataset_{test_case['name']}",
-            df=test_df,
-            readme="dataset de test",
-            default_metric="test_metric"
-        )
+        # Read dataset
+        response = datasets.read_dataset(client, dataset_id, with_df=False)
+        log_and_assert(response, 200)
 
-        assert response.status_code == 200
+        # Read dataset
+        response = datasets.read_dataset(client, dataset_id, with_df=True)
+        log_and_assert(response, 200)
 
-    def test_read_dataset(self, client: TestClient):
-        response = datasets.read_dataset(client)
-        print("response: ", response)
-        assert response.status_code == 200
+        # Read datasets
+        response = datasets.read_datasets(client)
+        log_and_assert(response, 200)
 
-    def test_read_dataset_id(self, client: TestClient):
-        test_df = pd.DataFrame({
-            'query': [1, 2],
-            'output': ['A', 'B']
-        })
-
-        create_response = datasets.create_dataset(
-            client=client,
-            name_dataset="test_dataset",
-            df=test_df,
-            readme="dataset de test",
-            default_metric="test_metric"
-        )
-
-        dataset_id = create_response.json()["id"]
-
-        response_without_df = datasets.read_dataset_id(client, dataset_id, with_df=False)
-        assert response_without_df.status_code == 200
-
-        response_with_df = datasets.read_dataset_id(client, dataset_id, with_df=True)
-        assert response_with_df.status_code == 200
-
-    def test_read_dataset_id_not_found(self, client: TestClient):
+    def test_read_dataset_not_found(self, client: TestClient):
         nonexistent_id = 99999
-        response = datasets.read_dataset_id(client, nonexistent_id)
-        assert response.status_code == 404
+        response = datasets.read_dataset(client, nonexistent_id)
+        log_and_assert(response, 404)
