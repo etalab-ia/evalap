@@ -625,7 +625,7 @@ def main():
         experimentset = st.session_state["experimentset"]
         st.query_params.expset = experimentset["id"]
 
-        col_head1, col_head2 = st.columns([1, 8])
+        col_head1, col_head2, col_head3 = st.columns([1, 8, 1])
 
         with col_head1:
             if st.button("← Go Back"):
@@ -635,6 +635,11 @@ def main():
 
         with col_head2:
             show_header(st.session_state['experimentset'])
+
+        with col_head3:
+            if st.button("🔄  Refresh", key="refresh"):
+                st.session_state["fetched_data"] = {}  
+                st.rerun()
 
         tab1, tab2, tab3, tab4 = st.tabs([
             "⭐ Scores", 
@@ -662,38 +667,24 @@ def main():
             col_score1, col_score2 = st.columns([4, 1])
             with col_score1:
                 st.subheader("Scores")
-            with col_score2:
-                if st.button("🔄 Refresh Scores", key="refresh_scores"):
-                    st.cache_data.clear()
-                    st.session_state["fetched_data"]={}
             display_experiment_set_score(experimentset, experiments_df)
 
         with tab2:
             col_overview1, col_overview2 = st.columns([4, 1])
             with col_overview1:
                 st.subheader("Overview")
-            with col_overview2:
-                if st.button("🔄 Refresh Overview", key="refresh_overview"):
-                    st.cache_data.clear()
             display_experiment_set_overview(experiments_df)
             
         with tab3:
             col_detail1, col_detail2 = st.columns([4, 1])
             with col_detail1:
                 st.subheader("Details")
-            with col_detail2:
-                if st.button("🔄 Refresh Details", key="refresh_details"):
-                    st.cache_data.clear()
             display_experiment_details(experimentset, experiments_df)
-
 
         with tab4:
             col_report1, col_report2 = st.columns([4, 1])
             with col_report1:
                 st.subheader("Ops analysis")
-            with col_report2:
-                if st.button("🔄 Refresh Report", key="refresh_report"):
-                    st.cache_data.clear()
             display_ops_analysis(experimentset)
 
     else:
