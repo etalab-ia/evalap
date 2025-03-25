@@ -306,6 +306,7 @@ def _format_experiments_score_df(experiments: list, df: pd.DataFrame) -> (bool, 
     experiment_names = [exp["name"] for exp in experiments]
     is_repeat_mode = _check_repeat_mode(experiments)
     result = None
+
     if is_repeat_mode and df["model"].notna().all():
         has_repeat = True
         # Lost repetition trailing code.
@@ -356,17 +357,21 @@ def display_experiment_set_score(experimentset, experiments_df):
     experiments = experimentset.get("experiments", [])
     _rename_model_variants(experiments)
     size = experiments[0]["dataset"]["size"]
-
     for exp in experiments:
         row = {}
         row_support = {}
-        if exp.get("_model") or exp.get("model"):
-            row["model"] = exp.get("_model") or exp["model"]["aliased_name"] or exp["model"]["name"]
-            row_support["model"] = (
-                exp.get("_model") or exp["model"]["aliased_name"] or exp["model"]["name"]
-            )
+        
+        # Modification de la logique de récupération du nom du modèle
+        model_name = (
+            exp.get("_model") 
+            or (exp["model"]["aliased_name"] if exp.get("model") else None)
+            or (exp["model"]["name"] if exp.get("model") else None)
+            or exp["name"]  # Fallback sur le nom de l'expérience
+        )
+        row["model"] = model_name
+        row_support["model"] = model_name
 
-        exp = cached_fetch_experiment(exp['id'], with_dataset=False, with_results=True)#fetch("get", f"/experiment/{exp['id']}?with_results=true")
+        exp = cached_fetch_experiment(exp['id'], with_dataset=False, with_results=True)
         if not exp:
             continue
 
@@ -388,6 +393,11 @@ def display_experiment_set_score(experimentset, experiments_df):
 
     df = pd.DataFrame(rows)
     df = _sort_columns(df, [])
+
+    # Ajout d'une colonne "model" par défaut si elle n'existe pas
+    if "model" not in df.columns:
+        df["model"] = [exp.get("name", "Unknown Model") for exp in experiments]
+
     try:
         has_repeat, df = _format_experiments_score_df(experiments, df)
     except ValueError as err:
@@ -472,7 +482,10 @@ def process_experiment(exp):
 
 
 def update_model_data(model_data, experiment):
-    model_name = experiment.get("model", {}).get("name") or experiment.get("model", {}).get("aliased_name", "Unknown Model")
+    if experiment.get("model"):
+        model_name = experiment["model"]["aliased_name"] or experiment["model"]["name"]
+    else:
+        model_name = "Unknow model"
     has_error = any(answer.get("error_msg") for answer in experiment.get("answers", []))
 
     if has_error:
