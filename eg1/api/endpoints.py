@@ -86,6 +86,32 @@ def read_dataset_by_query(
     raise HTTPException(status_code=400, detail="No query parameters provided")
 
 
+@router.get("/dataset", response_model=schemas.Dataset | schemas.DatasetFull, tags=["datasets"])
+def read_dataset_by_query(
+    id: str | None = None,
+    name: str | None = None,
+    with_df: bool = False,
+    db: Session = Depends(get_db),
+):
+    dataset = None
+    if name:
+        dataset = crud.get_dataset_by_name(db, name)
+        if dataset is None:
+            raise HTTPException(status_code=404, detail="Dataset with given name not found")
+    if id:
+        dataset = crud.get_dataset(db, id)
+        if dataset is None:
+            raise HTTPException(status_code=404, detail="Dataset not found")
+
+    if dataset:
+        if with_df:
+            return schemas.DatasetFull.from_orm(dataset)
+
+        return schemas.Dataset.from_orm(dataset)
+
+    raise HTTPException(status_code=400, detail="No query parameters provided")
+
+
 @router.patch("/dataset/{id}", response_model=schemas.Dataset, tags=["datasets"])
 def patch_dataset(id: int, dataset_patch: schemas.DatasetPatch, db: Session = Depends(get_db)):
     db_dataset = crud.update_dataset(db, id, dataset_patch)
@@ -93,6 +119,23 @@ def patch_dataset(id: int, dataset_patch: schemas.DatasetPatch, db: Session = De
         raise HTTPException(status_code=404, detail="Dataset not found")
 
     return db_dataset
+
+
+@router.delete(
+    "/dataset/{id}",
+    tags=["datasets"],
+)
+def delete_dataset(id: int, db: Session = Depends(get_db), admin_check=Depends(admin_only)):
+    try:
+        if not crud.remove_dataset(db, id):
+            raise HTTPException(status_code=404, detail="Dataset not found")
+        return "ok"
+    except (SchemaError, ValidationError) as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except IntegrityError as e:
+        return CustomIntegrityError.from_integrity_error(e.orig).to_http_response()
+    except Exception as e:
+        raise e
 
 
 #
@@ -498,3 +541,5 @@ def get_locustrun(run_id: int, db: Session = Depends(get_db)):
         return CustomIntegrityError.from_integrity_error(e.orig).to_http_response()
     except Exception as e:
         raise e
+
+
