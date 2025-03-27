@@ -357,12 +357,16 @@ def process_leaderboard_data(
                 mean = grouped[(column, "mean")].round(2)
                 std = grouped[(column, "std")].round(2)
                 result_repeat_true[f"{column}_mean"] = mean
-                result_repeat_true[column] = mean.astype(str) + " ± " + std.astype(str)
+                result_repeat_true[column] = result_repeat_true.apply(
+                    lambda row: f"{row[f'{column}_mean']:.2f}"
+                    if row['count'] == 1
+                    else f"{row[f'{column}_mean']:.2f} ± {std[row.name]:.2f}",  
+                    axis=1
+                )
 
         result_repeat_true.reset_index(drop=True, inplace=True)
     else:
         result_repeat_true = pd.DataFrame()
-
     # Concatenate results 
     final_df = pd.concat([df_repeat_false, result_repeat_true], ignore_index=True)
 

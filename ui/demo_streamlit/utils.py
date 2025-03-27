@@ -23,13 +23,13 @@ def fetch(method, endpoint, data=None):
         return None
 
 
-def calculate_tokens_per_second(tokens: Optional[int], time: Optional[float]) -> Optional[float]:
-    return (
-        round(tokens / time, 1) if tokens is not None and time is not None and time != 0 else None
-    )
-
-
 def hash_string(input_string, bits=8):
     hash_object = hashlib.sha256(input_string.encode())
     hash_hex = hash_object.hexdigest()
     return hash_hex[:bits]
+
+
+def calculate_tokens_per_second(tokens: Optional[int], time: Optional[float]) -> Optional[float]:
+    return (
+        round(tokens / time, 1) if tokens is not None and time is not None and time != 0 else None
+    )
