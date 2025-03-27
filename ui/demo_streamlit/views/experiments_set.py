@@ -1,5 +1,6 @@
 import json
 import re
+import time
 from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime
@@ -11,8 +12,54 @@ import plotly.express as px
 import streamlit as st
 from utils import fetch, hash_string
 
+#
+# Cached method for critical data fetching
+#
 
-@st.cache_data
+
+def _fetch(method, endpoint, data=None, refresh=False):
+    if refresh:
+        __fetch.clear(method, endpoint, data)
+
+    return __fetch(method, endpoint, data)
+
+
+@st.cache_data(ttl=600, max_entries=10)
+def __fetch(method, endpoint, data=None):
+    return fetch(method, endpoint, data)
+
+
+def _fetch_experimentset(expid, partial_expset, refresh=False):
+    if refresh:
+        __fetch_experimentset.clear(expid, partial_expset)
+
+    return __fetch_experimentset(expid, partial_expset)
+
+
+@st.cache_data(ttl=600, max_entries=3)
+def __fetch_experimentset(expid, partial_expset, refresh=False):
+    if refresh:
+        _fetch_experimentset.clear(expid, partial_expset)
+
+    experimentset = partial_expset
+    if not experimentset:
+        raise ValueError("experimentset not found: %s" % expid)
+
+    # Fetch experiment results
+    for i, expe in enumerate(experimentset["experiments"]) or []:
+        expe = fetch("get", f"/experiment/{expe['id']}", {"with_results": True})
+        if not expe:
+            continue
+        experimentset["experiments"][i] = expe
+
+    return experimentset
+
+
+#
+# @TODO: codefactor and triage
+#
+
+
 def _get_expset_status(expset: dict) -> tuple[dict, dict]:
     status_codes = {
         "pending": {"text": "Experiments did not start yet", "color": "yellow"},
@@ -21,18 +68,18 @@ def _get_expset_status(expset: dict) -> tuple[dict, dict]:
     }
 
     counts = dict(
-        total_answer_tries=sum(exp["num_try"] for exp in expset["experiments"]),
-        total_answer_successes=sum(exp["num_success"] for exp in expset["experiments"]),
-        total_observation_tries=sum(exp["num_observation_try"] for exp in expset["experiments"]),
-        total_observation_successes=sum(exp["num_observation_success"] for exp in expset["experiments"]),
-        answer_length=sum(exp["dataset"]["size"] for exp in expset["experiments"]),
-        observation_length=sum(exp["dataset"]["size"]*exp["num_metrics"] for exp in expset["experiments"]),
+        total_answer_tries=sum(expe["num_try"] for expe in expset["experiments"]),
+        total_answer_successes=sum(expe["num_success"] for expe in expset["experiments"]),
+        total_observation_tries=sum(expe["num_observation_try"] for expe in expset["experiments"]),
+        total_observation_successes=sum(expe["num_observation_success"] for expe in expset["experiments"]),
+        answer_length=sum(expe["dataset"]["size"] for expe in expset["experiments"]),
+        observation_length=sum(expe["dataset"]["size"]*expe["num_metrics"] for expe in expset["experiments"]),
     )  # fmt: skip
 
     # Running status
-    if all(exp["experiment_status"] == "pending" for exp in expset["experiments"]):
+    if all(expe["experiment_status"] == "pending" for expe in expset["experiments"]):
         status = status_codes["pending"]
-    elif all(exp["experiment_status"] == "finished" for exp in expset["experiments"]):
+    elif all(expe["experiment_status"] == "finished" for expe in expset["experiments"]):
         status = status_codes["finished"]
     else:
         status = status_codes["running"]
@@ -40,39 +87,28 @@ def _get_expset_status(expset: dict) -> tuple[dict, dict]:
     return status, counts
 
 
-if "fetched_data" not in st.session_state:
-    st.session_state["fetched_data"] = {}
-
-
-def cached_fetch_experiment(exp_id, with_dataset=True, with_results=True):
-    key = (exp_id, with_dataset)
-    if key in st.session_state["fetched_data"]:
-        return st.session_state["fetched_data"][key]
-    st.session_state["fetched_data"][key] = fetch(
-        "get",
-        f"/experiment/{exp_id}",
-        {"with_dataset": str(with_dataset), "with_results": str(with_results)},
-    )
-    return st.session_state["fetched_data"][key]
-
-
-@st.cache_data
 def _get_experiment_data(exp_id):
     """
     for each exp_id, returns query, answer true, answer llm and metrics
     """
-    exp = cached_fetch_experiment(exp_id, with_dataset=True)
-    if not exp:
+    expe = _fetch(
+        "get",
+        f"/experiment/{exp_id}",
+        {"with_dataset": True, "with_results": True},
+        refresh=st.session_state.get("refresh_experimentset"),
+    )
+    if not expe:
         return None
 
-    df = pd.read_json(StringIO(exp["dataset"]["df"]))
+    df = pd.read_json(StringIO(expe["dataset"]["df"]))
 
-    if "answers" in exp:
-        answers = {answer["num_line"]: answer["answer"] for answer in exp["answers"]}
+    # Merge answers and metrics into the dataset dataframe
+    if "answers" in expe:
+        answers = {answer["num_line"]: answer["answer"] for answer in expe["answers"]}
         df["answer"] = df.index.map(answers)
 
-    if "results" in exp:
-        for result in exp["results"]:
+    if "results" in expe:
+        for result in expe["results"]:
             metric_name = result["metric_name"]
             observations = {obs["num_line"]: obs["score"] for obs in result["observation_table"]}
             df[f"result_{metric_name}"] = df.index.map(observations)
@@ -111,8 +147,8 @@ def display_experiment_sets(experiment_sets):
                     unsafe_allow_html=True,
                 )
 
-                if st.button(f"{exp_set['name']}", key=f"exp_set_{idx}"):
-                    st.session_state["experimentset"] = exp_set
+                if st.button(f"{exp_set['name']}", key=f"pick_expe_{idx}"):
+                    st.query_params["expset"] = exp_set["id"]
                     st.rerun()
 
                 st.markdown(exp_set.get("readme", "No description available"))
@@ -123,7 +159,7 @@ def display_experiment_sets(experiment_sets):
                 with col2:
                     st.caption(f"Experiments: {len(exp_set['experiments'])} ")
                 with col3:
-                    st.caption(f"Created on {when}")
+                    st.caption(f"Created the {when}")
 
 
 def display_experiment_set_overview(experimentset, experiments_df):
@@ -148,16 +184,17 @@ def display_experiment_details(experimentset, experiments_df):
     experiment_ids = experiments_df["Id"].tolist()
     selected_exp_id = st.selectbox("Select Experiment ID", experiment_ids)
     experiment = next(
-        (exp for exp in experimentset.get("experiments", []) if exp["id"] == selected_exp_id), None
+        (expe for expe in experimentset.get("experiments", []) if expe["id"] == selected_exp_id),
+        None,
     )
     if experiment:
-        df_with_results = _get_experiment_data(experiment["id"])
+        full_df = _get_experiment_data(experiment["id"])
         expe_name = experiment["name"]
         readme = experiment["readme"]
         dataset_name = experiment["dataset"]["name"]
         model_name = experiment.get("model") or "Undefined Model"
 
-        if df_with_results is not None:
+        if full_df is not None:
             st.write(f"**experiment_id** n° {selected_exp_id}")
             st.write(f"**Name:** {expe_name}")
             st.write(f"**Readme:** {readme}")
@@ -167,7 +204,7 @@ def display_experiment_details(experimentset, experiments_df):
             with cols[1]:
                 st.write(f"**Model:** {model_name}")
             st.dataframe(
-                df_with_results,
+                full_df,
                 use_container_width=True,
                 hide_index=False,
                 column_config={"Id": st.column_config.TextColumn(width="small")},
@@ -213,16 +250,16 @@ def _rename_model_variants(experiments: list) -> list:
     Inplace add a _name attribute to experiment several model name are equal to help
     distinguish them
     """
-    names = [exp["model"]["name"] for exp in experiments if exp.get("model")]
+    names = [expe["model"]["name"] for expe in experiments if expe.get("model")]
     if len(set(names)) == len(names):
         return experiments
 
     names = []
-    for i, exp in enumerate(experiments):
-        if not exp.get("model"):
+    for i, expe in enumerate(experiments):
+        if not expe.get("model"):
             continue
 
-        name = exp["model"]["name"]
+        name = expe["model"]["name"]
         _name = name
         suffix = ""
         if re.search(r"__\d+$", name):
@@ -306,8 +343,8 @@ def _check_repeat_mode(experiments: list) -> bool:
     """
     check whether the experiment is related to a repetition
     """
-    for exp in experiments:
-        name = exp["name"]
+    for expe in experiments:
+        name = expe["name"]
         if re.search(r"__\d+$", name):
             return True
 
@@ -315,8 +352,8 @@ def _check_repeat_mode(experiments: list) -> bool:
 
 
 def _format_experiments_score_df(experiments: list, df: pd.DataFrame) -> (bool, pd.DataFrame):
-    experiment_ids = [exp["id"] for exp in experiments]
-    experiment_names = [exp["name"] for exp in experiments]
+    experiment_ids = [expe["id"] for expe in experiments]
+    experiment_names = [expe["name"] for expe in experiments]
     is_repeat_mode = _check_repeat_mode(experiments)
     result = None
 
@@ -368,25 +405,22 @@ def display_experiment_set_score(experimentset, experiments_df):
 
     rows = []
     rows_support = []
-    for exp in experiments:
+    for expe in experiments:
         row = {}
         row_support = {}
 
         # Determine model name
-        if exp.get("_model") or exp.get("model"):
-            model_name = exp.get("_model") or exp["model"]["aliased_name"] or exp["model"]["name"]
+        if expe.get("_model") or expe.get("model"):
+            model_name = (
+                expe.get("_model") or expe["model"]["aliased_name"] or expe["model"]["name"]
+            )
         else:
-            model_name = f"Undefined model ({exp['name']})"
+            model_name = f"Undefined model ({expe['name']})"
         row["model"] = model_name
         row_support["model"] = model_name
 
-        # Fetch results
-        exp = fetch("get", f"/experiment/{exp['id']}?with_results=true")
-        if not exp:
-            continue
-
         # Aggregate results/scores
-        for metric_results in exp.get("results", []):
+        for metric_results in expe.get("results", []):
             metric = metric_results["metric_name"]
             scores = [
                 x["score"] for x in metric_results["observation_table"] if pd.notna(x.get("score"))
@@ -406,13 +440,12 @@ def display_experiment_set_score(experimentset, experiments_df):
     df = _sort_columns(df, [])
 
     if "model" not in df.columns:
-        df["model"] = [exp.get("name", "Unknown Model") for exp in experiments]
+        df["model"] = [expe.get("name", "Unknown Model") for expe in experiments]
 
     try:
         has_repeat, df = _format_experiments_score_df(experiments, df)
-    except ValueError as err:
-        st.error("No result found yet, please try again later")
-        raise err
+    except (ValueError, TypeError) as err:
+        st.error("No valid result found, try again later...")
         return
 
     df_support = pd.DataFrame(rows_support)
@@ -453,16 +486,16 @@ def report_ops_global(exp_set):
         has_failure = counts["total_observation_tries"] > counts["total_observation_successes"]
         if has_failure:
             with st.expander("Failure Analysis", expanded=False):
-                for exp in exp_set["experiments"]:
-                    if exp["num_try"] != exp["num_success"]:
+                for expe in exp_set["experiments"]:
+                    if expe["num_try"] != expe["num_success"]:
                         st.write(
-                            f"id: {exp['id']} name: {exp['name']} (failed on output generation)"
+                            f"id: {expe['id']} name: {expe['name']} (failed on output generation)"
                         )
                         continue
 
-                    if exp["num_observation_try"] != exp["num_observation_success"]:
+                    if expe["num_observation_try"] != expe["num_observation_success"]:
                         st.write(
-                            f"id: {exp['id']} name: {exp['name']} (failed on score computation)"
+                            f"id: {expe['id']} name: {expe['name']} (failed on score computation)"
                         )
                         continue
 
@@ -485,12 +518,6 @@ def report_ops_global(exp_set):
         use_container_width=True,
         hide_index=True,
     )
-
-
-def process_experiment(exp):
-    exp_id = exp["id"]
-    experiment = cached_fetch_experiment(exp_id, with_dataset=True)
-    return experiment
 
 
 def update_model_data(model_data, experiment):
@@ -544,11 +571,9 @@ def report_model_and_metric(experimentset):
         lambda: {"finished": 0, "running": 0, "pending": 0, "failed": 0, "no_failed": 0}
     )
 
-    for exp in experimentset["experiments"]:
-        experiment = process_experiment(exp)
-        if experiment:
-            update_model_data(model_data, experiment)
-            update_metric_data(metric_data, experiment)
+    for experiment in experimentset["experiments"]:
+        update_model_data(model_data, experiment)
+        update_metric_data(metric_data, experiment)
 
     model_report = pd.DataFrame.from_dict(model_data, orient="index")
     model_report["Total"] = model_report[["finished", "running", "pending"]].sum(axis=1)
@@ -633,12 +658,13 @@ def display_ops_analysis(experimentset):
 def show_header(experimentset):
     status, counts = _get_expset_status(experimentset)
     st.markdown(f"## {experimentset['name']}")
-
-    col_showhead1, col_showhead2 = st.columns([1, 10])
-    with col_showhead1:
+    col1, col2 = st.columns([1/20, 1])
+    with col1:
         st.markdown(f"**Id**: {experimentset['id']}")
-    with col_showhead2:
-        st.markdown(f"**Readme:** {experimentset.get('readme', 'No description available')}")
+    with col2:
+        when = datetime.fromisoformat(experimentset["created_at"]).strftime("%d %B %Y")
+        st.caption(f"Created the {when}")
+    st.markdown(f"**Readme:** {experimentset.get('readme', 'No description available')}")
 
     finished_ratio = int(counts["total_observation_successes"] / counts["observation_length"] * 100)
     failure_ratio = int(
@@ -647,65 +673,68 @@ def show_header(experimentset):
         * 100
     )
 
-    metric_status = f"**Metric status:** Finished: {finished_ratio}%"
+    run_status = f"**Finished**: {finished_ratio}%"
     if failure_ratio > 0:
-        metric_status += (
+        run_status += (
             f" &nbsp;&nbsp;&nbsp; Failure: <span style='color:red;'>{failure_ratio}%</span>"
         )
 
-    st.markdown(metric_status, unsafe_allow_html=True)
+    st.markdown(run_status, unsafe_allow_html=True)
 
 
 def main():
-    experiment_sets = fetch("get", "/experiment_sets")
+    # Fetch or re-fetch data
+    # --
+    experiment_sets = _fetch(
+        "get", "/experiment_sets", refresh=st.session_state.get("refresh_main")
+    )
 
-    expid = st.query_params.get("expset")
+    # View Branching
+    # --
+    expid = st.query_params.get("expset") or st.session_state.get("expset_id")
     if expid:
-        # st.session_state["experimentset"] = next((x for x in experiment_sets if x["id"] == expid), None)
-        experimentset = fetch("get", f"/experiment_set/{expid}")
-        if not experimentset:
-            raise ValueError("experimentset not found: %s" % expid)
-        st.session_state["experimentset"] = experimentset
+        st.session_state["expset_id"] = expid
+        st.query_params.expset = expid
 
-    if st.session_state.get("experimentset"):
-        # Get the expet
-        experimentset = st.session_state["experimentset"]
-        st.query_params.expset = experimentset["id"]
+        # Get the expset
+        experimentset = next((x for x in experiment_sets if x["id"] == int(expid)), None)
+        experimentset = _fetch_experimentset(
+            expid, experimentset, refresh=st.session_state.get("refresh_experimentset")
+        )
 
         # Horizontal menu toolbar
-        # --
-        col_head1, col_head2, col_head3 = st.columns([1, 8, 1])
-        with col_head1:
-            if st.button("← Go Back", key="go_back"):
-                st.session_state["experimentset"] = None
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            if st.button(":arrow_left: Go back", key="go_back"):
+                st.session_state["expset_id"] = None
                 st.query_params.pop("expset")
                 st.rerun()
 
-        with col_head2:
-            show_header(st.session_state["experimentset"])
-
-        with col_head3:
-            if st.button("🔄  Refresh", key="refresh"):
-                st.session_state["fetched_data"] = {}
+        with col2:
+            if st.button("🔄 Refresh", key="refresh_experimentset"):
                 st.rerun()
 
-        experimentset = st.session_state["experimentset"]
         experiments_df = pd.DataFrame(
             [
                 {
-                    "Id": exp["id"],
-                    "Name": exp["name"],
-                    "Status": exp["experiment_status"],
-                    "Created at": exp["created_at"],
-                    "Num try": exp["num_try"],
-                    "Num success": exp["num_success"],
-                    "Num observation try": exp["num_observation_try"],
-                    "Num observation success": exp["num_observation_success"],
+                    "Id": expe["id"],
+                    "Name": expe["name"],
+                    "Model": (expe["model"]["aliased_name"] or expe["model"]["name"])
+                    if expe.get("model")
+                    else "Undefined model",
+                    "Status": expe["experiment_status"],
+                    "Created at": expe["created_at"],
+                    "Num try": expe["num_try"],
+                    "Num success": expe["num_success"],
+                    "Num observation try": expe["num_observation_try"],
+                    "Num observation success": expe["num_observation_success"],
                 }
-                for exp in experimentset["experiments"]
+                for expe in experimentset["experiments"]
             ]
         )
         experiments_df.sort_values(by="Id", ascending=True, inplace=True)
+
+        show_header(experimentset)
 
         # Display tabs
         # --
@@ -769,11 +798,13 @@ def main():
             tab_index[4]["func"](experimentset)
 
     else:
-        st.title("Experiment (Sets)")
-        col_main1, col_main2 = st.columns([4, 1])
-        with col_main2:
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            st.title("Experiment (Sets)")
+        with col2:
             if st.button("🔄 Refresh", key="refresh_main"):
-                st.cache_data.clear()
+                st.rerun()
+
         display_experiment_sets(experiment_sets)
 
 
