@@ -290,16 +290,16 @@ def _rename_model_variants(experiments: list) -> list:
 
         # List of model params
         model_params = [
-            (experiments[i]["model"].get("sampling_params") or {})
-            | (experiments[i]["model"].get("extra_params") or {})
-            for i in ids
+            (experiments[id]["model"].get("sampling_params") or {})
+            | (experiments[id]["model"].get("extra_params") or {})
+            for id in ids
         ]
 
         # Manage prompt_system param by computing its hash
-        for i in ids:
-            if not experiments[i]["model"].get("prompt_system"):
+        for i, id in enumerate(ids):
+            if not experiments[id]["model"].get("prompt_system"):
                 continue
-            model_params[i]["sys_prompt"] = hash_string(experiments[i]["model"]["prompt_system"], 4)
+            model_params[i]["sys_prompt"] = hash_string(experiments[id]["model"]["prompt_system"], 4)
 
         # remove commons parameters
         model_diff_params = _remove_commons_items(model_params)
