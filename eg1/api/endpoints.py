@@ -46,9 +46,7 @@ def read_datasets(db: Session = Depends(get_db)):
     return crud.get_datasets(db)
 
 
-@router.get(
-    "/dataset/{id}", response_model=schemas.Dataset | schemas.DatasetFull, tags=["datasets"]
-)
+@router.get("/dataset/{id}", response_model=schemas.Dataset | schemas.DatasetFull, tags=["datasets"])
 def read_dataset(id: int, with_df: bool = False, db: Session = Depends(get_db)):
     dataset = crud.get_dataset(db, id)
     if dataset is None:
@@ -82,32 +80,6 @@ def read_dataset_by_query(
             return schemas.DatasetFull.model_validate(dataset)
 
         return schemas.Dataset.model_validate(dataset)
-
-    raise HTTPException(status_code=400, detail="No query parameters provided")
-
-
-@router.get("/dataset", response_model=schemas.Dataset | schemas.DatasetFull, tags=["datasets"])
-def read_dataset_by_query(
-    id: str | None = None,
-    name: str | None = None,
-    with_df: bool = False,
-    db: Session = Depends(get_db),
-):
-    dataset = None
-    if name:
-        dataset = crud.get_dataset_by_name(db, name)
-        if dataset is None:
-            raise HTTPException(status_code=404, detail="Dataset with given name not found")
-    if id:
-        dataset = crud.get_dataset(db, id)
-        if dataset is None:
-            raise HTTPException(status_code=404, detail="Dataset not found")
-
-    if dataset:
-        if with_df:
-            return schemas.DatasetFull.from_orm(dataset)
-
-        return schemas.Dataset.from_orm(dataset)
 
     raise HTTPException(status_code=400, detail="No query parameters provided")
 
@@ -183,9 +155,7 @@ def create_experiment(experiment: schemas.ExperimentCreate, db: Session = Depend
     description="Update an experiment. The given metrics will be added (or rerun) to the existing results for this experiments. Use rerun_answers if want to re-generate the answers/output.",
     tags=["experiments"],
 )
-def patch_experiment(
-    id: int, experiment_patch: schemas.ExperimentPatch, db: Session = Depends(get_db)
-):
+def patch_experiment(id: int, experiment_patch: schemas.ExperimentPatch, db: Session = Depends(get_db)):
     db_exp = crud.update_experiment(db, id, experiment_patch)
     if db_exp is None:
         raise HTTPException(status_code=404, detail="Experiment not found")
@@ -519,9 +489,7 @@ def create_locustrun(run: schemas.LocustRunCreate, db: Session = Depends(get_db)
     description="Get the list of locust runs",
     tags=["locust"],
 )
-def get_locustruns(
-    skip: int = 0, limit: int = 100, backward: bool = True, db: Session = Depends(get_db)
-):
+def get_locustruns(skip: int = 0, limit: int = 100, backward: bool = True, db: Session = Depends(get_db)):
     try:
         db_runs = crud.get_locustruns(db, skip=skip, limit=limit, backward=backward)
         return db_runs
@@ -551,5 +519,3 @@ def get_locustrun(run_id: int, db: Session = Depends(get_db)):
         return CustomIntegrityError.from_integrity_error(e.orig).to_http_response()
     except Exception as e:
         raise e
-
-

@@ -56,9 +56,7 @@ def judge_completude_metric(output, output_true, **kwargs):
         }
     ]
     aiclient = LlmClient()
-    result = aiclient.generate(
-        model=config["model"], messages=messages, **config["sampling_params"]
-    )
+    result = aiclient.generate(model=config["model"], messages=messages, **config["sampling_params"])
     answer = result.choices[0].message.content
     score = answer.strip(" \n\"'.%")
     try:

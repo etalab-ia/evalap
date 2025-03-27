@@ -63,9 +63,7 @@ def judge_complexity_metric(output, output_true, **kwargs):
         }
     ]
     aiclient = LlmClient()
-    result = aiclient.generate(
-        model=config["model"], messages=messages, **config["sampling_params"]
-    )
+    result = aiclient.generate(model=config["model"], messages=messages, **config["sampling_params"])
     answer_text = result.choices[0].message.content
 
     def extract_score(line):
@@ -91,4 +89,3 @@ def judge_complexity_metric(output, output_true, **kwargs):
     answer = {"answer": answer_text, "scores": scores, "thematique": thematique}
 
     return int(scores["global"]), json.dumps(answer)
-

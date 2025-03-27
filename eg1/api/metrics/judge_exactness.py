@@ -33,7 +33,7 @@ Ne retourne que 1 ou 0, rien d'autre !
 _config = {
     "model": "gpt-4o",
     # "system_prompt": "Tu donnes...."
-       "sampling_params": {"temperature": 0.2, "max_tokens": 10},
+    "sampling_params": {"temperature": 0.2, "max_tokens": 10},
 }
 
 
@@ -52,9 +52,7 @@ def judge_exactness_metric(output, output_true, **kwargs):
         }
     ]
     aiclient = LlmClient()
-    result = aiclient.generate(
-        model=config["model"], messages=messages, **config["sampling_params"]
-    )
+    result = aiclient.generate(model=config["model"], messages=messages, **config["sampling_params"])
     answer = result.choices[0].message.content
     score = answer.strip(" \n\"'.%")
     try:

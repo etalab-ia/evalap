@@ -34,9 +34,23 @@ LlmApiUrl = LlmApiUrl()  # headers_keys does not exist otherwise...
 
 @dataclass
 class LlmApiModels:
-    openai: set[str] = ("o1", "gpt-4o", "gpt-4o-mini", "text-embedding-ada-002", "text-embedding-3-small", "text-embedding-3-large" )  # fmt: off
+    openai: set[str] = (
+        "o1",
+        "gpt-4o",
+        "gpt-4o-mini",
+        "text-embedding-ada-002",
+        "text-embedding-3-small",
+        "text-embedding-3-large",
+    )
     anthropic: set[str] = ("claude",)
-    mistral: set[str] = ("mistral-large-latest", "pixtral-large-latest", "mistral-small-latest", "ministral-8b-latest", "ministral-3b-latest", "mistral-embed")  # fmt: off
+    mistral: set[str] = (
+        "mistral-large-latest",
+        "pixtral-large-latest",
+        "mistral-small-latest",
+        "ministral-8b-latest",
+        "ministral-3b-latest",
+        "mistral-embed",
+    )
 
 
 def get_api_url(model: str) -> (str | None, dict):

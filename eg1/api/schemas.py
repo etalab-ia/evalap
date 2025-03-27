@@ -502,7 +502,6 @@ class LeaderboardEntry(BaseModel):
     experiment_set_name: Optional[str] = None
 
 
-
 class Leaderboard(EgBaseModel):
     entries: list[LeaderboardEntry]
 
@@ -511,9 +510,11 @@ class Leaderboard(EgBaseModel):
 # Ops
 #
 
+
 class ModelInfo(BaseModel):
     name: str
     aliased_name: Optional[str]
+
 
 class OpsMetrics(BaseModel):
     experiment_sets: int

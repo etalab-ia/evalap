@@ -73,9 +73,7 @@ class MetricRegistry:
             test_case = LLMTestCase(
                 **{
                     reverse_require_map[k]: v
-                    for k, v in (
-                        {"output": output, "output_true": output_true} | metric_params
-                    ).items()
+                    for k, v in ({"output": output, "output_true": output_true} | metric_params).items()
                     if k in reverse_require_map
                 }
             )
@@ -149,9 +147,7 @@ for class_name, obj in zip(classes, imported_objs):
 
     # @DEBUG: Deepeval:RagasMetric does not have the required_params attribute set.
     if class_name == "RagasMetric":
-        required_params = Enum(
-            "_", {name: name for name in ["input", "expected_output", "retrieval_context"]}
-        )
+        required_params = Enum("_", {name: name for name in ["input", "expected_output", "retrieval_context"]})
 
     metric_registry.register_deepeval(
         metric_class=obj["obj"],
