@@ -8,6 +8,22 @@ default:
 clean:
   rm -rf build/ eg1.egg-info/
 
+#
+# Openai API utils
+#
+
+list-albert-model env="prod":
+  #!/usr/bin/env sh
+  if [ "{{env}}" = "prod" ]; then
+    curl -XGET -H "Authorization: Bearer $ALBERT_API_KEY"  https://albert.api.etalab.gouv.fr/v1/models | jq '.data.[] | {id, type}'
+  elif [ "{{env}}" = "staging" ]; then
+    curl -XGET -H "Authorization: Bearer $ALBERT_API_KEY_STAGING"  https://albert.api.staging.etalab.gouv.fr/v1/models | jq '.data.[] | {id, type}'
+  fi
+
+#
+# Alembic commands
+#
+
 alembic-init:
   alembic -c api/alembic.ini revision --autogenerate -m "Table Initialization"
 
@@ -23,6 +39,10 @@ alembic-downgrade hash:
 
 alembic-history:
   alembic -c api/alembic.ini history
+
+#
+# DB Queries
+#
 
 [no-cd]
 drop-database db_name="eg1_dev":
