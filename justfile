@@ -20,6 +20,23 @@ list-albert-model env="prod":
     curl -XGET -H "Authorization: Bearer $ALBERT_API_KEY_STAGING"  https://albert.api.staging.etalab.gouv.fr/v1/models | jq '.data.[] | {id, type}'
   fi
 
+chat-completion provider="albert" model="mistralai/Mistral-Small-3.1-24B-Instruct-2503":
+  #!/usr/bin/env sh
+  if [ "{{provider}}" = "albert" ]; then
+    URL="https://albert.api.etalab.gouv.fr/v1"
+  fi
+
+  curl  "$URL/chat/completions" \
+      -H "Content-Type: application/json" \
+      -H "Authorization: Bearer $ALBERT_API_KEY" \
+      -d '{
+        "model": "{{model}}",
+        "messages": [
+          {"role": "system", "content": "Answer dramatically and with emojis."},
+          {"role": "user", "content": "Combien de fois 'p' dans développer ? Combien font 2*10+50-20 ?"}
+        ]
+      }' | jq
+
 #
 # Alembic commands
 #
