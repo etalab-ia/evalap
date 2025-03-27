@@ -56,9 +56,7 @@ def update_dataset(
 
 def remove_dataset(db: Session, dataset_id: int) -> bool:
     linked_experiments = (
-        db.query(func.count(models.Experiment.id))
-        .filter(models.Experiment.dataset_id == dataset_id)
-        .scalar()
+        db.query(func.count(models.Experiment.id)).filter(models.Experiment.dataset_id == dataset_id).scalar()
     )
     if linked_experiments > 0:
         raise SchemaError(
@@ -99,11 +97,7 @@ def get_answer(
     if answer_id:
         return db.query(models.Answer).filter(models.Answer.id == answer_id).first()
     elif experiment_id and num_line is not None:
-        return (
-            db.query(models.Answer)
-            .filter_by(experiment_id=experiment_id, num_line=num_line)
-            .first()
-        )
+        return db.query(models.Answer).filter_by(experiment_id=experiment_id, num_line=num_line).first()
     else:
         raise ValueError("Should give at list an answer_id or a experiment_id/num_line couple.")
 
@@ -118,15 +112,9 @@ def get_result(
         return db.query(models.Result).filter(models.Result.id == result_id).first()
     elif experiment_id and metric_name:
         # TODO: unique by name vs configurable metric (always acceded is by result_id)
-        return (
-            db.query(models.Result)
-            .filter_by(experiment_id=experiment_id, metric_name=metric_name)
-            .first()
-        )
+        return db.query(models.Result).filter_by(experiment_id=experiment_id, metric_name=metric_name).first()
     else:
-        raise ValueError(
-            "Should give at list an result_id or a couple experiment_id/metric_name couple."
-        )
+        raise ValueError("Should give at list an result_id or a couple experiment_id/metric_name couple.")
 
 
 def create_result(db: Session, result: schemas.ResultCreate) -> models.Result:
@@ -161,9 +149,7 @@ def update_result(
 
 
 def create_experiment(db: Session, experiment: schemas.ExperimentCreate) -> models.Experiment:
-    experiment = (
-        experiment.to_table_init(db) if isinstance(experiment, schemas.EgBaseModel) else experiment
-    )
+    experiment = experiment.to_table_init(db) if isinstance(experiment, schemas.EgBaseModel) else experiment
     db_exp = create_object_from_dict(db, models.Experiment, experiment)
     db.add(db_exp)
     db.commit()
@@ -242,13 +228,9 @@ def remove_experiment(db: Session, experiment_id: int) -> bool:
 #
 
 
-def create_experimentset(
-    db: Session, experimentset: schemas.ExperimentSetCreate
-) -> models.ExperimentSet:
+def create_experimentset(db: Session, experimentset: schemas.ExperimentSetCreate) -> models.ExperimentSet:
     experimentset = (
-        experimentset.to_table_init(db)
-        if isinstance(experimentset, schemas.EgBaseModel)
-        else experimentset
+        experimentset.to_table_init(db) if isinstance(experimentset, schemas.EgBaseModel) else experimentset
     )
     db_expset = create_object_from_dict(db, models.ExperimentSet, experimentset)
     db.add(db_expset)
@@ -306,9 +288,7 @@ def remove_experimentset(db: Session, experimentset_id: int) -> bool:
 
 def upsert_answer(db: Session, experiment_id: int, num_line: int, answer: dict) -> models.Answer:
     # Check if the record already exists
-    db_answer = (
-        db.query(models.Answer).filter_by(num_line=num_line, experiment_id=experiment_id).first()
-    )
+    db_answer = db.query(models.Answer).filter_by(num_line=num_line, experiment_id=experiment_id).first()
 
     if db_answer:
         # Update the existing record
@@ -324,9 +304,7 @@ def upsert_answer(db: Session, experiment_id: int, num_line: int, answer: dict) 
     return db_answer
 
 
-def upsert_observation(
-    db: Session, result_id: int, num_line: int, observation: dict
-) -> models.Answer:
+def upsert_observation(db: Session, result_id: int, num_line: int, observation: dict) -> models.Answer:
     # Check if the record already exists
     db_observation = (
         db.query(models.ObservationTable).filter_by(num_line=num_line, result_id=result_id).first()
@@ -338,9 +316,7 @@ def upsert_observation(
             setattr(db_observation, k, v)
     else:
         # Insert a new record
-        db_observation = models.ObservationTable(
-            result_id=result_id, num_line=num_line, **observation
-        )
+        db_observation = models.ObservationTable(result_id=result_id, num_line=num_line, **observation)
         db.add(db_observation)
 
     db.commit()
@@ -354,18 +330,19 @@ def upsert_observation(
 
 
 def get_leaderboard(
-    db: Session, metric_name: str = "judge_notator", dataset_name: str = None, limit: int = 100, offset: int = 0
+    db: Session,
+    metric_name: str = "judge_notator",
+    dataset_name: str = None,
+    limit: int = 100,
+    offset: int = 0,
 ):
-    # Subquery 
+    # Subquery
     main_metric_subquery = (
-        select(
-            models.Result.experiment_id,
-            func.avg(models.ObservationTable.score).label("main_score")
-        )
+        select(models.Result.experiment_id, func.avg(models.ObservationTable.score).label("main_score"))
         .join(models.ObservationTable, models.Result.id == models.ObservationTable.result_id)
         .where(models.Result.metric_name == metric_name)
         .group_by(models.Result.experiment_id)
-        .cte("main_metric")  
+        .cte("main_metric")
     )
 
     query = (
@@ -379,14 +356,11 @@ def get_leaderboard(
             models.Model.extra_params,
             models.Experiment.created_at.label("created_at"),
             models.Experiment.experiment_set_id,
-            models.ExperimentSet.name.label("experiment_set_name")
+            models.ExperimentSet.name.label("experiment_set_name"),
         )
         .join(models.Model, models.Experiment.model_id == models.Model.id)
         .join(models.Dataset, models.Experiment.dataset_id == models.Dataset.id)
-        .join(
-            main_metric_subquery,
-            models.Experiment.id == main_metric_subquery.c.experiment_id 
-        )
+        .join(main_metric_subquery, models.Experiment.id == main_metric_subquery.c.experiment_id)
         .outerjoin(models.ExperimentSet, models.Experiment.experiment_set_id == models.ExperimentSet.id)
     )
 
@@ -401,10 +375,7 @@ def get_leaderboard(
     entries = []
     for result in results:
         other_metrics_query = (
-            select(
-                models.Result.metric_name,
-                func.avg(models.ObservationTable.score).label("avg_score")
-            )
+            select(models.Result.metric_name, func.avg(models.ObservationTable.score).label("avg_score"))
             .join(models.ObservationTable, models.Result.id == models.ObservationTable.result_id)
             .where(
                 and_(
@@ -414,12 +385,11 @@ def get_leaderboard(
             )
             .group_by(models.Result.metric_name)
         )
-        
+
         other_metrics = db.execute(other_metrics_query).fetchall()
 
         other_metrics_dict = {
-            metric: float(score) if score is not None else None
-            for metric, score in other_metrics
+            metric: float(score) if score is not None else None for metric, score in other_metrics
         }
 
         entry = schemas.LeaderboardEntry(
@@ -433,16 +403,15 @@ def get_leaderboard(
             extra_param={k: str(v) for k, v in (result.extra_params or {}).items()},
             created_at=result.created_at,
             experiment_set_id=result.experiment_set_id,
-            experiment_set_name=result.experiment_set_name
+            experiment_set_name=result.experiment_set_name,
         )
         entries.append(entry)
 
     return schemas.Leaderboard(entries=entries)
 
 
-
 #
-# Ops 
+# Ops
 #
 
 
@@ -452,9 +421,11 @@ def get_ops_metrics(db: Session):
     unique_answers_count = db.query(func.count(models.Answer.id)).scalar()
     unique_metrics_count = db.query(func.count(models.Result.id)).scalar()
     unique_observations_count = db.query(func.count(models.ObservationTable.id)).scalar()
-    
+
     distinct_models = db.query(models.Model.name, models.Model.aliased_name).distinct().all()
-    distinct_models_list = [{"name": name, "aliased_name": aliased_name} for name, aliased_name in distinct_models]
+    distinct_models_list = [
+        {"name": name, "aliased_name": aliased_name} for name, aliased_name in distinct_models
+    ]
 
     return {
         "experiment_sets": experiment_sets_count,
@@ -462,9 +433,8 @@ def get_ops_metrics(db: Session):
         "unique_answers": unique_answers_count,
         "unique_metrics": unique_metrics_count,
         "unique_observations": unique_observations_count,
-        "distinct_models": distinct_models_list
+        "distinct_models": distinct_models_list,
     }
-
 
 
 #

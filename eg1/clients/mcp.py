@@ -103,9 +103,7 @@ def multi_step_generate(
         substeps = []
         for tool_call in completion.message.tool_calls or []:
             # Run tool
-            tool_call_result = mcp_bridge.call_tool(
-                tool_call.function.name, tool_call.function.arguments
-            )
+            tool_call_result = mcp_bridge.call_tool(tool_call.function.name, tool_call.function.arguments)
             # Format result
             if tool_call_result is None:
                 tool_content = []
@@ -118,9 +116,7 @@ def multi_step_generate(
             if len(tool_content) == 0:
                 tool_content = [{"type": "text", "text": "the tool call result is empty"}]
             elif len(tool_content) > 1:
-                logger.warning(
-                    "Tool call content size is greater than 1 for {tool_call.function.name}"
-                )
+                logger.warning("Tool call content size is greater than 1 for {tool_call.function.name}")
             tool_content = "\n".join([x["text"] for x in tool_content])
             messages.append(
                 {
