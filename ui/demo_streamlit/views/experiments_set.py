@@ -489,6 +489,9 @@ def display_experiment_set_score(experimentset, experiments_df):
 
         # For each column, find the min and max values and style them
         for col in df.columns:
+            if col in ["id", "Id"]:
+                continue
+
             col_means = df[col].apply(_extract_mean)
             if col_means.dtype in [np.float64, np.int64]:
                 max_idx = col_means.idxmax()
