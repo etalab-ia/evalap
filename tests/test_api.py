@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 
-from api.db import engine, SessionLocal
-from api.models import Base
+from eg1.api.db import engine, SessionLocal
+from eg1.api.models import Base
 
 
 class TestApi:
@@ -12,3 +12,4 @@ class TestApi:
         Base.metadata.create_all(bind=engine)
         # eventually initialize db data.
         #db: Session = SessionLocal()
+

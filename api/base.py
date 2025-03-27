@@ -1,2 +1,0 @@
-from api.models import *
-

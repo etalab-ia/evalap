@@ -3,9 +3,7 @@ FROM python:3.12-slim
 # Setup files
 WORKDIR /app
 COPY ./pyproject.toml /app
-COPY ./api /app/api
-COPY ./ui /app/ui
-COPY ./config /app/config
+COPY ./eg1 /app/eg1
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Install dependency
