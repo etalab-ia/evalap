@@ -302,7 +302,9 @@ def _rename_model_variants(experiments: list) -> list:
         for i, id in enumerate(ids):
             if not experiments[id]["model"].get("prompt_system"):
                 continue
-            model_params[i]["sys_prompt"] = hash_string(experiments[id]["model"]["prompt_system"], 4)
+            model_params[i]["sys_prompt"] = hash_string(
+                experiments[id]["model"]["prompt_system"], 4
+            )
 
         # remove commons parameters
         model_diff_params = _remove_commons_items(model_params)
@@ -325,12 +327,38 @@ def _find_default_sort_metric(columns):
     """
     find a sensible default metric for sorting results.
     """
-    preferred_metrics = ["judge_exactness", "contextual_relevancy"]
+    preferred_metrics = ["contextual_relevancy", "judge_notator", "judge_exactness"]
     for metric in preferred_metrics:
         if metric in columns:
             return f"{metric}"
 
     return list(columns)[0] if len(columns) > 0 else None
+
+
+def _extract_mean(value):
+    try:
+        return float(value.split("±")[0].strip())
+    except:
+        return value  # Return original value if not in expected format
+
+
+def _sort_score_df(*dfs, reset_index=False):
+    if len(dfs) == 0:
+        return
+
+    df = dfs[0]
+    sorting_metric = _find_default_sort_metric(df.columns)
+    df.sort_values(
+        by=sorting_metric, key=lambda x: x.map(_extract_mean), ascending=True, inplace=True
+    )
+    # Store the sorted index before resetting it
+    sorted_idx = df.index.copy()
+    for df in dfs:
+        # Reorder df2 inplace to match df1's order
+        df.loc[:] = df.loc[sorted_idx].values
+        if reset_index:
+            # Reset indices inplace
+            df.reset_index(drop=True, inplace=True)
 
 
 def _sort_columns(df: pd.DataFrame, first_columns: list) -> pd.DataFrame:
@@ -389,13 +417,6 @@ def _format_experiments_score_df(experiments: list, df: pd.DataFrame) -> (bool, 
         has_repeat = False
     else:
         df = result
-
-    # @DEBUG: when +- is used, the sorting does not work.
-    # default_sort_metric = _find_default_sort_metric(df.columns)
-    # if default_sort_metric in df.columns:
-    #    df = df.sort_values(by=f"{default_sort_metric}", ascending=False)
-    # @DEBUG: Id does not exist for "repeat" case
-    # df = df.sort_values(by="Id", ascending=True)
 
     return has_repeat, df
 
@@ -458,8 +479,27 @@ def display_experiment_set_score(experimentset, experiments_df):
     st.write("**Score:** Averaged score on experiments metrics")
     if has_repeat:
         st.warning("Score are aggregated on model repetition.")
+
+    _sort_score_df(df, df_support)
+
+    # To highlight min/max values in each column
+    def highlight_min_max(df):
+        # Create an empty DataFrame with the same shape as our original
+        highlight_df = pd.DataFrame("", index=df.index, columns=df.columns)
+
+        # For each column, find the min and max values and style them
+        for col in df.columns:
+            col_means = df[col].apply(_extract_mean)
+            if col_means.dtype in [np.float64, np.int64]:
+                max_idx = col_means.idxmax()
+                min_idx = col_means.idxmin()
+                highlight_df.loc[max_idx, col] = "font-weight: bold; color: green"
+                highlight_df.loc[min_idx, col] = "font-weight: bold; color: red"
+
+        return highlight_df
+
     st.dataframe(
-        df,
+        df.style.apply(highlight_min_max, axis=None),  # Apply styling
         use_container_width=True,
         hide_index=True,
         column_config={"Id": st.column_config.TextColumn(width="small")},
@@ -661,7 +701,7 @@ def display_ops_analysis(experimentset):
 def show_header(experimentset):
     status, counts = _get_expset_status(experimentset)
     st.markdown(f"## {experimentset['name']}")
-    col1, col2 = st.columns([1/20, 1])
+    col1, col2 = st.columns([1 / 20, 1])
     with col1:
         st.markdown(f"**Id**: {experimentset['id']}")
     with col2:
