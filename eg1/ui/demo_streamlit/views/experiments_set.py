@@ -192,20 +192,20 @@ def display_experiment_details(experimentset, experiments_df):
     )
     if experiment:
         full_df = _get_experiment_data(experiment["id"])
-        expe_name = experiment["name"]
-        readme = experiment["readme"]
-        dataset_name = experiment["dataset"]["name"]
-        model_name = experiment.get("model") or "Undefined Model"
 
         if full_df is not None:
             st.write(f"**experiment_id** n° {selected_exp_id}")
-            st.write(f"**Name:** {expe_name}")
-            st.write(f"**Readme:** {readme}")
+            st.write(f"**Name:** {experiment['name']}")
+            st.write(f"**Readme:** {experiment['readme']}")
+
             cols = st.columns(2)
             with cols[0]:
-                st.write(f"**Dataset:** {dataset_name}")
+                st.write(f"**Dataset:** {experiment['dataset']['name']}")
+                st.write(f"**Judge model:** {experiment['judge_model']}")
             with cols[1]:
+                model_name = experiment.get("model") or "Undefined Model"
                 st.write(f"**Model:** {model_name}")
+
             st.dataframe(
                 full_df,
                 use_container_width=True,
@@ -302,9 +302,7 @@ def _rename_model_variants(experiments: list) -> list:
         for i, id in enumerate(ids):
             if not experiments[id]["model"].get("prompt_system"):
                 continue
-            model_params[i]["sys_prompt"] = hash_string(
-                experiments[id]["model"]["prompt_system"], 4
-            )
+            model_params[i]["sys_prompt"] = hash_string(experiments[id]["model"]["prompt_system"], 4)
 
         # remove commons parameters
         model_diff_params = _remove_commons_items(model_params)
@@ -348,9 +346,7 @@ def _sort_score_df(*dfs, reset_index=False):
 
     df = dfs[0]
     sorting_metric = _find_default_sort_metric(df.columns)
-    df.sort_values(
-        by=sorting_metric, key=lambda x: x.map(_extract_mean), ascending=True, inplace=True
-    )
+    df.sort_values(by=sorting_metric, key=lambda x: x.map(_extract_mean), ascending=True, inplace=True)
     # Store the sorted index before resetting it
     sorted_idx = df.index.copy()
     for df in dfs:
@@ -380,6 +376,18 @@ def _check_repeat_mode(experiments: list) -> bool:
             return True
 
     return False
+
+
+def _format_model_params(expe):
+    if not expe.get("model"):
+        return None
+
+    model = expe["model"].copy()
+    model_params = model.get("sampling_params") or {} | (model.get("extra_params") or {})
+    if model.get("prompt_system"):
+        model_params["sys_prompt"] = hash_string(model["prompt_system"], 4)
+
+    return model_params
 
 
 def _format_experiments_score_df(experiments: list, df: pd.DataFrame) -> (bool, pd.DataFrame):
@@ -435,9 +443,7 @@ def display_experiment_set_score(experimentset, experiments_df):
 
         # Determine model name
         if expe.get("_model") or expe.get("model"):
-            model_name = (
-                expe.get("_model") or expe["model"]["aliased_name"] or expe["model"]["name"]
-            )
+            model_name = expe.get("_model") or expe["model"]["aliased_name"] or expe["model"]["name"]
         else:
             model_name = f"Undefined model ({expe['name']})"
         row["model"] = model_name
@@ -446,9 +452,7 @@ def display_experiment_set_score(experimentset, experiments_df):
         # Aggregate results/scores
         for metric_results in expe.get("results", []):
             metric = metric_results["metric_name"]
-            scores = [
-                x["score"] for x in metric_results["observation_table"] if pd.notna(x.get("score"))
-            ]
+            scores = [x["score"] for x in metric_results["observation_table"] if pd.notna(x.get("score"))]
             if scores:
                 row[f"{metric}"] = np.mean(scores)
                 row_support[f"{metric}_support"] = len(scores)
@@ -534,15 +538,11 @@ def report_ops_global(exp_set):
             with st.expander("Failure Analysis", expanded=False):
                 for expe in exp_set["experiments"]:
                     if expe["num_try"] != expe["num_success"]:
-                        st.write(
-                            f"id: {expe['id']} name: {expe['name']} (failed on output generation)"
-                        )
+                        st.write(f"id: {expe['id']} name: {expe['name']} (failed on output generation)")
                         continue
 
                     if expe["num_observation_try"] != expe["num_observation_success"]:
-                        st.write(
-                            f"id: {expe['id']} name: {expe['name']} (failed on score computation)"
-                        )
+                        st.write(f"id: {expe['id']} name: {expe['name']} (failed on score computation)")
                         continue
 
         report_data.append(
@@ -613,9 +613,7 @@ def report_model_and_metric(experimentset):
             "no_failed": 0,
         }
     )
-    metric_data = defaultdict(
-        lambda: {"finished": 0, "running": 0, "pending": 0, "failed": 0, "no_failed": 0}
-    )
+    metric_data = defaultdict(lambda: {"finished": 0, "running": 0, "pending": 0, "failed": 0, "no_failed": 0})
 
     for experiment in experimentset["experiments"]:
         update_model_data(model_data, experiment)
@@ -721,9 +719,7 @@ def show_header(experimentset):
 
     run_status = f"**Finished**: {finished_ratio}%"
     if failure_ratio > 0:
-        run_status += (
-            f" &nbsp;&nbsp;&nbsp; Failure: <span style='color:red;'>{failure_ratio}%</span>"
-        )
+        run_status += f" &nbsp;&nbsp;&nbsp; Failure: <span style='color:red;'>{failure_ratio}%</span>"
 
     st.markdown(run_status, unsafe_allow_html=True)
 
@@ -731,9 +727,7 @@ def show_header(experimentset):
 def main():
     # Fetch or re-fetch data
     # --
-    experiment_sets = _fetch(
-        "get", "/experiment_sets", refresh=st.session_state.get("refresh_main")
-    )
+    experiment_sets = _fetch("get", "/experiment_sets", refresh=st.session_state.get("refresh_main"))
 
     # View Branching
     # --
@@ -768,6 +762,7 @@ def main():
                     "Model": (expe["model"]["aliased_name"] or expe["model"]["name"])
                     if expe.get("model")
                     else "Undefined model",
+                    "Model params": _format_model_params(expe),
                     "Status": expe["experiment_status"],
                     "Created at": expe["created_at"],
                     "Num try": expe["num_try"],
