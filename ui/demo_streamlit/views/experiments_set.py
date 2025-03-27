@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 import plotly.express as px
 import streamlit as st
-from utils import fetch
+from utils import fetch, hash_string
 
 
 @st.cache_data
@@ -41,14 +41,18 @@ def _get_expset_status(expset: dict) -> tuple[dict, dict]:
 
 
 if "fetched_data" not in st.session_state:
-    st.session_state["fetched_data"]={}
+    st.session_state["fetched_data"] = {}
 
 
 def cached_fetch_experiment(exp_id, with_dataset=True, with_results=True):
     key = (exp_id, with_dataset)
     if key in st.session_state["fetched_data"]:
         return st.session_state["fetched_data"][key]
-    st.session_state["fetched_data"][key] = fetch("get", f"/experiment/{exp_id}", {"with_dataset": str(with_dataset), "with_results": str(with_results)})
+    st.session_state["fetched_data"][key] = fetch(
+        "get",
+        f"/experiment/{exp_id}",
+        {"with_dataset": str(with_dataset), "with_results": str(with_results)},
+    )
     return st.session_state["fetched_data"][key]
 
 
@@ -122,7 +126,7 @@ def display_experiment_sets(experiment_sets):
                     st.caption(f"Created on {when}")
 
 
-def display_experiment_set_overview(experiments_df):
+def display_experiment_set_overview(experimentset, experiments_df):
     """
     returns a dataframe with the list of Experiments and the associated status
     """
@@ -151,7 +155,7 @@ def display_experiment_details(experimentset, experiments_df):
         expe_name = experiment["name"]
         readme = experiment["readme"]
         dataset_name = experiment["dataset"]["name"]
-        model_name = experiment.get("model") or "Unknown Model"
+        model_name = experiment.get("model") or "Undefined Model"
 
         if df_with_results is not None:
             st.write(f"**experiment_id** n° {selected_exp_id}")
@@ -254,6 +258,12 @@ def _rename_model_variants(experiments: list) -> list:
             for i in ids
         ]
 
+        # Manage prompt_system param by computing its hash
+        for i in ids:
+            if not experiments[i]["model"].get("prompt_system"):
+                continue
+            model_params[i]["sys_prompt"] = hash_string(experiments[i]["model"]["prompt_system"], 4)
+
         # remove commons parameters
         model_diff_params = _remove_commons_items(model_params)
 
@@ -334,46 +344,20 @@ def _format_experiments_score_df(experiments: list, df: pd.DataFrame) -> (bool, 
 
     if result is None or len(result) == len(df):
         df["Id"] = experiment_ids
-        #df["name"] = experiment_names
+        # df["name"] = experiment_names
         df = df[["Id", "model"] + [col for col in df.columns if col not in ["Id", "model"]]]
         has_repeat = False
     else:
         df = result
 
     # @DEBUG: when +- is used, the sorting does not work.
-    #default_sort_metric = _find_default_sort_metric(df.columns)
-    #if default_sort_metric in df.columns:
+    # default_sort_metric = _find_default_sort_metric(df.columns)
+    # if default_sort_metric in df.columns:
     #    df = df.sort_values(by=f"{default_sort_metric}", ascending=False)
     # @DEBUG: Id does not exist for "repeat" case
-    #df = df.sort_values(by="Id", ascending=True)
+    # df = df.sort_values(by="Id", ascending=True)
 
     return has_repeat, df
-
-
-def _extract_experiment_data(exp):
-    """Extrait les données pertinentes d'un dictionnaire d'expériences."""
-    model_name = (
-        exp.get("_model") 
-        or (exp["model"]["aliased_name"] if exp.get("model") else None)
-        or (exp["model"]["name"] if exp.get("model") else None)
-        or exp["name"]  
-    )
-    
-    row = {"model": model_name}
-    row_support = {"model": model_name}
-    
-    exp = cached_fetch_experiment(exp['id'], with_dataset=False, with_results=True)
-    if not exp:
-        return None, None
-    
-    for metric_results in exp.get("results", []):
-        metric = metric_results["metric_name"]
-        scores = [x["score"] for x in metric_results["observation_table"] if pd.notna(x.get("score"))]
-        if scores:
-            row[f"{metric}"] = np.mean(scores)
-            row_support[f"{metric}_support"] = len(scores)
-            
-    return row, row_support
 
 
 def display_experiment_set_score(experimentset, experiments_df):
@@ -381,37 +365,60 @@ def display_experiment_set_score(experimentset, experiments_df):
     experiments = experimentset.get("experiments", [])
     _rename_model_variants(experiments)
     size = experiments[0]["dataset"]["size"]
-    
+
     rows = []
     rows_support = []
-    
     for exp in experiments:
-        row_data = _extract_experiment_data(exp)
-        if row_data[0] is not None and row_data[1] is not None:
-            rows.append(row_data[0])
-            rows_support.append(row_data[1])
-        
+        row = {}
+        row_support = {}
+
+        # Determine model name
+        if exp.get("_model") or exp.get("model"):
+            model_name = exp.get("_model") or exp["model"]["aliased_name"] or exp["model"]["name"]
+        else:
+            model_name = f"Undefined model ({exp['name']})"
+        row["model"] = model_name
+        row_support["model"] = model_name
+
+        # Fetch results
+        exp = fetch("get", f"/experiment/{exp['id']}?with_results=true")
+        if not exp:
+            continue
+
+        # Aggregate results/scores
+        for metric_results in exp.get("results", []):
+            metric = metric_results["metric_name"]
+            scores = [
+                x["score"] for x in metric_results["observation_table"] if pd.notna(x.get("score"))
+            ]
+            if scores:
+                row[f"{metric}"] = np.mean(scores)
+                row_support[f"{metric}_support"] = len(scores)
+
+        rows.append(row)
+        rows_support.append(row_support)
+
     if not rows:
         st.error("No valid experiment results found")
         return
-        
+
     df = pd.DataFrame(rows)
     df = _sort_columns(df, [])
-    
+
     if "model" not in df.columns:
         df["model"] = [exp.get("name", "Unknown Model") for exp in experiments]
-        
+
     try:
         has_repeat, df = _format_experiments_score_df(experiments, df)
     except ValueError as err:
         st.error("No result found yet, please try again later")
         raise err
         return
-        
+
     df_support = pd.DataFrame(rows_support)
     df_support = _sort_columns(df_support, [])
     _, df_support = _format_experiments_score_df(experiments, df_support)
-    
+
     st.write("**Score:** Averaged score on experiments metrics")
     if has_repeat:
         st.warning("Score are aggregated on model repetition.")
@@ -421,7 +428,7 @@ def display_experiment_set_score(experimentset, experiments_df):
         hide_index=True,
         column_config={"Id": st.column_config.TextColumn(width="small")},
     )
-    
+
     st.write("---")
     st.write(f"**Support:** the number of item on wich the metrics is computed (size = {size})")
     st.dataframe(
@@ -459,16 +466,18 @@ def report_ops_global(exp_set):
                         )
                         continue
 
-        report_data.append({
-            "Experiment Set Name": exp_set["name"],
-            "Status": status["text"],
-            "Total Experiments": len(exp_set["experiments"]),
-            "Answer Tries": counts["total_answer_tries"],
-            "Answer Successes": counts["total_answer_successes"],
-            "Observation Tries": counts["total_observation_tries"],
-            "Observation Successes": counts["total_observation_successes"],
-            "Has Failure": has_failure,
-        })
+        report_data.append(
+            {
+                "Experiment Set Name": exp_set["name"],
+                "Status": status["text"],
+                "Total Experiments": len(exp_set["experiments"]),
+                "Answer Tries": counts["total_answer_tries"],
+                "Answer Successes": counts["total_answer_successes"],
+                "Observation Tries": counts["total_observation_tries"],
+                "Observation Successes": counts["total_observation_successes"],
+                "Has Failure": has_failure,
+            }
+        )
 
     report_df = pd.DataFrame(report_data)
     st.dataframe(
@@ -485,10 +494,12 @@ def process_experiment(exp):
 
 
 def update_model_data(model_data, experiment):
+    # Determine model name
     if experiment.get("model"):
         model_name = experiment["model"]["aliased_name"] or experiment["model"]["name"]
     else:
-        model_name = "Unknow model"
+        model_name = f"Undefined model ({experiment['name']})"
+
     has_error = any(answer.get("error_msg") for answer in experiment.get("answers", []))
 
     if has_error:
@@ -512,14 +523,26 @@ def update_metric_data(metric_data, experiment):
 
 
 def calculate_failure_rate(row):
-    total = row['failed'] + row['no_failed']
-    return row['failed'] / total if total > 0 else 0
+    total = row["failed"] + row["no_failed"]
+    return row["failed"] / total if total > 0 else 0
 
 
 def report_model_and_metric(experimentset):
     """Analyzes experiment statuses by model and metric, including failed experiments and failure rates."""
-    model_data = defaultdict(lambda: {"finished": 0, "running":0, "running_answers": 0, "running_metrics": 0, "pending": 0, "failed": 0, "no_failed": 0})
-    metric_data = defaultdict(lambda: {"finished": 0, "running": 0, "pending": 0, "failed": 0, "no_failed": 0})
+    model_data = defaultdict(
+        lambda: {
+            "finished": 0,
+            "running": 0,
+            "running_answers": 0,
+            "running_metrics": 0,
+            "pending": 0,
+            "failed": 0,
+            "no_failed": 0,
+        }
+    )
+    metric_data = defaultdict(
+        lambda: {"finished": 0, "running": 0, "pending": 0, "failed": 0, "no_failed": 0}
+    )
 
     for exp in experimentset["experiments"]:
         experiment = process_experiment(exp)
@@ -531,15 +554,30 @@ def report_model_and_metric(experimentset):
     model_report["Total"] = model_report[["finished", "running", "pending"]].sum(axis=1)
     model_report["Failure Rate"] = model_report.apply(calculate_failure_rate, axis=1)
 
-    columns_order = ["finished", "running", "pending", "Total", "failed", "no_failed", "Failure Rate"]
+    columns_order = [
+        "finished",
+        "running",
+        "pending",
+        "Total",
+        "failed",
+        "no_failed",
+        "Failure Rate",
+    ]
     model_report = model_report[columns_order]
     model_for_graph = model_report.copy()
     model_report.columns = [col.title().replace("_", " ") for col in model_report.columns]
 
-    model_report.columns = pd.MultiIndex.from_tuples([
-        ("Status", "Finished"), ("Status", "Running"), ("Status", "Pending"), ("Status", "Total"),
-        ("Failure Analysis", "Failed"), ("Failure Analysis", "No Failed"), ("Failure Analysis", "Failure Rate")
-    ])
+    model_report.columns = pd.MultiIndex.from_tuples(
+        [
+            ("Status", "Finished"),
+            ("Status", "Running"),
+            ("Status", "Pending"),
+            ("Status", "Total"),
+            ("Failure Analysis", "Failed"),
+            ("Failure Analysis", "No Failed"),
+            ("Failure Analysis", "Failure Rate"),
+        ]
+    )
 
     st.subheader("Experiment Status by Model")
     st.dataframe(model_report, use_container_width=True)
@@ -562,10 +600,17 @@ def report_model_and_metric(experimentset):
 
     metric_report.columns = [col.title().replace("_", " ") for col in metric_report.columns]
 
-    metric_report.columns = pd.MultiIndex.from_tuples([
-        ("Status", "Finished"), ("Status", "Running"), ("Status", "Pending"), ("Status", "Total"),
-        ("Failure Analysis", "Failed"), ("Failure Analysis", "No Failed"), ("Failure Analysis", "Failure Rate")
-    ])
+    metric_report.columns = pd.MultiIndex.from_tuples(
+        [
+            ("Status", "Finished"),
+            ("Status", "Running"),
+            ("Status", "Pending"),
+            ("Status", "Total"),
+            ("Failure Analysis", "Failed"),
+            ("Failure Analysis", "No Failed"),
+            ("Failure Analysis", "Failure Rate"),
+        ]
+    )
 
     st.subheader("Experiment Status by Metric")
     st.dataframe(metric_report, use_container_width=True)
@@ -584,6 +629,7 @@ def display_ops_analysis(experimentset):
     report_ops_global(experimentset)
     report_model_and_metric(experimentset)
 
+
 def show_header(experimentset):
     status, counts = _get_expset_status(experimentset)
     st.markdown(f"## {experimentset['name']}")
@@ -594,9 +640,7 @@ def show_header(experimentset):
     with col_showhead2:
         st.markdown(f"**Readme:** {experimentset.get('readme', 'No description available')}")
 
-    finished_ratio = int(
-        counts["total_observation_successes"] / counts["observation_length"] * 100
-    )
+    finished_ratio = int(counts["total_observation_successes"] / counts["observation_length"] * 100)
     failure_ratio = int(
         (counts["total_observation_tries"] - counts["total_observation_successes"])
         / counts["observation_length"]
@@ -605,9 +649,12 @@ def show_header(experimentset):
 
     metric_status = f"**Metric status:** Finished: {finished_ratio}%"
     if failure_ratio > 0:
-        metric_status += f" &nbsp;&nbsp;&nbsp; Failure: <span style='color:red;'>{failure_ratio}%</span>"
+        metric_status += (
+            f" &nbsp;&nbsp;&nbsp; Failure: <span style='color:red;'>{failure_ratio}%</span>"
+        )
 
     st.markdown(metric_status, unsafe_allow_html=True)
+
 
 def main():
     experiment_sets = fetch("get", "/experiment_sets")
@@ -625,32 +672,28 @@ def main():
         experimentset = st.session_state["experimentset"]
         st.query_params.expset = experimentset["id"]
 
+        # Horizontal menu toolbar
+        # --
         col_head1, col_head2, col_head3 = st.columns([1, 8, 1])
-
         with col_head1:
-            if st.button("← Go Back"):
+            if st.button("← Go Back", key="go_back"):
                 st.session_state["experimentset"] = None
                 st.query_params.pop("expset")
                 st.rerun()
 
         with col_head2:
-            show_header(st.session_state['experimentset'])
+            show_header(st.session_state["experimentset"])
 
         with col_head3:
             if st.button("🔄  Refresh", key="refresh"):
-                st.session_state["fetched_data"] = {}  
+                st.session_state["fetched_data"] = {}
                 st.rerun()
 
-        tab1, tab2, tab3, tab4 = st.tabs([
-            "⭐ Scores", 
-            "📊 Set Overview", 
-            "📝 Details by Experiment Id", 
-            "🚨 Ops Analysis"
-        ])
-
         experimentset = st.session_state["experimentset"]
-        experiments_df = pd.DataFrame([
-            {     "Id": exp["id"],
+        experiments_df = pd.DataFrame(
+            [
+                {
+                    "Id": exp["id"],
                     "Name": exp["name"],
                     "Status": exp["experiment_status"],
                     "Created at": exp["created_at"],
@@ -658,41 +701,80 @@ def main():
                     "Num success": exp["num_success"],
                     "Num observation try": exp["num_observation_try"],
                     "Num observation success": exp["num_observation_success"],
- 
-             }
-            for exp in experimentset["experiments"]
-        ])
+                }
+                for exp in experimentset["experiments"]
+            ]
+        )
+        experiments_df.sort_values(by="Id", ascending=True, inplace=True)
+
+        # Display tabs
+        # --
+        tab_index = {
+            1: {
+                "key": "scores",
+                "title": "⭐ Scores",
+                "func": display_experiment_set_score,
+            },
+            2: {
+                "key": "overview",
+                "title": "📊 Set Overview",
+                "func": display_experiment_set_overview,
+            },
+            3: {
+                "key": "details",
+                "title": "📝 Details by Experiment Id",
+                "func": display_experiment_details,
+            },
+            4: {
+                "key": "ops",
+                "title": "🚨 Ops Analysis",
+                "func": display_ops_analysis,
+            },
+        }
+        tab_reverse = {d["key"]: k for k, d in tab_index.items()}
+        # @TODO: how to catch the tab click in order to set the current url query to tab key ?
+
+        tab1, tab2, tab3, tab4 = st.tabs(
+            [
+                tab_index[1]["title"],
+                tab_index[2]["title"],
+                tab_index[3]["title"],
+                tab_index[4]["title"],
+            ]
+        )
+
+        def show_warning_in_tabs(message):
+            with tab1:
+                st.warning(message)
+            with tab2:
+                st.warning(message)
+            with tab3:
+                st.warning(message)
+
+        df = experiments_df  # alias
+        if not (df["Status"] == "finished").all():
+            show_warning_in_tabs("Warning: some experiments are not finished.")
+        if df["Num success"].sum() != df["Num try"].sum():
+            show_warning_in_tabs("Warning: some answers are failed.")
+        if df["Num observation success"].sum() != df["Num observation try"].sum():
+            show_warning_in_tabs("Warning: some metrics are failed.")
 
         with tab1:
-            col_score1, col_score2 = st.columns([4, 1])
-            with col_score1:
-                st.subheader("Scores")
-            display_experiment_set_score(experimentset, experiments_df)
-
+            tab_index[1]["func"](experimentset, experiments_df)
         with tab2:
-            col_overview1, col_overview2 = st.columns([4, 1])
-            with col_overview1:
-                st.subheader("Overview")
-            display_experiment_set_overview(experiments_df)
-            
+            tab_index[2]["func"](experimentset, experiments_df)
         with tab3:
-            col_detail1, col_detail2 = st.columns([4, 1])
-            with col_detail1:
-                st.subheader("Details")
-            display_experiment_details(experimentset, experiments_df)
-
+            tab_index[3]["func"](experimentset, experiments_df)
         with tab4:
-            col_report1, col_report2 = st.columns([4, 1])
-            with col_report1:
-                st.subheader("Ops analysis")
-            display_ops_analysis(experimentset)
+            tab_index[4]["func"](experimentset)
 
     else:
         st.title("Experiment (Sets)")
         col_main1, col_main2 = st.columns([4, 1])
         with col_main2:
-            if st.button("🔄 Refresh List", key="refresh_main"):
+            if st.button("🔄 Refresh", key="refresh_main"):
                 st.cache_data.clear()
         display_experiment_sets(experiment_sets)
+
 
 main()
