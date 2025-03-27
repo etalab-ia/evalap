@@ -325,7 +325,7 @@ def _find_default_sort_metric(columns):
     """
     find a sensible default metric for sorting results.
     """
-    preferred_metrics = ["contextual_relevancy", "judge_notator", "judge_exactness"]
+    preferred_metrics = ["answer_relevancy", "judge_notator", "judge_exactness"]
     for metric in preferred_metrics:
         if metric in columns:
             return f"{metric}"
@@ -346,7 +346,7 @@ def _sort_score_df(*dfs, reset_index=False):
 
     df = dfs[0]
     sorting_metric = _find_default_sort_metric(df.columns)
-    df.sort_values(by=sorting_metric, key=lambda x: x.map(_extract_mean), ascending=True, inplace=True)
+    df.sort_values(by=sorting_metric, key=lambda x: x.map(_extract_mean), ascending=False, inplace=True)
     # Store the sorted index before resetting it
     sorted_idx = df.index.copy()
     for df in dfs:
