@@ -11,8 +11,8 @@ All notable changes to this project will be documented in this file.
 - Supported delete experiment route for admin users.
 - Introduced new retry and post routes with UI improvements.
 - Added experiments 'finished' and 'failure' ratio in overview.
-- Integrated MCP and multi-step LLM generations with MCP client bridge.
-- Enhanced experiment testing and addressed pydantic warnings.
+- Integrated MCP support and multi-step LLM generations with MCP client bridge.
+- New tests for an increase code coverage and addressed pydantic warnings.
 - Implemented loop limit and tool call step saving.
 - Improved sorting and metrics highlighting in the experiment set score table.
 
@@ -30,16 +30,17 @@ All notable changes to this project will be documented in this file.
 - Improved schema validation and error detail return for API.
 - Addressed issues with experiment view and retry functionality.
 
-### Code Improvements
+### 🛠️ Code Improvements
 
-- Reorganized code structure and fixed import issues.
+- Reorganized code structure (pip ready) and fixed import issues.
 - Moved API components to clients and adjusted imports accordingly.
 
-### Hotfixes
+### 🔥 Hotfixes
 
 - Addressed dataset and SQL float compatibility issues.
 - Updated configuration files for supervisord and Alembic.
 
-### Operations
+### ⚙️ Operations
 
 - Added Docker and Streamlit configuration files.
+- Fix supervisord path to deploy.
