@@ -3,7 +3,7 @@ from routes import ROUTES, get_page
 
 st.set_page_config(
     page_title="EG1 - Évaluation",
-    page_icon="ui/demo_streamlit/static/images/eg1_logo.png", 
+    page_icon="eg1/ui/demo_streamlit/static/images/eg1_logo.png",
     layout="wide",
     initial_sidebar_state="expanded",
 )
