@@ -36,9 +36,7 @@ class EgBaseModel(BaseModel):
             if hasattr(sub_schema, "to_table_init"):
                 obj[k] = sub_schema.to_table_init(db)
             elif isinstance(sub_schema, list):
-                obj[k] = [
-                    o.to_table_init(db) if isinstance(o, BaseModel) else o for o in sub_schema
-                ]
+                obj[k] = [o.to_table_init(db) if isinstance(o, BaseModel) else o for o in sub_schema]
 
         return obj
 
@@ -50,9 +48,7 @@ class EgBaseModel(BaseModel):
 # Enum
 #
 
-MetricEnum = Enum(
-    "MetricEnum", {name: name for name in metric_registry.get_metric_names()}, type=str
-)
+MetricEnum = Enum("MetricEnum", {name: name for name in metric_registry.get_metric_names()}, type=str)
 
 
 class ExperimentStatus(str, Enum):
@@ -118,10 +114,7 @@ class DatasetFull(DatasetBase):
 
 DatasetUpdate = create_model(
     "DatasetUpdate",
-    **{
-        field_name: (Optional[field.annotation], None)
-        for field_name, field in Dataset.model_fields.items()
-    },
+    **{field_name: (Optional[field.annotation], None) for field_name, field in Dataset.model_fields.items()},
     __base__=Dataset,
 )
 
@@ -130,10 +123,7 @@ DatasetUpdate = create_model(
 # expriment alignement with num_line
 DatasetPatch = create_model(
     "DatasetPatch",
-    **{
-        field_name: (Optional[field.annotation], None)
-        for field_name, field in Dataset.model_fields.items()
-    },
+    **{field_name: (Optional[field.annotation], None) for field_name, field in Dataset.model_fields.items()},
     __base__=DatasetBase,
 )
 
@@ -234,10 +224,7 @@ class Result(ResultBase):
 
 ResultUpdate = create_model(
     "ResultUpdate",
-    **{
-        field_name: (Optional[field.annotation], None)
-        for field_name, field in Result.model_fields.items()
-    },
+    **{field_name: (Optional[field.annotation], None) for field_name, field in Result.model_fields.items()},
     __base__=Result,
 )
 
@@ -273,16 +260,12 @@ class ExperimentCreate(ExperimentBase):
             obj["num_try"] = dataset.size
             obj["num_success"] = len(self.model.output)
             if obj["num_try"] != obj["num_success"]:
-                raise SchemaError(
-                    "The size of the model outputs must match the size of the dataset."
-                )
+                raise SchemaError("The size of the model outputs must match the size of the dataset.")
 
         # Handle Model
         has_raw_output = False
         if isinstance(self.model, ModelRaw):
-            model = {
-                k: v for k, v in self.model.model_dump().items() if k in ModelCreate.model_fields
-            }
+            model = {k: v for k, v in self.model.model_dump().items() if k in ModelCreate.model_fields}
             has_raw_output = True
             model["has_raw_output"] = has_raw_output
             # Create Answers from ModelRaw
@@ -291,9 +274,7 @@ class ExperimentCreate(ExperimentBase):
             m = self.model
             df = pd.read_json(StringIO(dataset.df))
             if len(df) != len(m.output):
-                raise SchemaError(
-                    "The size of the model outputs must match the size of the dataset."
-                )
+                raise SchemaError("The size of the model outputs must match the size of the dataset.")
 
             for i in range(len(m.output)):
                 answers.append(
@@ -368,15 +349,19 @@ class Experiment(ExperimentBase):
     model: Model | None
 
 
-class ExperimentWithResults(Experiment):
+class ExperimentRO(Experiment):
+    judge_model: str | None
+
+
+class ExperimentWithResults(ExperimentRO):
     results: list[Result] | None
 
 
-class ExperimentWithAnswers(Experiment):
+class ExperimentWithAnswers(ExperimentRO):
     answers: list[Answer] | None
 
 
-class ExperimentFull(Experiment):
+class ExperimentFull(ExperimentRO):
     answers: list[Answer] | None = None
     results: list[Result] | None = None
 
@@ -451,6 +436,10 @@ class ExperimentSet(ExperimentSetBase):
     id: int
     created_at: datetime
     experiments: list[Experiment] | None
+
+
+class ExperimentSetRO(ExperimentSet):
+    experiments: list[ExperimentRO] | None
 
 
 # For the special `cv` parameters passed at creation
@@ -538,12 +527,8 @@ class LocustRunBase(EgBaseModel):
 
 class LocustRunCreate(LocustRunBase):
     stats_df: str = Field(..., description="The stats csv file serialized as a dataframe.")
-    history_df: str = Field(
-        ..., description="The stats history CSV file serialized as a dataframe."
-    )
-    custom_history_df: str | None = Field(
-        None, description="Extra stats history serialized as a dataframe."
-    )
+    history_df: str = Field(..., description="The stats history CSV file serialized as a dataframe.")
+    custom_history_df: str | None = Field(None, description="Extra stats history serialized as a dataframe.")
 
 
 class LocustRun(LocustRunBase):
@@ -553,9 +538,5 @@ class LocustRun(LocustRunBase):
 
 class LocustRunFull(LocustRun):
     stats_df: str = Field(..., description="The stats csv file serialized as a dataframe.")
-    history_df: str = Field(
-        ..., description="The stats history CSV file serialized as a dataframe."
-    )
-    custom_history_df: str | None = Field(
-        None, description="Extra stats serialized as a dataframe."
-    )
+    history_df: str = Field(..., description="The stats history CSV file serialized as a dataframe.")
+    custom_history_df: str | None = Field(None, description="Extra stats serialized as a dataframe.")
