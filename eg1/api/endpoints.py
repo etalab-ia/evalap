@@ -415,7 +415,7 @@ def retry_runs(
                     crud.update_result(db, result.id, dict(metric_status="finished"))
 
     if (
-        force and len(set(rr.experiment_ids + rr.result_ids +rr.unfinished_experiment_ids + rr.unfinished_result_ids)) == 0
+        force and len(set(rr.experiment_ids + rr.result_ids + rr.unfinished_experiment_ids + rr.unfinished_result_ids)) == 0
     ):  # fmt: skip
         for exp in experimentset.experiments:
             crud.update_experiment(db, exp.id, dict(experiment_status="finished"))
