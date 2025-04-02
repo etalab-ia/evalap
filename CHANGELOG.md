@@ -8,6 +8,7 @@ All notable changes to this project will be documented in this file.
 ### 🚀 Features
 
 - [API] Support Anthropic, Openai, Mistral and Albert providers for judge models `judge_model parameter in experiments` (models are fetch from the openaai api v1/models endpoints
+- [SCRIPTS] ADD convenient scripts to run experiment from an isolated machine (like cortex, [see the tutorial](https://tchap.gouv.fr/#/room/!GeUSclgFhhSSkwiExz:agent.dinum.tchap.gouv.fr/$BoFMFX0xNyz0FFIIaFUzdIxyshhulBWPYZxP1q9Zm5s?via=agent.dinum.tchap.gouv.fr)
 
 ### 🔧 Improvements
 - [UI] Add an orpan special experiment group at the bottom of the experiments list.
