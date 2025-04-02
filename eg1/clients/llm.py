@@ -56,7 +56,8 @@ class LlmApiModels:
     openai: set[str] = field(default_factory=set)
     anthropic: set[str] = field(default_factory=set)
     mistral: set[str] = field(default_factory=set)
-    albert: set[str] = field(default_factory=set)
+    albert_prod: set[str] = field(default_factory=set)
+    albert_staging: set[str] = field(default_factory=set)
 
     @classmethod
     def _sync_openai_api_models(cls):
