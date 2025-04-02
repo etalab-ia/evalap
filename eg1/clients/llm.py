@@ -7,8 +7,8 @@ import requests
 
 # @TODO: Will be obsolete when MFS will use albert-api to do RAG
 from eg1.api.config import MFS_API_KEY_V2
-from eg1.utils import log_and_raise_for_status, retry
 from eg1.logger import logger
+from eg1.utils import log_and_raise_for_status, retry
 
 from .schemas.openai_rag import Chunk, RagChatCompletionResponse, Search
 
@@ -18,7 +18,8 @@ class LlmApiUrl:
     openai: str = "https://api.openai.com/v1"
     anthropic: str = "https://api.anthropic.com/v1"
     mistral: str = "https://api.mistral.ai/v1"
-    albert: str = "https://albert.api.etalab.gouv.fr/v1"
+    albert_prod: str = "https://albert.api.etalab.gouv.fr/v1"
+    albert_staging: str = "https://albert.api.staging.etalab.gouv.fr/v1"
     header_keys: dict = field(
         default_factory=lambda: {
             "openai": {
@@ -30,11 +31,12 @@ class LlmApiUrl:
                 "anthropic-version": "2023-06-01",
             },
             "mistral": {"Authorization": "Bearer {MISTRAL_API_KEY}"},
-            "albert": {"Authorization": "Bearer {ALBERT_API_KEY}"},
+            "albert_prod": {"Authorization": "Bearer {ALBERT_API_KEY}"},
+            "albert_staging": {"Authorization": "Bearer {ALBERT_API_KEY}"},
         }
     )
 
-    def build_header(self, provider, h_pattern=r"\{(.*?)\}"):
+    def build_header(self, provider: str, h_pattern: str = r"\{(.*?)\}"):
         headers = {}
         for h, t in LlmApiUrl.header_keys[provider].items():
             # Format the headers from the environ
@@ -77,7 +79,7 @@ class LlmApiModels:
 
         return self
 
-    def _all_models(self):
+    def _all_models(self) -> set:
         provider_models = [
             models for provider, models in self.__dict__.items() if not provider.startswith("_")
         ]
