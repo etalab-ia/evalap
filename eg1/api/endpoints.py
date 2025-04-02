@@ -54,8 +54,8 @@ def read_dataset(id: int, with_df: bool = False, db: Session = Depends(get_db)):
 
     if with_df:
         return schemas.DatasetFull.model_validate(dataset)
-
-    return schemas.Dataset.model_validate(dataset)
+    else:
+        return schemas.Dataset.model_validate(dataset)
 
 
 @router.get("/dataset", response_model=schemas.Dataset | schemas.DatasetFull, tags=["datasets"])
@@ -78,8 +78,8 @@ def read_dataset_by_query(
     if dataset:
         if with_df:
             return schemas.DatasetFull.model_validate(dataset)
-
-        return schemas.Dataset.model_validate(dataset)
+        else:
+            return schemas.Dataset.model_validate(dataset)
 
     raise HTTPException(status_code=400, detail="No query parameters provided")
 
@@ -203,7 +203,7 @@ def delete_experiment(
 
 @router.get(
     "/experiment/{id}",
-    response_model=schemas.Experiment
+    response_model=schemas.ExperimentRO
     | schemas.ExperimentWithResults
     | schemas.ExperimentWithAnswers
     | schemas.ExperimentFull
@@ -229,8 +229,8 @@ def read_experiment(
         return schemas.ExperimentWithResults.model_validate(experiment)
     elif with_answers:
         return schemas.ExperimentWithAnswers.model_validate(experiment)
-
-    return schemas.Experiment.model_validate(experiment)
+    else:
+        return schemas.ExperimentRO.model_validate(experiment)
 
 
 @router.get(
@@ -319,7 +319,7 @@ def patch_experimentset(
 
 @router.get(
     "/experiment_sets",
-    response_model=list[schemas.ExperimentSet],
+    response_model=list[schemas.ExperimentSetRO],
     tags=["experiment_set"],
 )
 def read_experimentsets(skip: int = 0, limit: int = 100, backward: bool = True, db: Session = Depends(get_db)):
@@ -332,7 +332,7 @@ def read_experimentsets(skip: int = 0, limit: int = 100, backward: bool = True, 
 
 @router.get(
     "/experiment_set/{id}",
-    response_model=schemas.ExperimentSet,
+    response_model=schemas.ExperimentSetRO,
     tags=["experiment_set"],
 )
 def read_experimentset(id: int, db: Session = Depends(get_db)):
