@@ -24,16 +24,9 @@ ROUTES = [
     {
         "id": "experiments_set",
         "path": "views/experiments_set.py",
-        "title": "Experiments Set",
+        "title": "Experiments",
         "description": "Navigate the experiments collections groups",
         "icon": ":material/experiment:",
-    },
-    {
-        "id": "experiments",
-        "path": "views/experiments.py",
-        "title": "Experiment",
-        "description": "Navigate the experiments not attached to an experiment group",
-        "icon": ":material/dashboard:",
     },
     {
         "id": "datasets",
