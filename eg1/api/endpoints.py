@@ -322,8 +322,8 @@ def patch_experimentset(
     response_model=list[schemas.ExperimentSet],
     tags=["experiment_set"],
 )
-def read_experimentsets(db: Session = Depends(get_db)):
-    experimentsets = crud.get_experimentsets(db)
+def read_experimentsets(skip: int = 0, limit: int = 100, backward: bool = True, db: Session = Depends(get_db)):
+    experimentsets = crud.get_experimentsets(db, skip=skip, limit=limit, backward=backward)
     if experimentsets is None:
         raise HTTPException(status_code=404, detail="ExperimentSets not found")
     return experimentsets
