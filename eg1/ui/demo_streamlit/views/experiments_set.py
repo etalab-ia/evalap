@@ -164,6 +164,24 @@ def display_experiment_sets(experiment_sets):
                 with col3:
                     st.caption(f"Created the {when}")
 
+    # Show orphan experiments
+    # --
+    st.markdown("---")
+    with st.container(border=True):
+        st.markdown(
+            f"<div style='position: absolute; top: 10px; right: 10px; "
+            f"width: 10px; height: 10px; border-radius: 50%; "
+            f"background: {status_color};' "
+            f"title='{status_description}'></div>",
+            unsafe_allow_html=True,
+        )
+
+        if st.button("Orphan experiments", key="pick_expe_orphan"):
+            st.query_params["expset"] = "orphan"
+            st.rerun()
+
+        st.markdown("The experiments that are not in evaluation sets.")
+
 
 def display_experiment_set_overview(experimentset, experiments_df):
     """
@@ -706,7 +724,10 @@ def show_header(experimentset):
     with col1:
         st.markdown(f"**Id**: {experimentset['id']}")
     with col2:
-        when = datetime.fromisoformat(experimentset["created_at"]).strftime("%d %B %Y")
+        try:
+            when = datetime.fromisoformat(experimentset["created_at"]).strftime("%d %B %Y")
+        except ValueError:
+            when = "N/A"
         st.caption(f"Created the {when}")
     st.markdown(f"**Readme:** {experimentset.get('readme', 'No description available')}")
 
@@ -736,11 +757,23 @@ def main():
         st.session_state["expset_id"] = expid
         st.query_params.expset = expid
 
-        # Get the expset
-        experimentset = next((x for x in experiment_sets if x["id"] == int(expid)), None)
-        experimentset = _fetch_experimentset(
-            expid, experimentset, refresh=st.session_state.get("refresh_experimentset")
-        )
+        # Get the expset (or the orphan experiments)
+        if expid.isdigit():
+            experimentset = next((x for x in experiment_sets if x["id"] == int(expid)), None)
+            experimentset = _fetch_experimentset(
+                expid, experimentset, refresh=st.session_state.get("refresh_experimentset")
+            )
+        elif expid == "orphan":
+            experimentset = {
+                "id":None,
+                "name": "Orphan experiments",
+                "created_at": "",
+                "experiments": fetch("get", "/experiments", {"orphan": True, "backward": True}),
+            }
+
+        else:
+            st.error("Invalid experiment set id: %s" % expid)
+            return
 
         # Horizontal menu toolbar
         col1, col2 = st.columns([3, 1])
@@ -841,7 +874,7 @@ def main():
     else:
         col1, col2 = st.columns([3, 1])
         with col1:
-            st.title("Experiment (Sets)")
+            st.title("Experiments")
         with col2:
             if st.button("🔄 Refresh", key="refresh_main"):
                 st.rerun()
