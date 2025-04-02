@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+
+## [0.3.1] - 2025-04-02
+
+### 🚀 Features
+
+- [API] Support Anthropic, Openai, Mistral and Albert providers for judge models `judge_model parameter in experiments` (models are fetch from the openaai api v1/models endpoints
+
+### 🔧 Improvements
+- [UI] Add an orpan special experiment group at the bottom of the experiments list.
+- [UI] Order the experiment set from the newest first
+- [UI] Remove old confusing experiments menu in favor of only the experiment sets menu (renamed simply experiments)
+
+
 ## [0.3] - 2025-03-27
 
 ### 🚀 Features
