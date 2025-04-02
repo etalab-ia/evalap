@@ -32,7 +32,7 @@ class LlmApiUrl:
             },
             "mistral": {"Authorization": "Bearer {MISTRAL_API_KEY}"},
             "albert_prod": {"Authorization": "Bearer {ALBERT_API_KEY}"},
-            "albert_staging": {"Authorization": "Bearer {ALBERT_API_KEY}"},
+            "albert_staging": {"Authorization": "Bearer {ALBERT_API_KEY_STAGING}"},
         }
     )
 
