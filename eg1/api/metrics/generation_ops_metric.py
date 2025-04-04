@@ -25,9 +25,9 @@ def nb_tokens_completion_metric(output, *args, **kwargs):
     metric_type="ops",
     require=["query"],
 )
-def nb_tokens_completion_metric(output, *args, **kwargs):
+def nb_tool_calls_metric(output, *args, **kwargs):
     metadata = kwargs["metadata"]
-    return metadata.get("nb_tokens_completion")
+    return metadata.get("nb_tool_calls")
 
 
 @metric_registry.register(
