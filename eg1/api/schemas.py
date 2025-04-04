@@ -172,6 +172,7 @@ class ModelRaw(EgBaseModel):
     execution_time: list[int] | None = None
     nb_tokens_prompt: list[int] | None = None
     nb_tokens_completion: list[int] | None = None
+    nb_tool_calls: list[int] | None = None
     retrieval_context: list[list[str]] | None = None
 
 
@@ -284,6 +285,7 @@ class ExperimentCreate(ExperimentBase):
                         execution_time=m.execution_time[i] if m.execution_time else None,
                         nb_tokens_prompt=m.nb_tokens_prompt[i] if m.nb_tokens_prompt else None,
                         nb_tokens_completion=m.nb_tokens_completion[i] if m.nb_tokens_completion else None,
+                        nb_tool_calls=m.nb_tool_calls[i] if m.nb_tool_calls else None,
                         retrieval_context=m.retrieval_context[i] if m.retrieval_context else None,
                     )
                 )  # fmt: skip

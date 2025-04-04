@@ -19,7 +19,7 @@ class MessageType(str, Enum):
     observation = "observations"  # Ask to generate an observation
 
 
-def fix_answer_num_count(db, db_exp, commit=True):
+def _fix_answer_num_count(db, db_exp, commit=True):
     # num_try: number of answers.
     # num_success: number of answer where answer is not None.
     counts = (
@@ -41,7 +41,7 @@ def fix_answer_num_count(db, db_exp, commit=True):
     return db_exp
 
 
-def fix_result_num_count(db, result, commit=True):
+def _fix_result_num_count(db, result, commit=True):
     # num_try: number of computed result/metric
     # num_success: number of metric where score is not None
     counts = (
@@ -79,7 +79,7 @@ def dispatch_tasks(db, db_exp, message_type: MessageType):
         # --
         # iterate the dataset
         db_exp.experiment_status = "running_answers"
-        db_exp = fix_answer_num_count(db, db_exp, commit=False)
+        db_exp = _fix_answer_num_count(db, db_exp, commit=False)
         db_exp.num_try = db_exp.num_success
         db.commit()
         df = pd.read_json(StringIO(db_exp.dataset.df))
@@ -126,7 +126,7 @@ def dispatch_tasks(db, db_exp, message_type: MessageType):
             if result.metric_status == "running":
                 continue
             result.metric_status = "running"
-            result = fix_result_num_count(db, result, commit=False)
+            result = _fix_result_num_count(db, result, commit=False)
             result.num_try = result.num_success
             db.commit()
             for a in db_exp.answers:
@@ -177,7 +177,7 @@ def dispatch_retries(db, retry_runs: schemas.RetryRuns):
             raise ValueError("should never happen: dprexpnotfound1")
 
         db_exp.experiment_status = "running_answers"
-        db_exp = fix_answer_num_count(db, db_exp, commit=False)
+        db_exp = _fix_answer_num_count(db, db_exp, commit=False)
         db_exp.num_try = db_exp.num_success
         db.commit()
         df = pd.read_json(StringIO(db_exp.dataset.df))
@@ -229,7 +229,7 @@ def dispatch_retries(db, retry_runs: schemas.RetryRuns):
         db_exp = result.experiment
         db_exp.experiment_status = "running_metrics"
         result.metric_status = "running"
-        result = fix_result_num_count(db, result, commit=False)
+        result = _fix_result_num_count(db, result, commit=False)
         result.num_try = result.num_success
         db.commit()
         df = pd.read_json(StringIO(db_exp.dataset.df))
