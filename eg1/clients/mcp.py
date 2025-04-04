@@ -2,14 +2,15 @@ import json
 
 import requests
 
-from eg1.clients import LlmClient, ChatCompletionResponse
+from eg1.api.config import MCP_BRIDGE_URL
+from eg1.clients import ChatCompletionResponse, LlmClient
 from eg1.logger import logger
 from eg1.utils import log_and_raise_for_status
 
 
 class MCPBridgeClient:
     def __init__(self):
-        self.url = "http://127.0.0.1:9092"
+        self.url = MCP_BRIDGE_URL
         self.refresh()
 
     def fetch_tools(self) -> dict:

@@ -42,20 +42,20 @@ chat-completion model="mistralai/Mistral-Small-3.1-24B-Instruct-2503" provider="
 #
 
 alembic-init:
-  alembic -c api/alembic.ini revision --autogenerate -m "Table Initialization"
+  alembic -c eg1/api/alembic.ini revision --autogenerate -m "Table Initialization"
 
 alembic-generate-revision name:
-  alembic -c api/alembic.ini upgrade head
-  alembic -c api/alembic.ini revision --autogenerate -m "{{name}}"
+  alembic -c eg1/api/alembic.ini upgrade head
+  alembic -c eg1/api/alembic.ini revision --autogenerate -m "{{name}}"
 
 alembic-upgrade:
-  alembic -c api/alembic.ini upgrade head
+  alembic -c eg1/api/alembic.ini upgrade head
 
 alembic-downgrade hash:
-  alembic -c api/alembic.ini downgrade {{hash}}
+  alembic -c eg1/api/alembic.ini downgrade {{hash}}
 
 alembic-history:
-  alembic -c api/alembic.ini history
+  alembic -c eg1/api/alembic.ini history
 
 #
 # Search engine
