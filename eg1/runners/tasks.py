@@ -82,6 +82,7 @@ def generate_answer(message: dict, mcp_bridge: MCPBridgeClient | None):
                     nb_tokens_prompt=result.usage.prompt_tokens,
                     nb_tokens_completion=result.usage.completion_tokens,
                     retrieval_context=retrieval_context,
+                    nb_tool_calls=len(steps) if steps else 0,
                     tool_steps=steps,
                 ),
             )
@@ -141,6 +142,7 @@ def generate_observation(message: dict, mcp_bridge: MCPBridgeClient):
             metadata["generation_time"] = answer.execution_time
             metadata["nb_tokens_prompt"] = answer.nb_tokens_prompt
             metadata["nb_tokens_completion"] = answer.nb_tokens_completion
+            metadata["nb_tool_calls"] = answer.nb_tool_calls
             metadata["retrieval_context"] = answer.retrieval_context
         try:
             # Generate observation/metric
@@ -156,9 +158,7 @@ def generate_observation(message: dict, mcp_bridge: MCPBridgeClient):
                 # Add extra inputs required by the metric
                 if require in ["output", "output_true"]:
                     if not getattr(msg, require):
-                        raise ValueError(
-                            f"The metric {msg.metric_name} require a non null {require} value."
-                        )
+                        raise ValueError(f"The metric {msg.metric_name} require a non null {require} value.")
                     continue
                 dataset = result.experiment.dataset
                 df = pd.read_json(StringIO(dataset.df))
@@ -170,9 +170,7 @@ def generate_observation(message: dict, mcp_bridge: MCPBridgeClient):
                     metric_params[require] = metadata.get(require)
 
                 if not metric_params[require]:
-                    raise ValueError(
-                        f"The metric {msg.metric_name} require a non null {require} value."
-                    )
+                    raise ValueError(f"The metric {msg.metric_name} require a non null {require} value.")
             # Extra metric params
             metric_params["model"] = result.experiment.judge_model or DEFAULT_JUDGE_MODEL
 
@@ -198,9 +196,7 @@ def generate_observation(message: dict, mcp_bridge: MCPBridgeClient):
                 db,
                 result.id,
                 msg.line_id,
-                dict(
-                    observation=observation, score=score, execution_time=int(timer.execution_time)
-                ),
+                dict(observation=observation, score=score, execution_time=int(timer.execution_time)),
             )
 
         except Exception as e:
@@ -237,7 +233,7 @@ def generate_observation(message: dict, mcp_bridge: MCPBridgeClient):
                 print("$", end="", flush=True)
 
 
-def process_task(message: dict, mcp_bridge: MCPBridgeClient|None):
+def process_task(message: dict, mcp_bridge: MCPBridgeClient | None):
     """Route and process message"""
     match message["message_type"]:
         case MessageType.answer:
