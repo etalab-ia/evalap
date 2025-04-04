@@ -36,7 +36,7 @@ from docopt import docopt
 
 from eg1.clients import multi_step_generate
 
-eg1_url = "https://eg1.etalab.gouv.fr/v1"
+eg1_url = "https://eg1.dev.etalab.gouv.fr/v1"
 
 
 def process_query(

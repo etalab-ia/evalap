@@ -58,6 +58,21 @@ alembic-history:
   alembic -c api/alembic.ini history
 
 #
+# Search engine
+#
+
+list-indexes env="dev":
+  #!/usr/bin/env sh
+  if [ "{{env}}" = "dev" ]; then
+    curl -u elastic:$ELASTICSEARCH_PASSWORD -X GET "$ELASTICSEARCH_URL/_cat/indices?v"
+  elif [ "{{env}}" = "staging" ]; then
+    curl -u elastic:$ELASTICSEARCH_PASSWORD -X GET "$ELASTICSEARCH_URL/_cat/indices?v"
+  elif [ "{{env}}" = "prod" ]; then
+    curl -u elastic:$ELASTICSEARCH_PASSWORD -X GET "$ELASTICSEARCH_URL/_cat/indices?v"
+  fi
+
+
+#
 # DB Queries
 #
 
