@@ -82,7 +82,7 @@ def generate_answer(message: dict, mcp_bridge: MCPBridgeClient | None):
                     nb_tokens_prompt=result.usage.prompt_tokens,
                     nb_tokens_completion=result.usage.completion_tokens,
                     retrieval_context=retrieval_context,
-                    nb_tool_calls=len(steps) if steps else 0,
+                    nb_tool_calls=sum(len(s) for s in steps) if steps else 0,
                     tool_steps=steps,
                 ),
             )
