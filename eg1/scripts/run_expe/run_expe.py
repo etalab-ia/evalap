@@ -87,7 +87,10 @@ def run_expe(args):
         "cv": {"common_params": common_params, "grid_params": grid_params, "repeat": 1},
     }
 
-    headers = {"Authorization": f"Bearer {eg1_token}"}
+    headers = {
+        "Authorization": f"Bearer {eg1_token}",
+        "Content-Encoding": "gzip",
+    }
     if expid is None:
         # POST the expset
         response = requests.post(f"{eg1_url}/experiment_set", json=expset, headers=headers)
