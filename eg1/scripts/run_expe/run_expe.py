@@ -28,7 +28,7 @@ from docopt import docopt
 
 from eg1.utils import log_and_raise_for_status
 
-eg1_url = "https://eg1.etalab.gouv.fr/v1"
+eg1_url = "https://eg1.dev.etalab.gouv.fr/v1"
 
 
 def run_expe(args):
