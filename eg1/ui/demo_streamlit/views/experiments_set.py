@@ -12,6 +12,7 @@ import plotly.express as px
 import streamlit as st
 from utils import fetch, hash_string
 
+
 #
 # Cached method for critical data fetching
 #
@@ -523,8 +524,10 @@ def display_experiment_set_score(experimentset, experiments_df):
 
         return highlight_df
 
+    float_columns = df.select_dtypes(include=['float']).columns
     st.dataframe(
-        df.style.apply(highlight_min_max, axis=None),  # Apply styling
+        # Apply styling
+        df.style.apply(highlight_min_max, axis=None).format("{:.2f}", subset=float_columns),
         use_container_width=True,
         hide_index=True,
         column_config={"Id": st.column_config.TextColumn(width="small")},
@@ -720,7 +723,7 @@ def display_ops_analysis(experimentset):
 def show_header(experimentset):
     status, counts = _get_expset_status(experimentset)
     st.markdown(f"## {experimentset['name']}")
-    col1, col2 = st.columns([1 / 20, 1])
+    col1, col2 = st.columns([1 / 12, 1])
     with col1:
         st.markdown(f"**Id**: {experimentset['id']}")
     with col2:
