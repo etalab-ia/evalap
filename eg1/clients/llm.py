@@ -73,7 +73,7 @@ class LlmApiModels:
             try:
                 response.raise_for_status()
             except requests.exceptions.RequestException as e:
-                logger.error(f"Model discovery error: {e}")
+                logger.warning(f"Model discovery error: {e}")
                 continue
             models_data = response.json()
             setattr(self, provider, {model["id"] for model in models_data["data"]})
