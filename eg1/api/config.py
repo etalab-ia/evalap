@@ -40,7 +40,7 @@ API_PREFIX = ""
 # Runners
 MAX_CONCURRENT_TASKS = 8  # 8 ok, 16 hard !
 DEFAULT_JUDGE_MODEL = "gpt-4o-mini"
-MCP_BRIDGE_URL = os.getenv("MCP_BRIDGE_URL", "http://localhost:9092")
+MCP_BRIDGE_URL = os.getenv("MCP_BRIDGE_URL", "http://172.18.0.1:9092")
 ZMQ_WORKER_URL = "tcp://localhost:5556"
 ZMQ_SENDER_URL = "tcp://localhost:5555"
 
