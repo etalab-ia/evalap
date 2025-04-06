@@ -139,6 +139,7 @@ class Answer(Base):
     nb_tokens_prompt = Column(Integer)
     nb_tokens_completion = Column(Integer)
     nb_tool_calls = Column(Integer)
+    context = Column(JSON)  # list[str]
     retrieval_context = Column(JSON)  # list[str]
     tool_steps = Column(JSON)  # list[list[dict]]
 
