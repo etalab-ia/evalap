@@ -60,9 +60,7 @@ def create_object_from_dict(db, model, data):
             related_obj = create_object_from_dict(db, rel_model, rel_data)
             setattr(obj, rel_name, related_obj)
         else:
-            raise NotImplementedError(
-                f"Unknonw type for relationtioship {rel_name}:{type(rel_data)}"
-            )
+            raise NotImplementedError(f"Unknonw type for relationtioship {rel_name}:{type(rel_data)}")
 
     return obj
 
@@ -110,9 +108,7 @@ class Result(Base):
     experiment_id = Column(Integer, ForeignKey("experiments.id"))
     experiment = relationship("Experiment", back_populates="results")
     # Many
-    observation_table = relationship(
-        "ObservationTable", back_populates="result", cascade="all, delete-orphan"
-    )
+    observation_table = relationship("ObservationTable", back_populates="result", cascade="all, delete-orphan")
 
 
 class ObservationTable(Base):
@@ -129,9 +125,7 @@ class ObservationTable(Base):
     result_id = Column(Integer, ForeignKey("results.id"))
     result = relationship("Result", back_populates="observation_table")
 
-    __table_args__ = (
-        UniqueConstraint("num_line", "result_id", name="_metric_num_line_unique_constraint"),
-    )
+    __table_args__ = (UniqueConstraint("num_line", "result_id", name="_metric_num_line_unique_constraint"),)
 
 
 class Answer(Base):
@@ -193,9 +187,7 @@ class Experiment(Base):
     results = relationship("Result", back_populates="experiment")  # len == #metrics
     answers = relationship("Answer", back_populates="experiment")  # len == #dataset.df
 
-    __table_args__ = (
-        UniqueConstraint("experiment_set_id", "name", name="_expset_name_unique_constraint"),
-    )
+    __table_args__ = (UniqueConstraint("experiment_set_id", "name", name="_expset_name_unique_constraint"),)
 
 
 class ExperimentSet(Base):

@@ -25,9 +25,9 @@ def _fix_answer_num_count(db, db_exp, commit=True):
     counts = (
         db.query(
             func.count(models.Answer.id).label("num_try"),
-            func.count(
-                case(((models.Answer.answer != None) & (models.Answer.error_msg == None), 1))
-            ).label("num_success"),
+            func.count(case(((models.Answer.answer != None) & (models.Answer.error_msg == None), 1))).label(
+                "num_success"
+            ),
         )
         .filter(models.Answer.experiment_id == db_exp.id)
         .one()
@@ -50,8 +50,7 @@ def _fix_result_num_count(db, result, commit=True):
             func.count(
                 case(
                     (
-                        (models.ObservationTable.score != None)
-                        & (models.ObservationTable.error_msg == None),
+                        (models.ObservationTable.score != None) & (models.ObservationTable.error_msg == None),
                         1,
                     )
                 )
@@ -85,11 +84,7 @@ def dispatch_tasks(db, db_exp, message_type: MessageType):
         df = pd.read_json(StringIO(db_exp.dataset.df))
         for num_line, row in df.iterrows():
             # Do not rerun if answer already exist with no error
-            r = (
-                db.query(models.Answer)
-                .filter_by(num_line=num_line, experiment_id=db_exp.id)
-                .first()
-            )
+            r = db.query(models.Answer).filter_by(num_line=num_line, experiment_id=db_exp.id).first()
             if r and r.answer and not r.error_msg:
                 continue
             elif r:
@@ -185,9 +180,7 @@ def dispatch_retries(db, retry_runs: schemas.RetryRuns):
         # Failed
         num_line_added = []
         for answer in db_exp.answers:
-            if (
-                answer.answer is not None and not answer.error_msg
-            ):  # @TODO: add a is_failed columns !
+            if answer.answer is not None and not answer.error_msg:  # @TODO: add a is_failed columns !
                 continue
 
             answer.error_msg = None
@@ -205,9 +198,7 @@ def dispatch_retries(db, retry_runs: schemas.RetryRuns):
         db.commit()  # for obs.error_msg
 
         # unfinished
-        num_lines = (
-            db.query(models.Answer.num_line).filter(models.Answer.experiment_id == expid).all()
-        )
+        num_lines = db.query(models.Answer.num_line).filter(models.Answer.experiment_id == expid).all()
         num_lines = [num_line[0] for num_line in num_lines]
         num_lines_missing = [
             i for i in range(db_exp.dataset.size) if i not in num_line_added and i not in num_lines

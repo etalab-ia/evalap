@@ -239,7 +239,9 @@ def create_experimentset(db: Session, experimentset: schemas.ExperimentSetCreate
     return db_expset
 
 
-def get_experimentsets(db: Session, skip: int = 0, limit: int = 100, backward: bool = False) -> list[models.ExperimentSet]:
+def get_experimentsets(
+    db: Session, skip: int = 0, limit: int = 100, backward: bool = False
+) -> list[models.ExperimentSet]:
     query = db.query(models.ExperimentSet)
     if backward:
         query = query.order_by(models.ExperimentSet.id.desc())

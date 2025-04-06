@@ -524,7 +524,7 @@ def display_experiment_set_score(experimentset, experiments_df):
 
         return highlight_df
 
-    float_columns = df.select_dtypes(include=['float']).columns
+    float_columns = df.select_dtypes(include=["float"]).columns
     st.dataframe(
         # Apply styling
         df.style.apply(highlight_min_max, axis=None).format("{:.2f}", subset=float_columns),
@@ -534,7 +534,7 @@ def display_experiment_set_score(experimentset, experiments_df):
     )
 
     st.write("---")
-    st.write(f"**Support:** the number of item on wich the metrics is computed (size = {size})")
+    st.write(f"**Support:** the numbers of item on wich the metrics is computed (total items = {size})")
     st.dataframe(
         df_support,
         use_container_width=True,
@@ -768,7 +768,7 @@ def main():
             )
         elif expid == "orphan":
             experimentset = {
-                "id":None,
+                "id": None,
                 "name": "Orphan experiments",
                 "created_at": "",
                 "experiments": fetch("get", "/experiments", {"orphan": True, "backward": True}),
