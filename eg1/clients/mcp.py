@@ -86,6 +86,9 @@ def multi_step_generate(
     cpt = 0
     steps: list[list[dict]] = []  # list of tools calls
     aiclient = LlmClient(base_url=model_base_url, api_key=model_api_key)
+    if "tools" in sampling_params:
+        sampling_params = sampling_params | {"tool_choice": "auto"}
+
     while cpt < max_step:
         cpt += 1
         result = aiclient.generate(model=model_name, messages=messages, **sampling_params)
@@ -118,7 +121,7 @@ def multi_step_generate(
                 tool_content = [{"type": "text", "text": "the tool call result is empty"}]
             elif len(tool_content) > 1:
                 logger.warning("Tool call content size is greater than 1 for {tool_call.function.name}")
-            tool_content = "\n".join([x["text"] for x in tool_content])
+            tool_content = "\n\n".join([x["text"] for x in tool_content])
             messages.append(
                 {
                     "role": "tool",
