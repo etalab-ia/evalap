@@ -98,6 +98,12 @@ def run_model(args):
     eg1_token = args["--eg1-token"] or os.getenv("EG1_API_KEY")
     system_prompt = args["--system-prompt"]
     sampling_params = args["--sampling-params"]
+    if sampling_params:
+        try:
+            sampling_params = json.loads(sampling_params)
+        except json.JSONDecodeError as e:
+            print(f"Error parsing sampling_params: {e}")
+            return
     extra_params = args["--extra-params"]
     max_workers = int(args["--max-workers"])
     repeat = int(args["--repeat"])
