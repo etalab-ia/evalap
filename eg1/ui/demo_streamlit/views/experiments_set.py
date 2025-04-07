@@ -502,7 +502,7 @@ def display_experiment_set_score(experimentset, experiments_df):
         f"</span>", 
         unsafe_allow_html=True
     )
-    elif available_judges == [""No_judge_found""]:
+    elif available_judges == ["No_judge_found"]:
         st.warning("No judge_model foubnd in this ExperimentSet")
 
     rows = []
