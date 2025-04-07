@@ -105,6 +105,12 @@ def run_model(args):
             print(f"Error parsing sampling_params: {e}")
             return
     extra_params = args["--extra-params"]
+    if extra_params:
+        try:
+            extra_params = json.loads(extra_params)
+        except json.JSONDecodeError as e:
+            print(f"Error parsing extra_params: {e}")
+            return
     max_workers = int(args["--max-workers"])
     repeat = int(args["--repeat"])
 
