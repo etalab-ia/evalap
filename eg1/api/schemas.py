@@ -173,6 +173,7 @@ class ModelRaw(EgBaseModel):
     nb_tokens_prompt: list[int] | None = None
     nb_tokens_completion: list[int] | None = None
     nb_tool_calls: list[int] | None = None
+    context: list[list[str]] | None = None
     retrieval_context: list[list[str]] | None = None
 
 
@@ -286,6 +287,7 @@ class ExperimentCreate(ExperimentBase):
                         nb_tokens_prompt=m.nb_tokens_prompt[i] if m.nb_tokens_prompt else None,
                         nb_tokens_completion=m.nb_tokens_completion[i] if m.nb_tokens_completion else None,
                         nb_tool_calls=m.nb_tool_calls[i] if m.nb_tool_calls else None,
+                        context=m.context[i] if m.context else None,
                         retrieval_context=m.retrieval_context[i] if m.retrieval_context else None,
                     )
                 )  # fmt: skip
@@ -309,7 +311,7 @@ class ExperimentCreate(ExperimentBase):
                 "Either provide a dataset with the 'query' field to generate the answer or with an 'output' field if have generated it yourself."
             )
         # Schema validation on all require fields
-        DEBUG_EXCEPTION_REQUIRE = ["retrieval_context"]
+        DEBUG_EXCEPTION_REQUIRE = ["context", "retrieval_context"] # fetch at runtime with tooling
         require_fields = {
             require
             for metric in self.metrics
