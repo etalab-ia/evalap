@@ -12,12 +12,12 @@ jobs:
   build-and-push:
     # Skip if commit message starts with specific strings
     if: >
-      !startsWith(toLower(github.event.head_commit.message), 'update readme') &&
-      !startsWith(toLower(github.event.head_commit.message), 'update changelog') &&
-      !startsWith(toLower(github.event.head_commit.message), 'update package') &&
-      !startsWith(toLower(github.event.head_commit.message), 'update justfile') &&
-      !startsWith(toLower(github.event.head_commit.message), 'ci skip') &&
-      !startsWith(toLower(github.event.head_commit.message), 'skip ci')
+      !startsWith(github.event.head_commit.message, 'Update Readme') &&
+      !startsWith(github.event.head_commit.message, 'Update Changelog') &&
+      !startsWith(github.event.head_commit.message, 'Update package') &&
+      !startsWith(github.event.head_commit.message, 'Update justfile') &&
+      !startsWith(github.event.head_commit.message, 'CI skip') &&
+      !startsWith(github.event.head_commit.message, 'skip CI')
     name: Build and push from ${{ github.ref_name }}/${{ github.sha }}
     outputs:
       commit_title: ${{ steps.get_head_commit_title.outputs.title }}
