@@ -13,8 +13,8 @@ This project provides an API to evaluate [LLM] models and an interface to naviga
 For guidance on how to use this project, please refer to the following resources:
 
 - the demo notebooks: [notebooks/](notebooks/)
-- The api reference: https://eg1.etalab.gouv.fr/redoc
-- The user-friendly interface: https://eg1.etalab.gouv.fr/
+- The api reference: https://eg1.dev.etalab.gouv.fr/redoc
+- The user-friendly interface: https://eg1.dev.etalab.gouv.fr/
 
 ## Contributing
 

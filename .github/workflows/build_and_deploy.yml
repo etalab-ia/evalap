@@ -16,6 +16,8 @@ jobs:
       !startsWith(github.event.head_commit.message, 'Update Changelog') &&
       !startsWith(github.event.head_commit.message, 'Update package') &&
       !startsWith(github.event.head_commit.message, 'Update justfile') &&
+      !startsWith(github.event.head_commit.message, 'Update notebook') &&
+      !startsWith(github.event.head_commit.message, 'Add notebook') &&
       !startsWith(github.event.head_commit.message, 'CI skip') &&
       !startsWith(github.event.head_commit.message, 'skip CI')
     name: Build and push from ${{ github.ref_name }}/${{ github.sha }}
