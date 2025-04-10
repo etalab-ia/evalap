@@ -86,7 +86,7 @@ def multi_step_generate(
     cpt = 0
     steps: list[list[dict]] = []  # list of tools calls
     aiclient = LlmClient(base_url=model_base_url, api_key=model_api_key)
-    if "tools" in sampling_params:
+    if "tools" in sampling_params and "tool_choice" not in sampling_params:
         sampling_params = sampling_params | {"tool_choice": "auto"}
 
     while cpt < max_step:
