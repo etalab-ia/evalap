@@ -15,9 +15,9 @@ clean:
 list-albert-model env="prod":
   #!/usr/bin/env sh
   if [ "{{env}}" = "prod" ]; then
-    curl -XGET -H "Authorization: Bearer $ALBERT_API_KEY"  https://albert.api.etalab.gouv.fr/v1/models | jq '.data.[] | {id, type, owned_by}'
+    curl -XGET -H "Authorization: Bearer $ALBERT_API_KEY"  https://albert.api.etalab.gouv.fr/v1/models | jq '.data.[] | {id, type, owned_by, aliases}'
   elif [ "{{env}}" = "staging" ]; then
-    curl -XGET -H "Authorization: Bearer $ALBERT_API_KEY_STAGING"  https://albert.api.staging.etalab.gouv.fr/v1/models | jq '.data.[] | {id, type, owned_by}'
+    curl -XGET -H "Authorization: Bearer $ALBERT_API_KEY_STAGING"  https://albert.api.staging.etalab.gouv.fr/v1/models | jq '.data.[] | {id, type, owned_by, aliases}'
   fi
 
 chat-completion model="mistralai/Mistral-Small-3.1-24B-Instruct-2503" provider="albert":
