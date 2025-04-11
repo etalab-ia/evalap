@@ -96,15 +96,17 @@ def multi_step_generate(
         cpt += 1
         result = aiclient.generate(model=model_name, messages=messages, **sampling_params)
         completion = result.choices[0]
+        # Add the completion result to messages
+        messages.append(completion.message.model_dump())
+
+        # Check if finished
         if completion.finish_reason in [None, "", "stop", "length"] or mcp_bridge is None:
             break
 
         # MCP/toolings loop
         # --
-        # Add the completion result to messages
         if completion.finish_reason not in ["tool_calls"]:
             logger.warning("Unknown LLM finish reason: %s" % completion.finish_reason)
-        messages.append(completion.message.model_dump())
         # If tool_calls, loop over the tool and execute @FUTURE async.gather for concurent execution
         substeps = []
         for tool_call in completion.message.tool_calls or []:
