@@ -80,9 +80,9 @@ def generate_answer(message: dict, mcp_bridge: MCPBridgeClient | None):
             # Thinking token extraction (@DEBUG: start sometimes missing ?)
             think, tag, answer = answer.partition("</think>")
             if tag:
-                think = think + tag
+                think = (think + tag).strip()
             else:
-                answer = think
+                answer = think.strip()
                 think = None
 
             # Upsert answer
