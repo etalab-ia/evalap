@@ -1,7 +1,8 @@
 import re
+from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -11,6 +12,7 @@ from eg1.api.db import get_db
 from eg1.api.errors import CustomIntegrityError, SchemaError
 from eg1.api.metrics import Metric, metric_registry
 from eg1.api.security import admin_only
+from eg1.clients import MCPBridgeClient, multi_step_generate, LlmClient
 from eg1.logger import logger
 from eg1.runners import dispatch_retries, dispatch_tasks
 
@@ -447,6 +449,91 @@ def read_leaderboard(
 @router.get("/ops_metrics", response_model=schemas.OpsMetrics, tags=["ops"])
 def read_ops_metrics(db: Session = Depends(get_db)):
     return crud.get_ops_metrics(db)
+
+
+#
+# Generate
+#
+
+
+class GenerateInput(BaseModel):
+    model: str
+    query: str
+    prompt_system: str | None = None
+    sampling_params: dict | None = None
+    extra_params: dict | None = None
+
+
+def _generate(input: GenerateInput):
+    # MCP Bridge client initalization
+    try:
+        mcp_bridge = MCPBridgeClient()
+    except Exception as e:
+        logger.warning(
+            "MCP bridge is not responding, MCP will not be used."
+            f"Reason: {e}"
+        )  # fmt: skip
+        mcp_bridge = None
+
+    # Build Smpling params
+    sampling_params_plus = (input.sampling_params or {}) | ( input.extra_params or {})
+
+    # Build tools input
+    _tools = sampling_params_plus.pop("_tools_", None)
+    if _tools and mcp_bridge:
+        tools = mcp_bridge.tools2openai(_tools)
+        sampling_params_plus["tools"] = tools
+
+    # Build messages
+    messages = [{"role": "user", "content": input.query}]
+    if input.prompt_system:
+        messages = [{"role": "system", "content": input.prompt_system}] + messages
+
+    _aiclient = LlmClient()
+    url, headers = _aiclient.get_url_and_headers(input.model)
+    api_key = headers["Authorization"].split()[-1]
+    result, steps = multi_step_generate(
+        model_base_url=url,
+        model_api_key=api_key,
+        model_name=input.model,
+        messages=messages,
+        sampling_params=sampling_params_plus,
+        mcp_bridge=mcp_bridge,
+    )
+
+    return result, steps
+
+
+@router.post("/generate", response_model=schemas.Answer, tags=["generate"])
+async def generate(
+    input: GenerateInput, db: Session = Depends(get_db)
+):
+    answer = None
+    think = None
+    error_msg = None
+    result, steps = _generate(input)
+    try:
+        answer = result.choices[0].message.content
+        if answer:
+            think, tag, answer = answer.partition("</think>")
+            if tag:
+                think = (think + tag).strip()
+            else:
+                answer = think.strip()
+                think = None
+    except Exception as e:
+        error_msg = str(e)
+
+    return schemas.Answer(
+        id=-1,
+        created_at=datetime.now(),
+        answer=answer,
+        think=think,
+        num_line=0,
+        error_msg=error_msg,
+        execution_time=-1,
+        tool_steps=steps,
+    )
 
 
 #
