@@ -1,6 +1,7 @@
 import json
 
 import requests
+from collection import defaultdict
 
 from eg1.api.config import MCP_BRIDGE_URL
 from eg1.clients import ChatCompletionResponse, LlmClient
@@ -82,9 +83,11 @@ def multi_step_generate(
     sampling_params: dict,
     mcp_bridge: MCPBridgeClient | None = None,
     max_steps=10,
+    max_steps_search=2,
 ) -> (ChatCompletionResponse, list[list[dict]]):
     cpt = 0
     steps: list[list[dict]] = []  # list of tools calls
+    tools_count = defaultdict(int)
     aiclient = LlmClient(base_url=model_base_url, api_key=model_api_key)
     if "tools" in sampling_params and "tool_choice" not in sampling_params:
         sampling_params = sampling_params | {"tool_choice": "auto"}
@@ -138,12 +141,17 @@ def multi_step_generate(
                 }
             )
 
+            tools_count[tool_call.function.name] += 1
+            # Avoid deep search recursion
+            if tool_call.function.name.startswith("search") and tools_count[tool_call.function.name] >= max_steps_search:
+                cpt = max_steps
+
         steps.append(substeps)
 
     # if max_steps has been reached
     if messages[-1]["role"] == "tool":
-        logger.warning(f"Multi-step agents maxt step has been reached for model {model_name}.")
-        sampling_params["tool_choice"] = None
+        logger.warning(f"Multi-step agents max steps has been reached for model {model_name}.")
+        sampling_params["tool_choice"] = "none"
         result = aiclient.generate(model=model_name, messages=messages, **sampling_params)
 
     return result, steps
