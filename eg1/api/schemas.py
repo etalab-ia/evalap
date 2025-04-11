@@ -311,7 +311,7 @@ class ExperimentCreate(ExperimentBase):
                 "Either provide a dataset with the 'query' field to generate the answer or with an 'output' field if have generated it yourself."
             )
         # Schema validation on all require fields
-        DEBUG_EXCEPTION_REQUIRE = ["context", "retrieval_context"] # fetch at runtime with tooling
+        DEBUG_EXCEPTION_REQUIRE = ["context", "retrieval_context"]  # fetch at runtime with tooling
         require_fields = {
             require
             for metric in self.metrics
@@ -432,6 +432,11 @@ class ExperimentSetCreate(ExperimentSetBase):
             obj["experiments"] = experiments
         elif self.experiments is None:
             obj.pop("experiments")
+
+        # Ensure judge_model are all equal
+        if obj["experiments"]:
+            if len(set([x["judge_model"] for x in obj["experiments"] if x["judge_model"]])) > 1:
+                raise SchemaError("The juge_model must be the same for all experiments in a set.")
 
         return obj
 
