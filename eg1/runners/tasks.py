@@ -65,15 +65,25 @@ def generate_answer(message: dict, mcp_bridge: MCPBridgeClient | None):
                 )
 
             answer = result.choices[0].message.content
+            think = None
             steps = steps or None
             context = None
             retrieval_context = None
+
             # RAG and context decoding from tools steps result
             if steps:
                 context = [x["tool_result"] for step in steps for x in step]
                 retrieval_context = [x for c in context for x in c.split("\n---\n")]
                 if len(context) == len(retrieval_context):
                     retrieval_context = None
+
+            # Thinking token extraction (@DEBUG: start sometimes missing ?)
+            think, tag, answer = answer.partition("</think>")
+            if tag:
+                think = think + tag
+            else:
+                answer = think
+                think = None
 
             # Upsert answer
             crud.upsert_answer(
@@ -82,6 +92,7 @@ def generate_answer(message: dict, mcp_bridge: MCPBridgeClient | None):
                 msg.line_id,
                 dict(
                     answer=answer,
+                    think=think,
                     execution_time=timer.execution_time,
                     nb_tokens_prompt=result.usage.prompt_tokens,
                     nb_tokens_completion=result.usage.completion_tokens,
