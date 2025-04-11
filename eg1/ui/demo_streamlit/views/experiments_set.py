@@ -466,28 +466,14 @@ def display_experiment_set_score(experimentset, experiments_df):
     with col1:
         st.write("**Score:** Averaged score on experiments metrics")
     with col2:
-        # Select model judge for pertinent analysis
-        selected_judge = st.selectbox(
-            "Filter per model judge", options=["All"] + available_judges, index=0, key="judge_filter"
-        )
+        st.write(f"**Judge model:** {available_judges[0] if available_judges else 'No judge found'}")
 
-    if selected_judge != "All":
-        st.markdown(
-            f"<span style='color: green; font-weight: bold; font-size: 1.1em'>"
-            f"&#x2714; Active filter : judge_model = {selected_judge}"
-            f"</span>",
-            unsafe_allow_html=True,
-        )
-    elif available_judges == ["No_judge_found"]:
-        st.warning("No judge_model foubnd in this ExperimentSet")
+    if len(available_judges) > 1:
+        st.warning(f"Multiple judge models found: {', '.join(available_judges)}")
 
     rows = []
     rows_support = []
     for expe in experiments:
-        if selected_judge and selected_judge != "All":
-            if expe.get("judge_model") != selected_judge:
-                continue
-
         row = {}
         row_support = {}
 
