@@ -78,12 +78,13 @@ def generate_answer(message: dict, mcp_bridge: MCPBridgeClient | None):
                     retrieval_context = None
 
             # Thinking token extraction (@DEBUG: start sometimes missing ?)
-            think, tag, answer = answer.partition("</think>")
-            if tag:
-                think = (think + tag).strip()
-            else:
-                answer = think.strip()
-                think = None
+            if answer:
+                think, tag, answer = answer.partition("</think>")
+                if tag:
+                    think = (think + tag).strip()
+                else:
+                    answer = think.strip()
+                    think = None
 
             # Upsert answer
             crud.upsert_answer(

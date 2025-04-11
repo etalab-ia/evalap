@@ -328,7 +328,7 @@ def _rename_model_variants(experiments: list) -> list:
 
         for model in names:
             pos = next((x for x in ids if model["pos"] == x), None)
-            if not pos:
+            if pos is None:
                 continue
 
             # Finally renamed it !
