@@ -1,7 +1,7 @@
 import json
 
 import requests
-from collection import defaultdict
+from collections import defaultdict
 
 from eg1.api.config import MCP_BRIDGE_URL
 from eg1.clients import ChatCompletionResponse, LlmClient
