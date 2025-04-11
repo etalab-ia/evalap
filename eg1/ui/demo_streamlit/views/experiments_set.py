@@ -523,7 +523,10 @@ def display_experiment_set_score(experimentset, experiments_df):
 
     # To highlight min/max values in each column
     def highlight_min_max(df):
+        # Create an empty DataFrame with the same shape as our original
         highlight_df = pd.DataFrame("", index=df.index, columns=df.columns)
+
+        # For each column, find the min and max values and style them
         for col in df.columns:
             if col in ["id", "Id"]:
                 continue
@@ -534,10 +537,12 @@ def display_experiment_set_score(experimentset, experiments_df):
                 min_idx = col_means.idxmin()
                 highlight_df.loc[max_idx, col] = "font-weight: bold; color: green"
                 highlight_df.loc[min_idx, col] = "font-weight: bold; color: red"
+
         return highlight_df
 
     float_columns = df.select_dtypes(include=["float"]).columns
     st.dataframe(
+        # Apply styling
         df.style.apply(highlight_min_max, axis=None).format("{:.2f}", subset=float_columns),
         use_container_width=True,
         hide_index=True,
