@@ -76,7 +76,9 @@ class LlmApiModels:
                 logger.warning(f"Model discovery error: {e}")
                 continue
             models_data = response.json()
-            setattr(self, provider, {model["id"] for model in models_data["data"]})
+            models = {model["id"] for model in models_data["data"]}
+            models |= {alias for model in models_data["data"] for alias in (model.get("aliases") or [])}
+            setattr(self, provider, models)
 
         return self
 
