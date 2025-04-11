@@ -437,7 +437,7 @@ class ExperimentSetCreate(ExperimentSetBase):
             obj.pop("experiments")
 
         # Ensure judge_model are all equal
-        if obj["experiments"]:
+        if obj.get("experiments"):
             if len(set([x["judge_model"] for x in obj["experiments"] if x["judge_model"]])) > 1:
                 raise SchemaError("The juge_model must be the same for all experiments in a set.")
 

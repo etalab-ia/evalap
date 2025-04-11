@@ -81,7 +81,7 @@ def multi_step_generate(
     messages: list,
     sampling_params: dict,
     mcp_bridge: MCPBridgeClient | None = None,
-    max_step=10,
+    max_steps=10,
 ) -> (ChatCompletionResponse, list[list[dict]]):
     cpt = 0
     steps: list[list[dict]] = []  # list of tools calls
@@ -89,11 +89,10 @@ def multi_step_generate(
     if "tools" in sampling_params and "tool_choice" not in sampling_params:
         sampling_params = sampling_params | {"tool_choice": "auto"}
 
-    while cpt < max_step:
+    while cpt < max_steps:
         cpt += 1
         result = aiclient.generate(model=model_name, messages=messages, **sampling_params)
         completion = result.choices[0]
-
         if completion.finish_reason in [None, "", "stop", "length"] or mcp_bridge is None:
             break
 
@@ -140,5 +139,11 @@ def multi_step_generate(
             )
 
         steps.append(substeps)
+
+    # if max_steps has been reached
+    if messages[-1]["role"] == "tool":
+        logger.warning(f"Multi-step agents maxt step has been reached for model {model_name}.")
+        sampling_params["tool_choice"] = None
+        result = aiclient.generate(model=model_name, messages=messages, **sampling_params)
 
     return result, steps
