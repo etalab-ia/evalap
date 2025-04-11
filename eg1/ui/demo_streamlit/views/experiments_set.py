@@ -406,7 +406,7 @@ def _format_model_params(expe):
         return None
 
     model = expe["model"].copy()
-    model_params = model.get("sampling_params") or {} | (model.get("extra_params") or {})
+    model_params = (model.get("sampling_params") or {}) | (model.get("extra_params") or {})
     if model.get("prompt_system"):
         model_params["sys_prompt"] = hash_string(model["prompt_system"], 4)
 
@@ -808,11 +808,10 @@ def main():
                 {
                     "Id": expe["id"],
                     "Name": expe["name"],
-                    "Model": (
-                        (expe["model"]["aliased_name"] or expe["model"]["name"])
-                        if expe.get("model")
-                        else "Undefined model"
-                    ),
+                    "Dataset": expe["dataset"]["name"],
+                    "Model": (expe["model"]["aliased_name"] or expe["model"]["name"])
+                    if expe.get("model")
+                    else "Undefined model",
                     "Model params": _format_model_params(expe),
                     "Status": expe["experiment_status"],
                     "Created at": expe["created_at"],

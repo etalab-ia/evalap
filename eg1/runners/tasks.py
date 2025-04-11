@@ -65,11 +65,25 @@ def generate_answer(message: dict, mcp_bridge: MCPBridgeClient | None):
                 )
 
             answer = result.choices[0].message.content
+            think = None
             steps = steps or None
+            context = None
             retrieval_context = None
-            # MFS AD-HOC solution to get the retriever context
-            if hasattr(result, "search_results"):
-                retrieval_context = [x.chunk.content for x in result.search_results]
+
+            # RAG and context decoding from tools steps result
+            if steps:
+                context = [x["tool_result"] for step in steps for x in step]
+                retrieval_context = [x for c in context for x in c.split("\n---\n")]
+                if len(context) == len(retrieval_context):
+                    retrieval_context = None
+
+            # Thinking token extraction (@DEBUG: start sometimes missing ?)
+            think, tag, answer = answer.partition("</think>")
+            if tag:
+                think = (think + tag).strip()
+            else:
+                answer = think.strip()
+                think = None
 
             # Upsert answer
             crud.upsert_answer(
@@ -78,9 +92,11 @@ def generate_answer(message: dict, mcp_bridge: MCPBridgeClient | None):
                 msg.line_id,
                 dict(
                     answer=answer,
+                    think=think,
                     execution_time=timer.execution_time,
                     nb_tokens_prompt=result.usage.prompt_tokens,
                     nb_tokens_completion=result.usage.completion_tokens,
+                    context=context,
                     retrieval_context=retrieval_context,
                     nb_tool_calls=sum(len(s) for s in steps) if steps else 0,
                     tool_steps=steps,
@@ -144,10 +160,12 @@ def generate_observation(message: dict, mcp_bridge: MCPBridgeClient):
             metadata["nb_tokens_completion"] = answer.nb_tokens_completion
             metadata["nb_tool_calls"] = answer.nb_tool_calls
             metadata["retrieval_context"] = answer.retrieval_context
+            metadata["context"] = answer.context
         try:
             # Generate observation/metric
             # --
             # Get the metric from registry
+            ignore_error = False
             metric = metric_registry.get_metric(msg.metric_name)
             metric_fun = metric_registry.get_metric_function(msg.metric_name)
             if not metric_fun:
@@ -170,7 +188,11 @@ def generate_observation(message: dict, mcp_bridge: MCPBridgeClient):
                     metric_params[require] = metadata.get(require)
 
                 if not metric_params[require]:
+                    if require in ["context", "retrieval_context"]:
+                        # A rely in the function calling now, it might not generate result just because the llm don't need it
+                        ignore_error = True
                     raise ValueError(f"The metric {msg.metric_name} require a non null {require} value.")
+
             # Extra metric params
             metric_params["model"] = result.experiment.judge_model or DEFAULT_JUDGE_MODEL
 
@@ -200,9 +222,13 @@ def generate_observation(message: dict, mcp_bridge: MCPBridgeClient):
             )
 
         except Exception as e:
-            error_msg = f"Observation {msg.metric_name} failed with error: %s" % e
-            logging.debug(traceback.print_exc())
-            logging.error(error_msg)
+            if ignore_error:
+                error_msg = f"Ignoring {msg.metric_name} with missing require field."
+                logging.warning(error_msg)
+            else:
+                error_msg = f"Observation {msg.metric_name} failed with error: %s" % e
+                logging.debug(traceback.print_exc())
+                logging.error(error_msg)
         finally:
             # Ensure atomic transaction
             stmt = (
@@ -210,7 +236,7 @@ def generate_observation(message: dict, mcp_bridge: MCPBridgeClient):
                 .where(models.Result.id == result.id)
                 .values(
                     num_try=models.Result.num_try + 1,
-                    num_success=models.Result.num_success + (1 if score is not None else 0),
+                    num_success=models.Result.num_success + (1 if (score is not None or ignore_error) else 0),
                 )
                 .returning(models.Result)
             )

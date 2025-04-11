@@ -15,27 +15,51 @@ clean:
 list-albert-model env="prod":
   #!/usr/bin/env sh
   if [ "{{env}}" = "prod" ]; then
-    curl -XGET -H "Authorization: Bearer $ALBERT_API_KEY"  https://albert.api.etalab.gouv.fr/v1/models | jq '.data.[] | {id, type}'
+    curl -XGET -H "Authorization: Bearer $ALBERT_API_KEY"  https://albert.api.etalab.gouv.fr/v1/models | jq '.data.[] | {id, type, owned_by, aliases}'
   elif [ "{{env}}" = "staging" ]; then
-    curl -XGET -H "Authorization: Bearer $ALBERT_API_KEY_STAGING"  https://albert.api.staging.etalab.gouv.fr/v1/models | jq '.data.[] | {id, type}'
+    curl -XGET -H "Authorization: Bearer $ALBERT_API_KEY_STAGING"  https://albert.api.staging.etalab.gouv.fr/v1/models | jq '.data.[] | {id, type, owned_by, aliases}'
   fi
 
 chat-completion model="mistralai/Mistral-Small-3.1-24B-Instruct-2503" provider="albert":
   #!/usr/bin/env sh
   if [ "{{provider}}" = "albert" ]; then
-    URL="https://albert.api.etalab.gouv.fr/v1"
+    URL="https://albert.api.staging.etalab.gouv.fr/v1"
   fi
 
   curl  "$URL/chat/completions" \
       -H "Content-Type: application/json" \
-      -H "Authorization: Bearer $ALBERT_API_KEY" \
+      -H "Authorization: Bearer $ALBERT_API_KEY_STAGING" \
       -d '{
         "model": "{{model}}",
         "messages": [
           {"role": "system", "content": "Answer dramatically and with emojis."},
           {"role": "user", "content": "Combien de fois 'p' dans développer ? Combien font 2*10+50-20 ?"}
         ]
-      }' | jq
+      }' 
+
+chat-completion-cortex:
+  #!/usr/bin/env bash
+  models_and_urls=(
+    "https://model1.multivacplatform.org/v1|$CORTEX_API_KEY|meta-llama/Llama-3.2-3B-Instruct"
+    "https://model2.multivacplatform.org/v1|$CORTEX_API_KEY|deepseek-ai/DeepSeek-R1-Distill-Qwen-32B"
+    "https://model4.multivacplatform.org/v1|$CORTEX_API_KEY|meta-llama/Llama-3.3-70B-Instruct"
+  )
+
+  for entry in "${models_and_urls[@]}"; do
+    IFS='|' read -r url key model <<< "$entry"
+
+    curl "$url/chat/completions" \
+         -H "Content-Type: application/json" \
+         -H "Authorization: Bearer $key" \
+         -d '{
+           "model": "'"$model"'",
+           "messages": [
+             {"role": "system", "content": "Answer dramatically and with emojis."},
+             {"role": "user", "content": "Combien de fois 'p' dans développer ? Combien font 2*10+50-20 ?"}
+           ]
+           }' | jq
+    done
+
 
 #
 # Alembic commands
