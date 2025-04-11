@@ -98,7 +98,7 @@ def display_model_production(model_info: dict, default_metric: str) -> None:
             st.info(f"No results found for experiment {exp_id}")
             return
 
-        metrics_data = {"Model": model_name}
+        metrics_data = {"Model": model_name, "Judge_model": results["judge_model"]}
         tokens, times = [], []
 
         for result in results["results"]:
@@ -128,7 +128,6 @@ def display_model_production(model_info: dict, default_metric: str) -> None:
 
             if tokens_per_second:
                 metrics_data["tokens_per_second"] = round(np.mean(tokens_per_second), 2)
-
         df = pd.DataFrame([metrics_data])
         st.dataframe(df)
 
