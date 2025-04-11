@@ -509,10 +509,18 @@ async def generate(
     input: GenerateInput, db: Session = Depends(get_db)
 ):
     answer = None
+    think = None
     error_msg = None
     result, steps = _generate(input)
     try:
         answer = result.choices[0].message.content
+        if answer:
+            think, tag, answer = answer.partition("</think>")
+            if tag:
+                think = (think + tag).strip()
+            else:
+                answer = think.strip()
+                think = None
     except Exception as e:
         error_msg = str(e)
 
@@ -520,6 +528,7 @@ async def generate(
         id=-1,
         created_at=datetime.now(),
         answer=answer,
+        think=think,
         num_line=0,
         error_msg=error_msg,
         execution_time=-1,
