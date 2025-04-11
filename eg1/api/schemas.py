@@ -175,6 +175,7 @@ class ModelRaw(EgBaseModel):
     nb_tool_calls: list[int] | None = None
     context: list[list[str]] | None = None
     retrieval_context: list[list[str]] | None = None
+    think: list[str] | None = None
 
 
 #
@@ -186,6 +187,7 @@ class Answer(EgBaseModel):
     id: int
     created_at: datetime
     answer: str | None
+    think: str | None
     num_line: int
     error_msg: str | None
     execution_time: int | None
@@ -283,6 +285,7 @@ class ExperimentCreate(ExperimentBase):
                     dict(
                         num_line=i,
                         answer = m.output[i],
+                        think=m.think[i] if m.think else None,
                         execution_time=m.execution_time[i] if m.execution_time else None,
                         nb_tokens_prompt=m.nb_tokens_prompt[i] if m.nb_tokens_prompt else None,
                         nb_tokens_completion=m.nb_tokens_completion[i] if m.nb_tokens_completion else None,
@@ -311,7 +314,7 @@ class ExperimentCreate(ExperimentBase):
                 "Either provide a dataset with the 'query' field to generate the answer or with an 'output' field if have generated it yourself."
             )
         # Schema validation on all require fields
-        DEBUG_EXCEPTION_REQUIRE = ["context", "retrieval_context"] # fetch at runtime with tooling
+        DEBUG_EXCEPTION_REQUIRE = ["context", "retrieval_context"]  # fetch at runtime with tooling
         require_fields = {
             require
             for metric in self.metrics
@@ -432,6 +435,11 @@ class ExperimentSetCreate(ExperimentSetBase):
             obj["experiments"] = experiments
         elif self.experiments is None:
             obj.pop("experiments")
+
+        # Ensure judge_model are all equal
+        if obj["experiments"]:
+            if len(set([x["judge_model"] for x in obj["experiments"] if x["judge_model"]])) > 1:
+                raise SchemaError("The juge_model must be the same for all experiments in a set.")
 
         return obj
 
