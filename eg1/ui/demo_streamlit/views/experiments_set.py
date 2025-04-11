@@ -114,9 +114,7 @@ def _get_experiment_data(exp_id):
     if "results" in expe:
         for result in expe["results"]:
             metric_name = result["metric_name"]
-            observations = {
-                obs["num_line"]: obs["score"] for obs in result["observation_table"]
-            }
+            observations = {obs["num_line"]: obs["score"] for obs in result["observation_table"]}
             df[f"result_{metric_name}"] = df.index.map(observations)
 
     return df
@@ -208,11 +206,7 @@ def display_experiment_details(experimentset, experiments_df):
     experiment_ids = experiments_df["Id"].tolist()
     selected_exp_id = st.selectbox("Select Experiment ID", experiment_ids)
     experiment = next(
-        (
-            expe
-            for expe in experimentset.get("experiments", [])
-            if expe["id"] == selected_exp_id
-        ),
+        (expe for expe in experimentset.get("experiments", []) if expe["id"] == selected_exp_id),
         None,
     )
     if experiment:
@@ -257,9 +251,7 @@ def _remove_commons_items(model_params: list[dict], first=True) -> list[dict]:
             # improves: works with any instead of all
             # take all dict value (recurse)
             # reinsert dict value in same order
-            x = [
-                (i, d[k]) for i, d in enumerate(model_params) if isinstance(d[k], dict)
-            ]
+            x = [(i, d[k]) for i, d in enumerate(model_params) if isinstance(d[k], dict)]
             idx, params = zip(*x)
             params = _remove_commons_items(list(params), first=False)
             for i, _id in enumerate(idx):
@@ -329,9 +321,7 @@ def _rename_model_variants(experiments: list) -> list:
         for i, id in enumerate(ids):
             if not experiments[id]["model"].get("prompt_system"):
                 continue
-            model_params[i]["sys_prompt"] = hash_string(
-                experiments[id]["model"]["prompt_system"], 4
-            )
+            model_params[i]["sys_prompt"] = hash_string(experiments[id]["model"]["prompt_system"], 4)
 
         # remove commons parameters
         model_diff_params = _remove_commons_items(model_params)
@@ -347,9 +337,7 @@ def _rename_model_variants(experiments: list) -> list:
                 variant = json.dumps(variant)
                 variant = variant.replace('"', "").replace(" ", "")
 
-                experiments[pos]["_model"] = (
-                    "#".join([_name, variant]) + model["suffix"]
-                )
+                experiments[pos]["_model"] = "#".join([_name, variant]) + model["suffix"]
 
 
 def _find_default_sort_metric(columns):
@@ -395,9 +383,7 @@ def _sort_score_df(*dfs, reset_index=False):
 
 def _sort_columns(df: pd.DataFrame, first_columns: list) -> pd.DataFrame:
     first_columns = []
-    new_column_order = sorted(
-        first_columns
-    ) + sorted(  # Sort the first group of columns
+    new_column_order = sorted(first_columns) + sorted(  # Sort the first group of columns
         [col for col in df.columns if col not in first_columns]
     )  # Sort remaining columns
     return df[new_column_order]
@@ -420,18 +406,14 @@ def _format_model_params(expe):
         return None
 
     model = expe["model"].copy()
-    model_params = model.get("sampling_params") or {} | (
-        model.get("extra_params") or {}
-    )
+    model_params = model.get("sampling_params") or {} | (model.get("extra_params") or {})
     if model.get("prompt_system"):
         model_params["sys_prompt"] = hash_string(model["prompt_system"], 4)
 
     return model_params
 
 
-def _format_experiments_score_df(
-    experiments: list, df: pd.DataFrame
-) -> (bool, pd.DataFrame):
+def _format_experiments_score_df(experiments: list, df: pd.DataFrame) -> (bool, pd.DataFrame):
     experiment_ids = [expe["id"] for expe in experiments]
     experiment_names = [expe["name"] for expe in experiments]
     is_repeat_mode = _check_repeat_mode(experiments)
@@ -462,9 +444,7 @@ def _format_experiments_score_df(
     if result is None or len(result) == len(df):
         df["Id"] = experiment_ids
         # df["name"] = experiment_names
-        df = df[
-            ["Id", "model"] + [col for col in df.columns if col not in ["Id", "model"]]
-        ]
+        df = df[["Id", "model"] + [col for col in df.columns if col not in ["Id", "model"]]]
         has_repeat = False
     else:
         df = result
@@ -478,30 +458,26 @@ def display_experiment_set_score(experimentset, experiments_df):
     _rename_model_variants(experiments)
     size = experiments[0]["dataset"]["size"]
 
-    available_judges = sorted(list(set(
-        expe.get("judge_model") for expe in experiments 
-        if expe.get("judge_model")
-    ))) or ["No_judge_found"]
-    
-    col1, col2 = st.columns([6, 2])  
+    available_judges = sorted(
+        list(set(expe.get("judge_model") for expe in experiments if expe.get("judge_model")))
+    ) or ["No_judge_found"]
+
+    col1, col2 = st.columns([6, 2])
     with col1:
         st.write("**Score:** Averaged score on experiments metrics")
     with col2:
-        #Select model judge for pertinent analysis
+        # Select model judge for pertinent analysis
         selected_judge = st.selectbox(
-            "Filter per model judge",
-            options=["All"] + available_judges,
-            index=0,
-            key="judge_filter"
+            "Filter per model judge", options=["All"] + available_judges, index=0, key="judge_filter"
         )
 
     if selected_judge != "All":
         st.markdown(
-        f"<span style='color: green; font-weight: bold; font-size: 1.1em'>"
-        f"&#x2714; Active filter : judge_model = {selected_judge}"
-        f"</span>", 
-        unsafe_allow_html=True
-    )
+            f"<span style='color: green; font-weight: bold; font-size: 1.1em'>"
+            f"&#x2714; Active filter : judge_model = {selected_judge}"
+            f"</span>",
+            unsafe_allow_html=True,
+        )
     elif available_judges == ["No_judge_found"]:
         st.warning("No judge_model foubnd in this ExperimentSet")
 
@@ -511,17 +487,13 @@ def display_experiment_set_score(experimentset, experiments_df):
         if selected_judge and selected_judge != "All":
             if expe.get("judge_model") != selected_judge:
                 continue
-                
+
         row = {}
         row_support = {}
 
         # Determine model name
         if expe.get("_model") or expe.get("model"):
-            model_name = (
-                expe.get("_model")
-                or expe["model"]["aliased_name"]
-                or expe["model"]["name"]
-            )
+            model_name = expe.get("_model") or expe["model"]["aliased_name"] or expe["model"]["name"]
         else:
             model_name = f"Undefined model ({expe['name']})"
         row["model"] = model_name
@@ -530,11 +502,7 @@ def display_experiment_set_score(experimentset, experiments_df):
         # Aggregate results/scores
         for metric_results in expe.get("results", []):
             metric = metric_results["metric_name"]
-            scores = [
-                x["score"]
-                for x in metric_results["observation_table"]
-                if pd.notna(x.get("score"))
-            ]
+            scores = [x["score"] for x in metric_results["observation_table"] if pd.notna(x.get("score"))]
             if scores:
                 row[f"{metric}"] = np.mean(scores)
                 row_support[f"{metric}_support"] = len(scores)
@@ -548,7 +516,7 @@ def display_experiment_set_score(experimentset, experiments_df):
 
     df = pd.DataFrame(rows)
     df = _sort_columns(df, [])
-    
+
     if "model" not in df.columns:
         df["model"] = [expe.get("name", "Unknown Model") for expe in experiments]
 
@@ -584,18 +552,14 @@ def display_experiment_set_score(experimentset, experiments_df):
 
     float_columns = df.select_dtypes(include=["float"]).columns
     st.dataframe(
-        df.style.apply(highlight_min_max, axis=None).format(
-            "{:.2f}", subset=float_columns
-        ),
+        df.style.apply(highlight_min_max, axis=None).format("{:.2f}", subset=float_columns),
         use_container_width=True,
         hide_index=True,
         column_config={"Id": st.column_config.TextColumn(width="small")},
     )
 
     st.write("---")
-    st.write(
-        f"**Support:** the numbers of item on wich the metrics is computed (total items = {size})"
-    )
+    st.write(f"**Support:** the numbers of item on wich the metrics is computed (total items = {size})")
     st.dataframe(
         df_support,
         use_container_width=True,
@@ -615,22 +579,16 @@ def report_ops_global(exp_set):
     if exp_set:
         status, counts = _get_expset_status(exp_set)
 
-        has_failure = (
-            counts["total_observation_tries"] > counts["total_observation_successes"]
-        )
+        has_failure = counts["total_observation_tries"] > counts["total_observation_successes"]
         if has_failure:
             with st.expander("Failure Analysis", expanded=False):
                 for expe in exp_set["experiments"]:
                     if expe["num_try"] != expe["num_success"]:
-                        st.write(
-                            f"id: {expe['id']} name: {expe['name']} (failed on output generation)"
-                        )
+                        st.write(f"id: {expe['id']} name: {expe['name']} (failed on output generation)")
                         continue
 
                     if expe["num_observation_try"] != expe["num_observation_success"]:
-                        st.write(
-                            f"id: {expe['id']} name: {expe['name']} (failed on score computation)"
-                        )
+                        st.write(f"id: {expe['id']} name: {expe['name']} (failed on score computation)")
                         continue
 
         report_data.append(
@@ -701,9 +659,7 @@ def report_model_and_metric(experimentset):
             "no_failed": 0,
         }
     )
-    metric_data = defaultdict(
-        lambda: {"finished": 0, "running": 0, "pending": 0, "failed": 0, "no_failed": 0}
-    )
+    metric_data = defaultdict(lambda: {"finished": 0, "running": 0, "pending": 0, "failed": 0, "no_failed": 0})
 
     for experiment in experimentset["experiments"]:
         update_model_data(model_data, experiment)
@@ -724,9 +680,7 @@ def report_model_and_metric(experimentset):
     ]
     model_report = model_report[columns_order]
     model_for_graph = model_report.copy()
-    model_report.columns = [
-        col.title().replace("_", " ") for col in model_report.columns
-    ]
+    model_report.columns = [col.title().replace("_", " ") for col in model_report.columns]
 
     model_report.columns = pd.MultiIndex.from_tuples(
         [
@@ -753,17 +707,13 @@ def report_model_and_metric(experimentset):
     st.plotly_chart(fig_model, use_container_width=True)
 
     metric_report = pd.DataFrame.from_dict(metric_data, orient="index")
-    metric_report["Total"] = metric_report[["finished", "running", "pending"]].sum(
-        axis=1
-    )
+    metric_report["Total"] = metric_report[["finished", "running", "pending"]].sum(axis=1)
     metric_report["Failure Rate"] = metric_report.apply(calculate_failure_rate, axis=1)
 
     metric_report = metric_report[columns_order]
     metric_for_graph = metric_report.copy()
 
-    metric_report.columns = [
-        col.title().replace("_", " ") for col in metric_report.columns
-    ]
+    metric_report.columns = [col.title().replace("_", " ") for col in metric_report.columns]
 
     metric_report.columns = pd.MultiIndex.from_tuples(
         [
@@ -803,19 +753,13 @@ def show_header(experimentset):
         st.markdown(f"**Id**: {experimentset['id']}")
     with col2:
         try:
-            when = datetime.fromisoformat(experimentset["created_at"]).strftime(
-                "%d %B %Y"
-            )
+            when = datetime.fromisoformat(experimentset["created_at"]).strftime("%d %B %Y")
         except ValueError:
             when = "N/A"
         st.caption(f"Created the {when}")
-    st.markdown(
-        f"**Readme:** {experimentset.get('readme', 'No description available')}"
-    )
+    st.markdown(f"**Readme:** {experimentset.get('readme', 'No description available')}")
 
-    finished_ratio = int(
-        counts["total_observation_successes"] / counts["observation_length"] * 100
-    )
+    finished_ratio = int(counts["total_observation_successes"] / counts["observation_length"] * 100)
     failure_ratio = int(
         (counts["total_observation_tries"] - counts["total_observation_successes"])
         / counts["observation_length"]
@@ -832,9 +776,7 @@ def show_header(experimentset):
 def main():
     # Fetch or re-fetch data
     # --
-    experiment_sets = _fetch(
-        "get", "/experiment_sets", refresh=st.session_state.get("refresh_main")
-    )
+    experiment_sets = _fetch("get", "/experiment_sets", refresh=st.session_state.get("refresh_main"))
 
     # View Branching
     # --
@@ -845,9 +787,7 @@ def main():
 
         # Get the expset (or the orphan experiments)
         if expid.isdigit():
-            experimentset = next(
-                (x for x in experiment_sets if x["id"] == int(expid)), None
-            )
+            experimentset = next((x for x in experiment_sets if x["id"] == int(expid)), None)
             experimentset = _fetch_experimentset(
                 expid,
                 experimentset,
@@ -858,9 +798,7 @@ def main():
                 "id": None,
                 "name": "Orphan experiments",
                 "created_at": "",
-                "experiments": fetch(
-                    "get", "/experiments", {"orphan": True, "backward": True}
-                ),
+                "experiments": fetch("get", "/experiments", {"orphan": True, "backward": True}),
             }
 
         else:
