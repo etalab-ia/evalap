@@ -344,7 +344,7 @@ def _find_default_sort_metric(columns):
     """
     find a sensible default metric for sorting results.
     """
-    preferred_metrics = ["answer_relevancy", "judge_notator", "judge_exactness"]
+    preferred_metrics = ["judge_precision", "judge_notator", "answer_relevancy", "judge_exactness"]
     for metric in preferred_metrics:
         if metric in columns:
             return f"{metric}"
