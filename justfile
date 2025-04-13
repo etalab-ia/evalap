@@ -12,23 +12,49 @@ clean:
 # Openai API utils
 #
 
-list-albert-model env="prod":
+list-model provider="albert":
   #!/usr/bin/env sh
-  if [ "{{env}}" = "prod" ]; then
-    curl -XGET -H "Authorization: Bearer $ALBERT_API_KEY"  https://albert.api.etalab.gouv.fr/v1/models | jq '.data.[] | {id, type, owned_by, aliases}'
-  elif [ "{{env}}" = "staging" ]; then
-    curl -XGET -H "Authorization: Bearer $ALBERT_API_KEY_STAGING"  https://albert.api.staging.etalab.gouv.fr/v1/models | jq '.data.[] | {id, type, owned_by, aliases}'
+  if [ "{{provider}}" = "albert" ]; then
+    URL="https://albert.api.etalab.gouv.fr/v1"
+    API_KEY=$ALBERT_API_KEY
+  elif [ "{{provider}}" = "albert-staging" ]; then
+    URL="https://albert.api.staging.etalab.gouv.fr/v1"
+    API_KEY=$ALBERT_API_KEY_STAGING
+  elif [ "{{provider}}" = "openai" ]; then
+    URL="https://api.openai.com/v1"
+    API_KEY=$OPENAI_API_KEY
+  elif [ "{{provider}}" = "anthropic" ]; then
+    URL="https://api.anthropic.com/v1"
+    API_KEY=$ANTHROPIC_API_KEY
+  elif [ "{{provider}}" = "mistral" ]; then
+    URL="https://api.mistral.ai/v1"
+    API_KEY=$MISTRAL_API_KEY
   fi
+
+  curl -XGET -H "Authorization: Bearer $API_KEY" $URL/models | jq '[.data.[] | {id, type, owned_by, aliases}]'
 
 chat-completion model="mistralai/Mistral-Small-3.1-24B-Instruct-2503" provider="albert":
   #!/usr/bin/env sh
   if [ "{{provider}}" = "albert" ]; then
+    URL="https://albert.api.etalab.gouv.fr/v1"
+    API_KEY=$ALBERT_API_KEY
+  elif [ "{{provider}}" = "albert-staging" ]; then
     URL="https://albert.api.staging.etalab.gouv.fr/v1"
+    API_KEY=$ALBERT_API_KEY_STAGING
+  elif [ "{{provider}}" = "openai" ]; then
+    URL="https://api.openai.com/v1"
+    API_KEY=$OPENAI_API_KEY
+  elif [ "{{provider}}" = "anthropic" ]; then
+    URL="https://api.anthropic.com/v1"
+    API_KEY=$ANTHROPIC_API_KEY
+  elif [ "{{provider}}" = "mistral" ]; then
+    URL="https://api.mistral.ai/v1"
+    API_KEY=$MISTRAL_API_KEY
   fi
 
   curl  "$URL/chat/completions" \
       -H "Content-Type: application/json" \
-      -H "Authorization: Bearer $ALBERT_API_KEY_STAGING" \
+      -H "Authorization: Bearer $API_KEY" \
       -d '{
         "model": "{{model}}",
         "messages": [

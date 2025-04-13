@@ -15,13 +15,16 @@ from .schemas.openai_rag import Chunk, RagChatCompletionResponse, Search
 
 @dataclass
 class LlmApiUrl:
-    openai: str = "https://api.openai.com/v1"
-    anthropic: str = "https://api.anthropic.com/v1"
-    mistral: str = "https://api.mistral.ai/v1"
     albert_prod: str = "https://albert.api.etalab.gouv.fr/v1"
     albert_staging: str = "https://albert.api.staging.etalab.gouv.fr/v1"
+    mistral: str = "https://api.mistral.ai/v1"
+    openai: str = "https://api.openai.com/v1"
+    anthropic: str = "https://api.anthropic.com/v1"
     header_keys: dict = field(
         default_factory=lambda: {
+            "albert_prod": {"Authorization": "Bearer {ALBERT_API_KEY}"},
+            "albert_staging": {"Authorization": "Bearer {ALBERT_API_KEY_STAGING}"},
+            "mistral": {"Authorization": "Bearer {MISTRAL_API_KEY}"},
             "openai": {
                 "Authorization": "Bearer {OPENAI_API_KEY}",
                 "OpenAI-Organization": "{OPENAI_ORG_KEY}",
@@ -30,9 +33,6 @@ class LlmApiUrl:
                 "x-api-key": "{ANTHROPIC_API_KEY}",
                 "anthropic-version": "2023-06-01",
             },
-            "mistral": {"Authorization": "Bearer {MISTRAL_API_KEY}"},
-            "albert_prod": {"Authorization": "Bearer {ALBERT_API_KEY}"},
-            "albert_staging": {"Authorization": "Bearer {ALBERT_API_KEY_STAGING}"},
         }
     )
 
@@ -53,11 +53,11 @@ LlmApiUrl = LlmApiUrl()  # headers_keys does not exist otherwise...
 
 @dataclass
 class LlmApiModels:
-    openai: set[str] = field(default_factory=set)
-    anthropic: set[str] = field(default_factory=set)
-    mistral: set[str] = field(default_factory=set)
     albert_prod: set[str] = field(default_factory=set)
     albert_staging: set[str] = field(default_factory=set)
+    mistral: set[str] = field(default_factory=set)
+    openai: set[str] = field(default_factory=set)
+    anthropic: set[str] = field(default_factory=set)
 
     @classmethod
     def _sync_openai_api_models(cls):
