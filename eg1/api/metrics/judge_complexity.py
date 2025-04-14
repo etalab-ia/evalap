@@ -1,6 +1,6 @@
 import json
 import re
-from eg1.clients import LlmClient
+from eg1.clients import LlmClient, split_think_answer
 from eg1.utils import render_jinja
 
 from . import metric_registry
@@ -64,7 +64,8 @@ def judge_complexity_metric(output, output_true, **kwargs):
     ]
     aiclient = LlmClient()
     result = aiclient.generate(model=config["model"], messages=messages, **config["sampling_params"])
-    answer_text = result.choices[0].message.content
+    observation = result.choices[0].message.content
+    think, answer = split_think_answer(observation)
 
     def extract_score(line):
         match = re.search(r"\[Note : (\d+(?:\.\d+)?)/\d+\]", line)
@@ -74,7 +75,7 @@ def judge_complexity_metric(output, output_true, **kwargs):
 
     thematique = "non catégorisé"
 
-    for line in answer_text.split("\n"):
+    for line in answer.split("\n"):
         if "Critère Demande :" in line:
             scores["demande"] = extract_score(line)
         elif "Critère Administration :" in line:
@@ -86,6 +87,6 @@ def judge_complexity_metric(output, output_true, **kwargs):
         elif line.startswith("Thématique :"):
             thematique = line.split(":", 1)[1].strip()
 
-    answer = {"answer": answer_text, "scores": scores, "thematique": thematique}
+    observation_ = {"answer": answer, "think":think, "scores": scores, "thematique": thematique}
 
-    return int(scores["global"]), json.dumps(answer)
+    return int(scores["global"]), json.dumps(observation_)
