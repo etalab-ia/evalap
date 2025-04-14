@@ -462,15 +462,6 @@ def display_experiment_set_score(experimentset, experiments_df):
         list(set(expe.get("judge_model") for expe in experiments if expe.get("judge_model")))
     ) or ["No_judge_found"]
 
-    col1, col2 = st.columns([6, 2])
-    with col1:
-        st.write("**Score:** Averaged score on experiments metrics")
-    with col2:
-        st.write(f"**Judge model:** {available_judges[0] if available_judges else 'No judge found'}")
-
-    if len(available_judges) > 1:
-        st.warning(f"Multiple judge models found: {', '.join(available_judges)}")
-
     rows = []
     rows_support = []
     for expe in experiments:
@@ -516,9 +507,6 @@ def display_experiment_set_score(experimentset, experiments_df):
     df_support = _sort_columns(df_support, [])
     _, df_support = _format_experiments_score_df(experiments, df_support)
 
-    if has_repeat:
-        st.warning("Score are aggregated on model repetition.")
-
     _sort_score_df(df, df_support)
 
     # To highlight min/max values in each column
@@ -539,6 +527,20 @@ def display_experiment_set_score(experimentset, experiments_df):
                 highlight_df.loc[min_idx, col] = "font-weight: bold; color: red"
 
         return highlight_df
+
+    # Show
+    # --
+    col1, col2 = st.columns([6, 2])
+    with col1:
+        text = "**Score:** Averaged score on experiments metrics"
+        if has_repeat:
+            text += ' <em style="font-size:0.85rem;">(aggregated on model repetition)</em>'
+        st.markdown(text, unsafe_allow_html=True)
+    with col2:
+        st.write(f"**Judge model:** {available_judges[0] if available_judges else 'No judge found'}")
+
+    if len(available_judges) > 1:
+        st.warning(f"Multiple judge models found: {', '.join(available_judges)}")
 
     float_columns = df.select_dtypes(include=["float"]).columns
     st.dataframe(
