@@ -1,4 +1,4 @@
-from eg1.clients import LlmClient
+from eg1.clients import LlmClient, split_think_answer
 from eg1.utils import render_jinja
 
 from . import metric_registry
@@ -41,7 +41,7 @@ NOTE
 _config = {
     "model": "gpt-4o",
     # "system_prompt": "Tu donnes...."
-    "sampling_params": {"temperature": 0.2, "max_tokens": 10},
+    "sampling_params": {"temperature": 0.2},
 }
 
 
@@ -61,10 +61,11 @@ def judge_pertinence_metric(output, output_true, **kwargs):
     ]
     aiclient = LlmClient()
     result = aiclient.generate(model=config["model"], messages=messages, **config["sampling_params"])
-    answer = result.choices[0].message.content
+    observation = result.choices[0].message.content
+    think, answer = split_think_answer(observation)
     score = answer.strip(" \n\"'.%")
     try:
         score = float(score)
     except ValueError:
         score = None
-    return score, answer
+    return score, observation

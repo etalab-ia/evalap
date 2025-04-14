@@ -211,3 +211,20 @@ class LlmClient:
             results = [x["embedding"] for x in results["data"]]
 
         return results
+
+
+#
+# Utils
+#
+
+
+def split_think_answer(answer: str, think_token="</think>") -> (str | None, str):
+    think, tag, answer = answer.partition("</think>")
+    if tag:
+        answer = answer.strip()
+        think = (think + tag).strip()
+    else:
+        answer = think.strip()
+        think = None
+
+    return think, answer
