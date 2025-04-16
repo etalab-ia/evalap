@@ -394,7 +394,6 @@ ExperimentUpdate = create_model(
 
 class ExperimentPatch(ExperimentUpdate):
     rerun_answers: bool = False
-    rerun_metrics: bool = False  # metrics are automatically run after answers atm
 
 
 #

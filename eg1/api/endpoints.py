@@ -183,7 +183,7 @@ def patch_experiment(id: int, experiment_patch: schemas.ExperimentPatch, db: Ses
     # Dispatch tasks
     if experiment_patch.rerun_answers and _needs_output(db_exp):
         dispatch_tasks(db, db_exp, "answers")
-    elif experiment_patch.rerun_metrics:
+    else:
         dispatch_tasks(db, db_exp, "observations")
 
     return db_exp
@@ -299,24 +299,32 @@ def patch_experimentset(
     if db_expset is None:
         raise HTTPException(status_code=404, detail="Experiment not found")
 
-    expset = experimentset_patch.to_table_init(db)
-    for experiment in expset.get("experiments") or []:
-        experiment["experiment_set_id"] = id
-        # Respect the unique constraint for auto-naming experiment !
-        # -> add an increment suffix to the experiment name
-        if re.search(r"__\d+$", experiment["name"]):
-            parts = experiment["name"].split("__")
-            parts[-1] = str(int(parts[-1]) + len(db_expset.experiments))
-            if parts[0] == "None":
-                parts[0] = db_expset.name
-            experiment["name"] = "__".join(parts)
-        db_exp = crud.create_experiment(db, experiment)
-        if _needs_output(db_exp):
-            dispatch_tasks(db, db_exp, "answers")
-        else:
-            dispatch_tasks(db, db_exp, "observations")
+    try:
+        expset = experimentset_patch.to_table_init(db)
+        for experiment in expset.get("experiments") or []:
+            experiment["experiment_set_id"] = id
+            # Respect the unique constraint for auto-naming experiment !
+            # -> add an increment suffix to the experiment name
+            if re.search(r"__\d+$", experiment["name"]):
+                parts = experiment["name"].split("__")
+                parts[-1] = str(int(parts[-1]) + len(db_expset.experiments))
+                if parts[0] == "None":
+                    parts[0] = db_expset.name
+                experiment["name"] = "__".join(parts)
+            db_exp = crud.create_experiment(db, experiment)
+            if _needs_output(db_exp):
+                dispatch_tasks(db, db_exp, "answers")
+            else:
+                dispatch_tasks(db, db_exp, "observations")
 
-    return db_expset
+        return db_expset
+
+    except (SchemaError, ValidationError) as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except IntegrityError as e:
+        return CustomIntegrityError.from_integrity_error(e.orig).to_http_response()
+    except Exception as e:
+        raise e
 
 
 @router.get(
@@ -478,8 +486,8 @@ def _generate(input: GenerateInput):
         )  # fmt: skip
         mcp_bridge = None
 
-    # Build Smpling params
-    sampling_params_plus = (input.sampling_params or {}) | ( input.extra_params or {})
+    # Build Smpling params
+    sampling_params_plus = (input.sampling_params or {}) | (input.extra_params or {})
 
     # Build tools input
     _tools = sampling_params_plus.pop("_tools_", None)
@@ -487,7 +495,7 @@ def _generate(input: GenerateInput):
         tools = mcp_bridge.tools2openai(_tools)
         sampling_params_plus["tools"] = tools
 
-    # Build messages
+    # Build messages
     messages = [{"role": "user", "content": input.query}]
     if input.prompt_system:
         messages = [{"role": "system", "content": input.prompt_system}] + messages
@@ -508,9 +516,7 @@ def _generate(input: GenerateInput):
 
 
 @router.post("/generate", response_model=schemas.Answer, tags=["generate"])
-async def generate(
-    input: GenerateInput, db: Session = Depends(get_db)
-):
+async def generate(input: GenerateInput, db: Session = Depends(get_db)):
     answer = None
     think = None
     error_msg = None
