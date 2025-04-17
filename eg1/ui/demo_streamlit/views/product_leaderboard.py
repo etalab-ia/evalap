@@ -12,7 +12,7 @@ import pandas as pd
 import streamlit as st
 import yaml
 
-from utils import fetch, calculate_tokens_per_second
+from utils import fetch, hash_string, _rename_model_variants, calculate_tokens_per_second
 
 DEFAULT_METRIC = "judge_exactness"
 
@@ -47,7 +47,7 @@ def fetch_leaderboard(
     metric_name: str = DEFAULT_METRIC,
     dataset_name: str | None = None,
     judge_model: str | None = None,
-    limit: int = 10,
+    limit: int = 1000,
 ) -> dict:
     """Fetches leaderboard data with caching."""
     endpoint = "/leaderboard"
@@ -135,100 +135,6 @@ def display_model_production(model_info: dict, default_metric: str) -> None:
         st.error(f"Error fetching results for experiment {exp_id}: {str(e)}")
 
 
-def _all_equal(lst: list) -> bool:
-    """Checks if all elements in a list are equal."""
-    return all(x == lst[0] for x in lst)
-
-
-def _remove_commons_items(model_params: List[Dict], first: bool = True) -> List[Dict]:
-    """
-    Removes common items from a list of dictionaries.
-    Handles nested dictionaries recursively.
-    """
-    if first:
-        model_params = deepcopy(model_params)
-
-    common_keys = set.intersection(*(set(d.keys()) for d in model_params))
-    for k in common_keys:
-        values = [d.get(k) for d in model_params]
-
-        if _all_equal(values):
-            for d in model_params:
-                d.pop(k, None)
-        elif all(isinstance(d.get(k), dict) for d in model_params):
-            dicts = [d.get(k) for d in model_params]
-            modified_dicts = _remove_commons_items([d for d in dicts if isinstance(d, dict)], first=False)
-
-            idx = 0
-            for i, d in enumerate(model_params):
-                if isinstance(d.get(k), dict):
-                    if idx < len(modified_dicts):
-                        d[k] = modified_dicts[idx]
-                        idx += 1
-        elif all(isinstance(d.get(k), list) for d in model_params):
-            pass  # Handle lists if needed
-
-    return model_params
-
-
-def _rename_model_variants(experiments: List[Dict]) -> None:
-    """
-    Inplace adds a _name attribute to experiment if several model names are equal,
-    to help distinguish them.
-    """
-    names = [exp["model"]["name"] for exp in experiments if exp.get("model")]
-    if len(set(names)) == len(names):
-        return
-
-    names_data = []
-    for i, exp in enumerate(experiments):
-        if not exp.get("model"):
-            continue
-
-        name = exp["model"]["name"]
-        _name = name
-        suffix = ""
-        match = re.search(r"__\d+$", name)
-        if match:
-            _name, suffix = name.rsplit("__", 1)
-
-        names_data.append(
-            {
-                "pos": i,
-                "name": name,
-                "_name": _name,
-                "suffix": suffix,
-            }
-        )
-
-    model_names = defaultdict(list)
-    for item in names_data:
-        model_names[item["_name"]].append(item["pos"])
-
-    for _name, ids in model_names.items():
-        if len(ids) <= 1:
-            continue
-
-        model_params = [
-            (experiments[i]["model"].get("sampling_params") or {})
-            | (experiments[i]["model"].get("extra_params") or {})
-            for i in ids
-        ]
-
-        model_diff_params = _remove_commons_items(model_params)
-
-        for model in names_data:
-            pos = next((x for x in ids if model["pos"] == x), None)
-            if pos is None:
-                continue
-
-            variant = model_diff_params[ids.index(pos)]
-            if variant:
-                variant = json.dumps(variant, sort_keys=True)
-                variant = variant.replace('"', "").replace(" ", "")
-                experiments[pos]["_model"] = "#".join([_name, variant]) + model["suffix"]
-
-
 def add_repeat_column(df: pd.DataFrame) -> pd.DataFrame:
     """Adds a 'repeat' column to the DataFrame based on experiment name pattern."""
 
@@ -270,13 +176,13 @@ def process_leaderboard_data(
                 "name": entry["model_name"],
                 "sampling_params": entry.get("sampling_param", {}),
                 "extra_params": entry.get("extra_param", {}),
+                "prompt_system": entry.get("prompt_system", {}),
             }
         }
         experiments.append(exp)
         exp_mapping[entry["experiment_id"]] = exp
 
     _rename_model_variants(experiments)
-
     entries = []
     for entry in leaderboard_data.get("entries", []):
         if current_model_id and entry["experiment_id"] == current_model_id:
@@ -285,9 +191,11 @@ def process_leaderboard_data(
         exp = exp_mapping.get(entry["experiment_id"], {})
         model_name = entry["model_name"]
         renamed_model = exp.get("_model", model_name)
-
-        params = {**entry.get("sampling_param", {}), **entry.get("extra_param", {})}
-        parameters = json.dumps(params, sort_keys=True, ensure_ascii=False) if params else ""
+        # recovers all parameters after processing
+        if "#" in renamed_model:
+            parameters = renamed_model.split("#")[1]
+        else:
+            parameters = ""
 
         processed_entry = {
             "Experiment ID": entry["experiment_id"],
