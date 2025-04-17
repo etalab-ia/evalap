@@ -97,7 +97,7 @@ def log_and_raise_for_status(response: Response, msg_on_error: str = "API Error 
 
 def import_classes(package_name: str, class_names: list[str], more: list[str] = None) -> list[dict]:
     """Get a list of class obj from given package name and class_names.
-    If `more` is given, it tries to extract the object with that names in the same module where a class is found.
+       If `more` is given, it tries to extract the object with that names in the same module where a class is found.
     """
     # Import the package
     package = importlib.import_module(package_name)
