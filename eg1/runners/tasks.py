@@ -81,7 +81,7 @@ def generate_answer(message: dict, mcp_bridge: MCPBridgeClient | None):
             if answer:
                 think, answer = split_think_answer(answer)
 
-            # calcul carbon
+            # Carbon calcul
             emission_carbon = impact_carbon("FRA", result.usage.completion_tokens, timer.execution_time)
 
             # Upsert answer
