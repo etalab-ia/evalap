@@ -147,6 +147,8 @@ class LlmClient:
         json_data["stream"] = stream
 
         url, headers = self.get_url_and_headers(model)
+        if not url:
+            raise ValueError(f"Model unknown: {model}")
         response = requests.post(url + path, headers=headers, json=json_data, stream=stream, timeout=300)
         log_and_raise_for_status(response, "Albert API error")
 
@@ -157,6 +159,7 @@ class LlmClient:
         # @TODO catch base URL to switch-case the context decoding
         chat = RagChatCompletionResponse(**r)
         # MFS decoding
+        # @deprecated
         if hasattr(chat, "rag_context"):
             refs = sum([x.references for x in chat.rag_context or []], [])
             chunks = []
