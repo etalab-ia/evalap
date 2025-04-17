@@ -367,7 +367,6 @@ def main() -> None:
     if not product_config.get("products"):
         st.warning("No products configured yet.")
         return
-
     product_tabs = st.tabs([product_info["name"] for product_info in product_config["products"].values()])
 
     for tab, product_info in zip(product_tabs, product_config["products"].values()):
