@@ -12,7 +12,7 @@ import pandas as pd
 import streamlit as st
 import yaml
 
-from utils import fetch, hash_string, _rename_model_variants, calculate_tokens_per_second
+from utils import fetch, _rename_model_variants, calculate_tokens_per_second
 
 DEFAULT_METRIC = "judge_exactness"
 
