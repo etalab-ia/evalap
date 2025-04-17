@@ -16,9 +16,6 @@ from utils import fetch, _rename_model_variants, calculate_tokens_per_second
 
 DEFAULT_METRIC = "judge_exactness"
 
-# TODO:
-# recup list mtetric du produit et n'afficher que les résultats dessus
-
 
 @st.cache_data(ttl=300)
 def load_product_config() -> dict:
@@ -54,7 +51,7 @@ def fetch_leaderboard(
     params = {"metric_name": metric_name}
     if dataset_name:
         params["dataset_name"] = dataset_name
-    if judge_model:
+    if judge_model and judge_model != "All":  # Only add judge_model if it's not "All"
         params["judge_model"] = judge_model
     return fetch("get", endpoint, params)
 
@@ -229,6 +226,9 @@ def process_leaderboard_data(
 
     score_column = f"{format_column_name(metric_name)} Score"
 
+    # Keep only Exp with score_column is run
+    df = df.dropna(subset=[score_column])
+
     # Separate repeat and non-repeat experiments
     df_repeat_false = df[df["repeat"] == False]
     df_repeat_false[f"{score_column}_mean"] = df_repeat_false[score_column]
@@ -295,15 +295,18 @@ def process_leaderboard_data(
         "Model_renamed",
         "experiment_set_name",
         "repeat",
+        "Generation Time",
+        "Nb Tokens Completion",
     ]
     final_df.drop(columns=columns_to_drop, inplace=True, errors="ignore")  # added errors='ignore'
 
     # Define column order
     fixed_columns = ["Rank", "Model", "Parameters", "Created at", score_column]
     col_decision = [col for col in final_df.columns if col in metrics_list_for_decision]
-    other_columns = [col for col in final_df.columns if col not in fixed_columns + col_decision]
-    column_order = fixed_columns + col_decision + other_columns
-
+    col_end = ["count", "experiment_set_id"]
+    end_columns = [col for col in final_df.columns if col in col_end]
+    other_columns = [col for col in final_df.columns if col not in fixed_columns + col_decision + end_columns]
+    column_order = fixed_columns + col_decision + other_columns + end_columns
     return final_df[[col for col in column_order if col in final_df.columns]]
 
 
@@ -393,10 +396,9 @@ def main() -> None:
             with col1:
                 st.write("#### Leaderboard")
             with col2:
-                # Fetch leaderboard data
+                # Get available judges from the leaderboard data
                 leaderboard_data = fetch_leaderboard(default_metric, product_dataset_name)
 
-                # Get available judges from the leaderboard data
                 available_judges = sorted(
                     list(
                         set(
@@ -422,8 +424,8 @@ def main() -> None:
                     unsafe_allow_html=True,
                 )
 
-            if judge_model != "All":
-                leaderboard_data = fetch_leaderboard(default_metric, product_dataset_name, judge_model)
+            # Fetch leaderboard data with judge_model filtering
+            leaderboard_data = fetch_leaderboard(default_metric, product_dataset_name, judge_model)
 
             df_leaderboard = process_leaderboard_data(
                 leaderboard_data, default_metric, metrics_list_for_decision, current_model_id
@@ -434,18 +436,16 @@ def main() -> None:
                 experiments_url = f"{base_url}experiments_set?expset="
 
                 df_leaderboard["Experiment Set Link"] = df_leaderboard["experiment_set_id"].apply(
-                    lambda x: create_experiment_set_link(x, experiments_url)
+                    lambda experiment_set_id: create_experiment_set_link(experiment_set_id, experiments_url)
                 )
-                df_leaderboard.drop(columns="experiment_set_id", inplace=True)
-
-                st.data_editor(
+                st.dataframe(
                     df_leaderboard,
-                    use_container_width=True,
                     hide_index=True,
-                    column_config={"Experiment Set Link": st.column_config.LinkColumn("Experiment Set Link")},
+                    column_config={"Experiment Set Link": st.column_config.LinkColumn()},
                 )
+
             else:
-                st.write("No data available for the leaderboard.")
+                st.info("No data to display for the current selection.")
 
 
 main()
