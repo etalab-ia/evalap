@@ -239,7 +239,7 @@ def impact_carbon(zone, token_count, request_latency):
     model_active_parameter_count = 100
     model_total_parameter_count = 100
 
-    impact = compute_llm_impacts(
+    return compute_llm_impacts(
         model_active_parameter_count=model_active_parameter_count,  # Nombre de paramètres activés pendant l'inférence. Pour les modèles denses, cette valeur est égale à model_total_parameter_count
         model_total_parameter_count=model_total_parameter_count,  # Nombre total de paramètres du modèle
         output_token_count=token_count,  # Nombre de tokens générés, disponible dans la réponse de l'API LLM
@@ -248,4 +248,3 @@ def impact_carbon(zone, token_count, request_latency):
         if_electricity_mix_gwp=if_electricity_mix_gwp,
         request_latency=request_latency,  # temps de réponse
     )
-    return impact
