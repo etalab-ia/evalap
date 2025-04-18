@@ -495,6 +495,7 @@ class LeaderboardEntry(BaseModel):
     dataset_name: str
     main_metric_score: Optional[float]
     other_metrics: dict
+    prompt_system: Optional[str] = None
     sampling_param: dict
     extra_param: dict
     created_at: datetime
