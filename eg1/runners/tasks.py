@@ -81,8 +81,11 @@ def generate_answer(message: dict, mcp_bridge: MCPBridgeClient | None):
             if answer:
                 think, answer = split_think_answer(answer)
 
-            # Carbon calcul
-            emission_carbon = impact_carbon("FRA", result.usage.completion_tokens, timer.execution_time)
+            try:
+                emission_carbon = impact_carbon("FRA", result.usage.completion_tokens, timer.execution_time)
+            except Exception as e:
+                print(f"Erreur during calcul carbon impact : {e}")
+                emission_carbon = None
 
             # Upsert answer
             crud.upsert_answer(
