@@ -27,7 +27,7 @@ class LlmApiUrl:
             "mistral": {"Authorization": "Bearer {MISTRAL_API_KEY}"},
             "openai": {
                 "Authorization": "Bearer {OPENAI_API_KEY}",
-                "OpenAI-Organization": "{OPENAI_ORG_KEY}",
+                #    "OpenAI-Organization": "{OPENAI_ORG_KEY}",
             },
             "anthropic": {
                 "x-api-key": "{ANTHROPIC_API_KEY}",
