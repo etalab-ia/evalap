@@ -12,12 +12,9 @@ import pandas as pd
 import streamlit as st
 import yaml
 
-from utils import fetch, calculate_tokens_per_second
+from utils import fetch, _rename_model_variants, calculate_tokens_per_second
 
 DEFAULT_METRIC = "judge_exactness"
-
-# TODO:
-# recup list mtetric du produit et n'afficher que les résultats dessus
 
 
 @st.cache_data(ttl=300)
@@ -47,14 +44,14 @@ def fetch_leaderboard(
     metric_name: str = DEFAULT_METRIC,
     dataset_name: str | None = None,
     judge_model: str | None = None,
-    limit: int = 10,
+    limit: int = 100,
 ) -> dict:
     """Fetches leaderboard data with caching."""
     endpoint = "/leaderboard"
     params = {"metric_name": metric_name}
     if dataset_name:
         params["dataset_name"] = dataset_name
-    if judge_model:
+    if judge_model and judge_model != "All":  # Only add judge_model if it's not "All"
         params["judge_model"] = judge_model
     return fetch("get", endpoint, params)
 
@@ -135,100 +132,6 @@ def display_model_production(model_info: dict, default_metric: str) -> None:
         st.error(f"Error fetching results for experiment {exp_id}: {str(e)}")
 
 
-def _all_equal(lst: list) -> bool:
-    """Checks if all elements in a list are equal."""
-    return all(x == lst[0] for x in lst)
-
-
-def _remove_commons_items(model_params: List[Dict], first: bool = True) -> List[Dict]:
-    """
-    Removes common items from a list of dictionaries.
-    Handles nested dictionaries recursively.
-    """
-    if first:
-        model_params = deepcopy(model_params)
-
-    common_keys = set.intersection(*(set(d.keys()) for d in model_params))
-    for k in common_keys:
-        values = [d.get(k) for d in model_params]
-
-        if _all_equal(values):
-            for d in model_params:
-                d.pop(k, None)
-        elif all(isinstance(d.get(k), dict) for d in model_params):
-            dicts = [d.get(k) for d in model_params]
-            modified_dicts = _remove_commons_items([d for d in dicts if isinstance(d, dict)], first=False)
-
-            idx = 0
-            for i, d in enumerate(model_params):
-                if isinstance(d.get(k), dict):
-                    if idx < len(modified_dicts):
-                        d[k] = modified_dicts[idx]
-                        idx += 1
-        elif all(isinstance(d.get(k), list) for d in model_params):
-            pass  # Handle lists if needed
-
-    return model_params
-
-
-def _rename_model_variants(experiments: List[Dict]) -> None:
-    """
-    Inplace adds a _name attribute to experiment if several model names are equal,
-    to help distinguish them.
-    """
-    names = [exp["model"]["name"] for exp in experiments if exp.get("model")]
-    if len(set(names)) == len(names):
-        return
-
-    names_data = []
-    for i, exp in enumerate(experiments):
-        if not exp.get("model"):
-            continue
-
-        name = exp["model"]["name"]
-        _name = name
-        suffix = ""
-        match = re.search(r"__\d+$", name)
-        if match:
-            _name, suffix = name.rsplit("__", 1)
-
-        names_data.append(
-            {
-                "pos": i,
-                "name": name,
-                "_name": _name,
-                "suffix": suffix,
-            }
-        )
-
-    model_names = defaultdict(list)
-    for item in names_data:
-        model_names[item["_name"]].append(item["pos"])
-
-    for _name, ids in model_names.items():
-        if len(ids) <= 1:
-            continue
-
-        model_params = [
-            (experiments[i]["model"].get("sampling_params") or {})
-            | (experiments[i]["model"].get("extra_params") or {})
-            for i in ids
-        ]
-
-        model_diff_params = _remove_commons_items(model_params)
-
-        for model in names_data:
-            pos = next((x for x in ids if model["pos"] == x), None)
-            if pos is None:
-                continue
-
-            variant = model_diff_params[ids.index(pos)]
-            if variant:
-                variant = json.dumps(variant, sort_keys=True)
-                variant = variant.replace('"', "").replace(" ", "")
-                experiments[pos]["_model"] = "#".join([_name, variant]) + model["suffix"]
-
-
 def add_repeat_column(df: pd.DataFrame) -> pd.DataFrame:
     """Adds a 'repeat' column to the DataFrame based on experiment name pattern."""
 
@@ -270,13 +173,13 @@ def process_leaderboard_data(
                 "name": entry["model_name"],
                 "sampling_params": entry.get("sampling_param", {}),
                 "extra_params": entry.get("extra_param", {}),
+                "prompt_system": entry.get("prompt_system", {}),
             }
         }
         experiments.append(exp)
         exp_mapping[entry["experiment_id"]] = exp
 
     _rename_model_variants(experiments)
-
     entries = []
     for entry in leaderboard_data.get("entries", []):
         if current_model_id and entry["experiment_id"] == current_model_id:
@@ -285,9 +188,11 @@ def process_leaderboard_data(
         exp = exp_mapping.get(entry["experiment_id"], {})
         model_name = entry["model_name"]
         renamed_model = exp.get("_model", model_name)
-
-        params = {**entry.get("sampling_param", {}), **entry.get("extra_param", {})}
-        parameters = json.dumps(params, sort_keys=True, ensure_ascii=False) if params else ""
+        # recovers all parameters after processing
+        if "#" in renamed_model:
+            parameters = renamed_model.split("#")[1]
+        else:
+            parameters = ""
 
         processed_entry = {
             "Experiment ID": entry["experiment_id"],
@@ -320,6 +225,9 @@ def process_leaderboard_data(
     df = add_repeat_column(df)
 
     score_column = f"{format_column_name(metric_name)} Score"
+
+    # Keep only Exp with score_column is run
+    df = df.dropna(subset=[score_column])
 
     # Separate repeat and non-repeat experiments
     df_repeat_false = df[df["repeat"] == False]
@@ -387,15 +295,18 @@ def process_leaderboard_data(
         "Model_renamed",
         "experiment_set_name",
         "repeat",
+        "Generation Time",
+        "Nb Tokens Completion",
     ]
     final_df.drop(columns=columns_to_drop, inplace=True, errors="ignore")  # added errors='ignore'
 
     # Define column order
     fixed_columns = ["Rank", "Model", "Parameters", "Created at", score_column]
     col_decision = [col for col in final_df.columns if col in metrics_list_for_decision]
-    other_columns = [col for col in final_df.columns if col not in fixed_columns + col_decision]
-    column_order = fixed_columns + col_decision + other_columns
-
+    col_end = ["count", "experiment_set_id"]
+    end_columns = [col for col in final_df.columns if col in col_end]
+    other_columns = [col for col in final_df.columns if col not in fixed_columns + col_decision + end_columns]
+    column_order = fixed_columns + col_decision + other_columns + end_columns
     return final_df[[col for col in column_order if col in final_df.columns]]
 
 
@@ -459,7 +370,6 @@ def main() -> None:
     if not product_config.get("products"):
         st.warning("No products configured yet.")
         return
-
     product_tabs = st.tabs([product_info["name"] for product_info in product_config["products"].values()])
 
     for tab, product_info in zip(product_tabs, product_config["products"].values()):
@@ -486,10 +396,9 @@ def main() -> None:
             with col1:
                 st.write("#### Leaderboard")
             with col2:
-                # Fetch leaderboard data
+                # Get available judges from the leaderboard data
                 leaderboard_data = fetch_leaderboard(default_metric, product_dataset_name)
 
-                # Get available judges from the leaderboard data
                 available_judges = sorted(
                     list(
                         set(
@@ -515,8 +424,8 @@ def main() -> None:
                     unsafe_allow_html=True,
                 )
 
-            if judge_model != "All":
-                leaderboard_data = fetch_leaderboard(default_metric, product_dataset_name, judge_model)
+            # Fetch leaderboard data with judge_model filtering
+            leaderboard_data = fetch_leaderboard(default_metric, product_dataset_name, judge_model)
 
             df_leaderboard = process_leaderboard_data(
                 leaderboard_data, default_metric, metrics_list_for_decision, current_model_id
@@ -527,18 +436,16 @@ def main() -> None:
                 experiments_url = f"{base_url}experiments_set?expset="
 
                 df_leaderboard["Experiment Set Link"] = df_leaderboard["experiment_set_id"].apply(
-                    lambda x: create_experiment_set_link(x, experiments_url)
+                    lambda experiment_set_id: create_experiment_set_link(experiment_set_id, experiments_url)
                 )
-                df_leaderboard.drop(columns="experiment_set_id", inplace=True)
-
-                st.data_editor(
+                st.dataframe(
                     df_leaderboard,
-                    use_container_width=True,
                     hide_index=True,
-                    column_config={"Experiment Set Link": st.column_config.LinkColumn("Experiment Set Link")},
+                    column_config={"Experiment Set Link": st.column_config.LinkColumn()},
                 )
+
             else:
-                st.write("No data available for the leaderboard.")
+                st.info("No data to display for the current selection.")
 
 
 main()
