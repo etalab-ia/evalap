@@ -123,3 +123,8 @@ To run unit tests, use :
 
     python -m pip install build twine
     twine upload dist/*
+
+## use ruff 
+```
+ ruff format --config=pyproject.toml file_path
+```

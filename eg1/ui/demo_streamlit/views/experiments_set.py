@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 import plotly.express as px
 import streamlit as st
-from utils import fetch, hash_string
+from utils import fetch, _rename_model_variants, _format_model_params
 
 
 #
@@ -235,111 +235,6 @@ def display_experiment_details(experimentset, experiments_df):
             st.error("Failed to fetch experiment data")
 
 
-def _all_equal(lst):
-    return all(x == lst[0] for x in lst)
-
-
-def _remove_commons_items(model_params: list[dict], first=True) -> list[dict]:
-    if first:
-        model_params = deepcopy(model_params)
-
-    common_keys = set.intersection(*(set(d.keys()) for d in model_params))
-    for k in common_keys:
-        if _all_equal([d[k] for d in model_params]):
-            _ = [d.pop(k) for d in model_params]
-        elif all(isinstance(d[k], dict) for d in model_params):
-            # improves: works with any instead of all
-            # take all dict value (recurse)
-            # reinsert dict value in same order
-            x = [(i, d[k]) for i, d in enumerate(model_params) if isinstance(d[k], dict)]
-            idx, params = zip(*x)
-            params = _remove_commons_items(list(params), first=False)
-            for i, _id in enumerate(idx):
-                if not params[i]:
-                    model_params[_id].pop(k)
-                model_params[_id][k] = params[i]
-        elif all(isinstance(d[k], list) for d in model_params):
-            # @improves: works with any instead of all
-            # take all dict value in  list value (recurse)
-            # reinsert dict value in same order
-            pass
-
-    return model_params
-
-
-def _rename_model_variants(experiments: list) -> list:
-    """
-    Inplace add a _name attribute to experiment several model name are equal to help
-    distinguish them
-    """
-    names = [expe["model"]["name"] for expe in experiments if expe.get("model")]
-    if len(set(names)) == len(names):
-        return experiments
-
-    names = []
-    for i, expe in enumerate(experiments):
-        if not expe.get("model"):
-            continue
-
-        name = expe["model"]["name"]
-        _name = name
-        suffix = ""
-        if re.search(r"__\d+$", name):
-            parts = name.rsplit("__", 1)
-            _name = parts[0]
-            suffix = parts[1]
-
-        names.append(
-            {
-                "pos": i,
-                "name": name,
-                "_name": _name,
-                "suffix": suffix,
-            }
-        )
-
-    # Find the experiments that have an equal _model name
-    model_names = defaultdict(list)
-    for item in names:
-        if not item:
-            continue
-        model_names[item["_name"]].append(item["pos"])
-
-    # Canonize model names
-    for _name, ids in model_names.items():
-        if len(ids) <= 1:
-            continue
-
-        # List of model params
-        model_params = [
-            (experiments[id]["model"].get("sampling_params") or {})
-            | (experiments[id]["model"].get("extra_params") or {})
-            for id in ids
-        ]
-
-        # Manage prompt_system param by computing its hash
-        for i, id in enumerate(ids):
-            if not experiments[id]["model"].get("prompt_system"):
-                continue
-            model_params[i]["sys_prompt"] = hash_string(experiments[id]["model"]["prompt_system"], 4)
-
-        # remove commons parameters
-        model_diff_params = _remove_commons_items(model_params)
-
-        for model in names:
-            pos = next((x for x in ids if model["pos"] == x), None)
-            if pos is None:
-                continue
-
-            # Finally renamed it !
-            variant = model_diff_params[ids.index(pos)]
-            if variant:
-                variant = json.dumps(variant)
-                variant = variant.replace('"', "").replace(" ", "")
-
-                experiments[pos]["_model"] = "#".join([_name, variant]) + model["suffix"]
-
-
 def _find_default_sort_metric(columns):
     """
     find a sensible default metric for sorting results.
@@ -399,18 +294,6 @@ def _check_repeat_mode(experiments: list) -> bool:
             return True
 
     return False
-
-
-def _format_model_params(expe):
-    if not expe.get("model"):
-        return None
-
-    model = expe["model"].copy()
-    model_params = (model.get("sampling_params") or {}) | (model.get("extra_params") or {})
-    if model.get("prompt_system"):
-        model_params["sys_prompt"] = hash_string(model["prompt_system"], 4)
-
-    return model_params
 
 
 def _format_experiments_score_df(experiments: list, df: pd.DataFrame) -> (bool, pd.DataFrame):
