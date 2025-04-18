@@ -170,6 +170,13 @@ def patch_experiment(id: int, experiment_patch: schemas.ExperimentPatch, db: Ses
             detail=f"Experiment is running ({db_exp.experiment_status}), please try again later",
         )
 
+    # Parameters you can not patch
+    if experiment_patch.judge_model and experiment_patch.judge_model != db_exp.judge_model:
+        raise HTTPException(
+            status_code=400,
+            detail="You cannot patch the judge_model in an experiment.",
+        )
+
     # Rerun experiment
     # --
     # Initialize metric results
@@ -301,6 +308,17 @@ def patch_experimentset(
 
     try:
         expset = experimentset_patch.to_table_init(db)
+        # Check the judge_model unicity
+        # --
+        judge = next((e.judge_model for e in db_expset.experiments if e.judge_model), None)
+        new_judge = next((e["judge_model"] for e in (expset.get("experiments") or []) if e.get("judge_model")), None)
+        # Judge and new_judge must be defined as we can have some experiments that won't use llm-as-a-judge model.
+        if judge and new_judge and judge != new_judge:
+            raise HTTPException(
+                status_code=400,
+                detail="You cannot patch the judge_model in an experiment.",
+            )
+
         for experiment in expset.get("experiments") or []:
             experiment["experiment_set_id"] = id
             # Respect the unique constraint for auto-naming experiment !
