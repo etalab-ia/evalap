@@ -44,7 +44,7 @@ def fetch_leaderboard(
     metric_name: str = DEFAULT_METRIC,
     dataset_name: str | None = None,
     judge_model: str | None = None,
-    limit: int = 1000,
+    limit: int = 100,
 ) -> dict:
     """Fetches leaderboard data with caching."""
     endpoint = "/leaderboard"
