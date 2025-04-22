@@ -230,6 +230,7 @@ def build_param_grid(common_params: dict[str, Any], grid_params: dict[str, list[
 #
 # carbon emission in kgCO2e (use Ecologits for estimation)
 #
+from eg1.logger import logger
 
 
 def load_models_info():
@@ -251,8 +252,9 @@ DEFAULT_PARAMS = {"params": 100, "active_params": 100, "total_params": 100}
 
 def build_model_extra_info(model_name, models_info_params):
     std_name = get_model_name_from_path(model_name)
+    logger.warning(std_name)
     model = models_info_params.get(std_name, DEFAULT_PARAMS.copy())
-    model["id"] = model.get("id", std_name)
+    model["id"] = model.get("id", std_name).lower()
 
     # if no size informations, default size = 100
     if not any(model.get(key) for key in ("friendly_size", "params", "total_params")):
@@ -265,11 +267,15 @@ def build_model_extra_info(model_name, models_info_params):
         model["required_ram"] = model["params"] * 2
     else:
         model["required_ram"] = model["params"]
-
+    logger.warning(model)
     return model
 
 
 def impact_carbon(model_name, model_url, token_count, request_latency) -> dict:
+    logger.warning(f"model_name : {model_name}")
+    logger.warning(f"model_url : {model_url}")
+    logger.warning(f"token_count : {token_count}")
+
     models_info = load_models_info()
     model_data = build_model_extra_info(model_name, models_info)
 
