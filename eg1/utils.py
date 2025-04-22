@@ -8,6 +8,9 @@ from typing import Any
 
 from jinja2 import BaseLoader, Environment
 from requests import Response
+import toml
+from pathlib import Path
+import logging
 
 from ecologits.tracers.utils import compute_llm_impacts, electricity_mixes
 
@@ -229,22 +232,72 @@ def build_param_grid(common_params: dict[str, Any], grid_params: dict[str, list[
 #
 
 
-def impact_carbon(zone, token_count, request_latency):
-    electricity_mix_zone = zone  # "FRA"#"WOR"
-    electricity_mix = electricity_mixes.find_electricity_mix(zone=electricity_mix_zone)
-    if_electricity_mix_adpe = electricity_mix.adpe
-    if_electricity_mix_pe = electricity_mix.pe
-    if_electricity_mix_gwp = electricity_mix.gwp
+def load_models_info():
+    config_path = Path("eg1/config/models-extra-info.toml")
 
-    model_active_parameter_count = 100
-    model_total_parameter_count = 100
+    with open(config_path, "r", encoding="utf-8") as f:
+        config = toml.load(f)
+
+    return config
+
+
+def get_model_name_from_path(full_name: str) -> str:
+    """Extrait le nom du modèle de son chemin complet et le convertit en minuscules."""
+    return full_name.split("/")[-1].lower()
+
+
+DEFAULT_PARAMS = {"params": 100, "active_params": 100, "total_params": 100}
+
+
+def build_model_extra_info(model_name, models_info_params):
+    std_name = get_model_name_from_path(model_name)
+    model = models_info_params.get(std_name, DEFAULT_PARAMS.copy())
+    model["id"] = model.get("id", std_name)
+
+    # if no size informations, default size = 100
+    if not any(model.get(key) for key in ("friendly_size", "params", "total_params")):
+        model["params"] = 100
+
+    PARAMS_SIZE_MAP = {"XS": 3, "S": 7, "M": 35, "L": 70, "XL": 200}
+    model["params"] = model.get("total_params", PARAMS_SIZE_MAP.get(model.get("friendly_size"), 100))
+
+    if model.get("quantization", None) == "q8":
+        model["required_ram"] = model["params"] * 2
+    else:
+        model["required_ram"] = model["params"]
+
+    return model
+
+
+def impact_carbon(model_name, model_url, token_count, request_latency) -> dict:
+    models_info = load_models_info()
+    model_data = build_model_extra_info(model_name, models_info)
+
+    # verif all essaential params
+    if not isinstance(token_count, (int, float)) or token_count < 0:
+        raise ValueError("token_count must be a positive number")
+    if not isinstance(request_latency, (int, float)) or request_latency < 0:
+        raise ValueError("request_latency must be a positive number")
+
+    mapc = model_data.get("active_params", model_data.get("params", 100))
+    matpc = model_data.get("total_params", model_data.get("params", 100))
+
+    # verif electricity zone
+    if not isinstance(model_url, str):
+        raise ValueError("model_url must be a string")
+
+    electricity_mix_zone = "FRA" if "albert" in model_url.lower() else "WOR"
+    electricity_mix = electricity_mixes.find_electricity_mix(zone=electricity_mix_zone)
+
+    if not electricity_mix:
+        raise ValueError(f"electricity zone {electricity_mix_zone} not found")
 
     return compute_llm_impacts(
-        model_active_parameter_count=model_active_parameter_count,  # Nombre de paramètres activés pendant l'inférence. Pour les modèles denses, cette valeur est égale à model_total_parameter_count
-        model_total_parameter_count=model_total_parameter_count,  # Nombre total de paramètres du modèle
-        output_token_count=token_count,  # Nombre de tokens générés, disponible dans la réponse de l'API LLM
-        if_electricity_mix_adpe=if_electricity_mix_adpe,
-        if_electricity_mix_pe=if_electricity_mix_pe,
-        if_electricity_mix_gwp=if_electricity_mix_gwp,
-        request_latency=request_latency,  # temps de réponse
+        model_active_parameter_count=mapc,
+        model_total_parameter_count=matpc,
+        output_token_count=token_count,
+        if_electricity_mix_adpe=electricity_mix.adpe,
+        if_electricity_mix_pe=electricity_mix.pe,
+        if_electricity_mix_gwp=electricity_mix.gwp,
+        request_latency=request_latency,
     )

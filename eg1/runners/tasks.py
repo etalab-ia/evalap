@@ -83,7 +83,9 @@ def generate_answer(message: dict, mcp_bridge: MCPBridgeClient | None):
 
             # Carbon emission
             try:
-                emission_carbon = impact_carbon("FRA", result.usage.completion_tokens, timer.execution_time)
+                emission_carbon = impact_carbon(
+                    model.name, model.base_url, result.usage.completion_tokens, timer.execution_time
+                )
 
             except Exception as e:
                 logger.error(f"Error during calcul carbon impact : {e}")
