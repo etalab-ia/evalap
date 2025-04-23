@@ -52,7 +52,7 @@ chat-completion model="mistralai/Mistral-Small-3.1-24B-Instruct-2503" provider="
     API_KEY=$MISTRAL_API_KEY
   fi
 
-  curl  "$URL/chat/completions" \
+  curl "$URL/chat/completions" \
       -H "Content-Type: application/json" \
       -H "Authorization: Bearer $API_KEY" \
       -d '{
