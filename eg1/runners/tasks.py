@@ -106,7 +106,7 @@ def generate_answer(message: dict, mcp_bridge: MCPBridgeClient | None):
                     retrieval_context=retrieval_context,
                     nb_tool_calls=sum(len(s) for s in steps) if steps else 0,
                     tool_steps=steps,
-                    emission_carbon=emission_carbon.model_dump(),
+                    emission_carbon=emission_carbon,
                 ),
             )
 

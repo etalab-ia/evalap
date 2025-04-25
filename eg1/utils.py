@@ -1,16 +1,17 @@
-import concurrent.futures
-import functools
-import importlib
-import pkgutil
-import time
-from itertools import product
-from typing import Any
+import logging
+from eg1.logger import logger
 
-from jinja2 import BaseLoader, Environment
-from requests import Response
+import time
 import toml
 from pathlib import Path
-import logging
+from requests import Response
+from jinja2 import BaseLoader, Environment
+from typing import Any
+from itertools import product
+import importlib
+import pkgutil
+import concurrent.futures
+import functools
 
 from ecologits.tracers.utils import compute_llm_impacts, electricity_mixes
 
@@ -230,10 +231,9 @@ def build_param_grid(common_params: dict[str, Any], grid_params: dict[str, list[
 #
 # carbon emission in kgCO2e (use Ecologits for estimation)
 #
-from eg1.logger import logger
 
 
-def load_models_info():
+def load_models_info() -> dict:
     config_path = Path("eg1/config/models-extra-info.toml")
 
     with open(config_path, "r", encoding="utf-8") as f:
@@ -243,62 +243,115 @@ def load_models_info():
 
 
 def get_model_name_from_path(full_name: str) -> str:
-    """Extrait le nom du modèle de son chemin complet et le convertit en minuscules."""
     return full_name.split("/")[-1].lower()
 
 
 DEFAULT_PARAMS = {"params": 100, "active_params": 100, "total_params": 100}
 
 
-def build_model_extra_info(model_name, models_info_params):
-    std_name = get_model_name_from_path(model_name)
-    logger.warning(std_name)
-    model = models_info_params.get(std_name, DEFAULT_PARAMS.copy())
-    model["id"] = model.get("id", std_name).lower()
+def estimate_model_params(model_name: str) -> dict:
+    """Estimate model parameters based on its name and known patterns."""
+    name_lower = model_name.lower()
 
-    # if no size informations, default size = 100
+    # Size estimation patterns
+    size_patterns = {"mini": 3, "small": 7, "medium": 13, "large": 70, "xl": 200, "xxl": 400}
+
+    # Mixture of Experts patterns
+    moe_patterns = ["moe", "mixture", "sparse"]
+    # Total parameters estimation
+    total_params = DEFAULT_PARAMS["total_params"]
+    for pattern, size in size_patterns.items():
+        if pattern in name_lower:
+            total_params = size
+            break
+
+    # Active parameters estimation
+    active_params = total_params
+    if any(pattern in name_lower for pattern in moe_patterns):
+        active_params = total_params // 4  # MoE models typically use 1/4 of total parameters
+
+    return {
+        "params": total_params,
+        "total_params": total_params,
+        "active_params": active_params,
+        "estimated": True,
+    }
+
+
+def build_model_extra_info(model_name: str, models_info_params: dict) -> dict:
+    """Build model information dictionary with default values for missing parameters."""
+    std_name = get_model_name_from_path(model_name)
+    logger.debug(f"Processing model: {std_name}")
+
+    # Case-insensitive search in TOML keys
+    model = None
+    for key in models_info_params.keys():
+        if key.lower() == std_name:
+            model = models_info_params[key]
+            break
+
+    if model is None:
+        logger.debug(f"Model {std_name} not found in models-extra-info.toml. Estimating parameters...")
+        model = estimate_model_params(std_name)
+        model["id"] = std_name.lower()
+        model["organisation"] = "unknown"
+        model["license"] = "unknown"
+        model["description"] = f"Model {std_name} not found in configuration. Parameters are estimated."
+    else:
+        model = model.copy()
+        model["id"] = model.get("id", std_name).lower()
+        model["estimated"] = False
+
+    # Handle size parameters
     if not any(model.get(key) for key in ("friendly_size", "params", "total_params")):
         model["params"] = 100
 
+    # Map friendly sizes to parameter counts
     PARAMS_SIZE_MAP = {"XS": 3, "S": 7, "M": 35, "L": 70, "XL": 200}
     model["params"] = model.get("total_params", PARAMS_SIZE_MAP.get(model.get("friendly_size"), 100))
 
+    # Calculate required RAM based on quantization
     if model.get("quantization", None) == "q8":
-        model["required_ram"] = model["params"] * 2
+        model["required_ram"] = model["params"] * 2  # q8 quantization uses 2 bytes per parameter
     else:
-        model["required_ram"] = model["params"]
-    logger.warning(model)
+        model["required_ram"] = model["params"]  # Default: 1 byte per parameter
+
+    logger.debug(f"Model info: {model}")
     return model
 
 
-def impact_carbon(model_name, model_url, token_count, request_latency) -> dict:
-    logger.warning(f"model_name : {model_name}")
-    logger.warning(f"model_url : {model_url}")
-    logger.warning(f"token_count : {token_count}")
+def impact_carbon(model_name: str, model_url: str, token_count: int, request_latency: float) -> dict:
+    """Calculate carbon impact of a model inference."""
+    logger.debug(f"model_name : {model_name}")
+    logger.debug(f"model_url : {model_url}")
+    logger.debug(f"token_count : {token_count}")
 
     models_info = load_models_info()
     model_data = build_model_extra_info(model_name, models_info)
 
-    # verif all essaential params
+    # Validate input parameters
     if not isinstance(token_count, (int, float)) or token_count < 0:
         raise ValueError("token_count must be a positive number")
     if not isinstance(request_latency, (int, float)) or request_latency < 0:
         raise ValueError("request_latency must be a positive number")
 
+    # Get model parameters
     mapc = model_data.get("active_params", model_data.get("params", 100))
     matpc = model_data.get("total_params", model_data.get("params", 100))
 
-    # verif electricity zone
+    # Determine electricity mix zone
     if not isinstance(model_url, str):
         raise ValueError("model_url must be a string")
 
+    # Use French electricity mix for Albert models, world average for others
     electricity_mix_zone = "FRA" if "albert" in model_url.lower() else "WOR"
     electricity_mix = electricity_mixes.find_electricity_mix(zone=electricity_mix_zone)
 
     if not electricity_mix:
         raise ValueError(f"electricity zone {electricity_mix_zone} not found")
 
-    return compute_llm_impacts(
+    # Calculate carbon impact using Ecologits
+    impacts = compute_llm_impacts(
         model_active_parameter_count=mapc,
         model_total_parameter_count=matpc,
         output_token_count=token_count,
@@ -307,3 +360,9 @@ def impact_carbon(model_name, model_url, token_count, request_latency) -> dict:
         if_electricity_mix_gwp=electricity_mix.gwp,
         request_latency=request_latency,
     )
+
+    # Convert to dict and add estimation flag
+    impacts_dict = impacts.model_dump()
+    impacts_dict["estimated"] = model_data.get("estimated", False)
+
+    return impacts_dict
