@@ -89,8 +89,9 @@ class DatasetCreate(DatasetBase):
 
         has_query = "query" in df.columns
 
-        if not has_query:
-            raise SchemaError("Your dataset needs a column 'query'.")
+        # @DEBUG: improve schema validation of dataset given the supported/default metrics passed.
+        #if not has_query:
+        #    raise SchemaError("Your dataset needs a column 'query'.")
 
         return {
             "has_query": has_query,

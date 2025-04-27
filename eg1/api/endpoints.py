@@ -1,7 +1,11 @@
+import os
 import re
+import shutil
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+import aiofiles
+import pyarrow.parquet as pq
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, ValidationError
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -12,7 +16,7 @@ from eg1.api.db import get_db
 from eg1.api.errors import CustomIntegrityError, SchemaError
 from eg1.api.metrics import Metric, metric_registry
 from eg1.api.security import admin_only
-from eg1.clients import MCPBridgeClient, multi_step_generate, LlmClient
+from eg1.clients import LlmClient, MCPBridgeClient, multi_step_generate
 from eg1.logger import logger
 from eg1.runners import dispatch_retries, dispatch_tasks
 
@@ -110,6 +114,72 @@ def delete_dataset(id: int, db: Session = Depends(get_db), admin_check=Depends(a
         return CustomIntegrityError.from_integrity_error(e.orig).to_http_response()
     except Exception as e:
         raise e
+
+
+@router.post("/dataset/{id}/upload_parquet", response_model=schemas.Dataset, tags=["datasets"])
+async def upload_parquet_dataset(id: int, request: Request, db: Session = Depends(get_db)):
+    """
+    Endpoint to handle streaming upload of Parquet data for a specific dataset.
+
+    Args:
+        dataset_id: ID of the dataset in the database
+        request: The streaming request containing Parquet data
+        db: Database session
+    """
+    # Fetch the dataset from the database
+    dataset = crud.get_dataset(db, id)
+    if dataset is None:
+        raise HTTPException(status_code=404, detail="Dataset not found")
+
+    # Create the directory structure if it doesn't exist
+    data_dir = "/data/datasets"
+    os.makedirs(data_dir, exist_ok=True)
+
+    # Define file paths
+    temp_file_path = f"{data_dir}/temp_{dataset.name}.parquet.tmp"
+    final_file_path = f"{data_dir}/{dataset.name}.parquet"
+
+    total_bytes = 0  # Track upload size for updating the database
+    try:
+        # Open a file to write the chunks
+        async with aiofiles.open(temp_file_path, "wb") as f:
+            # Process the incoming stream in chunks
+            async for chunk in request.stream():
+                if chunk:
+                    # Write the chunk to the file
+                    await f.write(chunk)
+                    total_bytes += len(chunk)
+
+    except Exception as e:
+        # Handle any other errors during the upload process
+        if os.path.exists(temp_file_path):
+            os.remove(temp_file_path)
+        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
+
+    # Validate the uploaded file is a valid Parquet file
+    try:
+        # Try to open the file with pyarrow to verify it's valid
+        pf = pq.ParquetFile(temp_file_path)
+        num_rows = pf.metadata.num_rows
+        column_names = [pf.schema.column(i).name for i in range(pf.metadata.num_columns)]
+
+        # Move the temporary file to the final destination
+        shutil.move(temp_file_path, final_file_path)
+
+        # Update the dataset record in the database
+        dataset.parquet_data_path = final_file_path
+        dataset.parquet_data_rows = num_rows
+        dataset.parquet_data_columns = column_names
+        dataset.parquet_data_size = total_bytes
+        db.commit()
+        db.refresh(dataset)
+
+        return dataset
+    except Exception as e:
+        # If validation fails, clean up and return an error
+        if os.path.exists(temp_file_path):
+            os.remove(temp_file_path)
+        raise HTTPException(status_code=400, detail=f"Invalid Parquet file: {str(e)}")
 
 
 #
@@ -311,7 +381,9 @@ def patch_experimentset(
         # Check the judge_model unicity
         # --
         judge = next((e.judge_model for e in db_expset.experiments if e.judge_model), None)
-        new_judge = next((e["judge_model"] for e in (expset.get("experiments") or []) if e.get("judge_model")), None)
+        new_judge = next(
+            (e["judge_model"] for e in (expset.get("experiments") or []) if e.get("judge_model")), None
+        )
         # Judge and new_judge must be defined as we can have some experiments that won't use llm-as-a-judge model.
         if judge and new_judge and judge != new_judge:
             raise HTTPException(
