@@ -77,7 +77,10 @@ class Dataset(Base):
     size = Column(Integer)
     readme = Column(Text)
     default_metric = Column(Text)
-
+    parquet_data_path = Column(Text)
+    parquet_data_columns = Column(JSON)  # list[str]
+    parquet_data_rows = Column(Integer)
+    parquet_data_size = Column(Integer) # In bytes
 
 class Model(Base):
     __tablename__ = "models"
