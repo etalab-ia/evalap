@@ -233,12 +233,13 @@ def build_param_grid(common_params: dict[str, Any], grid_params: dict[str, list[
 #
 
 
+DEFAULT_PARAMS = {"params": 100, "active_params": 100, "total_params": 100}
+
+
 def load_models_info() -> dict:
     config_path = Path("eg1/config/models-extra-info.toml")
-
     with open(config_path, "r", encoding="utf-8") as f:
         config = toml.load(f)
-
     return config
 
 
@@ -246,18 +247,16 @@ def get_model_name_from_path(full_name: str) -> str:
     return full_name.split("/")[-1].lower()
 
 
-DEFAULT_PARAMS = {"params": 100, "active_params": 100, "total_params": 100}
-
-
 def estimate_model_params(model_name: str) -> dict:
     """Estimate model parameters based on its name and known patterns."""
     name_lower = model_name.lower()
 
     # Size estimation patterns
-    size_patterns = {"mini": 3, "small": 7, "medium": 13, "large": 70, "xl": 200, "xxl": 400}
+    size_patterns = {"mini": 3, "small": 7, "medium": 35, "large": 70, "xl": 200, "xxl": 400}
 
     # Mixture of Experts patterns
     moe_patterns = ["moe", "mixture", "sparse"]
+
     # Total parameters estimation
     total_params = DEFAULT_PARAMS["total_params"]
     for pattern, size in size_patterns.items():
@@ -294,9 +293,6 @@ def build_model_extra_info(model_name: str, models_info_params: dict) -> dict:
         logger.debug(f"Model {std_name} not found in models-extra-info.toml. Estimating parameters...")
         model = estimate_model_params(std_name)
         model["id"] = std_name.lower()
-        model["organisation"] = "unknown"
-        model["license"] = "unknown"
-        model["description"] = f"Model {std_name} not found in configuration. Parameters are estimated."
     else:
         model = model.copy()
         model["id"] = model.get("id", std_name).lower()
@@ -304,14 +300,24 @@ def build_model_extra_info(model_name: str, models_info_params: dict) -> dict:
 
     # Handle size parameters
     if not any(model.get(key) for key in ("friendly_size", "params", "total_params")):
-        model["params"] = 100
+        model["params"] = DEFAULT_PARAMS["params"]
 
     # Map friendly sizes to parameter counts
     PARAMS_SIZE_MAP = {"XS": 3, "S": 7, "M": 35, "L": 70, "XL": 200}
-    model["params"] = model.get("total_params", PARAMS_SIZE_MAP.get(model.get("friendly_size"), 100))
+    model["params"] = model.get(
+        "total_params", PARAMS_SIZE_MAP.get(model.get("friendly_size"), DEFAULT_PARAMS["params"])
+    )
+
+    # if quantization, divide by 2
+    if model.get("quantization") == "q8":
+        model["active_params"] = model.get("active_params", model["params"]) // 2
+        model["total_params"] = model.get("total_params", model["params"]) // 2
+    else:
+        model["active_params"] = model.get("active_params", model["params"])
+        model["total_params"] = model.get("total_params", model["params"])
 
     # Calculate required RAM based on quantization
-    if model.get("quantization", None) == "q8":
+    if model.get("quantization") == "q8":
         model["required_ram"] = model["params"] * 2  # q8 quantization uses 2 bytes per parameter
     else:
         model["required_ram"] = model["params"]  # Default: 1 byte per parameter
@@ -335,9 +341,9 @@ def impact_carbon(model_name: str, model_url: str, token_count: int, request_lat
     if not isinstance(request_latency, (int, float)) or request_latency < 0:
         raise ValueError("request_latency must be a positive number")
 
-    # Get model parameters
-    mapc = model_data.get("active_params", model_data.get("params", 100))
-    matpc = model_data.get("total_params", model_data.get("params", 100))
+    # Get model parameters, always using DEFAULT_PARAMS as fallback
+    mapc = model_data.get("active_params", model_data.get("params", DEFAULT_PARAMS["active_params"]))
+    matpc = model_data.get("total_params", model_data.get("params", DEFAULT_PARAMS["total_params"]))
 
     # Determine electricity mix zone
     if not isinstance(model_url, str):
