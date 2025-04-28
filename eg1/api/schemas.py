@@ -369,6 +369,11 @@ class ExperimentWithAnswers(ExperimentRO):
     answers: list[Answer] | None
 
 
+class ExperimentWithEco(ExperimentRO):
+    answers: list[Answer] | None
+    emission_carbon: list[dict] | None
+
+
 class ExperimentFull(ExperimentRO):
     answers: list[Answer] | None = None
     results: list[Result] | None = None

@@ -215,6 +215,7 @@ def delete_experiment(
     response_model=schemas.ExperimentRO
     | schemas.ExperimentWithResults
     | schemas.ExperimentWithAnswers
+    | schemas.ExperimentWithEco
     | schemas.ExperimentFull
     | schemas.ExperimentFullWithDataset,
     tags=["experiments"],
@@ -224,6 +225,7 @@ def read_experiment(
     with_results: bool = False,
     with_answers: bool = False,
     with_dataset: bool = False,
+    with_eco: bool = False,
     db: Session = Depends(get_db),
 ):
     experiment = crud.get_experiment(db, id)
@@ -234,6 +236,8 @@ def read_experiment(
         return schemas.ExperimentFullWithDataset.model_validate(experiment)
     elif with_answers and with_results:
         return schemas.ExperimentFull.model_validate(experiment)
+    elif with_eco:
+        return schemas.ExperimentWithEco.model_validate(experiment)
     elif with_results:
         return schemas.ExperimentWithResults.model_validate(experiment)
     elif with_answers:
@@ -311,7 +315,9 @@ def patch_experimentset(
         # Check the judge_model unicity
         # --
         judge = next((e.judge_model for e in db_expset.experiments if e.judge_model), None)
-        new_judge = next((e["judge_model"] for e in (expset.get("experiments") or []) if e.get("judge_model")), None)
+        new_judge = next(
+            (e["judge_model"] for e in (expset.get("experiments") or []) if e.get("judge_model")), None
+        )
         # Judge and new_judge must be defined as we can have some experiments that won't use llm-as-a-judge model.
         if judge and new_judge and judge != new_judge:
             raise HTTPException(
