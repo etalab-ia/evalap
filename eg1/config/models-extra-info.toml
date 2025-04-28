@@ -611,6 +611,17 @@ excerpt = "Yi 1.5 est un modèle de l'entreprise chinoise 01-ai, spécialisé en
 params = 9
 license = "Apache 2.0"
 
+["whisper-large-v3"]
+url = "https://huggingface.co/openai/whisper-large-v3"
+simple_name = "Whisper Large v3"
+organisation = "OpenAI"
+icon_path = "openai.svg"
+license = "MIT"
+params = 1550
+excerpt = "Whisper Large v3 est un modèle de reconnaissance automatique de la parole (ASR) multilingue open source, développé par OpenAI. Il est particulièrement performant pour la transcription et la traduction audio."
+description = "Whisper Large v3 est la troisième version du modèle ASR open source d'OpenAI. Il prend en charge de nombreuses langues, offre une grande précision sur la transcription et la traduction audio, et est utilisé dans de nombreux outils de transcription automatique. Le modèle est disponible sous licence MIT et hébergé sur Hugging Face."
+release_date = "12/2023"
+
 # ["Vicuna-13B"]
 # simple_name = "Vicuna-13B"
 # organisation = "Meta"
