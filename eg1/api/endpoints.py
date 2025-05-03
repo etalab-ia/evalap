@@ -561,7 +561,7 @@ def read_ops_metrics(db: Session = Depends(get_db)):
 class GenerateInput(BaseModel):
     model: str
     query: str
-    prompt_system: str | None = None
+    system_prompt: str | None = None
     sampling_params: dict | None = None
     extra_params: dict | None = None
 
@@ -588,8 +588,8 @@ def _generate(input: GenerateInput):
 
     # Build messages
     messages = [{"role": "user", "content": input.query}]
-    if input.prompt_system:
-        messages = [{"role": "system", "content": input.prompt_system}] + messages
+    if input.system_prompt:
+        messages = [{"role": "system", "content": input.system_prompt}] + messages
 
     _aiclient = LlmClient()
     url, headers = _aiclient.get_url_and_headers(input.model)

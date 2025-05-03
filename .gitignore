@@ -7,6 +7,8 @@ notebooks/\[DEBUG\]*
 notebooks/\[BACKUP\]*
 *.back.py
 config/products/\[BACKUP\]*
+*.parquet
+*.csv
 
 
 #

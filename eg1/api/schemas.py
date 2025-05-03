@@ -133,7 +133,7 @@ class ModelBase(EgBaseModel):
     name: str
     base_url: str
     aliased_name: str | None = None
-    prompt_system: str | None = None
+    system_prompt: str | None = None
     sampling_params: dict | None = None
     extra_params: dict | None = None
 
@@ -162,7 +162,7 @@ class ModelRaw(EgBaseModel):
     )
     name: str = ""
     base_url: str = ""
-    prompt_system: str | None = None
+    system_prompt: str | None = None
     sampling_params: dict | None = None
     extra_params: dict | None = None
     # Ops metrics
@@ -485,7 +485,7 @@ class LeaderboardEntry(BaseModel):
     dataset_name: str
     main_metric_score: Optional[float]
     other_metrics: dict
-    prompt_system: Optional[str] = None
+    system_prompt: Optional[str] = None
     sampling_param: dict
     extra_param: dict
     created_at: datetime
