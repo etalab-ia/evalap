@@ -89,7 +89,7 @@ class Model(Base):
     aliased_name = Column(Text)
     base_url = Column(Text)
     api_key = Column(Text)
-    prompt_system = Column(Text)
+    system_prompt = Column(Text)
     # prompt_template = Column(Text) # rag, composition, multiagents ?
     sampling_params = Column(JSON)  # dict
     extra_params = Column(JSON)  # dict
