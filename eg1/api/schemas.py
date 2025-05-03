@@ -87,16 +87,11 @@ class DatasetCreate(DatasetBase):
         except ValueError:
             raise SchemaError("'df' should be a readable dataframe. Use df.to_json()...")
 
-        has_query = "query" in df.columns
-
-        # @DEBUG: improve schema validation of dataset given the supported/default metrics passed.
-        #if not has_query:
-        #    raise SchemaError("Your dataset needs a column 'query'.")
-
         return {
-            "has_query": has_query,
             "size": len(df),
             "columns": list(df.columns),
+            "parquet_size": 0,
+            "parquet_columns": [],
             **obj,
         }
 
@@ -104,9 +99,10 @@ class DatasetCreate(DatasetBase):
 class Dataset(DatasetBase):
     id: int
     created_at: datetime
-    has_query: bool
     size: int = Field(description="Number of rows in the dataset (length of the dataframe)")
     columns: list[str]
+    parquet_size: int = Field(description="Number of rows in the dataset (length of the parquet file)")
+    parquet_columns: list[str]
 
 
 class DatasetFull(DatasetBase):
@@ -158,7 +154,7 @@ class ModelWithKeys(Model):
 class ModelRaw(EgBaseModel):
     # Answers
     output: list[str] = Field(
-        description="The sequence of answers generated for this model, ordered as the 'query' input of the dataset you are working on."
+        description="The sequence of answers generated for this model, ordered as the 'rows' input of the dataset you are working on."
     )
     # ModelBase
     aliased_name: str = Field(
@@ -308,13 +304,6 @@ class ExperimentCreate(ExperimentBase):
 
         # Validate Model and metric compatibility
         # --
-        needs_output = any("output" in metric_registry.get_metric(m).require for m in self.metrics)
-        if needs_output and not has_raw_output and not dataset.has_query:
-            raise SchemaError(
-                "You need to provide an answer for this metric. "
-                "Either provide a dataset with the 'query' field to generate the answer or with an 'output' field if have generated it yourself."
-            )
-        # Schema validation on all require fields
         DEBUG_EXCEPTION_REQUIRE = ["context", "retrieval_context"]  # fetch at runtime with tooling
         require_fields = {
             require
@@ -325,10 +314,10 @@ class ExperimentCreate(ExperimentBase):
         for require in require_fields:
             if require in ["output"]:
                 continue
-            if require not in dataset.columns:
+            if require not in (dataset.columns + dataset.parquet_columns):
                 raise SchemaError(
                     f"You need to provide a `{require}` for one of your metric. "
-                    f"Your dataset needs to have an `{require}` field."
+                    "Either your dataset needs to have a `{require}` field or use ModelRaw schema to provide it yourself if its a model generated field."
                 )
 
         return {

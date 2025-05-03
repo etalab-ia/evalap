@@ -71,16 +71,15 @@ class Dataset(Base):
     id = Column(Integer, primary_key=True)
     created_at = Column(DateTime, server_default=func.now())
     name = Column(Text, unique=True)
-    df = Column(JSON)  # df
-    columns = Column(JSON)  # list[str]
-    has_query = Column(Boolean)
-    size = Column(Integer)
     readme = Column(Text)
     default_metric = Column(Text)
-    parquet_data_path = Column(Text)
-    parquet_data_columns = Column(JSON)  # list[str]
-    parquet_data_rows = Column(Integer)
-    parquet_data_size = Column(Integer) # In bytes
+    df = Column(JSON)  # df
+    size = Column(Integer) # rows
+    columns = Column(JSON)  # list[str]
+    parquet_path = Column(Text)
+    parquet_size = Column(Integer) # rows
+    parquet_columns = Column(JSON)  # list[str]
+    parquet_byte_size = Column(Integer)
 
 class Model(Base):
     __tablename__ = "models"

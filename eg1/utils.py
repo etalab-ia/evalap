@@ -1,8 +1,11 @@
+import base64
 import concurrent.futures
 import functools
 import importlib
+import io
 import pkgutil
 import re
+import subprocess
 import time
 from itertools import product
 from typing import Any
@@ -33,6 +36,44 @@ def extract_code(text: str):
         return code
 
     return text.strip()
+
+
+def image_to_base64(pil_image, format=None):
+    """
+    Convert a PIL image to a base64-encoded PNG bytes string.
+    """
+    format = format or pil_image.format
+    with io.BytesIO() as buffer:
+        pil_image.save(buffer, format=format)
+        return base64.b64encode(buffer.getvalue()).decode("utf-8")
+
+
+def pandoc(content, input_format="html", output_format="markdown"):
+    """
+    Convert HTML to Markdown using Pandoc
+
+    Parameters:
+    - html_content: The HTML string to convert
+    - output_format: The specific Markdown flavor (e.g., "markdown", "markdown_strict", "gfm" for GitHub-flavored Markdown)
+
+    Returns:
+    - Markdown text
+    """
+    # Create a process that runs pandoc
+    process = subprocess.Popen(
+        ["pandoc", "-f", input_format, "-t", output_format],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+
+    # Send the HTML content to pandoc and get the output
+    new_content, error = process.communicate(input=content)
+    if process.returncode != 0:
+        raise Exception(f"Pandoc conversion failed: {error}")
+
+    return new_content
 
 
 #
