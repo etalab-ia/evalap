@@ -10,7 +10,9 @@ import time
 from itertools import product
 from typing import Any
 
+import pyarrow.parquet as pq
 from jinja2 import BaseLoader, Environment
+from PIL import Image
 from requests import Response
 
 #
@@ -38,10 +40,15 @@ def extract_code(text: str):
     return text.strip()
 
 
-def image_to_base64(pil_image, format=None):
+def image_to_base64(image: Image.Image | dict, format: str | None = None):
     """
     Convert a PIL image to a base64-encoded PNG bytes string.
     """
+    if isinstance(image, dict):
+        image = Image.open(io.BytesIO(image["bytes"]))
+    else:
+        pil_image = image
+
     format = format or pil_image.format
     with io.BytesIO() as buffer:
         pil_image.save(buffer, format=format)
@@ -191,6 +198,51 @@ def import_classes(package_name: str, class_names: list[str], more: list[str] = 
     classes = sorted(classes, key=lambda d: class_indexes[d["name"]])
 
     return classes
+
+
+#
+# Parquet utils
+#
+
+
+def get_parquet_row_by_index(parquet_file_path: str, row_index: int, batch_size: int = 10) -> dict:
+    """
+    Extract the ith row from a Parquet file using iter_batches
+
+    Args:
+        parquet_file_path: Path to the Parquet file
+        row_index: The index of the row to extract (0-based)
+
+    Returns:
+        Dictionary representing the row data
+    """
+    # Open the parquet file
+    pf = pq.ParquetFile(parquet_file_path)
+
+    # Validate row index against total rows
+    if row_index < 0 or row_index >= pf.metadata.num_rows:
+        raise IndexError(f"Row index {row_index} out of bounds (total rows: {pf.metadata.num_rows})")
+
+    # Iterate through batches until we find the one containing our row
+    row = None
+    current_row = 0
+    for batch in pf.iter_batches(batch_size=batch_size):
+        batch_size = len(batch)
+
+        # Check if the target row is in this batch
+        if current_row <= row_index < current_row + batch_size:
+            # Calculate the local index within this batch
+            local_index = row_index - current_row
+
+            # Extract the row as a dictionary
+            columns = pf.schema_arrow.names
+            row = {col: batch[col][local_index].as_py() for col in columns}
+            break
+
+        # Move to the next batch
+        current_row += batch_size
+
+    return row
 
 
 #

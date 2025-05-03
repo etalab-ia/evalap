@@ -90,6 +90,7 @@ class Model(Base):
     base_url = Column(Text)
     api_key = Column(Text)
     system_prompt = Column(Text)
+    prelude_prompt = Column(Text)
     # prompt_template = Column(Text) # rag, composition, multiagents ?
     sampling_params = Column(JSON)  # dict
     extra_params = Column(JSON)  # dict
@@ -165,6 +166,7 @@ class Experiment(Base):
     created_at = Column(DateTime, server_default=func.now())
     experiment_status = Column(String)
     judge_model = Column(String)
+    with_vision = Column(Boolean)
     num_try = Column(Integer, default=0)
     num_success = Column(Integer, default=0)
 
