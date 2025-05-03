@@ -134,6 +134,7 @@ class ModelBase(EgBaseModel):
     base_url: str
     aliased_name: str | None = None
     system_prompt: str | None = None
+    prelude_prompt: str | None = None
     sampling_params: dict | None = None
     extra_params: dict | None = None
 
@@ -163,6 +164,7 @@ class ModelRaw(EgBaseModel):
     name: str = ""
     base_url: str = ""
     system_prompt: str | None = None
+    prelude_prompt: str | None = None
     sampling_params: dict | None = None
     extra_params: dict | None = None
     # Ops metrics
@@ -239,6 +241,10 @@ class ExperimentBase(EgBaseModel):
     readme: str | None = None
     experiment_set_id: int | None = None
     judge_model: Literal[*LlmApiModels._all_models()] | None = None
+    with_vision: bool = Field(
+        False,
+        description="Add the image to the user message if an 'img' field is present in the dataset (parquet).",
+    )
 
 
 class ExperimentCreate(ExperimentBase):
