@@ -116,6 +116,7 @@ def delete_dataset(id: int, db: Session = Depends(get_db), admin_check=Depends(a
         raise e
 
 
+# @TODO write /dataset/{id}/download_parquet
 @router.post("/dataset/{id}/upload_parquet", response_model=schemas.Dataset, tags=["datasets"])
 async def upload_parquet_dataset(id: int, request: Request, db: Session = Depends(get_db)):
     """
@@ -161,16 +162,16 @@ async def upload_parquet_dataset(id: int, request: Request, db: Session = Depend
         # Try to open the file with pyarrow to verify it's valid
         pf = pq.ParquetFile(temp_file_path)
         num_rows = pf.metadata.num_rows
-        column_names = [pf.schema.column(i).name for i in range(pf.metadata.num_columns)]
+        column_names = pf.schema_arrow.names
 
         # Move the temporary file to the final destination
         shutil.move(temp_file_path, final_file_path)
 
         # Update the dataset record in the database
-        dataset.parquet_data_path = final_file_path
-        dataset.parquet_data_rows = num_rows
-        dataset.parquet_data_columns = column_names
-        dataset.parquet_data_size = total_bytes
+        dataset.parquet_path = final_file_path
+        dataset.parquet_size = num_rows
+        dataset.parquet_columns = column_names
+        dataset.parquet_byte_size = total_bytes
         db.commit()
         db.refresh(dataset)
 
