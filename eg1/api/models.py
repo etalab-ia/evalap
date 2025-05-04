@@ -71,13 +71,16 @@ class Dataset(Base):
     id = Column(Integer, primary_key=True)
     created_at = Column(DateTime, server_default=func.now())
     name = Column(Text, unique=True)
-    df = Column(JSON)  # df
-    columns = Column(JSON)  # list[str]
-    has_query = Column(Boolean)
-    size = Column(Integer)
     readme = Column(Text)
     default_metric = Column(Text)
-
+    columns_map = Column(JSON) # dict[str, str]
+    df = Column(JSON)  # df
+    size = Column(Integer) # rows
+    columns = Column(JSON)  # list[str]
+    parquet_path = Column(Text)
+    parquet_size = Column(Integer) # rows
+    parquet_columns = Column(JSON)  # list[str]
+    parquet_byte_size = Column(Integer)
 
 class Model(Base):
     __tablename__ = "models"
@@ -87,7 +90,8 @@ class Model(Base):
     aliased_name = Column(Text)
     base_url = Column(Text)
     api_key = Column(Text)
-    prompt_system = Column(Text)
+    system_prompt = Column(Text)
+    prelude_prompt = Column(Text)
     # prompt_template = Column(Text) # rag, composition, multiagents ?
     sampling_params = Column(JSON)  # dict
     extra_params = Column(JSON)  # dict
@@ -163,6 +167,7 @@ class Experiment(Base):
     created_at = Column(DateTime, server_default=func.now())
     experiment_status = Column(String)
     judge_model = Column(String)
+    with_vision = Column(Boolean)
     num_try = Column(Integer, default=0)
     num_success = Column(Integer, default=0)
 

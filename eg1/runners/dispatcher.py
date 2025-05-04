@@ -81,8 +81,7 @@ def dispatch_tasks(db, db_exp, message_type: MessageType):
         db_exp = _fix_answer_num_count(db, db_exp, commit=False)
         db_exp.num_try = db_exp.num_success
         db.commit()
-        df = pd.read_json(StringIO(db_exp.dataset.df))
-        for num_line, row in df.iterrows():
+        for num_line, row in crud.get_dataset_iterator(db_exp):
             # Do not rerun if answer already exist with no error
             r = db.query(models.Answer).filter_by(num_line=num_line, experiment_id=db_exp.id).first()
             if r and r.answer and not r.error_msg:
@@ -96,7 +95,7 @@ def dispatch_tasks(db, db_exp, message_type: MessageType):
                     "exp_id": db_exp.id,
                     "model_id": db_exp.model.id,
                     "line_id": num_line,
-                    "query": row["query"],
+                    "query": row.get("query"),
                 }
             )
 
@@ -136,7 +135,7 @@ def dispatch_tasks(db, db_exp, message_type: MessageType):
                 elif r:
                     r.error_msg = None
 
-                row = df.iloc[a.num_line]
+                row = crud.get_dataset_row(db_exp, a.num_line, df_fallback=df)
                 sender.send_json(
                     {
                         "message_type": MessageType.observation,
@@ -179,21 +178,22 @@ def dispatch_retries(db, retry_runs: schemas.RetryRuns):
 
         # Failed
         num_line_added = []
-        for answer in db_exp.answers:
-            if answer.answer is not None and not answer.error_msg:  # @TODO: add a is_failed columns !
+        for a in db_exp.answers:
+            if a.answer is not None and not a.error_msg:  # @TODO: add a is_failed columns !
                 continue
 
-            answer.error_msg = None
+            a.error_msg = None
+            row = crud.get_dataset_row(db_exp, a.num_line, df_fallback=df)
             sender.send_json(
                 {
                     "message_type": MessageType.answer,
                     "exp_id": db_exp.id,
                     "model_id": db_exp.model.id,
-                    "line_id": answer.num_line,
-                    "query": df.iloc[answer.num_line]["query"],
+                    "line_id": a.num_line,
+                    "query": row.get("query"),
                 }
             )
-            num_line_added + [answer.num_line]
+            num_line_added + [a.num_line]
 
         db.commit()  # for obs.error_msg
 
@@ -204,13 +204,14 @@ def dispatch_retries(db, retry_runs: schemas.RetryRuns):
             i for i in range(db_exp.dataset.size) if i not in num_line_added and i not in num_lines
         ]
         for num_line in num_lines_missing:
+            row = crud.get_dataset_row(db_exp, num_line, df_fallback=df)
             sender.send_json(
                 {
                     "message_type": MessageType.answer,
                     "exp_id": db_exp.id,
                     "model_id": db_exp.model.id,
                     "line_id": num_line,
-                    "query": df.iloc[num_line]["query"],
+                    "query": row.get("query"),
                 }
             )
 
@@ -232,9 +233,10 @@ def dispatch_retries(db, retry_runs: schemas.RetryRuns):
                 continue
 
             obs.error_msg = None
+            row = crud.get_dataset_row(db_exp, obs.num_line, df_fallback=df)
             answer = crud.get_answer(db, experiment_id=db_exp.id, num_line=obs.num_line)
             if not answer:
-                output = df.iloc[obs.num_line].get("output")
+                output = row.get("output")
             else:
                 output = answer.answer
 
@@ -245,7 +247,7 @@ def dispatch_retries(db, retry_runs: schemas.RetryRuns):
                     "line_id": obs.num_line,
                     "metric_name": result.metric_name,
                     "output": output,
-                    "output_true": df.iloc[obs.num_line].get("output_true"),
+                    "output_true": row.get("output_true"),
                 }
             )
             num_line_added + [answer.num_line]
@@ -263,9 +265,10 @@ def dispatch_retries(db, retry_runs: schemas.RetryRuns):
             i for i in range(db_exp.dataset.size) if i not in num_line_added and i not in num_lines
         ]
         for num_line in num_lines_missing:
+            row = crud.get_dataset_row(db_exp, obs.num_line, df_fallback=df)
             answer = crud.get_answer(db, experiment_id=db_exp.id, num_line=num_line)
             if not answer:
-                output = df.iloc[num_line].get("output")
+                output = row.get("output")
             else:
                 output = answer.answer
 
@@ -276,7 +279,7 @@ def dispatch_retries(db, retry_runs: schemas.RetryRuns):
                     "line_id": num_line,
                     "metric_name": result.metric_name,
                     "output": output,
-                    "output_true": df.iloc[num_line].get("output_true"),
+                    "output_true": row.get("output_true"),
                 }
             )
 

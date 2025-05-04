@@ -1,4 +1,4 @@
-# Ressources
+# Tools and Agents
 
 ### RAG
 
@@ -20,4 +20,22 @@
 To dig:
 - graph memrory: https://github.com/modelcontextprotocol/servers/tree/main/src/memory
 - smolagent support MCP : https://github.com/huggingface/smolagents/pull/232
+
+### Agents
+
+Leaderboard:
+- https://leaderboard.steel.dev/
+
+Awesome list:
+- https://github.com/steel-dev/awesome-web-agents
+- https://github.com/Jenqyang/Awesome-AI-Agents
+- https://github.com/e2b-dev/awesome-ai-agents
+
+MCP browser server:
+- https://github.com/co-browser/browser-use-mcp-server
+- https://github.com/Automata-Labs-team/MCP-Server-Playwright
+- https://github.com/browserbase/mcp-server-browserbase?tab=readme-ov-file
+- https://github.com/microsoft/playwright-mcp
+- https://github.com/blackwhite084/playwright-plus-python-mcp
+- https://github.com/executeautomation/mcp-playwright
 

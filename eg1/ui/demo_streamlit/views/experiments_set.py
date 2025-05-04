@@ -103,6 +103,10 @@ def _get_experiment_data(exp_id):
 
     df = pd.read_json(StringIO(expe["dataset"]["df"]))
 
+    if len(df) == 0 and expe["dataset"]["parquet_size"]:
+        if expe["dataset"]["parquet_size"] > 0:
+            df =  pd.DataFrame(index=range(100))
+
     # Merge answers and metrics into the dataset dataframe
     if "answers" in expe:
         answers = {answer["num_line"]: answer["answer"] for answer in expe["answers"]}
@@ -635,12 +639,15 @@ def show_header(experimentset):
         st.caption(f"Created the {when}")
     st.markdown(f"**Readme:** {experimentset.get('readme', 'No description available')}")
 
-    finished_ratio = int(counts["total_observation_successes"] / counts["observation_length"] * 100)
-    failure_ratio = int(
-        (counts["total_observation_tries"] - counts["total_observation_successes"])
-        / counts["observation_length"]
-        * 100
-    )
+    finished_ratio = 0
+    failure_ratio = 0
+    if counts["observation_length"] > 0:
+        finished_ratio = int(counts["total_observation_successes"] / counts["observation_length"] * 100)
+        failure_ratio = int(
+            (counts["total_observation_tries"] - counts["total_observation_successes"])
+            / counts["observation_length"]
+            * 100
+        )
 
     run_status = f"**Finished**: {finished_ratio}%"
     if failure_ratio > 0:

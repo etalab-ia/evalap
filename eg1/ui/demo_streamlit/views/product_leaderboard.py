@@ -173,7 +173,7 @@ def process_leaderboard_data(
                 "name": entry["model_name"],
                 "sampling_params": entry.get("sampling_param", {}),
                 "extra_params": entry.get("extra_param", {}),
-                "prompt_system": entry.get("prompt_system", {}),
+                "system_prompt": entry.get("system_prompt", {}),
             }
         }
         experiments.append(exp)
