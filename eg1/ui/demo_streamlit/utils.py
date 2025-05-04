@@ -121,11 +121,11 @@ def _rename_model_variants(experiments: list) -> list:
             for id in ids
         ]
 
-        # Manage prompt_system param by computing its hash
+        # Manage system_prompt param by computing its hash
         for i, id in enumerate(ids):
-            if not experiments[id]["model"].get("prompt_system"):
+            if not experiments[id]["model"].get("system_prompt"):
                 continue
-            model_params[i]["sys_prompt"] = hash_string(experiments[id]["model"]["prompt_system"], 4)
+            model_params[i]["sys_prompt"] = hash_string(experiments[id]["model"]["system_prompt"], 4)
 
         # remove commons parameters
         model_diff_params = _remove_commons_items(model_params)
@@ -211,7 +211,7 @@ def _format_model_params(expe):
 
     model = expe["model"].copy()
     model_params = (model.get("sampling_params") or {}) | (model.get("extra_params") or {})
-    if model.get("prompt_system"):
-        model_params["sys_prompt"] = hash_string(model["prompt_system"], 4)
+    if model.get("system_prompt"):
+        model_params["sys_prompt"] = hash_string(model["system_prompt"], 4)
 
     return model_params
