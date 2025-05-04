@@ -53,7 +53,7 @@ def generate_answer(message: dict, mcp_bridge: MCPBridgeClient | None):
             # Generate answer
             # --
             if exp.with_vision:
-                pf_row = get_parquet_row_by_index(model.dataset.parquet_path, msg.line_id)
+                pf_row = get_parquet_row_by_index(exp.dataset.parquet_path, msg.line_id)
                 messages = [
                     {
                         "role": "user",

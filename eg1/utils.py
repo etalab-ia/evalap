@@ -45,7 +45,7 @@ def image_to_base64(image: Image.Image | dict, format: str | None = None):
     Convert a PIL image to a base64-encoded PNG bytes string.
     """
     if isinstance(image, dict):
-        image = Image.open(io.BytesIO(image["bytes"]))
+        pil_image = Image.open(io.BytesIO(image["bytes"]))
     else:
         pil_image = image
 

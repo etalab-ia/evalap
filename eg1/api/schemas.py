@@ -109,7 +109,7 @@ class Dataset(DatasetBase):
     parquet_columns: list[str]
 
 
-class DatasetFull(DatasetBase):
+class DatasetFull(Dataset):
     df: str  # from_json
 
 
@@ -325,10 +325,14 @@ class ExperimentCreate(ExperimentBase):
             if require in ["output"]:
                 continue
             if require not in (dataset.columns + dataset.parquet_columns):
-                # @HEERE: handle columns_map (schemas !!)
+                if dataset.columns_map and dataset.columns_map.get(require) in (
+                    dataset.columns + dataset.parquet_columns
+                ):
+                    # Handle columns_maps
+                    continue
                 raise SchemaError(
                     f"You need to provide a `{require}` for one of your metric. "
-                    "Either your dataset needs to have a `{require}` field or use ModelRaw schema to provide it yourself if its a model generated field."
+                    f"Either your dataset needs to have a `{require}` field or use ModelRaw schema to provide it yourself if its a model generated field."
                 )
 
         return {
