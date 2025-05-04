@@ -73,6 +73,10 @@ class DatasetBase(EgBaseModel):
     name: str
     readme: str
     default_metric: str
+    columns_map: dict[str, str] | None = Field(
+        None,
+        description="A column names maping that indicates what names in dataset match the eg1 stadandard (output, output_true etc)",
+    )
 
 
 class DatasetCreate(DatasetBase):
@@ -321,6 +325,7 @@ class ExperimentCreate(ExperimentBase):
             if require in ["output"]:
                 continue
             if require not in (dataset.columns + dataset.parquet_columns):
+                # @HEERE: handle columns_map (schemas !!)
                 raise SchemaError(
                     f"You need to provide a `{require}` for one of your metric. "
                     "Either your dataset needs to have a `{require}` field or use ModelRaw schema to provide it yourself if its a model generated field."
