@@ -28,7 +28,7 @@ dependencies = [
     "pyarrow==19.0.1",
     "deepeval==2.5.2",
     "ragas==0.2.14",
-    "rapidfuzz==3.13.0"
+    "rapidfuzz==3.13.0",
     # Front
     "streamlit==1.40.1",
     "plotly==5.22.0"
