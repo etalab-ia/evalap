@@ -46,7 +46,7 @@ def generate_answer(message: dict, mcp_bridge: MCPBridgeClient | None):
             tools = mcp_bridge.tools2openai(_tools)
             sampling_params_plus["tools"] = tools
 
-        query = "\n\n".join([model.prelude_prompt, msg.query]) if model.prelude_prompt else msg.query
+        query = "\n\n".join([model.prelude_prompt, msg.query]) if model.prelude_prompt else (msg.query or "")
         answer = None
         error_msg = None
         try:

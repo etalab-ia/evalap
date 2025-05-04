@@ -73,6 +73,7 @@ class Dataset(Base):
     name = Column(Text, unique=True)
     readme = Column(Text)
     default_metric = Column(Text)
+    columns_map = Column(JSON) # dict[str, str]
     df = Column(JSON)  # df
     size = Column(Integer) # rows
     columns = Column(JSON)  # list[str]

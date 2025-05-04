@@ -1,4 +1,9 @@
-from sqlalchemy import and_, desc, func, select, column
+from io import StringIO
+from typing import Generator
+
+import pandas as pd
+import pyarrow.parquet as pq
+from sqlalchemy import and_, column, desc, func, select
 from sqlalchemy.orm import Session, joinedload
 
 import eg1.api.models as models
@@ -6,6 +11,7 @@ import eg1.api.schemas as schemas
 from eg1.api.errors import CustomIntegrityError, SchemaError
 from eg1.api.metrics import Metric, metric_registry
 from eg1.api.models import create_object_from_dict
+from eg1.utils import get_parquet_row_by_index
 
 #
 # Datasets
@@ -72,6 +78,51 @@ def remove_dataset(db: Session, dataset_id: int) -> bool:
     db.commit()
     # update_db_exp(db, dataset_id, dict(is_archived=True))
     return True
+
+
+def get_dataset_row(
+    db_exp: models.Experiment, line_id: int, df_fallback=None | pd.DataFrame, columns_map=None
+) -> dict:
+    if db_exp.with_vision:
+        row = get_parquet_row_by_index(db_exp.dataset.parquet_path, line_id)
+    else:
+        if df_fallback is None:
+            df = pd.read_json(StringIO(db_exp.dataset.df))
+        else:
+            df = df_fallback
+        row = df.iloc[line_id].to_dict()
+
+    for k, v in (db_exp.dataset.columns_map or {}).items():
+        row[k] = row[v]
+
+    return row
+
+
+def get_dataset_iterator(
+    db_exp: models.Experiment, columns_map=None
+) -> Generator[tuple[int, dict], None, None]:
+    if db_exp.with_vision:
+        # Parquet based dataset
+        pf = pq.ParquetFile(db_exp.dataset.parquet_path)
+        batch_size = 10
+        batch_number = 0
+        for batch in pf.iter_batches(batch_size=batch_size):
+            df = batch.to_pandas()
+            for num_line, row in df.iterrows():
+                row = row.to_dict()
+                for k, v in (db_exp.dataset.columns_map or {}).items():
+                    row[k] = row[v]
+                yield num_line + batch_number * batch_size, row
+
+            batch_number += 1
+    else:
+        # Dataframe based dataset
+        df = pd.read_json(StringIO(db_exp.dataset.df))
+        for num_line, row in df.iterrows():
+            row = row.to_dict()
+            for k, v in (db_exp.dataset.columns_map or {}).items():
+                row[k] = row[v]
+            yield num_line, row
 
 
 #
