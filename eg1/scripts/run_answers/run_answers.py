@@ -135,7 +135,7 @@ def run_model(args):
         "aliased_name": model,
         "name": model,
         "base_url": base_url,
-        "prompt_system": system_prompt,
+        "system_prompt": system_prompt,
         "sampling_params": sampling_params,
         "dataset": dataset["name"],
     }

@@ -14,7 +14,7 @@ from eg1.api.metrics import metric_registry
 from eg1.clients import MCPBridgeClient, multi_step_generate, split_think_answer
 from eg1.logger import logger
 from eg1.runners import MessageType, dispatch_tasks
-from eg1.utils import Timer, run_with_timeout
+from eg1.utils import Timer, get_parquet_row_by_index, image_to_base64, run_with_timeout
 from eg1.utils_eco import impact_carbon
 
 
@@ -47,14 +47,37 @@ def generate_answer(message: dict, mcp_bridge: MCPBridgeClient | None):
             tools = mcp_bridge.tools2openai(_tools)
             sampling_params_plus["tools"] = tools
 
+        query = msg.query or ""
+        query = "\n\n".join([model.prelude_prompt, query]) if model.prelude_prompt else query
         answer = None
         error_msg = None
         try:
             # Generate answer
             # --
-            messages = [{"role": "user", "content": msg.query}]
-            if model.prompt_system:
-                messages = [{"role": "system", "content": model.prompt_system}] + messages
+            if exp.with_vision:
+                pf_row = get_parquet_row_by_index(exp.dataset.parquet_path, msg.line_id)
+                messages = [
+                    {
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": query},
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": "data:image/png;base64," + image_to_base64(pf_row["img"])
+                                },
+                            },
+                        ],
+                    }
+                ]
+            else:
+                messages = [{"role": "user", "content": query}]
+
+            if model.system_prompt:
+                messages = [{"role": "system", "content": model.system_prompt}] + messages
+
+                pass
+
             with Timer() as timer:
                 result, steps = multi_step_generate(
                     model_base_url=model.base_url,

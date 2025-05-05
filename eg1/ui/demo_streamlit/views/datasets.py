@@ -35,14 +35,17 @@ def main():
                 )
                 st.subheader(dataset["name"])
                 st.write(
-                    f"Columns: {', '.join(map(lambda x: '**' + x + '**', dataset['columns']))}"
+                    f"Columns: {', '.join(map(lambda x: '**' + x + '**', dataset['columns'] or dataset['parquet_columns']))}"
                 )
+                if dataset["columns_map"]:
+                    st.write(f"Columns map: {dataset['columns_map']}")
+
                 st.markdown(dataset.get("readme", "No description available"))
                 col1, col2, col3, col4 = st.columns([1 / 8, 2 / 8, 2 / 8, 3 / 8])
                 with col1:
                     st.caption(f"Id: {dataset['id']} ")
                 with col2:
-                    st.caption(f"Rows: {dataset['size']}")
+                    st.caption(f"Rows: {dataset['size'] or dataset['parquet_size']}")
                 with col3:
                     st.caption(f"Default metric: {dataset['default_metric']}")
                 with col4:
