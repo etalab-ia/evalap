@@ -54,6 +54,10 @@ def generate_answer(message: dict, mcp_bridge: MCPBridgeClient | None):
             # Generate answer
             # --
             if exp.with_vision:
+                if msg.line_id > 100:
+                    # @DEBUG/@PERF
+                    raise ValueError("limit to 100 input for vision")
+                dataset_size = exp.dataset.parquet_size
                 pf_row = get_parquet_row_by_index(exp.dataset.parquet_path, msg.line_id)
                 messages = [
                     {
@@ -70,6 +74,7 @@ def generate_answer(message: dict, mcp_bridge: MCPBridgeClient | None):
                     }
                 ]
             else:
+                dataset_size = exp.dataset.size
                 messages = [{"role": "user", "content": query}]
 
             if model.system_prompt:
@@ -146,7 +151,7 @@ def generate_answer(message: dict, mcp_bridge: MCPBridgeClient | None):
 
         # Check if all the answer have been generated.
         db.expire(exp, ["num_try"])
-        if exp.num_try >= exp.dataset.size and msg.follow_observation:
+        if exp.num_try >= dataset_size and msg.follow_observation:
             # @warning: we enter here several time after db.expire, needed to ensure concurent increment are not missed
             # this should be idempotent
             dispatch_tasks(db, exp, MessageType.observation)
@@ -265,9 +270,14 @@ def generate_observation(message: dict, mcp_bridge: MCPBridgeClient):
             if error_msg:
                 crud.upsert_observation(db, result.id, msg.line_id, dict(error_msg=error_msg))
 
+        if result.experiment.with_vision:
+            dataset_size = result.experiment.dataset.parquet_size
+        else:
+            dataset_size = result.experiment.dataset.size
+
         # Check if all the answer have been generated.
         db.expire(result, ["num_try"])
-        if result.num_try >= result.experiment.dataset.size:
+        if result.num_try >= dataset_size:
             # @warning: we enter here several time after db.expire, needed to ensure concurent increment are not missed
             # this should be idempotent
             result = crud.update_result(db, result.id, dict(metric_status="finished"))
