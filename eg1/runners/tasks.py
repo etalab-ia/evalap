@@ -14,7 +14,8 @@ from eg1.api.metrics import metric_registry
 from eg1.clients import MCPBridgeClient, multi_step_generate, split_think_answer
 from eg1.logger import logger
 from eg1.runners import MessageType, dispatch_tasks
-from eg1.utils import Timer, run_with_timeout, impact_carbon
+from eg1.utils import Timer, run_with_timeout
+from eg1.utils_eco import impact_carbon
 
 
 @dataclass
