@@ -192,6 +192,11 @@ class Answer(EgBaseModel):
     error_msg: str | None
     execution_time: int | None
     tool_steps: list | None
+
+
+class AnswerWithEco(Answer):
+    """Answer with emission_carbon field for eco metrics."""
+
     emission_carbon: dict | None
 
 
@@ -370,8 +375,7 @@ class ExperimentWithAnswers(ExperimentRO):
 
 
 class ExperimentWithEco(ExperimentRO):
-    answers: list[Answer] | None
-    emission_carbon: list[dict] | None
+    answers: list[AnswerWithEco] | None
 
 
 class ExperimentFull(ExperimentRO):
