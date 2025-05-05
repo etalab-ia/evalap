@@ -268,7 +268,7 @@ class ExperimentCreate(ExperimentBase):
             dataset = models.Dataset(**obj["dataset"])
         obj["dataset"] = dataset
         if isinstance(self.model, ModelRaw):
-            obj["num_try"] = dataset.size
+            obj["num_try"] = dataset.parquet_size if self.with_vision else dataset.size
             obj["num_success"] = len(self.model.output)
             if obj["num_try"] != obj["num_success"]:
                 raise SchemaError("The size of the model outputs must match the size of the dataset.")

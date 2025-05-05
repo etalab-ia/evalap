@@ -197,11 +197,16 @@ def dispatch_retries(db, retry_runs: schemas.RetryRuns):
 
         db.commit()  # for obs.error_msg
 
+        if db_exp.with_vision:
+            dataset_size = db_exp.dataset.parquet_size
+        else:
+            dataset_size = db_exp.dataset.size
+
         # unfinished
         num_lines = db.query(models.Answer.num_line).filter(models.Answer.experiment_id == expid).all()
         num_lines = [num_line[0] for num_line in num_lines]
         num_lines_missing = [
-            i for i in range(db_exp.dataset.size) if i not in num_line_added and i not in num_lines
+            i for i in range(dataset_size) if i not in num_line_added and i not in num_lines
         ]
         for num_line in num_lines_missing:
             row = crud.get_dataset_row(db_exp, num_line, df_fallback=df)
@@ -254,6 +259,11 @@ def dispatch_retries(db, retry_runs: schemas.RetryRuns):
 
         db.commit()  # for obs.error_msg
 
+        if db_exp.with_vision:
+            dataset_size = db_exp.dataset.parquet_size
+        else:
+            dataset_size = db_exp.dataset.size
+
         # Unfinished
         num_lines = (
             db.query(models.ObservationTable.num_line)
@@ -262,7 +272,7 @@ def dispatch_retries(db, retry_runs: schemas.RetryRuns):
         )
         num_lines = [num_line[0] for num_line in num_lines]
         num_lines_missing = [
-            i for i in range(db_exp.dataset.size) if i not in num_line_added and i not in num_lines
+            i for i in range(dataset_size) if i not in num_line_added and i not in num_lines
         ]
         for num_line in num_lines_missing:
             row = crud.get_dataset_row(db_exp, obs.num_line, df_fallback=df)
