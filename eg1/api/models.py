@@ -73,14 +73,15 @@ class Dataset(Base):
     name = Column(Text, unique=True)
     readme = Column(Text)
     default_metric = Column(Text)
-    columns_map = Column(JSON) # dict[str, str]
+    columns_map = Column(JSON)  # dict[str, str]
     df = Column(JSON)  # df
-    size = Column(Integer) # rows
+    size = Column(Integer)  # rows
     columns = Column(JSON)  # list[str]
     parquet_path = Column(Text)
-    parquet_size = Column(Integer) # rows
+    parquet_size = Column(Integer)  # rows
     parquet_columns = Column(JSON)  # list[str]
     parquet_byte_size = Column(Integer)
+
 
 class Model(Base):
     __tablename__ = "models"
@@ -147,6 +148,7 @@ class Answer(Base):
     context = Column(JSON)  # list[str]
     retrieval_context = Column(JSON)  # list[str]
     tool_steps = Column(JSON)  # list[list[dict]]
+    emission_carbon = Column(JSON)  # dict[ecologits]
 
     # One
     experiment_id = Column(Integer, ForeignKey("experiments.id"))
