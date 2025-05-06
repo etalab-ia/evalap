@@ -69,8 +69,8 @@ class LlmApiModels:
 
             url = getattr(LlmApiUrl, provider)
             headers = LlmApiUrl.build_header(provider)
-            response = requests.get(f"{url}/models", headers=headers)
             try:
+                response = requests.get(f"{url}/models", headers=headers)
                 response.raise_for_status()
             except requests.exceptions.RequestException as e:
                 logger.warning(f"Model discovery error: {e}")
