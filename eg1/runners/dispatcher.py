@@ -275,7 +275,7 @@ def dispatch_retries(db, retry_runs: schemas.RetryRuns):
             i for i in range(dataset_size) if i not in num_line_added and i not in num_lines
         ]
         for num_line in num_lines_missing:
-            row = crud.get_dataset_row(db_exp, obs.num_line, df_fallback=df)
+            row = crud.get_dataset_row(db_exp, num_line, df_fallback=df)
             answer = crud.get_answer(db, experiment_id=db_exp.id, num_line=num_line)
             if not answer:
                 output = row.get("output")
