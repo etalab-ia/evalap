@@ -1,7 +1,7 @@
 """add emission carbon
 
 Revision ID: de6a4f1e935b
-Revises: 4b903ee83b10
+Revises: 10a7f6d91de4
 Create Date: 2025-04-18 14:07:00.486850
 
 """
@@ -14,7 +14,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = "de6a4f1e935b"
-down_revision: Union[str, None] = "4b903ee83b10"
+down_revision: Union[str, None] = "10a7f6d91de4"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
