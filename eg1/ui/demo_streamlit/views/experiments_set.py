@@ -30,25 +30,27 @@ def __fetch(method, endpoint, data=None):
     return fetch(method, endpoint, data)
 
 
-def _fetch_experimentset(expid, partial_expset, refresh=False):
+def _fetch_experimentset(expid, partial_expset, refresh=False, with_eco=False):
     if refresh:
-        __fetch_experimentset.clear(expid, partial_expset)
-
-    return __fetch_experimentset(expid, partial_expset)
+        __fetch_experimentset.clear(expid, partial_expset, with_eco)
+    return __fetch_experimentset(expid, partial_expset, with_eco)
 
 
 @st.cache_data(ttl=600, max_entries=3)
-def __fetch_experimentset(expid, partial_expset, refresh=False):
+def __fetch_experimentset(expid, partial_expset, with_eco=False, refresh=False):
     if refresh:
-        _fetch_experimentset.clear(expid, partial_expset)
+        _fetch_experimentset.clear(expid, partial_expset, with_eco)
 
     experimentset = partial_expset
     if not experimentset:
         raise ValueError("experimentset not found: %s" % expid)
 
-    # Fetch experiment results
+    # Fetch experiment results ou eco
     for i, expe in enumerate(experimentset["experiments"]) or []:
-        expe = fetch("get", f"/experiment/{expe['id']}", {"with_results": True})
+        if with_eco:
+            expe = fetch("get", f"/experiment/{expe['id']}", {"with_eco": True})
+        else:
+            expe = fetch("get", f"/experiment/{expe['id']}", {"with_results": True})
         if not expe:
             continue
         experimentset["experiments"][i] = expe
@@ -466,17 +468,90 @@ def count_unique_models_and_metrics(exp_set: dict[str, any]) -> tuple[int, int]:
     return len(unique_models), len(unique_metrics)
 
 
+def convert_range_to_value(value_or_range):
+    if isinstance(value_or_range, dict) and "min" in value_or_range and "max" in value_or_range:
+        return (value_or_range["min"] + value_or_range["max"]) / 2
+    else:
+        return value_or_range
+
+
+def compute_mean_impact(exp_set: dict, impact_key: str):
+    total = 0.0
+    count = 0
+    for experiment in exp_set.get("experiments", []):
+        for answer in experiment.get("answers", []):
+            emission = answer.get("emission_carbon")
+            if not isinstance(emission, dict):
+                continue
+            impact = emission.get(impact_key, {})
+            value = impact.get("value")
+            if value is not None:
+                total += convert_range_to_value(value)
+                count += 1
+    if count == 0:
+        return None
+    return total
+
+
+st.markdown(
+    """
+    <style>
+    .metric-label {
+        font-weight: bold !important;
+        font-size: 1.8em !important;
+        color: #741b85;
+        text-align: center;
+        margin-bottom: 0.1em;
+    }
+    .metric-value {
+        font-weight: normal !important;
+        font-size: 1.4em !important;
+        color: #333333;
+        text-align: center;
+        margin-top: 0;
+    }
+    .metric-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 0.4em 0;
+    }
+    </style>
+""",
+    unsafe_allow_html=True,
+)
+
+
+def metric_display(label, value):
+    return f"""
+    <div class="metric-container">
+        <div class="metric-label">{label}</div>
+        <div class="metric-value">{value}</div>
+    </div>
+    """
+
+
 def report_ops_global(exp_set):
-    """
-    Generates a DataFrame report with experiment set statuses and displays it,
-    along with a bar chart visualization.
-    """
     st.subheader("🛰️ Global")
     n_models, n_metrics = count_unique_models_and_metrics(exp_set)
-    col1, col2, col3, col4, col5 = st.columns(5)
-    col1.metric("Models", n_models)
-    col2.metric("Metrics", n_metrics)
-    col3.metric("Carbon", "")
+
+    energy_total = compute_mean_impact(exp_set, "energy")
+    gwp_total = compute_mean_impact(exp_set, "gwp")
+    energy_str = f"{energy_total:.3f} kWh" if energy_total is not None else "NR"
+    if gwp_total is None:
+        carbon_str = "NR"
+    elif gwp_total < 1:
+        carbon_str = f"{gwp_total*1000:.1f} gCO₂eq"
+    else:
+        carbon_str = f"{gwp_total:.3f} kgCO₂eq"
+
+    cols = st.columns(4)
+    for col, (label, value) in zip(
+        cols,
+        [("Models", n_models), ("Metrics", n_metrics), ("Energy", energy_str), ("GHG Emissions", carbon_str)],
+    ):
+        col.markdown(metric_display(label, value), unsafe_allow_html=True)
 
     st.subheader("🧭 Status by Experiment Set")
 
@@ -635,6 +710,7 @@ def main():
                 expid,
                 experimentset,
                 refresh=st.session_state.get("refresh_experimentset"),
+                with_eco=False,
             )
         elif expid == "orphan":
             experimentset = {
@@ -742,8 +818,14 @@ def main():
             tab_index[2]["func"](experimentset, experiments_df)
         with tab3:
             tab_index[3]["func"](experimentset, experiments_df)
-        with tab4:
-            tab_index[4]["func"](experimentset)
+        with tab4:  # TODO : see how pass this fetch in this condition : 'if expid.isdigit():'
+            experimentset_ops = _fetch_experimentset(
+                expid,
+                next((x for x in experiment_sets if x["id"] == int(expid)), None),
+                refresh=st.session_state.get("refresh_experimentset"),
+                with_eco=True,
+            )
+            tab_index[4]["func"](experimentset_ops)
 
     else:
         col1, col2 = st.columns([3, 1])
