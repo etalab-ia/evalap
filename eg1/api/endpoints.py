@@ -557,6 +557,11 @@ def read_ops_metrics(db: Session = Depends(get_db)):
     return crud.get_ops_metrics(db)
 
 
+@router.get("/ops_eco", response_model=schemas.OpsEco, tags=["ops"])
+def read_ops_eco(db: Session = Depends(get_db)):
+    return crud.get_ops_eco(db)
+
+
 #
 # Generate
 #

@@ -502,6 +502,64 @@ def get_ops_metrics(db: Session):
     }
 
 
+def get_ops_eco(db: Session):
+    def convert_range_to_value(value_or_range):
+        if isinstance(value_or_range, dict) and "min" in value_or_range and "max" in value_or_range:
+            return (value_or_range["min"] + value_or_range["max"]) / 2
+        return value_or_range
+
+    def sum_emission_values(emission_dict):
+        total = {}
+        for key, value in emission_dict.items():
+            if isinstance(value, dict):
+                if "value" in value:
+                    # Handle direct value or range
+                    total[key] = convert_range_to_value(value["value"])
+                else:
+                    # Recursively handle nested dictionaries
+                    nested_total = sum_emission_values(value)
+                    for nested_key, nested_value in nested_total.items():
+                        total[f"{key}_{nested_key}"] = nested_value
+        return total
+
+    # Get all answers with emission_carbon data
+    answers = db.query(models.Answer).filter(models.Answer.emission_carbon.isnot(None)).all()
+
+    # Get the oldest date with emission_carbon data
+    first_emission_date = None
+    if answers:
+        first_emission_date = min(answer.created_at for answer in answers)
+
+    # Initialize totals
+    total_emissions = {
+        "energy": 0,
+        "gwp": 0,
+        "adpe": 0,
+        "pe": 0,
+        "usage_energy": 0,
+        "usage_gwp": 0,
+        "usage_adpe": 0,
+        "usage_pe": 0,
+        "embodied_gwp": 0,
+        "embodied_adpe": 0,
+        "embodied_pe": 0,
+    }
+
+    # Sum up all emissions
+    for answer in answers:
+        if answer.emission_carbon:
+            emissions = sum_emission_values(answer.emission_carbon)
+            for key, value in emissions.items():
+                if key in total_emissions:
+                    total_emissions[key] += value
+
+    return {
+        "total_emissions": total_emissions,
+        "total_answers_with_emissions": len(answers),
+        "first_emission_date": first_emission_date,
+    }
+
+
 #
 # LOCUST
 #

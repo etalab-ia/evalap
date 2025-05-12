@@ -381,6 +381,7 @@ class ExperimentWithAnswers(ExperimentRO):
 
 class ExperimentWithEco(ExperimentRO):
     answers: list[AnswerWithEco] | None
+    results: list[Result] | None = None
 
 
 class ExperimentFull(ExperimentRO):
@@ -540,6 +541,12 @@ class OpsMetrics(BaseModel):
     unique_metrics: int
     unique_observations: int
     distinct_models: list[ModelInfo]
+
+
+class OpsEco(BaseModel):
+    total_emissions: dict[str, float]
+    total_answers_with_emissions: int
+    first_emission_date: datetime
 
 
 #
