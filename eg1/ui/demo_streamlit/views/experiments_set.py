@@ -105,7 +105,7 @@ def _get_experiment_data(exp_id):
 
     if len(df) == 0 and expe["dataset"]["parquet_size"]:
         if expe["dataset"]["parquet_size"] > 0:
-            df =  pd.DataFrame(index=range(100))
+            df = pd.DataFrame(index=range(100))
 
     # Merge answers and metrics into the dataset dataframe
     if "answers" in expe:
@@ -448,12 +448,37 @@ def display_experiment_set_score(experimentset, experiments_df):
     )
 
 
+def count_unique_models_and_metrics(exp_set: dict[str, any]) -> tuple[int, int]:
+    unique_models: set[str] = set()
+    unique_metrics: set[str] = set()
+
+    experiments = exp_set.get("experiments", [])
+    for experiment in experiments:
+        model = experiment.get("model", {})
+        if "name" in model:
+            unique_models.add(model["name"])
+
+        for result in experiment.get("results", []):
+            metric_name = result.get("metric_name")
+            if metric_name:
+                unique_metrics.add(metric_name)
+
+    return len(unique_models), len(unique_metrics)
+
+
 def report_ops_global(exp_set):
     """
     Generates a DataFrame report with experiment set statuses and displays it,
     along with a bar chart visualization.
     """
-    st.subheader("Status by Experiment Set")
+    st.subheader("🛰️ Global")
+    n_models, n_metrics = count_unique_models_and_metrics(exp_set)
+    col1, col2, col3, col4, col5 = st.columns(5)
+    col1.metric("Models", n_models)
+    col2.metric("Metrics", n_metrics)
+    col3.metric("Carbon", "")
+
+    st.subheader("🧭 Status by Experiment Set")
 
     report_data = []
     if exp_set:
@@ -492,137 +517,72 @@ def report_ops_global(exp_set):
     )
 
 
-def update_model_data(model_data, experiment):
-    # Determine model name
-    if experiment.get("model"):
-        model_name = experiment["model"]["aliased_name"] or experiment["model"]["name"]
-    else:
-        model_name = f"Undefined model ({experiment['name']})"
+def compute_failure_rates(exp_set: dict[str, any]) -> tuple[dict[str, float], dict[str, float]]:
+    model_stats = defaultdict(lambda: {"num_try": 0, "num_success": 0})
+    metric_stats = defaultdict(lambda: {"num_try": 0, "num_success": 0})
 
-    has_error = any(answer.get("error_msg") for answer in experiment.get("answers", []))
+    experiments = exp_set.get("experiments", [])
 
-    if has_error:
-        model_data[model_name]["failed"] += 1
-    else:
-        status = experiment["experiment_status"]
-        model_data[model_name][status] += 1
-        model_data[model_name]["no_failed"] += 1
+    for experiment in experiments:
+        model = experiment.get("model", {})
+        model_name = model.get("name")
+        num_try = experiment.get("num_try", 0)
+        num_success = experiment.get("num_success", 0)
+        if model_name:
+            model_stats[model_name]["num_try"] += num_try
+            model_stats[model_name]["num_success"] += num_success
+
+        for result in experiment.get("results", []):
+            metric_name = result.get("metric_name")
+            r_num_try = result.get("num_try", 0)
+            r_num_success = result.get("num_success", 0)
+            if metric_name:
+                metric_stats[metric_name]["num_try"] += r_num_try
+                metric_stats[metric_name]["num_success"] += r_num_success
+
+    model_failure_rate = {
+        name: 1 - (stats["num_success"] / stats["num_try"]) if stats["num_try"] > 0 else 0.0
+        for name, stats in model_stats.items()
+    }
+    metric_failure_rate = {
+        name: 1 - (stats["num_success"] / stats["num_try"]) if stats["num_try"] > 0 else 0.0
+        for name, stats in metric_stats.items()
+    }
+
+    return model_failure_rate, metric_failure_rate
 
 
-def update_metric_data(metric_data, experiment):
-    has_error = any(answer.get("error_msg") for answer in experiment.get("answers", []))
-    if "results" in experiment and not has_error:
-        for result in experiment["results"]:
-            metric_name = result["metric_name"]
-            metric_status = result["metric_status"]
-            metric_data[metric_name][metric_status] += 1
-            metric_data[metric_name]["no_failed"] += 1
-    elif has_error:
-        metric_data["Unknown"]["failed"] += 1
+def display_failure_analysis(exp_set: dict) -> None:
+    st.subheader("🚨 Failure rate analysis")
 
+    model_failure, metric_failure = compute_failure_rates(exp_set)
 
-def calculate_failure_rate(row):
-    total = row["failed"] + row["no_failed"]
-    return row["failed"] / total if total > 0 else 0
+    col1, col2 = st.columns(2)
 
+    with col1:
+        st.subheader("🤖 By model")
+        if not model_failure:
+            st.info("No models found")
+        else:
+            for model, rate in sorted(model_failure.items(), key=lambda x: -x[1]):
+                st.markdown(f"**{model}**")
+                st.progress(rate, text=f"{rate:.1%} failures")
+                st.write("---")
 
-def report_model_and_metric(experimentset):
-    """Analyzes experiment statuses by model and metric, including failed experiments and failure rates."""
-    model_data = defaultdict(
-        lambda: {
-            "finished": 0,
-            "running": 0,
-            "running_answers": 0,
-            "running_metrics": 0,
-            "pending": 0,
-            "failed": 0,
-            "no_failed": 0,
-        }
-    )
-    metric_data = defaultdict(lambda: {"finished": 0, "running": 0, "pending": 0, "failed": 0, "no_failed": 0})
-
-    for experiment in experimentset["experiments"]:
-        update_model_data(model_data, experiment)
-        update_metric_data(metric_data, experiment)
-
-    model_report = pd.DataFrame.from_dict(model_data, orient="index")
-    model_report["Total"] = model_report[["finished", "running", "pending"]].sum(axis=1)
-    model_report["Failure Rate"] = model_report.apply(calculate_failure_rate, axis=1)
-
-    columns_order = [
-        "finished",
-        "running",
-        "pending",
-        "Total",
-        "failed",
-        "no_failed",
-        "Failure Rate",
-    ]
-    model_report = model_report[columns_order]
-    model_for_graph = model_report.copy()
-    model_report.columns = [col.title().replace("_", " ") for col in model_report.columns]
-
-    model_report.columns = pd.MultiIndex.from_tuples(
-        [
-            ("Status", "Finished"),
-            ("Status", "Running"),
-            ("Status", "Pending"),
-            ("Status", "Total"),
-            ("Failure Analysis", "Failed"),
-            ("Failure Analysis", "No Failed"),
-            ("Failure Analysis", "Failure Rate"),
-        ]
-    )
-
-    st.subheader("Experiment Status by Model")
-    st.dataframe(model_report, use_container_width=True)
-
-    fig_model = px.bar(
-        model_for_graph,
-        x=model_for_graph.index,
-        y=["finished", "running", "pending", "failed"],
-        title="Experiment Status by Model",
-        labels={"value": "Count", "index": "Model"},
-    )
-    st.plotly_chart(fig_model, use_container_width=True)
-
-    metric_report = pd.DataFrame.from_dict(metric_data, orient="index")
-    metric_report["Total"] = metric_report[["finished", "running", "pending"]].sum(axis=1)
-    metric_report["Failure Rate"] = metric_report.apply(calculate_failure_rate, axis=1)
-
-    metric_report = metric_report[columns_order]
-    metric_for_graph = metric_report.copy()
-
-    metric_report.columns = [col.title().replace("_", " ") for col in metric_report.columns]
-
-    metric_report.columns = pd.MultiIndex.from_tuples(
-        [
-            ("Status", "Finished"),
-            ("Status", "Running"),
-            ("Status", "Pending"),
-            ("Status", "Total"),
-            ("Failure Analysis", "Failed"),
-            ("Failure Analysis", "No Failed"),
-            ("Failure Analysis", "Failure Rate"),
-        ]
-    )
-
-    st.subheader("Experiment Status by Metric")
-    st.dataframe(metric_report, use_container_width=True)
-
-    fig_metric = px.bar(
-        metric_for_graph,
-        x=metric_for_graph.index,
-        y=["finished", "running", "pending", "failed"],
-        title="Experiment Status by Metric",
-        labels={"value": "Count", "index": "Metric"},
-    )
-    st.plotly_chart(fig_metric, use_container_width=True)
+    with col2:
+        st.subheader("📏 By metric")
+        if not metric_failure:
+            st.info("No metrics found")
+        else:
+            for metric, rate in sorted(metric_failure.items(), key=lambda x: -x[1]):
+                st.markdown(f"**{metric}**")
+                st.progress(rate, text=f"{rate:.1%} failures")
+                st.write("---")
 
 
 def display_ops_analysis(experimentset):
     report_ops_global(experimentset)
-    report_model_and_metric(experimentset)
+    display_failure_analysis(experimentset)
 
 
 def show_header(experimentset):
