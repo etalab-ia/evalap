@@ -7,6 +7,7 @@ OCR AI lib:
 - https://github.com/docling-project/docling
 - https://github.com/VikParuchuri/marker
 - https://github.com/allenai/olmocr
+- https://github.com/Unstructured-IO/unstructured
 
 Datasets:
 - https://huggingface.co/datasets/getomni-ai/ocr-benchmark
