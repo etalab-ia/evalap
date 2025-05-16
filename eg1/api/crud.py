@@ -503,55 +503,53 @@ def get_ops_metrics(db: Session):
 
 
 def get_ops_eco(db: Session):
-    def convert_range_to_value(value_or_range):
-        if isinstance(value_or_range, dict) and "min" in value_or_range and "max" in value_or_range:
-            return (value_or_range["min"] + value_or_range["max"]) / 2
-        return value_or_range
+    def convert_range_to_value(value):
+        if isinstance(value, dict) and "min" in value and "max" in value:
+            return (value["min"] + value["max"]) / 2
+        return value
 
-    def sum_emission_values(emission_dict):
-        total = {}
+    def extract_emission_values(emission_dict):
+        result = {}
         for key, value in emission_dict.items():
             if isinstance(value, dict):
                 if "value" in value:
-                    # Handle direct value or range
-                    total[key] = convert_range_to_value(value["value"])
+                    result[key] = convert_range_to_value(value["value"])
                 else:
-                    # Recursively handle nested dictionaries
-                    nested_total = sum_emission_values(value)
-                    for nested_key, nested_value in nested_total.items():
-                        total[f"{key}_{nested_key}"] = nested_value
-        return total
+                    nested = extract_emission_values(value)
+                    result.update({f"{key}_{k}": v for k, v in nested.items()})
+        return result
 
-    # Get all answers with emission_carbon data
     answers = db.query(models.Answer).filter(models.Answer.emission_carbon.isnot(None)).all()
 
-    # Get the oldest date with emission_carbon data
-    first_emission_date = None
-    if answers:
-        first_emission_date = min(answer.created_at for answer in answers)
+    if not answers:
+        return {
+            "total_emissions": {},
+            "total_answers_with_emissions": 0,
+            "first_emission_date": None,
+        }
 
-    # Initialize totals
+    first_emission_date = min(a.created_at for a in answers)
     total_emissions = {
-        "energy": 0,
-        "gwp": 0,
-        "adpe": 0,
-        "pe": 0,
-        "usage_energy": 0,
-        "usage_gwp": 0,
-        "usage_adpe": 0,
-        "usage_pe": 0,
-        "embodied_gwp": 0,
-        "embodied_adpe": 0,
-        "embodied_pe": 0,
+        k: 0
+        for k in [
+            "energy",
+            "gwp",
+            "adpe",
+            "pe",
+            "usage_energy",
+            "usage_gwp",
+            "usage_adpe",
+            "usage_pe",
+            "embodied_gwp",
+            "embodied_adpe",
+            "embodied_pe",
+        ]
     }
 
-    # Sum up all emissions
     for answer in answers:
-        if answer.emission_carbon:
-            emissions = sum_emission_values(answer.emission_carbon)
-            for key, value in emissions.items():
-                if key in total_emissions:
-                    total_emissions[key] += value
+        emissions = extract_emission_values(answer.emission_carbon)
+        for key in total_emissions:
+            total_emissions[key] += emissions.get(key, 0)
 
     return {
         "total_emissions": total_emissions,

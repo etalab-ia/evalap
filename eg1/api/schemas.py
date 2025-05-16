@@ -546,7 +546,7 @@ class OpsMetrics(BaseModel):
 class OpsEco(BaseModel):
     total_emissions: dict[str, float]
     total_answers_with_emissions: int
-    first_emission_date: datetime
+    first_emission_date: datetime | None
 
 
 #

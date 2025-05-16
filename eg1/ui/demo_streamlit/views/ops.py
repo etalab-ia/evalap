@@ -56,8 +56,6 @@ def main():
 
     # Global OPS metrics
     ops_metrics = fetch("get", "/ops_metrics")
-    ops_eco = fetch("get", "/ops_eco")
-
     st.subheader("Global")
     col1, col2, col3, col4, col5 = st.columns(5)
     col1.metric("Experiment Sets", ops_metrics["experiment_sets"])
@@ -69,21 +67,27 @@ def main():
     st.write("---")
 
     st.subheader("Environmental impact")
-    energy, gwp, pretty_date = get_emission_metrics(ops_eco)
+    ops_eco = fetch("get", "/ops_eco")
 
-    # Calculating equivalence
-    lightbulb_value, lightbulb_unit = calculate_lightbulb_consumption(energy)
-    streaming_value, streaming_unit = calculate_streaming_hours(gwp)
+    if ops_eco["total_answers_with_emissions"] > 0:
+        energy, gwp, pretty_date = get_emission_metrics(ops_eco)
 
-    col_eco1, col_eco2, col_eco3, col_eco4, col_eco5 = st.columns(5)
-    col_eco1.metric("Energy (kWh)", f"{energy:.4f}")
-    col_eco2.metric("GWP (kgCO₂e)", f"{gwp:.4f}")
-    col_eco3.metric("= 5W LED bulb", f"{lightbulb_value} {lightbulb_unit}")
-    col_eco4.metric("= Video streaming", f"{streaming_value} {streaming_unit}")
-    col_eco5.metric("Calculations since", pretty_date)
+        # Calculating equivalence
+        lightbulb_value, lightbulb_unit = calculate_lightbulb_consumption(energy)
+        streaming_value, streaming_unit = calculate_streaming_hours(gwp)
 
-    st.caption(":bulb: **5W LED bulb**: equivalent lighting duration")
-    st.caption(":tv: **Video streaming**: equivalent video streaming time (source: impactco2.fr)")
+        col_eco1, col_eco2, col_eco3, col_eco4, col_eco5 = st.columns(5)
+        col_eco1.metric("Energy (kWh)", f"{energy:.4f}")
+        col_eco2.metric("GWP (kgCO₂e)", f"{gwp:.4f}")
+        col_eco3.metric("= 5W LED bulb", f"{lightbulb_value} {lightbulb_unit}")
+        col_eco4.metric("= Video streaming", f"{streaming_value} {streaming_unit}")
+        col_eco5.metric("Calculations since", pretty_date)
+
+        st.caption(":bulb: **5W LED bulb**: equivalent lighting duration")
+        st.caption(":tv: **Video streaming**: equivalent video streaming time (source: impactco2.fr)")
+
+    else:
+        st.write("No experiments with environmental impact calculations")
 
     st.write("---")
 
