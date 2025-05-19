@@ -631,13 +631,12 @@ def display_failure_analysis(exp_set: dict) -> None:
     st.subheader("🚨 Failure rate analysis")
 
     model_failure, metric_failure = compute_failure_rates(exp_set)
-
     col1, col2 = st.columns(2)
 
     with col1:
         st.subheader("🤖 By model")
-        if not model_failure:
-            st.info("No models found")
+        if not model_failure or all(v == 0 for v in model_failure.values()):
+            st.info("No models with failure")
         else:
             for model, rate in sorted(model_failure.items(), key=lambda x: -x[1]):
                 st.markdown(f"**{model}**")
@@ -646,8 +645,8 @@ def display_failure_analysis(exp_set: dict) -> None:
 
     with col2:
         st.subheader("📏 By metric")
-        if not metric_failure:
-            st.info("No metrics found")
+        if not metric_failure or all(v == 0 for v in metric_failure.values()):
+            st.info("No metrics with failure")
         else:
             for metric, rate in sorted(metric_failure.items(), key=lambda x: -x[1]):
                 st.markdown(f"**{metric}**")
