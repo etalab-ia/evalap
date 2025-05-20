@@ -322,9 +322,10 @@ def _format_experiments_score_df(experiments: list, df: pd.DataFrame) -> (bool, 
         # Iterate over each column (except 'model') to format mean ± std
         for column in df.columns:
             if column not in ["model"]:
+                decimals = 4 if "_consumption" in column else 2
                 # Format the score as "mean ± std"
-                mean_ = grouped[(column, "mean")].round(2).astype(str)
-                std_ = grouped[(column, "std")].round(2).astype(str)
+                mean_ = grouped[(column, "mean")].round(decimals).astype(str)
+                std_ = grouped[(column, "std")].round(decimals).astype(str)
                 if all(x is None or x == 0 or np.isnan(x) for x in std_.astype(float)):
                     result[column] = mean_
                 else:
