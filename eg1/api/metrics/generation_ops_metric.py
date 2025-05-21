@@ -1,5 +1,4 @@
 from . import metric_registry
-import logging
 from eg1.logger import logger
 
 
@@ -41,13 +40,10 @@ def nb_tool_calls_metric(output, *args, **kwargs):
 )
 def generation_time_metric(output, *args, **kwargs):
     metadata = kwargs["metadata"]
-    logging.info("metadata >>>>> ")
-    logging.info(metadata)
-
     return metadata.get("generation_time")
 
 
-def average_metric_from_emission_carbon(emission_carbon, key):
+def _average_metric_from_emission_carbon(emission_carbon, key):
     """
     Calcule la moyenne (min+max)/2 pour la sous-catégorie donnée (key)
     dans le dictionnaire emission_carbon.
@@ -73,7 +69,7 @@ def average_metric_from_emission_carbon(emission_carbon, key):
 )
 def energy_consumption_metric(output, *args, **kwargs):
     emission_carbon = kwargs["metadata"].get("emission_carbon", {})
-    return average_metric_from_emission_carbon(emission_carbon, "energy")
+    return _average_metric_from_emission_carbon(emission_carbon, "energy")
 
 
 @metric_registry.register(
@@ -84,4 +80,4 @@ def energy_consumption_metric(output, *args, **kwargs):
 )
 def gwp_metric(output, *args, **kwargs):
     emission_carbon = kwargs["metadata"].get("emission_carbon", {})
-    return average_metric_from_emission_carbon(emission_carbon, "gwp")
+    return _average_metric_from_emission_carbon(emission_carbon, "gwp")

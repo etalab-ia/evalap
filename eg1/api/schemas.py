@@ -379,11 +379,6 @@ class ExperimentWithAnswers(ExperimentRO):
     answers: list[Answer] | None
 
 
-class ExperimentWithEco(ExperimentRO):
-    answers: list[AnswerWithEco] | None
-    results: list[Result] | None = None
-
-
 class ExperimentFull(ExperimentRO):
     answers: list[Answer] | None = None
     results: list[Result] | None = None
@@ -391,6 +386,10 @@ class ExperimentFull(ExperimentRO):
 
 class ExperimentFullWithDataset(ExperimentFull):
     dataset: DatasetFull | None = None
+
+
+class ExperimentFullWithEco(ExperimentFull):
+    answers: list[AnswerWithEco] | None
 
 
 # For the special `metrics` paramter passed at creation

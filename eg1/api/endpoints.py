@@ -286,7 +286,7 @@ def delete_experiment(
     response_model=schemas.ExperimentRO
     | schemas.ExperimentWithResults
     | schemas.ExperimentWithAnswers
-    | schemas.ExperimentWithEco
+    | schemas.ExperimentFullWithEco
     | schemas.ExperimentFull
     | schemas.ExperimentFullWithDataset,
     tags=["experiments"],
@@ -305,10 +305,10 @@ def read_experiment(
 
     if with_dataset:
         return schemas.ExperimentFullWithDataset.model_validate(experiment)
+    elif with_eco:
+        return schemas.ExperimentFullWithEco.model_validate(experiment)
     elif with_answers and with_results:
         return schemas.ExperimentFull.model_validate(experiment)
-    elif with_eco:
-        return schemas.ExperimentWithEco.model_validate(experiment)
     elif with_results:
         return schemas.ExperimentWithResults.model_validate(experiment)
     elif with_answers:

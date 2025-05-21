@@ -30,16 +30,16 @@ def __fetch(method, endpoint, data=None):
     return fetch(method, endpoint, data)
 
 
-def _fetch_experimentset(expid, partial_expset, refresh=False, with_eco=False):
+def _fetch_experimentset(expid, partial_expset, refresh=False):
     if refresh:
-        __fetch_experimentset.clear(expid, partial_expset, with_eco)
-    return __fetch_experimentset(expid, partial_expset, with_eco)
+        __fetch_experimentset.clear(expid, partial_expset)
+    return __fetch_experimentset(expid, partial_expset)
 
 
 @st.cache_data(ttl=600, max_entries=3)
-def __fetch_experimentset(expid, partial_expset, with_eco=False, refresh=False):
+def __fetch_experimentset(expid, partial_expset, refresh=False):
     if refresh:
-        _fetch_experimentset.clear(expid, partial_expset, with_eco)
+        _fetch_experimentset.clear(expid, partial_expset)
 
     experimentset = partial_expset
     if not experimentset:
@@ -47,10 +47,7 @@ def __fetch_experimentset(expid, partial_expset, with_eco=False, refresh=False):
 
     # Fetch experiment results ou eco
     for i, expe in enumerate(experimentset["experiments"]) or []:
-        if with_eco:
-            expe = fetch("get", f"/experiment/{expe['id']}", {"with_eco": True})
-        else:
-            expe = fetch("get", f"/experiment/{expe['id']}", {"with_results": True})
+        expe = fetch("get", f"/experiment/{expe['id']}", {"with_results": True, "with_eco": True})
         if not expe:
             continue
         experimentset["experiments"][i] = expe
@@ -710,7 +707,6 @@ def main():
                 expid,
                 experimentset,
                 refresh=st.session_state.get("refresh_experimentset"),
-                with_eco=False,
             )
         elif expid == "orphan":
             experimentset = {
@@ -818,14 +814,8 @@ def main():
             tab_index[2]["func"](experimentset, experiments_df)
         with tab3:
             tab_index[3]["func"](experimentset, experiments_df)
-        with tab4:  # TODO : see how pass this fetch in this condition : 'if expid.isdigit():'
-            experimentset_ops = _fetch_experimentset(
-                expid,
-                next((x for x in experiment_sets if x["id"] == int(expid)), None),
-                refresh=st.session_state.get("refresh_experimentset"),
-                with_eco=True,
-            )
-            tab_index[4]["func"](experimentset_ops)
+        with tab4:
+            tab_index[4]["func"](experimentset)
 
     else:
         col1, col2 = st.columns([3, 1])
