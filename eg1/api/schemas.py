@@ -379,10 +379,6 @@ class ExperimentWithAnswers(ExperimentRO):
     answers: list[Answer] | None
 
 
-class ExperimentWithEco(ExperimentRO):
-    answers: list[AnswerWithEco] | None
-
-
 class ExperimentFull(ExperimentRO):
     answers: list[Answer] | None = None
     results: list[Result] | None = None
@@ -390,6 +386,10 @@ class ExperimentFull(ExperimentRO):
 
 class ExperimentFullWithDataset(ExperimentFull):
     dataset: DatasetFull | None = None
+
+
+class ExperimentFullWithEco(ExperimentFull):
+    answers: list[AnswerWithEco] | None
 
 
 # For the special `metrics` paramter passed at creation
@@ -540,6 +540,12 @@ class OpsMetrics(BaseModel):
     unique_metrics: int
     unique_observations: int
     distinct_models: list[ModelInfo]
+
+
+class OpsEco(BaseModel):
+    total_emissions: dict[str, float]
+    total_answers_with_emissions: int
+    first_emission_date: datetime | None
 
 
 #

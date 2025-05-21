@@ -502,6 +502,62 @@ def get_ops_metrics(db: Session):
     }
 
 
+def get_ops_eco(db: Session):
+    def convert_range_to_value(value):
+        if isinstance(value, dict) and "min" in value and "max" in value:
+            return (value["min"] + value["max"]) / 2
+        return value
+
+    def extract_emission_values(emission_dict):
+        result = {}
+        for key, value in emission_dict.items():
+            if isinstance(value, dict):
+                if "value" in value:
+                    result[key] = convert_range_to_value(value["value"])
+                else:
+                    nested = extract_emission_values(value)
+                    result.update({f"{key}_{k}": v for k, v in nested.items()})
+        return result
+
+    answers = db.query(models.Answer).filter(models.Answer.emission_carbon.isnot(None)).all()
+
+    if not answers:
+        return {
+            "total_emissions": {},
+            "total_answers_with_emissions": 0,
+            "first_emission_date": None,
+        }
+
+    first_emission_date = min(a.created_at for a in answers)
+    total_emissions = {
+        k: 0
+        for k in [
+            "energy",
+            "gwp",
+            "adpe",
+            "pe",
+            "usage_energy",
+            "usage_gwp",
+            "usage_adpe",
+            "usage_pe",
+            "embodied_gwp",
+            "embodied_adpe",
+            "embodied_pe",
+        ]
+    }
+
+    for answer in answers:
+        emissions = extract_emission_values(answer.emission_carbon)
+        for key in total_emissions:
+            total_emissions[key] += emissions.get(key, 0)
+
+    return {
+        "total_emissions": total_emissions,
+        "total_answers_with_emissions": len(answers),
+        "first_emission_date": first_emission_date,
+    }
+
+
 #
 # LOCUST
 #

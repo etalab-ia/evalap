@@ -198,6 +198,7 @@ def generate_observation(message: dict, mcp_bridge: MCPBridgeClient):
             metadata["nb_tool_calls"] = answer.nb_tool_calls
             metadata["retrieval_context"] = answer.retrieval_context
             metadata["context"] = answer.context
+            metadata["emission_carbon"] = answer.emission_carbon
         try:
             # Generate observation/metric
             # --
