@@ -3,6 +3,52 @@
 All notable changes to this project will be documented in this file.
 
 
+## [0.4] - 2025-05-21
+
+### 🚀 Features
+
+- Support thinking model in judge 
+- Add nb_tool_call as ops metrics + add MCP_BRIFGE_URL + format
+- Parquet dataset support + ocr metrics + notebook demo
+- Add and handle new with_vision and prelude_prompt attribute
+- Calculation of the environmental impact of models for the response generation part.
+- Creation of two new environmental metrics: energy_consumption and gwp_consumption.
+
+### 🔧 Improvements
+
+- [UI] display of the environmental brick in the OPS pane and experiments_set metric results.
+
+### 🐛 Bug Fixes
+
+- *(runners)* Nb_tool_calls metrics computation
+- Improve log level warning.
+- *(ui)* Use two point float precision in score table.
+- Temporary url for MCP bridge
+- Tool activation and rag metrics error handling
+- *(ui)* Show dataset name and all model paramsi in expeset overview
+- *(mcp)* Allow tool_choice tuning
+- *(clients)* Add support for aliases models in v1/models
+- *(api)* Judge model must be unique in a set.
+- Strip answer + think
+- Fix multi-step agent loop generation if max_steps is reached.
+- Remove rerun_metric in patch exp + better handle error in patch expset route + fix format
+- Disallow model_judge patch for experiment and experiment_set
+- Parquet support and schemas
+- *(schema)* Rename prompt_system to system_prompt
+- Columns_map for ocr marker demo dataset
+- Dataset views
+- *(tasks)* Empty query
+
+### 💼 Other
+
+- Strip answer + not test on integrer !!!
+- *(runner)* Limit deep search steps + tool_choice 'none'.
+- Import collections
+- *(mcp)* Fix the multi-step loop
+- Unbound variables
+- Non blocking model sync
+
+
 ## [0.3.1] - 2025-04-02
 
 ### 🚀 Features
