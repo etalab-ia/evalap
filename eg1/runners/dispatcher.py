@@ -112,35 +112,46 @@ def dispatch_tasks(db, db_exp, message_type: MessageType):
             )
         db_exp.experiment_status = "running_metrics"
         db.commit()
-        df = pd.read_json(StringIO(db_exp.dataset.df))
+
+        # Fix and align metric status and count
+        blocked_metrics = []
         for result in db_exp.results:
             # wait a random time between 10 and 500 ms to avoid race condition
-            time.sleep(random.uniform(10, 500) / 1000)
+            time.sleep(random.uniform(50, 500) / 1000)
             db.expire(result, ["metric_status"])
             if result.metric_status == "running":
-                continue
+                blocked_metrics.append(result.id)
             result.metric_status = "running"
             result = _fix_result_num_count(db, result, commit=False)
             result.num_try = result.num_success
             db.commit()
-            for a in db_exp.answers:
+
+        # Iterate dataset and metrics
+        for num_line, row in crud.get_dataset_iterator(db_exp):
+
+            # Retrieve the answer
+            a = (
+                db.query(models.Answer)
+                .filter(models.Answer.experiment_id == db_exp.id, models.Answer.num_line == num_line)
+                .first()
+            )
+
+            for result in db_exp.results:
+                if result.id in blocked_metrics:
+                    continue
+
                 # Do not rerun if score already exist with no error
-                r = (
-                    db.query(models.ObservationTable)
-                    .filter_by(num_line=a.num_line, result_id=result.id)
-                    .first()
-                )
+                r = db.query(models.ObservationTable).filter_by(num_line=num_line, result_id=result.id).first()
                 if r and r.score is not None and not r.error_msg:
                     continue
                 elif r:
                     r.error_msg = None
 
-                row = crud.get_dataset_row(db_exp, a.num_line, df_fallback=df)
                 sender.send_json(
                     {
                         "message_type": MessageType.observation,
                         "exp_id": db_exp.id,
-                        "line_id": a.num_line,
+                        "line_id": num_line,
                         "metric_name": result.metric_name,
                         "output": a.answer,
                         "output_true": row.get("output_true"),
@@ -205,9 +216,7 @@ def dispatch_retries(db, retry_runs: schemas.RetryRuns):
         # unfinished
         num_lines = db.query(models.Answer.num_line).filter(models.Answer.experiment_id == expid).all()
         num_lines = [num_line[0] for num_line in num_lines]
-        num_lines_missing = [
-            i for i in range(dataset_size) if i not in num_line_added and i not in num_lines
-        ]
+        num_lines_missing = [i for i in range(dataset_size) if i not in num_line_added and i not in num_lines]
         for num_line in num_lines_missing:
             row = crud.get_dataset_row(db_exp, num_line, df_fallback=df)
             sender.send_json(
@@ -271,9 +280,7 @@ def dispatch_retries(db, retry_runs: schemas.RetryRuns):
             .all()
         )
         num_lines = [num_line[0] for num_line in num_lines]
-        num_lines_missing = [
-            i for i in range(dataset_size) if i not in num_line_added and i not in num_lines
-        ]
+        num_lines_missing = [i for i in range(dataset_size) if i not in num_line_added and i not in num_lines]
         for num_line in num_lines_missing:
             row = crud.get_dataset_row(db_exp, num_line, df_fallback=df)
             answer = crud.get_answer(db, experiment_id=db_exp.id, num_line=num_line)
