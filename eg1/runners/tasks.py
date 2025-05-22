@@ -56,7 +56,7 @@ def generate_answer(message: dict, mcp_bridge: MCPBridgeClient | None):
             # --
             if exp.with_vision:
                 dataset_size = exp.dataset.parquet_size
-                if msg.line_id > 100:
+                if msg.line_id >= 100:
                     # @DEBUG/@PERF
                     raise ValueError("limit to 100 input for vision")
 
