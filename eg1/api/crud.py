@@ -586,6 +586,7 @@ def get_locustruns(
         query = query.order_by(models.LocustRun.id.asc())
     return query.offset(skip).limit(limit).all()
 
+
 #
 # LOAD TESTING
 #
@@ -602,6 +603,16 @@ def create_loadtesting(db: Session, run: schemas.LoadTestingCreate) -> models.Lo
 
 def get_loadtesting(db: Session, run_id: int) -> models.LoadTesting | None:
     return db.query(models.LoadTesting).filter(models.LoadTesting.id == run_id).first()
+
+
+def remove_loadtesting(db: Session, run_id: int) -> bool:
+    load_testing = db.query(models.LoadTesting).filter(models.LoadTesting.id == run_id).first()
+    if not load_testing:
+        return False
+
+    db.delete(load_testing)
+    db.commit()
+    return True
 
 
 def get_loadtestings(
