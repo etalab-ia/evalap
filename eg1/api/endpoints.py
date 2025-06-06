@@ -716,6 +716,7 @@ def get_locustrun(run_id: int, db: Session = Depends(get_db)):
     except Exception as e:
         raise e
 
+
 #
 # Load Testing
 #
@@ -782,6 +783,23 @@ def get_loadtesting(run_id: int, db: Session = Depends(get_db)):
 
     except (SchemaError, ValidationError) as e:
         raise HTTPException(status_code=400, detail=str(e))
+    except IntegrityError as e:
+        return CustomIntegrityError.from_integrity_error(e.orig).to_http_response()
+    except Exception as e:
+        raise e
+
+
+@router.delete(
+    "/loadtesting/{run_id}",
+    description="Remove loadtesting run.",
+    tags=["loadtesting"],
+)
+def remove_loadtesting(run_id: int, db: Session = Depends(get_db)):
+    try:
+        if not crud.remove_loadtesting(db, run_id):
+            raise HTTPException(status_code=404, detail="LoadTesting not found")
+        return "ok"
+
     except IntegrityError as e:
         return CustomIntegrityError.from_integrity_error(e.orig).to_http_response()
     except Exception as e:
