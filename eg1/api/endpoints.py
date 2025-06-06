@@ -715,3 +715,74 @@ def get_locustrun(run_id: int, db: Session = Depends(get_db)):
         return CustomIntegrityError.from_integrity_error(e.orig).to_http_response()
     except Exception as e:
         raise e
+
+#
+# Load Testing
+#
+
+
+@router.post(
+    "/loadtesting",
+    response_model=schemas.LoadTesting,
+    description="""Save a loadtesting run.
+
+    To format the loadtesting CSV as a dataframe, here is how you must convert it to a dataframe:
+    ```
+    import pandas as pd
+    import requests
+    stats_df = pd.read_csv("stats.csv").to_json()
+
+    # Then you can just pass the data in the POST request along the other parameters.
+    ```
+    """,
+    tags=["loadtesting"],
+)
+def create_loadtesting(run: schemas.LoadTestingCreate, db: Session = Depends(get_db)):
+    try:
+        db_run = crud.create_loadtesting(db, run)
+        return db_run
+
+    except (SchemaError, ValidationError) as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except IntegrityError as e:
+        return CustomIntegrityError.from_integrity_error(e.orig).to_http_response()
+    except Exception as e:
+        raise e
+
+
+@router.get(
+    "/loadtesting/runs",
+    response_model=list[schemas.LoadTesting],
+    description="Get the list of loadtesting runs",
+    tags=["loadtesting"],
+)
+def get_loadtestings(skip: int = 0, limit: int = 100, backward: bool = True, db: Session = Depends(get_db)):
+    try:
+        db_runs = crud.get_loadtestings(db, skip=skip, limit=limit, backward=backward)
+        return db_runs
+
+    except (SchemaError, ValidationError) as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except IntegrityError as e:
+        return CustomIntegrityError.from_integrity_error(e.orig).to_http_response()
+    except Exception as e:
+        raise e
+
+
+@router.get(
+    "/loadtesting/{run_id}",
+    response_model=schemas.LoadTestingFull,
+    description="Get loadtesting run with data.",
+    tags=["loadtesting"],
+)
+def get_loadtesting(run_id: int, db: Session = Depends(get_db)):
+    try:
+        db_run = crud.get_loadtesting(db, run_id)
+        return db_run
+
+    except (SchemaError, ValidationError) as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except IntegrityError as e:
+        return CustomIntegrityError.from_integrity_error(e.orig).to_http_response()
+    except Exception as e:
+        raise e
