@@ -228,3 +228,17 @@ class LocustRun(Base):
     stats_df = Column(Text)
     history_df = Column(Text)
     custom_history_df = Column(Text)
+
+#
+# Load testing
+#
+
+class LoadTesting(Base):
+    __tablename__ = "loadtesting"
+
+    id = Column(Integer, primary_key=True)
+    created_at = Column(DateTime, server_default=func.now())
+    model = Column(Text)
+    name = Column(Text)
+    prompt = Column(Text)
+    df = Column(JSON) # df

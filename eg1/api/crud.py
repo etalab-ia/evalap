@@ -585,3 +585,42 @@ def get_locustruns(
     else:
         query = query.order_by(models.LocustRun.id.asc())
     return query.offset(skip).limit(limit).all()
+
+
+#
+# LOAD TESTING
+#
+
+
+def create_loadtesting(db: Session, run: schemas.LoadTestingCreate) -> models.LoadTesting:
+    run = run.to_table_init(db) if isinstance(run, schemas.EgBaseModel) else run
+    db_run = create_object_from_dict(db, models.LoadTesting, run)
+    db.add(db_run)
+    db.commit()
+    db.refresh(db_run)
+    return db_run
+
+
+def get_loadtesting(db: Session, run_id: int) -> models.LoadTesting | None:
+    return db.query(models.LoadTesting).filter(models.LoadTesting.id == run_id).first()
+
+
+def remove_loadtesting(db: Session, run_id: int) -> bool:
+    load_testing = db.query(models.LoadTesting).filter(models.LoadTesting.id == run_id).first()
+    if not load_testing:
+        return False
+
+    db.delete(load_testing)
+    db.commit()
+    return True
+
+
+def get_loadtestings(
+    db: Session, skip: int = 0, limit: int = 100, backward: bool = False
+) -> list[models.LoadTesting]:
+    query = db.query(models.LoadTesting)
+    if backward:
+        query = query.order_by(models.LoadTesting.id.desc())
+    else:
+        query = query.order_by(models.LoadTesting.id.asc())
+    return query.offset(skip).limit(limit).all()
