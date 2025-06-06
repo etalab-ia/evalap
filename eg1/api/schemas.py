@@ -574,3 +574,25 @@ class LocustRunFull(LocustRun):
     stats_df: str = Field(..., description="The stats csv file serialized as a dataframe.")
     history_df: str = Field(..., description="The stats history CSV file serialized as a dataframe.")
     custom_history_df: str | None = Field(None, description="Extra stats serialized as a dataframe.")
+
+#
+# Load Testing
+#
+
+class LoadTestingBase(EgBaseModel):
+    model: str | None = Field(None, description="The LLM model name/id targeted if any.")
+    name: str | None = Field(None, description="The name of the run.")
+    prompt: str | None = Field(None, description="The prompt use for the run.")
+
+
+class LoadTestingCreate(LoadTestingBase):
+    df: str = Field(..., description="The stats data.") # from_json
+
+
+class LoadTesting(LoadTestingBase):
+    id: int
+    created_at: datetime
+
+
+class LoadTestingFull(LoadTesting):
+    df: str = Field(..., description="The stats data.") # from_json
