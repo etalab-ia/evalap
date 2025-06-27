@@ -154,7 +154,7 @@ def dispatch_tasks(db, db_exp, message_type: MessageType):
                         "line_id": num_line,
                         "metric_name": result.metric_name,
                         "output": a.answer,
-                        "output_true": row.get("output_true"),
+                        "output_true": str(row.get("output_true")),
                     }
                 )
 
@@ -261,7 +261,7 @@ def dispatch_retries(db, retry_runs: schemas.RetryRuns):
                     "line_id": obs.num_line,
                     "metric_name": result.metric_name,
                     "output": output,
-                    "output_true": row.get("output_true"),
+                    "output_true": str(row.get("output_true")),
                 }
             )
             num_line_added + [answer.num_line]
@@ -296,7 +296,7 @@ def dispatch_retries(db, retry_runs: schemas.RetryRuns):
                     "line_id": num_line,
                     "metric_name": result.metric_name,
                     "output": output,
-                    "output_true": row.get("output_true"),
+                    "output_true": str(row.get("output_true")),
                 }
             )
 
