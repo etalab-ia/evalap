@@ -1,6 +1,7 @@
 from io import StringIO
 from typing import Generator
 
+import numpy as np
 import pandas as pd
 import pyarrow.parquet as pq
 from sqlalchemy import and_, column, desc, func, select
@@ -91,6 +92,7 @@ def get_dataset_row(
         else:
             df = df_fallback
         row = df.iloc[line_id].to_dict()
+        row = {k: (v.item() if isinstance(v, np.generic) else v) for k, v in row.items()}
 
     for k, v in (db_exp.dataset.columns_map or {}).items():
         row[k] = row[v]
@@ -110,6 +112,7 @@ def get_dataset_iterator(
             df = batch.to_pandas()
             for num_line, row in df.iterrows():
                 row = row.to_dict()
+                row = {k: (v.item() if isinstance(v, np.generic) else v) for k, v in row.items()}
                 for k, v in (db_exp.dataset.columns_map or {}).items():
                     row[k] = row[v]
                 yield num_line + batch_number * batch_size, row
@@ -120,6 +123,7 @@ def get_dataset_iterator(
         df = pd.read_json(StringIO(db_exp.dataset.df))
         for num_line, row in df.iterrows():
             row = row.to_dict()
+            row = {k: (v.item() if isinstance(v, np.generic) else v) for k, v in row.items()}
             for k, v in (db_exp.dataset.columns_map or {}).items():
                 row[k] = row[v]
             yield num_line, row
