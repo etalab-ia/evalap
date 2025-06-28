@@ -1,4 +1,4 @@
-from typing import List, Literal, Optional
+from typing import List, Literal, Optional, Dict, Any
 
 from pydantic import BaseModel, ConfigDict
 
@@ -19,8 +19,9 @@ class ChunkMetadata(BaseModel):
 
 class Chunk(BaseModel):
     object: Literal["chunk"] = "chunk"
-    id: str | None = None
+    id: str | int | None = None
     metadata: ChunkMetadata | None = None
+    metadata: Dict[str, Any]
     content: str
 
 
