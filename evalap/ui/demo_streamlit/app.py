@@ -3,7 +3,7 @@ from routes import ROUTES, get_page
 
 st.set_page_config(
     page_title="EVALAP - Évaluation API and Platform",
-    page_icon="app/ui/demo_streamlit/static/images/evalap_logo.png",
+    page_icon="evalap/ui/demo_streamlit/static/images/evalap_logo.png",
     layout="wide",
     initial_sidebar_state="expanded",
 )
