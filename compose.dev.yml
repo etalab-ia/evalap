@@ -1,16 +1,16 @@
 services:
   db:
     image: postgres:17
-    container_name: postgres-albert-eg1
+    container_name: postgres-evalap
     ports:
       - "5432:5432"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: changeme
-      POSTGRES_DB: eg1_dev
+      POSTGRES_DB: evalap_dev
     volumes:
       - postgres_db:/var/lib/postgresql/data
 
 volumes:
   postgres_db:
-    name: eg1_postgres_db
+    name: evalap_postgres_db
