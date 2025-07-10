@@ -75,7 +75,7 @@ class DatasetBase(EgBaseModel):
     default_metric: str
     columns_map: dict[str, str] | None = Field(
         None,
-        description="A column names maping that indicates what names in dataset match the eg1 stadandard (output, output_true etc)",
+        description="A column names maping that indicates what names in dataset match the evalap stadandard (output, output_true etc)",
     )
 
 

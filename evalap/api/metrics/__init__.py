@@ -6,7 +6,7 @@ from enum import Enum
 import inflection
 from deepeval.key_handler import KEY_FILE_HANDLER
 
-from eg1.utils import import_classes
+from evalap.utils import import_classes
 
 # FIX deepeval: OSError: [Errno 24] Too many open files: '.deepeval'
 KEY_FILE_HANDLER.fetch_data = lambda x: None
@@ -112,7 +112,7 @@ metric_registry = MetricRegistry()
 
 # Registed decorated metrics in api.metrics
 # --
-metrics_package = "eg1.api.metrics"
+metrics_package = "evalap.api.metrics"
 metrics_directory = __path__[0]
 for filename in os.listdir(metrics_directory):
     if filename.endswith(".py") and not filename.startswith("_"):
