@@ -8,7 +8,7 @@ DEFAULT_PARAMS = {"params": 100, "active_params": 100, "total_params": 100}
 
 
 def load_models_info() -> dict:
-    config_path = Path("eg1/config/models-extra-info.toml")
+    config_path = Path("evalap/config/models-extra-info.toml")
     with open(config_path, "r", encoding="utf-8") as f:
         config = toml.load(f)
     return config

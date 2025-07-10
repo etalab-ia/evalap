@@ -1,11 +1,11 @@
-# Evaluation General One (EG1)
+# Evalap 
 
 ## Overview
 
-Albert "Evaluation General One" is a high-level service designed to perform evaluations for Etalab. 
+Evalap "Evaluation API and Platform" is a high-level service designed to perform evaluations for Etalab. 
 This project provides an API to evaluate [LLM] models and an interface to navigate datasets, models, metrics and experiments.
 
-![Logo](images/eg1_overview.png)
+![Logo](images/evalap_overview.png)
 
 
 ## Ressources
@@ -13,8 +13,8 @@ This project provides an API to evaluate [LLM] models and an interface to naviga
 For guidance on how to use this project, please refer to the following resources:
 
 - the demo notebooks: [notebooks/](notebooks/)
-- The api reference: https://eg1.etalab.gouv.fr/redoc
-- The user-friendly interface: https://eg1.etalab.gouv.fr/
+- The api reference: https://evalap.etalab.gouv.fr/redoc
+- The user-friendly interface: https://evalap.etalab.gouv.fr/
 
 ## Contributing
 

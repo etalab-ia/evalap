@@ -5,7 +5,7 @@ on:
     branches:
       - main
 env:
-  IMAGE_NAME: ghcr.io/${{ github.repository }}/eg1
+  IMAGE_NAME: ghcr.io/${{ github.repository }}/evalap
   IMAGE_TAG: ${{ github.sha }}
 
 jobs:
@@ -69,7 +69,7 @@ jobs:
             --form ref=main \
             --form 'variables[pipeline_name]=${{ github.event.repository.name }} - ${{ needs.build-and-push.outputs.commit_title }}' \
             --form 'variables[docker_image_tag]=${{ env.IMAGE_TAG }}' \
-            --form 'variables[application_to_deploy]=eg1' \
+            --form 'variables[application_to_deploy]=evalap' \
             --form 'variables[deployment_environment]=dev' \
             'https://gitlab.com/api/v4/projects/58117805/trigger/pipeline')"
 

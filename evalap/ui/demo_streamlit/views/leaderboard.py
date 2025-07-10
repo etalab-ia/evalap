@@ -107,7 +107,7 @@ def process_leaderboard_data(leaderboard_data: dict, group: str, metric_name: st
 
 
 def main():
-    st.title("EG1 Leaderboard")
+    st.title("Evalap Leaderboard")
 
     metrics = fetch_metrics()
     datasets = fetch_datasets()

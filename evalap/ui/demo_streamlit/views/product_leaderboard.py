@@ -20,7 +20,7 @@ DEFAULT_METRIC = "judge_exactness"
 @st.cache_data(ttl=300)
 def load_product_config() -> dict:
     """Loads product configuration from YAML file, caching the result."""
-    config_path = Path("eg1") / "config" / "products" / "product_config.yml"
+    config_path = Path("evalap") / "config" / "products" / "product_config.yml"
     if not config_path.exists():
         st.error(f"Configuration file not found at: {config_path}")
         return {"products": {}}
