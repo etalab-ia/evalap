@@ -771,7 +771,7 @@ def main():
             },
             3: {
                 "key": "details",
-                "title": "📝 Details by Experiment Id",
+                "title": "📝 Details by Experiment",
                 "func": display_experiment_details,
             },
             4: {
