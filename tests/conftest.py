@@ -12,9 +12,9 @@ from typing import Generator
 import pytest
 from fastapi.testclient import TestClient
 
-from eg1.api.config import ZMQ_SENDER_URL
-from eg1.api.db import SessionLocal
-from eg1.api.main import app
+from evalap.api.config import ZMQ_SENDER_URL
+from evalap.api.db import SessionLocal
+from evalap.api.main import app
 
 #
 # Api client

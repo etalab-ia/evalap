@@ -6,7 +6,7 @@ default:
   just --list
 
 clean:
-  rm -rf build/ eg1.egg-info/
+  rm -rf build/ evalap.egg-info/
 
 #
 # Openai API utils
@@ -92,20 +92,20 @@ chat-completion-cortex:
 #
 
 alembic-init:
-  alembic -c eg1/api/alembic.ini revision --autogenerate -m "Table Initialization"
+  alembic -c evalap/api/alembic.ini revision --autogenerate -m "Table Initialization"
 
 alembic-generate-revision name:
-  alembic -c eg1/api/alembic.ini upgrade head
-  alembic -c eg1/api/alembic.ini revision --autogenerate -m "{{name}}"
+  alembic -c evalap/api/alembic.ini upgrade head
+  alembic -c evalap/api/alembic.ini revision --autogenerate -m "{{name}}"
 
 alembic-upgrade:
-  alembic -c eg1/api/alembic.ini upgrade head
+  alembic -c evalap/api/alembic.ini upgrade head
 
 alembic-downgrade hash:
-  alembic -c eg1/api/alembic.ini downgrade {{hash}}
+  alembic -c evalap/api/alembic.ini downgrade {{hash}}
 
 alembic-history:
-  alembic -c eg1/api/alembic.ini history
+  alembic -c evalap/api/alembic.ini history
 
 #
 # Search engine
@@ -127,11 +127,11 @@ list-indexes env="dev":
 #
 
 [no-cd]
-drop-database db_name="eg1_dev":
+drop-database db_name="evalap_dev":
   #!/usr/bin/env python
   # Does not work !
   import sys, os; sys.path.append("{{work_dir}}")
-  from eg1.api.config import DATABASE_URI
+  from evalap.api.config import DATABASE_URI
 
   DB_NAME = "{{db_name}}"
   PGURI = DATABASE_URI.replace("+psycopg2", "")
@@ -142,7 +142,7 @@ drop-database db_name="eg1_dev":
 drop-table table_name:
   #!/usr/bin/env python
   import sys, os; sys.path.append("{{work_dir}}")
-  from eg1.api.config import DATABASE_URI
+  from evalap.api.config import DATABASE_URI
 
   TABLE_NAME = "{{table_name}}"
   PGURI = DATABASE_URI.replace("+psycopg2", "")
@@ -153,7 +153,7 @@ drop-table table_name:
 reset-experiment-status *expids:
   #!/usr/bin/env python
   import sys, os; sys.path.append("{{work_dir}}")
-  from eg1.api.config import DATABASE_URI
+  from evalap.api.config import DATABASE_URI
 
   PGURI = DATABASE_URI.replace("+psycopg2", "")
   expids = "{{expids}}".split()
@@ -169,7 +169,7 @@ reset-experiment-status *expids:
 get-experiment expid:
   #!/usr/bin/env python
   import sys, os; sys.path.append("{{work_dir}}")
-  from eg1.api.config import DATABASE_URI
+  from evalap.api.config import DATABASE_URI
 
   PGURI = DATABASE_URI.replace("+psycopg2", "")
   expid = "{{expid}}"
@@ -184,5 +184,5 @@ get-experiment expid:
   exit_status = os.system(command)
 
 rainfrog:
-  rainfrog --url postgres://postgres:changeme@localhost:5432/eg1_dev
+  rainfrog --url postgres://postgres:changeme@localhost:5432/evalap_dev
 
