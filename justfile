@@ -6,7 +6,7 @@ default:
   just --list
 
 clean:
-  rm -rf build/ eg1.egg-info/
+  rm -rf build/ evalap.egg-info/
 
 #
 # Openai API utils
@@ -127,7 +127,7 @@ list-indexes env="dev":
 #
 
 [no-cd]
-drop-database db_name="eg1_dev":
+drop-database db_name="evalap_dev":
   #!/usr/bin/env python
   # Does not work !
   import sys, os; sys.path.append("{{work_dir}}")
@@ -184,5 +184,4 @@ get-experiment expid:
   exit_status = os.system(command)
 
 rainfrog:
-  rainfrog --url postgres://postgres:changeme@localhost:5432/eg1_dev
-
+  rainfrog --url postgres://postgres:changeme@localhost:5432/evalap_dev

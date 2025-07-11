@@ -1,7 +1,7 @@
 import streamlit as st
 from routes import ROUTES
 
-st.title("Welcome to EVALAP")
+st.title("Welcome to EvalAP")
 
 
 st.write("What is on the menu:")
