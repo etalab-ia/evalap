@@ -5,9 +5,9 @@ The project includes an UI/UX based on Streamlit [WIP].
 
 
 ```
-eg1/
+evalap/
 ├── justfile    --> just is a handy way to save and run project-specific commands. See https://just.systems
-├── eg1/        --> The eg1 code source
+├── evalap/        --> The evalap code source
 │   ├── api/        --> The evaluation API source code
 │   ├── runner/     --> The runner (message passing) source code
 │   ├── mcp/        --> The MCP client.
@@ -24,7 +24,7 @@ The project needs the following API key to be set perform LLM based metrics:
 export OPENAI_API_KEY="You secret key"
 ```
 
-All the project global settings and environmant variables are handled in `eg1/api/config.py`.
+All the project global settings and environmant variables are handled in `evalap/api/config.py`.
 
 The environement variables can also be defined in a `.env` file at the root of the project.
 
@@ -38,17 +38,17 @@ The environement variables can also be defined in a `.env` file at the root of t
 
 2. Create the first migration script:
 ```
-    alembic -c eg1/api/alembic.ini revision --autogenerate -m "Table Initialization"
+    alembic -c evalap/api/alembic.ini revision --autogenerate -m "Table Initialization"
 ```
 
 3. Initialize/Update the database schema:
 ```
-    alembic -c eg1/api/alembic.ini upgrade head
+    alembic -c evalap/api/alembic.ini upgrade head
 ```
 4. If you modify the schema :
 ```
-    alembic -c eg1/api/alembic.ini revision --autogenerate -m "text explication"
-    alembic -c eg1/api/alembic.ini upgrade head  
+    alembic -c evalap/api/alembic.ini revision --autogenerate -m "text explication"
+    alembic -c evalap/api/alembic.ini upgrade head  
 ```
 
 ## Run API
@@ -59,13 +59,13 @@ The environement variables can also be defined in a `.env` file at the root of t
 ```
 2. Launch the API:
 ```
-    uvicorn eg1.api.main:app --reload
+    uvicorn evalap.api.main:app --reload
 ```
 3. Launch the runner:
 ```
-    PYTHONPATH="." python -m eg1.runners
+    PYTHONPATH="." python -m evalap.runners
     # To change the default loggin level you can do:
-    #LOG_LEVEL="DEBUG" PYTHONPATH="." python -m eg1.runners
+    #LOG_LEVEL="DEBUG" PYTHONPATH="." python -m evalap.runners
 ```
 
 ## Swagger
@@ -77,7 +77,7 @@ Access the API documentation at: http://localhost:8000/redoc (or http://localhos
 
 To run the streamlit frontend, run : 
 
-    streamlit run eg1/ui/demo_streamlit/app.py --server.runOnSave true
+    streamlit run evalap/ui/demo_streamlit/app.py --server.runOnSave true
 
 
 ## Jupyter Tutorial
@@ -87,9 +87,9 @@ The `notebook/` directory contains examples of API usage.
 
 ## Adding new metrics
 
-Each single metric should be defined in a file in `eg1/api/metrics/{metric_name}.py`.
+Each single metric should be defined in a file in `evalap/api/metrics/{metric_name}.py`.
 The file should be self-contained, i.e contains the eventual prompt and settings related to the metric.
-The metric should be decorated as followinf example to be registed as a known metric of EG1: 
+The metric should be decorated as followinf example to be registed as a known metric of EVALAP: 
 
 
 ```python

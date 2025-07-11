@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 
-from eg1.api.db import engine, SessionLocal
-from eg1.api.models import Base
+from evalap.api.db import engine, SessionLocal
+from evalap.api.models import Base
 
 
 class TestApi:

@@ -1,7 +1,7 @@
 [project]
-name = "eg1"
+name = "evalap"
 version = "0.3.0"
-description = "Albert Evaluations"
+description = "Evaluations API and Platform"
 authors = [{ name = "Etalab", email = "etalab@modernisation.gouv.fr" }]
 requires-python = ">=3.10"
 readme = "README.md"
@@ -38,14 +38,14 @@ dependencies = [
 
 
 [project.urls]
-Homepage = "https://eg1.etalab.gouv.fr"
-Source = "https://github.com/etalab-ia/eg1"
-Tracker = "https://github.com/etalab-ia/eg1/issues"
-Documentation = "https://github.com/etalab-ia/eg1"
+Homepage = "https://evalap.etalab.gouv.fr"
+Source = "https://github.com/etalab-ia/evalap"
+Tracker = "https://github.com/etalab-ia/evalap/issues"
+Documentation = "https://github.com/etalab-ia/evalap"
 
 [project.scripts]
-eg1_generate_answers = "eg1.scripts.run_answers.run_answers:main"
-eg1_run_expe = "eg1.scripts.run_expe.run_expe:main"
+evalap_generate_answers = "evalap.scripts.run_answers.run_answers:main"
+evalap_run_expe = "evalap.scripts.run_expe.run_expe:main"
 
 # Packaging
 
@@ -54,11 +54,11 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = {find = {where = ["."], include = ["eg1*"]}}
+packages = {find = {where = ["."], include = ["evalap*"]}}
 include-package-data = true
 
 [tool.setuptools.package-data]
-eg1_config = ["config/*"]
+evalap_config = ["config/*"]
 
 [tool.pdm]
 distribution = false

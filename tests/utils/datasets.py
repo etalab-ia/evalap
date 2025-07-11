@@ -1,7 +1,7 @@
 import pandas as pd
 from fastapi.testclient import TestClient
 
-from eg1.api.config import API_BASE_URL
+from evalap.api.config import API_BASE_URL
 
 ROOT_PATH = API_BASE_URL
 
