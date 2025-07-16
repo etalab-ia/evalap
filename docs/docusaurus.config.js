@@ -1,0 +1,164 @@
+// @ts-check
+// Note: type annotations allow type checking and IDEs autocompletion
+
+const lightCodeTheme = require('prism-react-renderer/themes/github');
+const darkCodeTheme = require('prism-react-renderer/themes/dracula');
+
+/** @type {import('@docusaurus/types').Config} */
+const config = {
+    title: 'Evalap',
+    tagline: 'Evaluation API and Platform for LLM models',
+    favicon: 'img/favicon.ico',
+
+    // Set the production url of your site here
+    url: 'https://evalap.etalab.gouv.fr',
+    // Set the /<baseUrl>/ pathname under which your site is served
+    // For GitHub pages deployment, it is often '/<projectName>/'
+    baseUrl: '/',
+
+    // GitHub pages deployment config.
+    // If you aren't using GitHub pages, you don't need these.
+    organizationName: 'etalab', // Usually your GitHub org/user name.
+    projectName: 'evalap', // Usually your repo name.
+
+    onBrokenLinks: 'throw',
+    onBrokenMarkdownLinks: 'warn',
+
+    // Even if you don't use internalization, you can use this field to set useful
+    // metadata like html lang. For example, if your site is Chinese, you may want
+    // to replace "en" with "zh-Hans".
+    i18n: {
+        defaultLocale: 'en',
+        locales: ['en', 'fr'],
+    },
+
+    presets: [
+        [
+            'classic',
+            /** @type {import('@docusaurus/preset-classic').Options} */
+            ({
+                docs: {
+                    sidebarPath: require.resolve('./sidebars.js'),
+                    // Please change this to your repo.
+                    // Remove this to remove the "edit this page" links.
+                    editUrl:
+                        'https://github.com/etalab/evalap/tree/main/docs/',
+                },
+                blog: false,
+                theme: {
+                    customCss: require.resolve('./src/css/custom.css'),
+                },
+            }),
+        ],
+    ],
+
+    themeConfig:
+        /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
+        ({
+            // Replace with your project's social card
+            image: 'img/android-chrome-512x512.png',
+            navbar: {
+                title: 'EvalAP',
+                hideOnScroll: true,
+                logo: {
+                    alt: 'EvalAP Logo',
+                    src: 'img/favicon.ico',
+                    href: '/docs',
+                },
+                items: [
+                    {
+                        type: 'docSidebar',
+                        sidebarId: 'tutorialSidebar',
+                        label: 'Documentation',
+                        position: 'left',
+                    },
+                    {
+                        label: 'API Reference',
+                        href: "https://evalap.etalab.gouv.fr/redoc",
+                        position: 'left',
+                    },
+                    {
+                        type: 'search',
+                        position: 'right',
+                    },
+                    {
+                        label: 'Github',
+                        href: 'https://github.com/etalab/evalap',
+                        position: 'right',
+                    },
+                ],
+            },
+            footer: {
+                style: 'dark',
+                links: [
+                    {
+                        title: 'Docs',
+                        items: [
+                            {
+                                label: 'Getting Started',
+                                to: '/docs/getting-started/install-from-source',
+                            },
+                            {
+                                label: 'User Guides',
+                                to: '/docs/user-guides/add-your-dataset',
+                            },
+                            {
+                                label: 'Developer Guide',
+                                to: '/docs/developer-guide/adding-a-new-metric',
+                            },
+                        ],
+                    },
+                    {
+                        title: 'Community',
+                        items: [
+                            {
+                                label: 'GitHub Issues',
+                                href: 'https://github.com/etalab/evalap/issues',
+                            },
+                            {
+                                label: 'Discussions',
+                                href: 'https://github.com/etalab/evalap/discussions',
+                            },
+                        ],
+                    },
+                    {
+                        title: 'More',
+                        items: [
+                            {
+                                label: 'Official instance',
+                                href: 'https://evalap.etalab.gouv.fr',
+                            },
+                            {
+                                label: 'API Reference',
+                                href: 'https://evalap.etalab.gouv.fr/redoc',
+                            },
+                            {
+                                label: 'API Swagger',
+                                href: 'https://evalap.etalab.gouv.fr/docs',
+                            },
+                            {
+                                label: 'Github',
+                                href: 'https://github.com/etalab/evalap',
+                            },
+                        ],
+                    },
+                ],
+                copyright: `Copyright © ${new Date().getFullYear()} Etalab. Built with Docusaurus.`,
+            },
+            algolia: {
+                // The application ID provided by Algolia
+                appId: 'L16S9RBKXB',
+
+                // Public API key: it is safe to commit it
+                apiKey: 'beb495bea76be681f1a65d23a0afcb17',
+
+                indexName: 'YOUR_INDEX_NAME',
+            },
+            prism: {
+                theme: lightCodeTheme,
+                darkTheme: darkCodeTheme,
+            },
+        }),
+};
+
+module.exports = config;
