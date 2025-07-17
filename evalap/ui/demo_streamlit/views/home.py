@@ -1,9 +1,19 @@
+import os
+from PIL import Image
 import streamlit as st
 from routes import ROUTES
-from PIL import Image
 
-logo_path = "evalap/ui/demo_streamlit/static/images/EvalAP_logo.png"  
-logo = Image.open(logo_path)
+def get_logo_path(filename="evalap_logo.png"):
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    logo_path = os.path.join(script_dir, '..', 'static', 'images', filename)
+    return os.path.normpath(logo_path)
+
+logo_path = get_logo_path()  # Tu peux adapter le nom si besoin
+
+if os.path.exists(logo_path):
+    logo = Image.open(logo_path)
+else:
+    logo = Image.new("RGBA", (200, 100), (255, 255, 255, 0))  
 
 col1, col2 = st.columns([4, 2])
 
