@@ -1,8 +1,8 @@
 // @ts-check
 // Note: type annotations allow type checking and IDEs autocompletion
 
-const lightCodeTheme = require('prism-react-renderer/themes/github');
-const darkCodeTheme = require('prism-react-renderer/themes/dracula');
+const { themes } = require('prism-react-renderer');
+
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
@@ -41,8 +41,8 @@ const config = {
                     sidebarPath: require.resolve('./sidebars.js'),
                     // Please change this to your repo.
                     // Remove this to remove the "edit this page" links.
-                    editUrl:
-                        'https://github.com/etalab/evalap/tree/main/docs/',
+                    editUrl: 'https://github.com/etalab-ia/evalap/tree/main/docs/',
+                    sidebarCollapsed: false,
                 },
                 blog: false,
                 theme: {
@@ -83,7 +83,7 @@ const config = {
                     },
                     {
                         label: 'Github',
-                        href: 'https://github.com/etalab/evalap',
+                        href: 'https://github.com/etalab-ia/evalap',
                         position: 'right',
                     },
                 ],
@@ -113,11 +113,11 @@ const config = {
                         items: [
                             {
                                 label: 'GitHub Issues',
-                                href: 'https://github.com/etalab/evalap/issues',
+                                href: 'https://github.com/etalab-ia/evalap/issues',
                             },
                             {
                                 label: 'Discussions',
-                                href: 'https://github.com/etalab/evalap/discussions',
+                                href: 'https://github.com/etalab-ia/evalap/discussions',
                             },
                         ],
                     },
@@ -138,12 +138,12 @@ const config = {
                             },
                             {
                                 label: 'Github',
-                                href: 'https://github.com/etalab/evalap',
+                                href: 'https://github.com/etalab-ia/evalap',
                             },
                         ],
                     },
                 ],
-                copyright: `Copyright © ${new Date().getFullYear()} Etalab. Built with Docusaurus.`,
+                copyright: `Copyright © ${new Date().getFullYear()} Etalab.`,
             },
             algolia: {
                 // The application ID provided by Algolia
@@ -152,11 +152,11 @@ const config = {
                 // Public API key: it is safe to commit it
                 apiKey: 'beb495bea76be681f1a65d23a0afcb17',
 
-                indexName: 'YOUR_INDEX_NAME',
+                indexName: 'evalap-doc',
             },
             prism: {
-                theme: lightCodeTheme,
-                darkTheme: darkCodeTheme,
+                theme: themes.github,
+                darkTheme: themes.dracula,
             },
         }),
 };

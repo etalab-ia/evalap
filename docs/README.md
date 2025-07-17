@@ -65,4 +65,4 @@ Please ensure your documentation changes are clear, concise, and follow the exis
 
 ## License
 
-To be defined.
+MIT

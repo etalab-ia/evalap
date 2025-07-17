@@ -19,7 +19,13 @@ Evalap is a comprehensive platform that allows you to:
 - Compare different models and their performances
 - Build your own Leaderboards
 
+
 ## Guide Overview
+
+:::info
+Currently, the EvalAP webapp (frontend) is a read-only application to visualize the evaluation data. To publish datasets and run experiments you must use the EvalAP API.
+:::
+
 
 <div className="container">
   <div className="row">
