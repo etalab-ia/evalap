@@ -82,7 +82,7 @@ print(f"Dataset created with ID: {dataset_id}")
 
 ## From Parquet Dataset
 
-See the demo tutorial to add an OCR dataset: https://github.com/etalab-ia/evalap/blob/main/notebooks/create_marker_dataset.ipynb
+See the demo tutorial to add an OCR dataset: [create_marker_dataset.ipynb](https://github.com/etalab-ia/evalap/blob/main/notebooks/create_marker_dataset.ipynb)
 
 
 ## Next Steps
@@ -90,5 +90,4 @@ See the demo tutorial to add an OCR dataset: https://github.com/etalab-ia/evalap
 After adding your dataset, you can:
 
 - [Create a simple experiment](./create-a-simple-experiment.md) using your dataset
-- Add more datasets for comprehensive evaluation
 - Explore existing datasets in the platform
