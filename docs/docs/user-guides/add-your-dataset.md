@@ -2,103 +2,88 @@
 sidebar_position: 1
 ---
 
-# Add Your Dataset
+# Publish a Dataset
 
 This guide will walk you through the process of adding a new dataset to Evalap for model evaluation.
 
-## Dataset Requirements
 
-Before adding a dataset, ensure it meets the following requirements:
+You can add a dataset programmatically using the Evalap API.
 
-- The dataset should be in a supported format (JSON, CSV, or JSONL)
-- Each entry in the dataset should contain at least:
-  - An input field (the prompt or question)
-  - A reference field (the expected output or answer)
 
-## Adding a Dataset via the Web Interface
+Two formats are supported : 
 
-1. Log in to the Evalap web interface
-2. Navigate to the "Datasets" section
-3. Click on the "Add New Dataset" button
-4. Fill in the required information:
-   - Dataset name
-   - Description
-   - Tags (optional)
-5. Upload your dataset file
-6. Map the fields in your dataset to the required fields in Evalap
-7. Click "Submit" to add your dataset
+- CSV like data (dataframes)
+- Parquet format (for bigger dataset)
 
-## Adding a Dataset via the API
 
-You can also add a dataset programmatically using the Evalap API:
+## Column Mapping
+
+
+Evalap uses a standard column naming convention. When adding your dataset, you need to either name your columns accordingly or map your dataset columns to these standard names using the `columns_map` parameter:
+
+- `query`: (str) the input query.
+- `output`: (str) the model answer.
+- `output_true`: (str) the ground truth answer.
+- `context`: list[str] a list of contextual information pass to the prompt.
+- `retrieval_context`: list[str] a list of retrieved information pass to the prompt.
+- `reasoning`: (str) The reasoning output tokens associated to an answer.
+- (to come) `tools_called`
+- (to come) `expected_tools`
+
+
+If the column names of your dataset do not match these conventions, you can either rename them before adding the dataset, or use the parameter `columns_map` in the request to provide a mapping between the Evalap convention names and yours.
+
+
+
+For example, if your dataset has columns named "question" and "answer", you would map them like this:
+
+```json
+"columns_map": {"question": "input", "answer": "output_true"}
+```
+
+## From CSV like dataset
+
+The following code show how to upload a dataset to Evalap from a CSV file.
 
 ```python
 import requests
 import json
+import pandas as pd
 
 # Replace with your Evalap API endpoint
-API_URL = "https://evalap.etalab.gouv.fr/api"
+API_URL = "https://evalap.etalab.gouv.fr/v1"
 
-# Replace with your API key or authentication token
+# Replace with your API key or authentication token (or None if launch locally)
 HEADERS = {
-    "Authorization": "Bearer YOUR_API_KEY",
+    "Authorization": "Bearer YOUR_EVALAP_KEY",
     "Content-Type": "application/json"
 }
 
+# Load the dataset from a CSV file
+dataset_df = pd.read_csv("my_dataset.csv")  # Pandas use "," as default limiter.
+
+
 # Prepare dataset metadata
-dataset_metadata = {
-    "name": "My Custom Dataset",
-    "description": "A dataset for evaluating question answering capabilities",
-    "tags": ["question-answering", "french"]
+dataset = {
+    "name": "My domain specific dataset",
+    "readme": "A dataset for evaluating question answering capabilities",
+    "default_metric": "judge_precision",
+    "df": dataset_df.to_json()
 }
 
 # Create the dataset
-response = requests.post(
-    f"{API_URL}/datasets",
-    headers=HEADERS,
-    json=dataset_metadata
-)
+response = requests.post( f"{API_URL}/datasets", headers=HEADERS, json=dataset)
 
 dataset_id = response.json()["id"]
 
-# Now upload the dataset file
-with open("my_dataset.json", "rb") as f:
-    files = {"file": ("my_dataset.json", f, "application/json")}
-    response = requests.post(
-        f"{API_URL}/datasets/{dataset_id}/upload",
-        headers={"Authorization": HEADERS["Authorization"]},
-        files=files
-    )
-
-print(f"Dataset uploaded: {response.json()}")
+print(f"Dataset created with ID: {dataset_id}")
 ```
 
-## Dataset Format Example
 
-Here's an example of a properly formatted dataset in JSON:
+## From Parquet Dataset
 
-```json
-[
-  {
-    "question": "What is the capital of France?",
-    "answer": "Paris",
-    "category": "Geography",
-    "difficulty": "Easy"
-  },
-  {
-    "question": "Who wrote 'Les Misérables'?",
-    "answer": "Victor Hugo",
-    "category": "Literature",
-    "difficulty": "Medium"
-  }
-]
-```
+See the demo tutorial to add an OCR dataset: https://github.com/etalab-ia/evalap/blob/main/notebooks/create_marker_dataset.ipynb
 
-When mapping this dataset in Evalap, you would map:
-- "question" to the input field
-- "answer" to the reference field
-
-The additional fields ("category" and "difficulty") can be used for filtering and analysis.
 
 ## Next Steps
 

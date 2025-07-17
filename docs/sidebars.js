@@ -22,17 +22,26 @@ const sidebars = {
         {
             type: 'category',
             label: 'Getting Started',
-            items: ['getting-started/install-from-source', 'getting-started/install-with-docker'],
+            items: [
+                'getting-started/install-from-source',
+                'getting-started/install-with-docker'
+            ],
         },
         {
             type: 'category',
             label: 'User Guides',
-            items: ['user-guides/add-your-dataset', 'user-guides/create-a-simple-experiment'],
+            items: [
+                'user-guides/add-your-dataset',
+                'user-guides/create-a-simple-experiment'
+            ],
         },
         {
             type: 'category',
             label: 'Developer Guide',
-            items: ['developer-guide/adding-a-new-metric', 'developer-guide/increase-parallel-requests'],
+            items: [
+                'developer-guide/adding-a-new-metric',
+                'developer-guide/increase-parallel-requests'
+            ],
         },
     ],
 };
