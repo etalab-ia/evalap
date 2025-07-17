@@ -5,10 +5,7 @@ sidebar_position: 1
 # Publish a Dataset
 
 This guide will walk you through the process of adding a new dataset to Evalap for model evaluation.
-
-
 You can add a dataset programmatically using the Evalap API.
-
 
 Two formats are supported : 
 
@@ -38,8 +35,11 @@ If the column names of your dataset do not match these conventions, you can eith
 For example, if your dataset has columns named "question" and "answer", you would map them like this:
 
 ```json
-"columns_map": {"question": "input", "answer": "output_true"}
+"columns_map": {"input": "question", "output_true": "answer"}
 ```
+
+See the [api reference](https://evalap.etalab.gouv.fr/redoc#tag/datasets/operation/create_dataset_v1_dataset_post) for more usage detail.
+
 
 ## From CSV like dataset
 
