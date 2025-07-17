@@ -63,7 +63,7 @@ const config = {
                 logo: {
                     alt: 'EvalAP Logo',
                     src: 'img/favicon.ico',
-                    href: '/docs',
+                    href: '/',
                 },
                 items: [
                     {
@@ -96,7 +96,7 @@ const config = {
                         items: [
                             {
                                 label: 'Getting Started',
-                                to: '/docs/getting-started/install-from-source',
+                                to: '/docs/getting-started/install-with-docker',
                             },
                             {
                                 label: 'User Guides',

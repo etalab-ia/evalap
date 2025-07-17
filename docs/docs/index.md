@@ -1,29 +1,14 @@
 ---
-slug: /
 id: intro
 sidebar_position: 1
 sidebar_label: Introduction
 ---
 
-# Welcome to EvalAP
-
-**EvalAP** (**Eval**uation **A**PI and **P**latform) is a high-level service designed to perform evaluations for Etalab. This project provides an API to evaluate LLM models and an interface to navigate datasets, models, metrics, and experiments.
-
-## What is EvalAP?
-
-Evalap is a comprehensive platform that allows you to:
-
-- Evaluate Large Language Models (LLMs) using standardized metrics
-- Navigate through datasets, models, and experiments
-- Create and run your own evaluation experiments
-- Compare different models and their performances
-- Build your own Leaderboards
-
-
-## Guide Overview
+# Documentation Overview
 
 :::info
-Currently, the EvalAP webapp (frontend) is a read-only application to visualize the evaluation data. To publish datasets and run experiments you must use the EvalAP API.
+Currently, the EvalAP webapp (frontend) is a read-only application to visualize the evaluation data.  
+To publish datasets and run experiments you must use the EvalAP API.
 :::
 
 
@@ -67,4 +52,7 @@ Currently, the EvalAP webapp (frontend) is a read-only application to visualize 
 
 ## Contributing
 
-You can open issues for bugs you've found or features you think are missing. You can also submit pull requests to the Evalap repository. To get started, take a look at the CONTRIBUTING.md file in [the repository](https://github.com/etalab-ia/evalap).
+You can open issues for bugs you've found or features you think are missing. You can also submit pull requests or open discussion to the Evalap repository.
+
+To get started, take a look at the CONTRIBUTING.md file in [the repository](https://github.com/etalab-ia/evalap).
+

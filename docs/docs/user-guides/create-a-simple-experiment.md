@@ -4,128 +4,136 @@ sidebar_position: 2
 
 # Create a Simple Experiment
 
-This guide will walk you through the process of creating and running a simple evaluation experiment in Evalap.
-
-## Prerequisites
-
-Before creating an experiment, ensure you have:
-
-- Access to the Evalap platform
-- At least one dataset added to the platform
-- Access to one or more models for evaluation
-
-## Creating an Experiment via the Web Interface
-
-1. Log in to the Evalap web interface
-2. Navigate to the "Experiments" section
-3. Click on the "Create New Experiment" button
-4. Fill in the experiment details:
-   - Experiment name
-   - Description
-   - Tags (optional)
-5. Select the dataset(s) you want to use for evaluation
-6. Select the model(s) you want to evaluate
-7. Choose the evaluation metrics:
-   - Accuracy
-   - F1 Score
-   - BLEU Score
-   - ROUGE Score
-   - Custom metrics (if available)
-8. Configure experiment parameters:
-   - Number of samples (or use the entire dataset)
-   - Randomization seed (for reproducibility)
-   - Parallel execution settings
-9. Click "Create Experiment" to save your configuration
-10. Click "Run Experiment" to start the evaluation
+This guide walks you through creating and running a simple evaluation experiment in Evalap.
 
 ## Creating an Experiment via the API
 
-You can also create and run experiments programmatically using the Evalap API:
+An experiment evaluates a model on a specific dataset using defined metrics.
+
+When choosing a model, there are typically two scenarios:
+1. **Provider models** (e.g., OpenAI, Albert): EvalAP generates answers from the dataset. The dataset must contain at least a `query` column representing the model inputs.
+2. **Custom models**: You generate the model outputs yourself and pass them to the API for metric computation.
+
+This guide covers both scenarios.
+
+### Selecting Metrics
+
+You need to specify which metrics to compute for your experiment. You can explore available metrics through the interface or API.
+
+A typical metric for evaluating LLMs is "LLM-as-a-judge," which uses another LLM to assess answer quality. When you have ground-truth answers in your dataset, you can use LLM-as-a-judge to verify if the model output contains the correct answer. In EvalAP, the `judge_precision` metric performs this function.
+
+Here are some key metrics offered by EvalAP:
+
+| Name                      | Description                                                                                                      | Type     | Require                                      |
+|---------------------------|------------------------------------------------------------------------------------------------------------------|----------|----------------------------------------------|
+| judge_precision           | Binary precision of output_true. Returns 1 if the correct answer is contained in the given answer                | llm      | [output, output_true, query]                 |
+| qcm_exactness             | Binary equality between output and output_true                                                                   | llm      | [output, output_true]                        |
+| bias                      | See https://docs.confident-ai.com/docs/metrics-introduction                                                     | deepeval | [output, query]                              |
+| hallucination             | See https://docs.confident-ai.com/docs/metrics-introduction                                                     | deepeval | [context, output, query]                     |
+| contextual_relevancy      | See https://docs.confident-ai.com/docs/metrics-introduction                                                     | deepeval | [output, query, retrieval_context]           |
+| ocr_v1                    | Levenshtein distance between output and ground-truth markdown                                                    | ocr      | [output, output_true]                        |
+| output_length             | Number of words in the output                                                                                   | ops      | [output]                                     |
+| generation_time           | Time taken to generate the answer/output                                                                        | ops      | [output]                                     |
+| energy_consumption        | Energy consumption (kWh) - Environmental impact calculated by ecologits library                                  | ops      | [output]                                     |
+| nb_tool_calls             | Number of tools called during generation                                                                         | ops      | [output]                                     |
+
+:::info
+Query the complete metrics list from the [v1/metrics](https://evalap.etalab.gouv.fr/redoc#tag/metrics) API route.
+:::
+
+When selecting metrics, ensure the required fields match your dataset columns. For example, `judge_precision` requires `output`, `output_true`, and `query` fields. Note that the `output` field is generated by EvalAP during evaluation, so it doesn't need to be present in your dataset initially.
+
+Additional metrics provide general measurements like generation time and output size.
+
+### Creating an Experiment with a Model Provider
+
+Here's how to create a simple experiment evaluating an OpenAI model:
 
 ```python
+import os
 import requests
-import json
 
 # Replace with your Evalap API endpoint
-API_URL = "https://evalap.etalab.gouv.fr/api"
+API_URL = "https://evalap.etalab.gouv.fr/v1"
 
-# Replace with your API key or authentication token
+# Replace with your API key or authentication token (or None if launch locally)
 HEADERS = {
     "Authorization": "Bearer YOUR_API_KEY",
     "Content-Type": "application/json"
 }
 
-# Prepare experiment configuration
-experiment_config = {
-    "name": "Simple QA Evaluation",
-    "description": "Evaluating model performance on question answering",
-    "datasets": ["dataset_id_1"],  # Replace with actual dataset IDs
-    "models": ["model_id_1", "model_id_2"],  # Replace with actual model IDs
-    "metrics": ["accuracy", "f1_score"],
-    "parameters": {
-        "sample_size": 100,  # Number of samples to use
-        "seed": 42,  # Random seed for reproducibility
-        "max_parallel_requests": 5  # Number of parallel requests
-    }
+# Design the experiment
+experiment = {
+    "name": "my_experiment_name", 
+    "dataset": "my_dataset", # name identifier of the dataset
+    "model": {"name": "gpt-4o", "base_url": "https://api.openai.com/v1", "api_key": os.getenv("OPENAI_API_KEY")},
+    "metrics": ["judge_precision", "generation_time", "output_length"],
 }
 
-# Create the experiment
-response = requests.post(
-    f"{API_URL}/experiments",
-    headers=HEADERS,
-    json=experiment_config
-)
-
-experiment_id = response.json()["id"]
-
 # Run the experiment
-response = requests.post(
-    f"{API_URL}/experiments/{experiment_id}/run",
-    headers=HEADERS
-)
-
-print(f"Experiment started: {response.json()}")
-
-# Check experiment status
-response = requests.get(
-    f"{API_URL}/experiments/{experiment_id}/status",
-    headers=HEADERS
-)
-
-print(f"Experiment status: {response.json()}")
+response = requests.post(f'{API_URL}/experiment', json=experiment, headers=HEADERS)
+experiment_id = response.json()["id"]
+print(f"Experiment {experiment_id} is running")
 ```
 
-## Monitoring Experiment Progress
+### Creating an Experiment with a Custom Model
 
-Once your experiment is running, you can monitor its progress:
+For the second scenario, where you have your own model outputs, you'll need to provide those outputs in your API call. Here's how to create an experiment with a custom model:
 
-1. In the web interface, navigate to the "Experiments" section
-2. Find your experiment in the list and click on it
-3. The experiment details page will show:
-   - Current status (Running, Completed, Failed)
-   - Progress indicator
-   - Estimated time remaining
-   - Partial results (if available)
+```python
+import os
+import requests
 
-## Viewing Experiment Results
+# Replace with your Evalap API endpoint
+API_URL = "https://evalap.etalab.gouv.fr/v1"
 
-After the experiment completes:
+# Replace with your API key or authentication token (or None if launch locally)
+HEADERS = {
+    "Authorization": "Bearer YOUR_API_KEY",
+    "Content-Type": "application/json"
+}
+
+# Design the experiment with a custom model
+experiment = {
+    "name": "my_custom_model_experiment", 
+    "dataset": "my_dataset", # name identifier of the dataset
+    "model": {
+        "aliased_name": "my-custom-model",  # A name to identify this model
+        "output": ["answer1", "answer2", "answer3"]  # Array of model outputs corresponding to dataset rows
+    },
+    "metrics": ["judge_precision", "generation_time", "output_length"],
+}
+
+# Run the experiment
+response = requests.post(f'{API_URL}/experiment', json=experiment, headers=HEADERS)
+experiment_id = response.json()["id"]
+print(f"Experiment {experiment_id} is running")
+```
+
+In this scenario, the model schema is different:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| output | Array of strings | The sequence of answers generated by your model, ordered to match the 'rows' of the dataset you are evaluating |
+| aliased_name | string | A name to identify this model. Different from the 'name' parameter used with provider models |
+
+After running the experiment, the API returns a success response if it starts without errors. EvalAP manages experiments asynchronously, and you can check the status and results through the interface or by querying the API directly.
+
+
+## Viewing Experiment Results and Progress
+
+After launching an experiment:
 
 1. Navigate to the experiment details page
-2. View the summary results showing:
+2. View summary results showing:
    - Overall performance metrics for each model
-   - Comparative charts and visualizations
+   - Support table displaying the number of experiments used for score averaging
 3. Explore detailed results:
-   - Per-sample performance
-   - Error analysis
-   - Model output examples
-4. Export results in various formats (CSV, JSON, PDF)
+   - Number of successful and failed attempts per experiment
+   - Detailed results for each experiment
 
-## Next Steps
 
-After creating your first experiment, you can:
+:::tip Next Steps: Experiment Sets
+After creating your first experiment, consider using **Experiment Sets** to compare multiple models or configurations. Experiment sets allow you to run related experiments together, making it easier to draw meaningful comparisons and conclusions. They're essential for robust evaluations that account for model variability and provide comparative insights. Learn more in our [Create an Experiment Set](./create-an-experiment-set) guide.
+:::
 
-- Create more complex experiments with multiple datasets and models
-- Customize evaluation metrics for specific use cases
-- Analyze results to identify model strengths and weaknesses
-- Share experiment results with your team

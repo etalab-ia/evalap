@@ -3,6 +3,7 @@ from PIL import Image
 import streamlit as st
 from routes import ROUTES
 from pathlib import Path
+from streamlit_card import card
 
 
 def get_logo(filename="evalap_logo.png"):
@@ -15,15 +16,38 @@ def get_logo(filename="evalap_logo.png"):
     return logo
 
 
-col1, col2 = st.columns([4, 2])
+col1, col2, _ = st.columns([0.25, 0.25, 0.4])  # Image column is 20%, content column is 80%
 
 with col1:
     st.title("Welcome to EvalAP")
-    st.write("What is on the menu :")
-    for route in ROUTES:
-        if route["id"] in ["home"] or route.get("is_hidden"):
-            continue
-        st.page_link(route["path"], label=f"{route['title']}: {route['description']}", icon=route["icon"])
 
 with col2:
-    st.image(get_logo(), use_container_width=True)
+    st.image(get_logo(), width=150)
+
+st.markdown("""
+<style>
+    /* Increase font size for page links */
+    .stPageLink {
+        margin-bottom: 12px !important; /* Add more space between items */
+    }
+
+    /* Make the link text bold */
+    .stPageLink p {
+        font-size: 1.5rem !important;  /* Adjust size as needed */
+        font-weight: 500 !important;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+for route in ROUTES:
+    if route["id"] in ["home"] or route.get("is_hidden"):
+        continue
+    st.page_link(route["path"], label=f"{route['title']}: {route['description']}", icon=route["icon"])
+    #card(
+    #    title= route['title'],
+    #    text=route['description'],
+    #)
+
+
+st.markdown("Explore [our documentation](/doc) for more information.")
+

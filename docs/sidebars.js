@@ -23,8 +23,8 @@ const sidebars = {
             type: 'category',
             label: 'Getting Started',
             items: [
+                'getting-started/install-with-docker',
                 'getting-started/install-from-source',
-                'getting-started/install-with-docker'
             ],
         },
         {
@@ -32,7 +32,8 @@ const sidebars = {
             label: 'User Guides',
             items: [
                 'user-guides/add-your-dataset',
-                'user-guides/create-a-simple-experiment'
+                'user-guides/create-a-simple-experiment',
+                'user-guides/create-experiment-set',
             ],
         },
         {
@@ -40,7 +41,7 @@ const sidebars = {
             label: 'Developer Guide',
             items: [
                 'developer-guide/adding-a-new-metric',
-                'developer-guide/increase-parallel-requests'
+                'developer-guide/increase-parallel-requests',
             ],
         },
     ],
