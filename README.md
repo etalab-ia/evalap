@@ -1,5 +1,9 @@
 # Evalap 
 
+<p align="center">
+  <img src=evalap/ui/demo_streamlit/static/images/evalap_logo.png alt="texte alternatif" width="200" />
+</p>
+
 ## Overview
 
 Evalap "Evaluation API and Platform" is a high-level service designed to perform evaluations for Etalab. 
@@ -24,5 +28,4 @@ To get started, take a look at [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-To be defined.
-
+MIT License
