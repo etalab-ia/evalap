@@ -8,9 +8,16 @@ RUN pip install --no-cache-dir uv
 # Setup files
 WORKDIR /app
 COPY ./pyproject.toml /app
+COPY ./docs /app/docs
 COPY ./evalap /app/evalap
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Install dependency
+# --
 RUN uv pip install --no-cache --system .
-RUN apt-get update && apt-get install -y supervisor && apt-get clean
+# For the API and webapp 
+RUN apt-get update
+RUN apt-get install -y supervisor
+# For the doc
+RUN apt-get install -y npm nodejs
+RUN apt-get clean
