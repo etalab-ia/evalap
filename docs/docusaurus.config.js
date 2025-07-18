@@ -157,7 +157,7 @@ const config = {
                 // Public API key: it is safe to commit it
                 apiKey: 'beb495bea76be681f1a65d23a0afcb17',
 
-                indexName: 'evalap-doc',
+                indexName: 'Evalap doc',
             },
             prism: {
                 theme: themes.github,
