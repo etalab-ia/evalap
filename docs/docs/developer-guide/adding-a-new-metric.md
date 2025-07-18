@@ -8,7 +8,13 @@ This guide will walk you through the process of adding a custom evaluation metri
 
 ## Understanding Metrics in Evalap
 
-Evalap uses metrics to evaluate model outputs against reference answers. Each metric is implemented as a Python class that inherits from a base metric interface and provides specific evaluation logic.
+Evalap uses a metric registry system where metrics are registered using decorators. There are three types of metrics:
+
+- **LLM-as-judge metrics**: Use language models to evaluate outputs
+- **DeepEval metrics**: Integrate with the DeepEval library
+- **Human metrics**: For human-in-the-loop evaluation
+
+Each metric specifies its required inputs and returns a score along with an explanation.
 
 ## Prerequisites
 
@@ -16,186 +22,252 @@ Before adding a new metric, ensure you have:
 
 - A local development environment set up
 - Understanding of the metric you want to implement
-- Basic knowledge of Python
+- Basic knowledge of Python and decorators
 
-## Step 1: Create a New Metric Class
+## Example 1: Creating an LLM-as-Judge Metric
 
-Create a new Python file in the metrics directory with your metric implementation:
+This example shows how to create a metric that uses an LLM to evaluate outputs. Create a new Python file in the `evalap/api/metrics/` directory:
 
 ```python
-# evalap/metrics/my_custom_metric.py
+# evalap/api/metrics/my_custom_metric.py
 
-from evalap.metrics.base import BaseMetric
-from typing import Any, Dict, List, Union
+from evalap.clients import LlmClient, split_think_answer
+from evalap.utils import render_jinja
 
-class MyCustomMetric(BaseMetric):
-    """A custom metric for evaluating model outputs.
-    
-    This metric [describe what your metric does].
+from . import metric_registry
+
+# Define your prompt template for the LLM-as-judge metric
+_template = """
+Given the following question:
+
+<question>
+{{query}}
+</question>
+
+And the expected answer:
+
+<expected>
+{{output_true}}
+</expected>
+
+And the actual answer to evaluate:
+
+<actual>
+{{output}}
+</actual>
+
+Evaluate how well the actual answer matches the expected answer.
+Score from 0 to 1, where 1 is a perfect match.
+
+Return only the numeric score!
+""".strip()
+
+# Configuration for LLM-as-judge metrics
+_config = {
+    "model": "gpt-4o",
+    "sampling_params": {"temperature": 0.2},
+}
+
+@metric_registry.register(
+    name="my_custom_metric",
+    description="Evaluates how well the output matches the expected answer",
+    metric_type="llm",  # or "deepeval" or "human"
+    require=["output", "output_true", "query"],  # Required inputs
+)
+def my_custom_metric(output, output_true, **kwargs):
     """
+    Compute the custom metric score.
     
-    name = "my_custom_metric"  # Unique identifier for the metric
-    display_name = "My Custom Metric"  # Human-readable name
-    description = "A custom metric that evaluates [description]"  # Detailed description
-    
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        # Initialize any specific parameters for your metric
-        self.parameter1 = kwargs.get("parameter1", default_value)
-        self.parameter2 = kwargs.get("parameter2", default_value)
-    
-    def compute(self, references: List[str], predictions: List[str]) -> Dict[str, Any]:
-        """Compute the metric score between references and predictions.
+    Args:
+        output: The model's output to evaluate
+        output_true: The expected/reference output
+        **kwargs: Additional parameters (e.g., query, context)
         
-        Args:
-            references: List of reference answers
-            predictions: List of model-generated answers
-            
-        Returns:
-            Dictionary containing the metric scores
-        """
-        # Implement your metric computation logic here
-        scores = []
-        for ref, pred in zip(references, predictions):
-            # Calculate individual score
-            score = self._calculate_score(ref, pred)
-            scores.append(score)
-        
-        # Return results
-        return {
-            "score": sum(scores) / len(scores) if scores else 0,  # Average score
-            "individual_scores": scores,  # Individual scores for each sample
-            # Add any additional metrics or statistics
+    Returns:
+        tuple: (score, observation) where score is numeric and observation is explanation
+    """
+    # For LLM-as-judge metrics
+    config = _config | {k: v for k, v in kwargs.items() if k in _config}
+    
+    messages = [
+        {
+            "role": "user",
+            "content": render_jinja(_template, output=output, output_true=output_true, **kwargs),
         }
+    ]
     
-    def _calculate_score(self, reference: str, prediction: str) -> float:
-        """Calculate the score for a single reference-prediction pair."""
-        # Implement your specific scoring logic here
-        # Example:
-        # 1. Preprocess reference and prediction
-        # 2. Calculate similarity or other relevant measure
-        # 3. Return a score (typically between 0 and 1)
+    aiclient = LlmClient()
+    result = aiclient.generate(
+        model=config["model"], 
+        messages=messages, 
+        **config["sampling_params"]
+    )
+    
+    observation = result.choices[0].message.content
+    think, answer = split_think_answer(observation)
+    
+    # Parse the score
+    score = answer.strip(" \n\"'.%")
+    try:
+        score = float(score)
+    except ValueError:
+        score = None
         
-        # Placeholder implementation
-        return 0.0
+    return score, observation
 ```
 
-## Step 2: Register Your Metric
+## Example 2: Creating a Non-LLM Metric
 
-Register your new metric in the metrics registry:
+This example demonstrates how to create a simple metric that doesn't use an LLM for evaluation. These metrics use deterministic logic or mathematical calculations:
 
 ```python
-# evalap/metrics/__init__.py
+# evalap/api/metrics/exact_match.py
 
-from evalap.metrics.accuracy import AccuracyMetric
-from evalap.metrics.f1_score import F1ScoreMetric
-# ... other existing imports
-from evalap.metrics.my_custom_metric import MyCustomMetric
+from . import metric_registry
 
-# Update the METRICS dictionary
-METRICS = {
-    "accuracy": AccuracyMetric,
-    "f1_score": F1ScoreMetric,
-    # ... other existing metrics
-    "my_custom_metric": MyCustomMetric,
+@metric_registry.register(
+    name="exact_match",
+    description="Binary metric that checks if output exactly matches expected",
+    metric_type="llm",  # Even simple metrics can be marked as "llm" type
+    require=["output", "output_true"],
+)
+def exact_match_metric(output, output_true, **kwargs):
+    """Check if output exactly matches expected output."""
+    # Normalize strings for comparison
+    output_normalized = output.strip().lower()
+    expected_normalized = output_true.strip().lower()
+    
+    # Calculate score
+    score = 1.0 if output_normalized == expected_normalized else 0.0
+    
+    # Provide explanation
+    if score == 1.0:
+        observation = "Exact match found"
+    else:
+        observation = f"No match: expected '{output_true}' but got '{output}'"
+    
+    return score, observation
+```
+
+## Understanding Required Inputs
+
+The `require` parameter specifies which inputs your metric needs. Common options include:
+
+- `output`: The model's generated answer
+- `output_true`: The expected/reference answer
+- `query`: The input question/prompt
+- `context`: Additional context provided
+- `retrieval_context`: Retrieved documents (for RAG metrics)
+- `reasoning`: Chain-of-thought reasoning
+
+## Metric Registration
+
+The metric is automatically registered when the file is placed in the `evalap/api/metrics/` directory. The registration happens through the `__init__.py` file which imports all Python files in the directory.
+
+## Testing Your Metric
+
+Create tests for your metric:
+
+```python
+# tests/api/metrics/test_my_custom_metric.py
+
+import pytest
+from evalap.api.metrics import metric_registry
+
+def test_my_custom_metric():
+    metric_func = metric_registry.get_metric_function("my_custom_metric")
+    
+    # Test perfect match
+    score, observation = metric_func(
+        output="Paris is the capital of France",
+        output_true="Paris is the capital of France",
+        query="What is the capital of France?"
+    )
+    assert score == 1.0
+    
+    # Test partial match
+    score, observation = metric_func(
+        output="Paris",
+        output_true="Paris is the capital of France",
+        query="What is the capital of France?"
+    )
+    assert 0 < score < 1
+    
+    # Test no match
+    score, observation = metric_func(
+        output="London is the capital of UK",
+        output_true="Paris is the capital of France",
+        query="What is the capital of France?"
+    )
+    assert score == 0.0
+```
+
+## Using Your Metric
+
+Once registered, your metric can be used in experiments:
+
+```python
+from evalap.api.metrics import metric_registry
+
+# Get the metric function
+metric_func = metric_registry.get_metric_function("my_custom_metric")
+
+# Use it to evaluate
+score, reason = metric_func(
+    output="The model's answer",
+    output_true="The expected answer",
+    query="What is the question?"
+)
+
+print(f"Score: {score}")
+print(f"Reason: {reason}")
+```
+
+## Advanced Topics
+
+### Integrating DeepEval Metrics
+
+Evalap automatically integrates several DeepEval metrics. To add a new DeepEval metric:
+
+1. Add the metric class name to the `classes` list in `evalap/api/metrics/__init__.py`
+2. The system will automatically register it with appropriate naming and requirements
+
+### Handling Different Input Types
+
+For metrics that require different inputs than the standard ones, you can map them using the `deepeval_require_map`:
+
+```python
+deepeval_require_map = {
+    "input": "query",
+    "actual_output": "output",
+    "expected_output": "output_true",
+    "context": "context",
+    "retrieval_context": "retrieval_context",
+    "reasoning": "reasoning",
 }
 ```
 
-## Step 3: Add Tests for Your Metric
+### Error Handling
 
-Create tests to ensure your metric works correctly:
-
-```python
-# tests/metrics/test_my_custom_metric.py
-
-import unittest
-from evalap.metrics.my_custom_metric import MyCustomMetric
-
-class TestMyCustomMetric(unittest.TestCase):
-    def setUp(self):
-        self.metric = MyCustomMetric()
-    
-    def test_perfect_match(self):
-        references = ["This is a test", "Another test"]
-        predictions = ["This is a test", "Another test"]
-        result = self.metric.compute(references, predictions)
-        self.assertEqual(result["score"], 1.0)  # Perfect match should score 1.0
-    
-    def test_no_match(self):
-        references = ["This is a test", "Another test"]
-        predictions = ["Completely different", "Not matching at all"]
-        result = self.metric.compute(references, predictions)
-        self.assertEqual(result["score"], 0.0)  # No match should score 0.0
-    
-    def test_partial_match(self):
-        references = ["This is a test", "Another test"]
-        predictions = ["This is a test", "Different answer"]
-        result = self.metric.compute(references, predictions)
-        # Partial match should have a score between 0 and 1
-        self.assertTrue(0 < result["score"] < 1)
-
-if __name__ == "__main__":
-    unittest.main()
-```
-
-## Step 4: Document Your Metric
-
-Add documentation for your metric in the API reference:
-
-```markdown
-# docs/docs/api-reference/metrics.md
-
-## MyCustomMetric
-
-**Identifier**: `my_custom_metric`
-
-**Description**: A custom metric that evaluates [description]
-
-### Parameters
-
-- `parameter1` (type): Description of parameter1. Default: `default_value`
-- `parameter2` (type): Description of parameter2. Default: `default_value`
-
-### Example Usage
+Always handle potential errors gracefully:
 
 ```python
-from evalap.metrics import METRICS
-
-my_metric = METRICS["my_custom_metric"](parameter1=value1, parameter2=value2)
-result = my_metric.compute(references, predictions)
-print(f"Score: {result['score']}")
-```
-```
-
-## Step 5: Test Your Metric in the Platform
-
-1. Restart the Evalap service to load your new metric
-2. Create a new experiment using your custom metric
-3. Verify that the metric works as expected
-
-## Advanced Customization
-
-### Metric Parameters
-
-You can make your metric configurable by accepting parameters in the constructor:
-
-```python
-def __init__(self, threshold=0.5, case_sensitive=True, **kwargs):
-    super().__init__(**kwargs)
-    self.threshold = threshold
-    self.case_sensitive = case_sensitive
+try:
+    score = float(answer)
+except ValueError:
+    score = None
+    observation = "Failed to parse score from LLM response"
 ```
 
-### Handling Edge Cases
+## Best Practices
 
-Ensure your metric handles edge cases gracefully:
-
-- Empty strings
-- Very long inputs
-- Special characters
-- Different languages
-- Null or missing values
+1. **Clear Naming**: Use descriptive names that indicate what the metric measures
+2. **Documentation**: Provide clear descriptions in the `description` parameter
+3. **Consistent Scoring**: Use a consistent scale (typically 0-1)
+4. **Explanations**: Always return meaningful observations/reasons with scores
+5. **Input Validation**: Validate required inputs before processing
+6. **Temperature Settings**: For LLM-as-judge metrics, use low temperature for consistency
 
 ## Conclusion
 
-By following these steps, you've successfully added a custom metric to Evalap. Your metric can now be used in experiments to evaluate model performance according to your specific criteria.
+By following these steps, you can add custom metrics to Evalap that integrate seamlessly with the evaluation platform. The metric registry system makes it easy to add new evaluation criteria while maintaining consistency across the platform.

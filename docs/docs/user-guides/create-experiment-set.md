@@ -176,3 +176,7 @@ After launching an experiment set:
 
 Experiment sets provide a comprehensive view of model performance, making it easier to draw meaningful conclusions from your evaluations.
 
+
+:::tip Next Steps: Experiment Sets
+[Explore the notebooks for real examples of creating evaluations with experiment sets.](https://github.com/etalab-ia/evalap/tree/main/notebooks)
+:::
