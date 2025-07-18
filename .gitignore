@@ -87,3 +87,5 @@ MANIFEST
 .pdm-python
 pdm.lock
 *.lock
+.envrc
+.direnv/
