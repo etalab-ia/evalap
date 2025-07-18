@@ -3,7 +3,7 @@ from PIL import Image
 import streamlit as st
 from routes import ROUTES
 from pathlib import Path
-from streamlit_card import card
+#from streamlit_card import card
 
 
 def get_logo(filename="evalap_logo.png"):
