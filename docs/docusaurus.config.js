@@ -14,7 +14,7 @@ const config = {
     url: 'https://evalap.etalab.gouv.fr',
     // Set the /<baseUrl>/ pathname under which your site is served
     // For GitHub pages deployment, it is often '/<projectName>/'
-    baseUrl: '/',
+    baseUrl: '/doc/',
 
     // GitHub pages deployment config.
     // If you aren't using GitHub pages, you don't need these.
@@ -57,6 +57,9 @@ const config = {
     themeConfig:
         /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
         ({
+            metadata: [
+                { name: "algolia-site-verification", content: "766474FDFEC7E852" },
+            ],
             // Replace with your project's social card
             image: 'img/android-chrome-512x512.png',
             navbar: {
@@ -154,7 +157,7 @@ const config = {
                 // Public API key: it is safe to commit it
                 apiKey: 'beb495bea76be681f1a65d23a0afcb17',
 
-                indexName: 'evalap-doc',
+                indexName: 'Evalap doc',
             },
             prism: {
                 theme: themes.github,
