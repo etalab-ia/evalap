@@ -17,21 +17,47 @@ from utils import fetch, _rename_model_variants, calculate_tokens_per_second
 DEFAULT_METRIC = "judge_exactness"
 
 
-@st.cache_data(ttl=300)
+#@st.cache_data(ttl=300)
 def load_product_config() -> dict:
-    """Loads product configuration from YAML file, caching the result."""
+    """Loads product configuration from YAML file, caching the result, with robust error handling and smooth UX."""
     config_path = Path("evalap") / "config" / "products" / "product_config.yml"
-    if not config_path.exists():
-        st.error(f"Configuration file not found at: {config_path}")
-        return {"products": {}}
+    err_msg = None
+    config = {}
 
-    try:
-        with open(config_path, "r") as f:
-            config = yaml.safe_load(f)
-        return config
-    except Exception as e:
-        st.error(f"Error loading configuration: {str(e)}")
-        return {"products": {}}
+    # File not exits
+    if not config_path.exists():
+        err_msg = f"🚫 Configuration file not found at : `{config_path}`."
+
+    else:
+        # Files empty
+        try:
+            with open(config_path, "r") as f:
+                config = yaml.safe_load(f)
+            if not config:
+                err_msg = f"⚠️ The configuration file at `{config_path}` is empty."
+        except yaml.YAMLError as err:
+            err_msg = (
+                f"❌  Syntax error in YAML "
+                f"(fichier : `{config_path}`):\n\n``````"
+            )
+        except Exception as e:
+            err_msg = (
+                f"❌ Error loading configuration file "
+                f"(`{config_path}`):\n\n``````"
+            )
+
+    # Structure ko
+    if not err_msg and ("products" not in config or not config.get("products")):
+        err_msg = (
+            f"⚠️ The configuration file at `{config_path}` does not contain any `products` key "
+            "or the key is empty. Add your products to get started."
+        )
+
+    if err_msg:
+        st.error(err_msg)
+        return {"products": {}} 
+    return config
+
 
 
 def fetch_experiment_results(exp_id: int) -> dict:
@@ -367,9 +393,10 @@ def main() -> None:
 
     product_config = load_product_config()
 
-    if not product_config.get("products"):
-        st.warning("No products configured yet.")
-        return
+    if not product_config.get("products"):  
+        st.info("No product configuration found.")
+        st.stop()
+
     product_tabs = st.tabs([product_info["name"] for product_info in product_config["products"].values()])
 
     for tab, product_info in zip(product_tabs, product_config["products"].values()):
