@@ -134,6 +134,6 @@ After launching an experiment:
 
 
 :::tip Next Steps: Experiment Sets
-After creating your first experiment, consider using **Experiment Sets** to compare multiple models or configurations. Experiment sets allow you to run related experiments together, making it easier to draw meaningful comparisons and conclusions. They're essential for robust evaluations that account for model variability and provide comparative insights. Learn more in our [Create an Experiment Set](./create-an-experiment-set) guide.
+After creating your first experiment, consider using **Experiment Sets** to compare multiple models or configurations. Experiment sets allow you to run related experiments together, making it easier to draw meaningful comparisons and conclusions. They're essential for robust evaluations that account for model variability and provide comparative insights. Learn more in our [Create an Experiment Set](./create-experiment-set) guide.
 :::
 

@@ -18,8 +18,10 @@ const config = {
 
     // GitHub pages deployment config.
     // If you aren't using GitHub pages, you don't need these.
-    organizationName: 'etalab', // Usually your GitHub org/user name.
+    organizationName: 'etalab-ia', // Usually your GitHub org/user name.
     projectName: 'evalap', // Usually your repo name.
+    deploymentBranch: 'main',
+    trailingSlash: false,
 
     onBrokenLinks: 'throw',
     onBrokenMarkdownLinks: 'warn',
