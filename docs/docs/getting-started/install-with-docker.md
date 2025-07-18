@@ -1,3 +1,22 @@
+---
+sidebar_position: 1
+---
+
+# Install with Docker
+
+This guide will walk you through the process of installing and running Evalap using Docker.
+
+## Prerequisites
+
+Before you begin, ensure you have the following installed on your system:
+
+- Docker version 18.0.6 or above.
+
+## Run with compose
+
+Create a `compose.yml` file with the following content:
+
+```yaml
 services:
   postgres:
     image: postgres:16.5
@@ -47,3 +66,24 @@ services:
 volumes:
   postgres_data:
   evalap_data:
+```
+
+Then run the application with:
+
+```bash
+docker compose up -d
+```
+
+This will start both the application and the database services in detached mode.
+
+You should then be able to connect to the following services:
+- the API at http://localhost:8000/docs
+- the webapp at http://localhost:8501
+
+
+## Next Steps
+
+Now that you have Evalap installed with Docker, you can:
+
+- [Add your dataset](../user-guides/add-your-dataset.md) to start evaluating models
+- [Create a simple experiment](../user-guides/create-a-simple-experiment.md) to test the platform
