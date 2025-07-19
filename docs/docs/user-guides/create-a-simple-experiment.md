@@ -76,6 +76,10 @@ experiment_id = response.json()["id"]
 print(f"Experiment {experiment_id} is running")
 ```
 
+:::info
+The model schema support passing sampling params, such as the temperature like `"model": {..., "sampling_params": {"temperature": 0.2}}`, or extra params since supported by the Openai API used. Check the [experiment creation endpoint](https://evalap.etalab.gouv.fr/redoc#tag/experiments/operation/create_experiment_v1_experiment_post) to full list of supported parameters.
+:::
+
 ### Creating an Experiment with a Custom Model
 
 For the second scenario, where you have your own model outputs, you'll need to provide those outputs in your API call. Here's how to create an experiment with a custom model:

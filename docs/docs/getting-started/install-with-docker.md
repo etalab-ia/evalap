@@ -87,3 +87,4 @@ Now that you have Evalap installed with Docker, you can:
 
 - [Add your dataset](../user-guides/add-your-dataset.md) to start evaluating models
 - [Create a simple experiment](../user-guides/create-a-simple-experiment.md) to test the platform
+- Explore the Jupyter notebook examples in the `notebooks/` directory

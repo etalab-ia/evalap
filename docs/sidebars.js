@@ -34,6 +34,7 @@ const sidebars = {
                 'user-guides/add-your-dataset',
                 'user-guides/create-a-simple-experiment',
                 'user-guides/create-experiment-set',
+                'user-guides/run-answers-locally',
             ],
         },
         {
