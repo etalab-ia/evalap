@@ -86,6 +86,16 @@ uvicorn evalap.api.main:app --reload --host 0.0.0.0 --port 8000
 PYTHONPATH="." python -m evalap.runners
 ```
 
+### Verify Installation
+
+To verify that Evalap is running correctly, open your web browser and navigate to:
+
+```
+http://localhost:8000/redoc
+```
+
+You should see the API documentation page. You can also use `http://localhost:8000/docs` if you prefer the swagger version.
+
 ### Logging Configuration
 
 You can adjust the logging level for more detailed output:
@@ -112,21 +122,11 @@ The API should now be running at `http://localhost:8000`.
 streamlit run evalap/ui/demo_streamlit/app.py --server.runOnSave true
 ```
 
-## Verify Installation
-
-To verify that Evalap is running correctly, open your web browser and navigate to:
-
-```
-http://localhost:8000/redoc
-```
-
-You should see the API documentation page. You can also use `http://localhost:8000/docs` if you prefer the swagger version.
 
 ## Next Steps
 
 Now that you have Evalap installed, you can:
 
-- Explore the Jupyter notebook examples in the `notebooks/` directory
-- [Install with Docker](./install-with-docker.md) for an alternative installation method
 - [Add your dataset](../user-guides/add-your-dataset.md) to start evaluating models
 - [Create a simple experiment](../user-guides/create-a-simple-experiment.md) to test the platform
+- Explore the Jupyter notebook examples in the `notebooks/` directory

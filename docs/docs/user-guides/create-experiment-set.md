@@ -6,6 +6,8 @@ sidebar_position: 3
 
 This guide explains how to create and run an experiment set evaluation  in EvalAP, which allows you to compare multiple models or configurations.
 
+> **Note:** Before proceeding with this guide, please make sure you've read the [Create a Simple Experiment](create-a-simple-experiment) article, as it covers fundamental concepts needed to understand experiment sets.
+
 ## Why Use Experiment Sets?
 
 Meaningful evaluations rarely consist of a single experiment. To draw valid conclusions about model performance, you need:
