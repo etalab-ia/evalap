@@ -43,7 +43,8 @@ To publish datasets and run experiments you must use the EvalAP API.
     <div className="col col--4 col--offset-0">
       <div className="featureCard">
         <h3 className="featureTitle">API Reference</h3>
-        <p className="featureDescription">Comprehensive documentation of the Evalap API.</p>
+        <p className="featureDescription">Complete technical specification of the Evalap API.
+</p>
         <a href="/docs/api-reference/index">View API Reference →</a>
       </div>
     </div>
