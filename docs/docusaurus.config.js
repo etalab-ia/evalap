@@ -91,6 +91,10 @@ const config = {
                         href: 'https://github.com/etalab-ia/evalap',
                         position: 'right',
                     },
+                    {
+                        type: 'localeDropdown',
+                        position: 'right',
+                    },
                 ],
             },
             footer: {
