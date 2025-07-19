@@ -35,7 +35,7 @@ If the column names of your dataset do not match these conventions, you can eith
 For example, if your dataset has columns named "question" and "answer", you would map them like this:
 
 ```json
-"columns_map": {"input": "question", "output_true": "answer"}
+"columns_map": {"input": "question", "output": "answer"}
 ```
 
 See the [api reference](https://evalap.etalab.gouv.fr/redoc#tag/datasets/operation/create_dataset_v1_dataset_post) for more usage detail.
@@ -82,7 +82,7 @@ print(f"Dataset created with ID: {dataset_id}")
 
 ## From Parquet Dataset
 
-See the demo tutorial to add an OCR dataset: [create_marker_dataset.ipynb](https://github.com/etalab-ia/evalap/blob/main/notebooks/create_marker_dataset.ipynb)
+See the demo tutorial to add an OCR dataset provided by the Marker library: [create_marker_dataset.ipynb](https://github.com/etalab-ia/evalap/blob/main/notebooks/create_marker_dataset.ipynb)
 
 
 ## Next Steps

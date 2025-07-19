@@ -16,9 +16,9 @@ This project provides an API to evaluate [LLM] models and an interface to naviga
 
 For guidance on how to use this project, please refer to the following resources:
 
+- The documentation: https://evalap.etalab.gouv.fr/doc
 - the demo notebooks: [notebooks/](notebooks/)
-- The api reference: https://evalap.etalab.gouv.fr/redoc
-- The user-friendly interface: https://evalap.etalab.gouv.fr/
+- The public instance interface: https://evalap.etalab.gouv.fr/
 
 ## Contributing
 
