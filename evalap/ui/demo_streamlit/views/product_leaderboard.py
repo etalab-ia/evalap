@@ -19,43 +19,36 @@ DEFAULT_METRIC = "judge_exactness"
 
 #@st.cache_data(ttl=300)
 def load_product_config() -> dict:
-    """Loads product configuration from YAML file, caching the result, with robust error handling and smooth UX."""
     config_path = Path("evalap") / "config" / "products" / "product_config.yml"
-    err_msg = None
-    config = {}
 
-    # File not exits
     if not config_path.exists():
-        err_msg = f"🚫 Configuration file not found at : `{config_path}`."
+        st.error(f"🚫 Configuration file not found at : `{config_path}`.")
+        return {"products": {}}
 
-    else:
-        # Files empty
-        try:
-            with open(config_path, "r") as f:
-                config = yaml.safe_load(f)
-            if not config:
-                err_msg = f"⚠️ The configuration file at `{config_path}` is empty."
-        except yaml.YAMLError as err:
-            err_msg = (
-                f"❌  Syntax error in YAML "
-                f"(fichier : `{config_path}`):\n\n``````"
-            )
-        except Exception as e:
-            err_msg = (
-                f"❌ Error loading configuration file "
-                f"(`{config_path}`):\n\n``````"
-            )
+    try:
+        with open(config_path, "r") as f:
+            config = yaml.safe_load(f)
+        if not config:
+            st.error(f"⚠️ The configuration file at `{config_path}` is empty.")
+            return {"products": {}}
+    except yaml.YAMLError as err:
+        st.error(
+            f"❌  Syntax error in YAML (file : `{config_path}`):\n\n``````"
+        )
+        return {"products": {}}
+    except Exception as e:
+        st.error(
+            f"❌ Error loading configuration file (`{config_path}`):\n\n``````"
+        )
+        return {"products": {}}
 
-    # Structure ko
-    if not err_msg and ("products" not in config or not config.get("products")):
-        err_msg = (
+    if "products" not in config or not config.get("products"):
+        st.error(
             f"⚠️ The configuration file at `{config_path}` does not contain any `products` key "
             "or the key is empty. Add your products to get started."
         )
+        return {"products": {}}
 
-    if err_msg:
-        st.error(err_msg)
-        return {"products": {}} 
     return config
 
 
