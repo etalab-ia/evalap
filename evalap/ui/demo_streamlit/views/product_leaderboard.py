@@ -17,21 +17,40 @@ from utils import fetch, _rename_model_variants, calculate_tokens_per_second
 DEFAULT_METRIC = "judge_exactness"
 
 
-@st.cache_data(ttl=300)
+#@st.cache_data(ttl=300)
 def load_product_config() -> dict:
-    """Loads product configuration from YAML file, caching the result."""
     config_path = Path("evalap") / "config" / "products" / "product_config.yml"
+
     if not config_path.exists():
-        st.error(f"Configuration file not found at: {config_path}")
+        st.error(f"🚫 Configuration file not found at : `{config_path}`.")
         return {"products": {}}
 
     try:
         with open(config_path, "r") as f:
             config = yaml.safe_load(f)
-        return config
-    except Exception as e:
-        st.error(f"Error loading configuration: {str(e)}")
+        if not config:
+            st.error(f"⚠️ The configuration file at `{config_path}` is empty.")
+            return {"products": {}}
+    except yaml.YAMLError as err:
+        st.error(
+            f"❌  Syntax error in YAML (file : `{config_path}`):\n\n``````"
+        )
         return {"products": {}}
+    except Exception as e:
+        st.error(
+            f"❌ Error loading configuration file (`{config_path}`):\n\n``````"
+        )
+        return {"products": {}}
+
+    if "products" not in config or not config.get("products"):
+        st.error(
+            f"⚠️ The configuration file at `{config_path}` does not contain any `products` key "
+            "or the key is empty. Add your products to get started."
+        )
+        return {"products": {}}
+
+    return config
+
 
 
 def fetch_experiment_results(exp_id: int) -> dict:
@@ -367,9 +386,10 @@ def main() -> None:
 
     product_config = load_product_config()
 
-    if not product_config.get("products"):
-        st.warning("No products configured yet.")
-        return
+    if not product_config.get("products"):  
+        st.info("No product configuration found.")
+        st.stop()
+
     product_tabs = st.tabs([product_info["name"] for product_info in product_config["products"].values()])
 
     for tab, product_info in zip(product_tabs, product_config["products"].values()):
