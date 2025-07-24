@@ -1,4 +1,4 @@
-# Evalap 
+# EvalAP
 
 <p align="center">
   <img src=evalap/ui/demo_streamlit/static/images/evalap_logo.png alt="texte alternatif" width="200" />
@@ -6,7 +6,7 @@
 
 ## Overview
 
-Evalap "Evaluation API and Platform" is a high-level service designed to perform evaluations for Etalab. 
+EvalAP "Evaluation API and Platform" is a high-level service designed to perform evaluations for Etalab. 
 This project provides an API to evaluate [LLM] models and an interface to navigate datasets, models, metrics and experiments.
 
 ![Logo](images/evalap_overview.png)
