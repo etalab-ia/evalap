@@ -5,7 +5,7 @@ on:
     branches:
       - main
 env:
-  IMAGE_NAME: ghcr.io/${{ github.repository.lowercase }}/evalap
+  IMAGE_NAME: ghcr.io/${{ github.repository }}/evalap
   IMAGE_TAG: ${{ github.sha }}
 
 jobs:
