@@ -16,13 +16,13 @@ def get_logo(filename="evalap_logo.png"):
     return logo
 
 
-col1, col2, _ = st.columns([0.25, 0.25, 0.4])  # Image column is 20%, content column is 80%
+col1, col2, _ = st.columns([0.2, 0.6, 0.2])  # Image column is 20%, content column is 80%
 
 with col1:
-    st.title("Welcome to EvalAP")
+    st.image(get_logo(), width=150)
 
 with col2:
-    st.image(get_logo(), width=150)
+    st.title("Welcome to EvalAP")
 
 st.markdown("""
 <style>
@@ -33,7 +33,7 @@ st.markdown("""
 
     /* Make the link text bold */
     .stPageLink p {
-        font-size: 1.5rem !important;  /* Adjust size as needed */
+        font-size: 1.2rem !important;  /* Adjust size as needed */
         font-weight: 500 !important;
     }
 </style>
