@@ -116,7 +116,7 @@ def generate_answer(message: dict, mcp_bridge: MCPBridgeClient | None):
                 emission_carbon = impact_carbon(
                     model.name, model.base_url, result.usage.completion_tokens, timer.execution_time
                 )
-            
+
             except Exception as e:
                 logger.error(f"Error during calcul carbon impact : {e}")
                 emission_carbon = None
@@ -241,7 +241,7 @@ def generate_observation(message: dict, mcp_bridge: MCPBridgeClient):
                 #     metric_fun, 300, msg.output, msg.output_true, **metric_params
                 # )
             if isinstance(metric_result, tuple):
-                score, observation, obs_result = metric_result ##TODO: AUDREY WARNING : modifier dans deepeval
+                score, observation, obs_result = metric_result  ##TODO: AUDREY WARNING : modifier dans deepeval
             else:
                 score = metric_result
 
@@ -252,14 +252,14 @@ def generate_observation(message: dict, mcp_bridge: MCPBridgeClient):
                 raise ValueError("Unsuported score type: %s %s" % (type(score), score))
 
             # Carbon emission for observations calcul
-            if hasattr(obs_result, 'usage') and hasattr(obs_result.usage, 'completion_tokens'):
+            if hasattr(obs_result, "usage") and hasattr(obs_result.usage, "completion_tokens"):
                 try:
                     base_url, _ = LlmClient().get_url_and_headers(metric_params["model"])
                     emission_carbon = impact_carbon(
                         metric_params["model"],
                         base_url,
                         obs_result.usage.completion_tokens,
-                        timer.execution_time
+                        timer.execution_time,
                     )
                 except Exception as e:
                     logger.error(f"Error during calcul carbon impact : {e}")
@@ -270,11 +270,12 @@ def generate_observation(message: dict, mcp_bridge: MCPBridgeClient):
                 db,
                 result.id,
                 msg.line_id,
-                dict(observation=observation, 
-                     score=score, 
-                     execution_time=int(timer.execution_time),
-                     emission_carbon=emission_carbon,
-                    ),
+                dict(
+                    observation=observation,
+                    score=score,
+                    execution_time=int(timer.execution_time),
+                    emission_carbon=emission_carbon,
+                ),
             )
 
         except Exception as e:
