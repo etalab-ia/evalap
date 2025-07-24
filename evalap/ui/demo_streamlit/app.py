@@ -8,6 +8,9 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
+#
+# Customize base style
+#
 custom_css = """
 <style>
 body {
