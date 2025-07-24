@@ -191,6 +191,8 @@ def generate_observation(message: dict, mcp_bridge: MCPBridgeClient):
         observation = None
         error_msg = None
         metadata = {}
+        emission_carbon = None
+
         if answer:  # answer.answer == msg.output
             metadata["generation_time"] = answer.execution_time
             metadata["nb_tokens_prompt"] = answer.nb_tokens_prompt
@@ -241,7 +243,7 @@ def generate_observation(message: dict, mcp_bridge: MCPBridgeClient):
                 #     metric_fun, 300, msg.output, msg.output_true, **metric_params
                 # )
             if isinstance(metric_result, tuple):
-                score, observation, obs_result = metric_result  ##TODO: AUDREY WARNING : modifier dans deepeval
+                score, observation, obs_result = metric_result
             else:
                 score = metric_result
 
@@ -262,7 +264,7 @@ def generate_observation(message: dict, mcp_bridge: MCPBridgeClient):
                         timer.execution_time,
                     )
                 except Exception as e:
-                    logger.error(f"Error during calcul carbon impact : {e}")
+                    logger.info(f"Error during calcul carbon impact : {e}")
                     emission_carbon = None
 
             # Upsert obsevation
