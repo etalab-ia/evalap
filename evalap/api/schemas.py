@@ -548,7 +548,7 @@ class OpsEcoDetails(BaseModel):
     first_emission_date: datetime | None
 
 
-class OpsEcoCombined(BaseModel):
+class OpsEcoGlobal(BaseModel):
     answers: OpsEcoDetails
     observation_table: OpsEcoDetails
 
