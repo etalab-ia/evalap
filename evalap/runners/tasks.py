@@ -11,7 +11,7 @@ import evalap.api.models as models
 from evalap.api.config import DEFAULT_JUDGE_MODEL
 from evalap.api.db import SessionLocal
 from evalap.api.metrics import metric_registry
-from evalap.clients import MCPBridgeClient, multi_step_generate, split_think_answer
+from evalap.clients import MCPBridgeClient, multi_step_generate, split_think_answer, LlmClient
 from evalap.logger import logger
 from evalap.runners import MessageType, dispatch_tasks
 from evalap.utils import Timer, get_parquet_row_by_index, image_to_base64, run_with_timeout
@@ -191,6 +191,8 @@ def generate_observation(message: dict, mcp_bridge: MCPBridgeClient):
         observation = None
         error_msg = None
         metadata = {}
+        emission_carbon = None
+
         if answer:  # answer.answer == msg.output
             metadata["generation_time"] = answer.execution_time
             metadata["nb_tokens_prompt"] = answer.nb_tokens_prompt
@@ -241,7 +243,7 @@ def generate_observation(message: dict, mcp_bridge: MCPBridgeClient):
                 #     metric_fun, 300, msg.output, msg.output_true, **metric_params
                 # )
             if isinstance(metric_result, tuple):
-                score, observation = metric_result
+                score, observation, obs_result = metric_result
             else:
                 score = metric_result
 
@@ -251,12 +253,31 @@ def generate_observation(message: dict, mcp_bridge: MCPBridgeClient):
             elif score is not None:
                 raise ValueError("Unsuported score type: %s %s" % (type(score), score))
 
+            # Carbon emission for observations calcul
+            if hasattr(obs_result, "usage") and hasattr(obs_result.usage, "completion_tokens"):
+                try:
+                    base_url, _ = LlmClient().get_url_and_headers(metric_params["model"])
+                    emission_carbon = impact_carbon(
+                        metric_params["model"],
+                        base_url,
+                        obs_result.usage.completion_tokens,
+                        timer.execution_time,
+                    )
+                except Exception as e:
+                    logger.info(f"Error during calcul carbon impact : {e}")
+                    emission_carbon = None
+
             # Upsert obsevation
             crud.upsert_observation(
                 db,
                 result.id,
                 msg.line_id,
-                dict(observation=observation, score=score, execution_time=int(timer.execution_time)),
+                dict(
+                    observation=observation,
+                    score=score,
+                    execution_time=int(timer.execution_time),
+                    emission_carbon=emission_carbon,
+                ),
             )
 
         except Exception as e:
