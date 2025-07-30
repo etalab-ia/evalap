@@ -168,7 +168,7 @@ class Experiment(Base):
     is_archived = Column(Boolean, default=False)  # do not allow user to remove without IAM.
     created_at = Column(DateTime, server_default=func.now())
     experiment_status = Column(String)
-    judge_model = Column(String)
+    judge_model = Column(JSON) # string or dict
     with_vision = Column(Boolean)
     num_try = Column(Integer, default=0)
     num_success = Column(Integer, default=0)

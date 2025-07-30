@@ -250,7 +250,7 @@ class ExperimentBase(EgBaseModel):
     name: str
     readme: str | None = None
     experiment_set_id: int | None = None
-    judge_model: Literal[*LlmApiModels._all_models()] | None = None
+    judge_model: dict | Literal[*LlmApiModels._all_models()] | None = None
     with_vision: bool = Field(
         False,
         description="Add the image to the user message if an 'img' field is present in the dataset (parquet).",
@@ -368,7 +368,7 @@ class Experiment(ExperimentBase):
 
 
 class ExperimentRO(Experiment):
-    judge_model: str | None
+    judge_model: dict | str | None
 
 
 class ExperimentWithResults(ExperimentRO):
@@ -452,7 +452,9 @@ class ExperimentSetCreate(ExperimentSetBase):
 
         # Ensure judge_model are all equal
         if obj.get("experiments"):
-            if len(set([x["judge_model"] for x in obj["experiments"] if x["judge_model"]])) > 1:
+            def _get_judge(jm):
+                return jm.get("name") if isinstance(jm, dict) else jm
+            if len(set([_get_judge(x["judge_model"]) for x in obj["experiments"] if x["judge_model"]])) > 1:
                 raise SchemaError("The juge_model must be the same for all experiments in a set.")
 
         return obj
@@ -516,7 +518,7 @@ class LeaderboardEntry(BaseModel):
     created_at: datetime
     experiment_set_id: Optional[int] = None
     experiment_set_name: Optional[str] = None
-    judge_model: Optional[str] = None
+    judge_model: Optional[str|dict] = None
 
 
 class Leaderboard(EgBaseModel):
