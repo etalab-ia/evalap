@@ -506,13 +506,13 @@ def get_ops_metrics(db: Session):
     }
 
 
-def convert_range_to_value(value):
+def _convert_range_to_value(value):
     if isinstance(value, dict) and "min" in value and "max" in value:
         return (value["min"] + value["max"]) / 2
     return value
 
 
-def extract_emission_values(emission_dict):
+def _extract_emission_values(emission_dict):
     if not emission_dict:
         return {}
 
@@ -526,9 +526,9 @@ def extract_emission_values(emission_dict):
     for key, value in emission_dict.items():
         if isinstance(value, dict):
             if "value" in value:
-                result[key] = convert_range_to_value(value["value"])
+                result[key] = _convert_range_to_value(value["value"])
             else:
-                nested = extract_emission_values(value)
+                nested = _extract_emission_values(value)
                 result.update({f"{key}_{k}": v for k, v in nested.items()})
     return result
 
@@ -579,7 +579,7 @@ def _aggregate_emissions(entries):
         if isinstance(emission_carbon, str) and emission_carbon.lower() == "null":
             emissions = {}
         elif isinstance(emission_carbon, dict):
-            emissions = extract_emission_values(emission_carbon)
+            emissions = _extract_emission_values(emission_carbon)
         else:
             emissions = {}
 
