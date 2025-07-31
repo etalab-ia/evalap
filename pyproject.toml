@@ -68,8 +68,7 @@ distribution = false
 [project.optional-dependencies]
 test = ["pytest==8.3.3", 
         "pytest-asyncio==0.24.0",
-        "pre-commit==3.6.0",
-        "ruff==0.12.4"]
+        ]
 
 [tool.pytest.ini_options]
 asyncio_default_fixture_loop_scope = "function"
