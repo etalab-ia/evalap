@@ -110,7 +110,7 @@ def main():
         st.caption(":tv: **Video streaming**: equivalent video streaming time (source: impactco2.fr)")
 
     else:
-        st.write("No experiments with environmental impact calculations")
+        st.write("No metrics with environmental impact calculations")
 
     st.write("---")
 
