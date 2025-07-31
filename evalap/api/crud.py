@@ -537,11 +537,10 @@ def _aggregate_emissions(entries):
     if not entries:
         return {
             "total_emissions": {},
-            "total_answers_with_emissions": 0,
+            "total_entries_with_emissions": 0,
             "first_emission_date": None,
         }
 
-    # Filtrage des entrées avec emission_carbon non None, non vide, et de type dict ou string "null" exclu
     filtered_entries = [
         e
         for e in entries
@@ -552,7 +551,7 @@ def _aggregate_emissions(entries):
     if not filtered_entries:
         return {
             "total_emissions": {},
-            "total_answers_with_emissions": 0,
+            "total_entries_with_emissions": 0,
             "first_emission_date": None,
         }
 
