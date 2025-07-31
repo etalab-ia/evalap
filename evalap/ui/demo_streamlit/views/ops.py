@@ -41,10 +41,11 @@ def calculate_streaming_hours(impact_gwp_value_or_range):
         return int(streaming_hours * 60 * 60), "s"
 
 
-def get_emission_metrics(ops_eco):
-    energy = ops_eco["total_emissions"]["energy"]
-    gwp = ops_eco["total_emissions"]["gwp"]
-    raw_date = ops_eco["first_emission_date"]
+def get_answer_emission_metrics(ops_eco, source):
+    energy = ops_eco[source]["total_emissions"]["energy"]
+    gwp = ops_eco[source]["total_emissions"]["gwp"]
+    raw_date = ops_eco[source]["first_emission_date"]
+
     date_obj = datetime.fromisoformat(raw_date)
     pretty_date = date_obj.strftime("%d %B %Y")
     return energy, gwp, pretty_date
@@ -69,8 +70,30 @@ def main():
     st.subheader("Environmental impact")
     ops_eco = fetch("get", "/ops_eco")
 
-    if ops_eco["total_answers_with_emissions"] > 0:
-        energy, gwp, pretty_date = get_emission_metrics(ops_eco)
+    st.markdown('<h4 style="color: blue;">Responses generated</h4>', unsafe_allow_html=True)
+    if ops_eco["answers"]["total_entries_with_emissions"] > 0:
+        energy, gwp, pretty_date = get_answer_emission_metrics(ops_eco, "answers")
+
+        # Calculating equivalence
+        lightbulb_value, lightbulb_unit = calculate_lightbulb_consumption(energy)
+        streaming_value, streaming_unit = calculate_streaming_hours(gwp)
+
+        col_eco1, col_eco2, col_eco3, col_eco4, col_eco5 = st.columns(5)
+        col_eco1.metric("Energy (kWh)", f"{energy:.4f}")
+        col_eco2.metric("GWP (kgCO₂e)", f"{gwp:.4f}")
+        col_eco3.metric("= 5W LED bulb", f"{lightbulb_value} {lightbulb_unit}")
+        col_eco4.metric("= Video streaming", f"{streaming_value} {streaming_unit}")
+        col_eco5.metric("Calculations since", pretty_date)
+
+        st.caption(":bulb: **5W LED bulb**: equivalent lighting duration")
+        st.caption(":tv: **Video streaming**: equivalent video streaming time (source: impactco2.fr)")
+
+    else:
+        st.write("No experiments with environmental impact calculations")
+
+    st.markdown('<h4 style="color: blue;">Llms as-a-judge metrics</h4>', unsafe_allow_html=True)
+    if ops_eco["observation_table"]["total_entries_with_emissions"] > 0:
+        energy, gwp, pretty_date = get_answer_emission_metrics(ops_eco, "observation_table")
 
         # Calculating equivalence
         lightbulb_value, lightbulb_unit = calculate_lightbulb_consumption(energy)
