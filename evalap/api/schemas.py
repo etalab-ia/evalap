@@ -542,10 +542,15 @@ class OpsMetrics(BaseModel):
     distinct_models: list[ModelInfo]
 
 
-class OpsEco(BaseModel):
+class OpsEcoDetails(BaseModel):
     total_emissions: dict[str, float]
-    total_answers_with_emissions: int
+    total_entries_with_emissions: int
     first_emission_date: datetime | None
+
+
+class OpsEcoGlobal(BaseModel):
+    answers: OpsEcoDetails
+    observation_table: OpsEcoDetails
 
 
 #
@@ -575,9 +580,11 @@ class LocustRunFull(LocustRun):
     history_df: str = Field(..., description="The stats history CSV file serialized as a dataframe.")
     custom_history_df: str | None = Field(None, description="Extra stats serialized as a dataframe.")
 
+
 #
 # Load Testing
 #
+
 
 class LoadTestingBase(EgBaseModel):
     model: str | None = Field(None, description="The LLM model name/id targeted if any.")
@@ -586,7 +593,7 @@ class LoadTestingBase(EgBaseModel):
 
 
 class LoadTestingCreate(LoadTestingBase):
-    df: str = Field(..., description="The stats data.") # from_json
+    df: str = Field(..., description="The stats data.")  # from_json
 
 
 class LoadTesting(LoadTestingBase):
@@ -595,4 +602,4 @@ class LoadTesting(LoadTestingBase):
 
 
 class LoadTestingFull(LoadTesting):
-    df: str = Field(..., description="The stats data.") # from_json
+    df: str = Field(..., description="The stats data.")  # from_json
