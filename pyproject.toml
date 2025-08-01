@@ -3,7 +3,7 @@ name = "evalap"
 version = "0.3.0"
 description = "Evaluations API and Platform"
 authors = [{ name = "Etalab", email = "etalab@modernisation.gouv.fr" }]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 readme = "README.md"
 license = { text = "MIT" }
 keywords = ["IA", "LLM", "evaluation"]

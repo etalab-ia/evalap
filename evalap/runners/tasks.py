@@ -231,7 +231,7 @@ def generate_observation(message: dict, mcp_bridge: MCPBridgeClient):
                         ignore_error = True
                     raise ValueError(f"The metric {msg.metric_name} require a non null {require} value.")
 
-            # Extra metric params
+            # Set the Judge model for the metric
             metric_params["model"] = result.experiment.judge_model or DEFAULT_JUDGE_MODEL
 
             # Compute metric

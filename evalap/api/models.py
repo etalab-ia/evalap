@@ -13,11 +13,41 @@ from sqlalchemy import (
 from sqlalchemy.orm import RelationshipProperty, class_mapper, declarative_base, relationship
 from sqlalchemy.sql import func
 
-from evalap.api.schemas import EgBaseModel
+import evalap.api.schemas as schemas
 
 Base = declarative_base()
 
+
 # By convention, we reserve the String type for Enum defined in the schema scope.
+#
+def is_equal(model1, model2):
+    """Check if two data model are equal,
+    Either they come from a model, a schema or a dict
+    """
+    data = []
+    for v in (model1, model2):
+        if isinstance(data, schemas.EgBaseModel):
+            # Schema
+            value = v.model_dump()
+        elif isinstance(data, Base):
+            # import evalap.api.schemas as schemas
+            # Model (sql)
+            model_class_name = v.__class__.__name__
+            # Try to find the schema class
+            if hasattr(schemas, model_class_name):
+                schema_class = getattr(schemas, model_class_name)
+                value = schema_class.model_validate(v).model_dump()
+            else:
+                raise ValueError(f"No schema found for model {model_class_name}")
+        elif isinstance(data, dict):
+            # Raw dict
+            value = v
+        else:
+            raise ValueError(f"Unknown type for data {type(v)}")
+
+        data.append(value)
+
+    return all(d == data[0] for d in data)
 
 
 def is_relationship(model, attribute_name):
@@ -54,8 +84,8 @@ def create_object_from_dict(db, model, data):
         elif isinstance(rel_data, list):  # Handle one-to-many or many-to-many
             related_objs = [create_object_from_dict(db, rel_model, item) for item in rel_data]
             setattr(obj, rel_name, related_objs)
-        elif isinstance(rel_data, (dict, EgBaseModel)):  # Handle one-to-one or many-to-one
-            if isinstance(rel_data, EgBaseModel):
+        elif isinstance(rel_data, (dict, schemas.EgBaseModel)):  # Handle one-to-one or many-to-one
+            if isinstance(rel_data, schemas.EgBaseModel):
                 rel_data = vars(rel_data)
             related_obj = create_object_from_dict(db, rel_model, rel_data)
             setattr(obj, rel_name, related_obj)
@@ -168,7 +198,6 @@ class Experiment(Base):
     is_archived = Column(Boolean, default=False)  # do not allow user to remove without IAM.
     created_at = Column(DateTime, server_default=func.now())
     experiment_status = Column(String)
-    judge_model = Column(JSON) # string or dict
     with_vision = Column(Boolean)
     num_try = Column(Integer, default=0)
     num_success = Column(Integer, default=0)
@@ -189,7 +218,9 @@ class Experiment(Base):
     dataset_id = Column(Integer, ForeignKey("datasets.id"))
     dataset = relationship("Dataset")
     model_id = Column(Integer, ForeignKey("models.id"))
-    model = relationship("Model", cascade="all, delete-orphan", single_parent=True)
+    model = relationship("Model", foreign_keys=[model_id], cascade="all, delete-orphan", single_parent=True)
+    judge_model_id = Column(Integer, ForeignKey("models.id"))
+    judge_model = relationship("Model", foreign_keys=[judge_model_id], cascade="all, delete")
     experiment_set_id = Column(Integer, ForeignKey("experiment_sets.id"))
     experiment_set = relationship("ExperimentSet", back_populates="experiments")
     # Many
@@ -229,9 +260,11 @@ class LocustRun(Base):
     history_df = Column(Text)
     custom_history_df = Column(Text)
 
+
 #
 # Load testing
 #
+
 
 class LoadTesting(Base):
     __tablename__ = "loadtesting"
@@ -241,4 +274,4 @@ class LoadTesting(Base):
     model = Column(Text)
     name = Column(Text)
     prompt = Column(Text)
-    df = Column(JSON) # df
+    df = Column(JSON)  # df

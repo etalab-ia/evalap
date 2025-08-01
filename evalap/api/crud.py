@@ -420,7 +420,7 @@ def get_leaderboard(
             models.Experiment.created_at.label("created_at"),
             models.Experiment.experiment_set_id,
             models.ExperimentSet.name.label("experiment_set_name"),
-            models.Experiment.judge_model.label("judge_model"),
+            #models.Experiment.judge_model.label("judge_model"),
         )
         .join(models.Model, models.Experiment.model_id == models.Model.id)
         .join(models.Dataset, models.Experiment.dataset_id == models.Dataset.id)

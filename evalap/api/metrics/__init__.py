@@ -2,14 +2,36 @@ import importlib
 import os
 from dataclasses import dataclass
 from enum import Enum
+from typing import TYPE_CHECKING, Union
 
 import inflection
 from deepeval.key_handler import KEY_FILE_HANDLER
 
+from evalap.clients import get_api_url
 from evalap.utils import import_classes
 
 # FIX deepeval: OSError: [Errno 24] Too many open files: '.deepeval'
 KEY_FILE_HANDLER.fetch_data = lambda x: None
+
+if TYPE_CHECKING:
+    import evalap.api.models as models
+    import evalap.api.schemas as schemas
+
+
+def get_judge_model(model: Union[str, "models.Model"]) -> "schemas.Model":
+    if isinstance(model, schemas.EgBaseModel):
+        model = schemas.Model.model_validate(model)
+    elif isinstance(model, str):
+        url, headers = get_api_url(model)
+        model = schemas.ModelCreate(
+            name=model,
+            base_url=url,
+            api_key=(headers.get("Authorization") or headers.get("x-api-key") or "").split()[-1],
+        )
+    else:
+        raise ValueError("Model type for judge unsuported.")
+
+    return model
 
 
 class MetricType(str, Enum):

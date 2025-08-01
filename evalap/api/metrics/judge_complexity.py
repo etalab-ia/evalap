@@ -3,7 +3,7 @@ import re
 from evalap.clients import LlmClient, split_think_answer
 from evalap.utils import render_jinja
 
-from . import metric_registry
+from . import metric_registry, get_judge_model
 
 _template = """
 Vous êtes un assistant administratif, expert dans l'analyse de questions et leurs complexités.
@@ -62,7 +62,8 @@ def judge_complexity_metric(output, output_true, **kwargs):
             "content": render_jinja(_template, output=output, output_true=output_true, **kwargs),
         }
     ]
-    aiclient = LlmClient()
+    model = get_judge_model(config["model"])
+    aiclient = LlmClient(base_url=model.base_url, api_key=model.api_key)
     result = aiclient.generate(model=config["model"], messages=messages, **config["sampling_params"])
     observation = result.choices[0].message.content
     think, answer = split_think_answer(observation)
