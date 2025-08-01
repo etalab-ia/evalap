@@ -128,6 +128,8 @@ def display_experiment_sets(experiment_sets):
     returns the list of experiments set, with their status/info
     """
     cols = st.columns(3)
+    status_color = None
+    status_description = None
 
     for idx, exp_set in enumerate(experiment_sets):
         status, counts = _get_expset_status(exp_set)
@@ -235,7 +237,11 @@ def display_experiment_details(experimentset, experiments_df):
                 column_config={"Id": st.column_config.TextColumn(width="small")},
             )
         else:
-            st.error("Failed to fetch experiment data")
+            if experimentset.get("experiments"):
+                st.error("Failed to fetch experiment data")
+            else:
+                # No experiment set yet...
+                pass
 
 
 def _find_default_sort_metric(columns):
@@ -693,6 +699,9 @@ def main():
     # --
     experiment_sets = _fetch("get", "/experiment_sets", refresh=st.session_state.get("refresh_main"))
 
+    if not experiment_sets:
+        return st.warning("No experiments yet to display")
+
     # View Branching
     # --
     expid = st.query_params.get("expset") or st.session_state.get("expset_id")
@@ -719,6 +728,9 @@ def main():
         else:
             st.error("Invalid experiment set id: %s" % expid)
             return
+
+        if not experimentset.get("experiments"):
+            return st.warning("No experiments yet to display")
 
         # Horizontal menu toolbar
         col1, col2 = st.columns([3, 1])
