@@ -124,6 +124,41 @@ Dans ce scénario, le schéma du modèle est différent :
 Après avoir exécuté l'expérience, l'API renvoie une réponse de succès si elle démarre sans erreurs. EvalAP gère les expériences de manière asynchrone, et vous pouvez vérifier l'état et les résultats via l'interface ou en interrogeant directement l'API.
 
 
+### Configuration d'un Modèle LLM-as-a-Judge
+
+Lorsque vous utilisez des métriques comme `judge_precision` qui s'appuient sur un LLM pour évaluer les sorties, vous pouvez personnaliser le modèle qui agit comme juge. Par défaut, EvalAP utilise un petit modèle préconfiguré, mais vous pouvez spécifier le vôtre en utilisant le paramètre `judge_model` dans votre configuration d'expérience.
+
+Vous pouvez spécifier le modèle juge de deux façons :
+
+1. **En utilisant une chaîne de caractères pour le nom du modèle** : EvalAP utilisera le premier modèle disponible correspondant à ce nom parmi vos fournisseurs configurés (Pour configurer un fournisseur, vous devez simplement avoir la clé API appropriée définie dans votre environnement avant de lancer EvalAP, par exemple `OPENAI_API_KEY`, `MISTRAL_API_KEY`).
+2. **En utilisant une configuration complète du modèle** : Fournissez le nom du modèle, l'URL de base et la clé API.
+
+
+Voici un exemple d'utilisation :
+
+```python
+# En utilisant une chaîne de caractères pour le nom du modèle
+experiment = {
+    "name": "judge_precision",
+    "dataset": "my_dataset",
+    "model": {"name": "gpt-4o", "base_url": "https://api.openai.com/v1", "api_key": os.getenv("OPENAI_API_KEY")},
+    "metrics": ["judge_precision", "generation_time"],
+    "judge_model": "gpt-4-turbo"  # Spécifiez quel modèle utiliser comme juge
+}
+
+# Ou en utilisant une configuration complète du modèle
+experiment = {
+    "name": "judge_precision",
+    "dataset": "my_dataset",
+    "model": {"name": "gpt-4o", "base_url": "https://api.openai.com/v1", "api_key": os.getenv("OPENAI_API_KEY")},
+    "metrics": ["judge_precision", "generation_time"],
+    "judge_model": {
+        "name": "claude-3-opus-20240229",
+        "base_url": "https://api.anthropic.com/v1",
+        "api_key": os.getenv("ANTHROPIC_API_KEY")
+    }
+}
+
 ## Consulter les Résultats et la Progression de l'Expérience
 
 Après avoir lancé une expérience :

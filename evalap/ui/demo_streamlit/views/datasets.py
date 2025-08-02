@@ -12,7 +12,7 @@ def main():
 
     datasets = fetch("get", "/datasets")
     if not datasets:
-        return
+        return st.warning("No datasets yet to display")
 
     # Main content
     main_content, right_menu = st.columns([8, 2])

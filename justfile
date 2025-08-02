@@ -20,15 +20,20 @@ list-model provider="albert":
   elif [ "{{provider}}" = "albert-staging" ]; then
     URL="https://albert.api.staging.etalab.gouv.fr/v1"
     API_KEY=$ALBERT_API_KEY_STAGING
-  elif [ "{{provider}}" = "openai" ]; then
-    URL="https://api.openai.com/v1"
-    API_KEY=$OPENAI_API_KEY
   elif [ "{{provider}}" = "anthropic" ]; then
     URL="https://api.anthropic.com/v1"
     API_KEY=$ANTHROPIC_API_KEY
+    curl -XGET -H "x-api-key: $API_KEY" -H "anthropic-version: 2023-06-01" $URL/models | jq '[.data.[] | {id, type, owned_by, aliases}]'
+    return
+  elif [ "{{provider}}" = "openai" ]; then
+    URL="https://api.openai.com/v1"
+    API_KEY=$OPENAI_API_KEY
   elif [ "{{provider}}" = "mistral" ]; then
     URL="https://api.mistral.ai/v1"
     API_KEY=$MISTRAL_API_KEY
+  elif [ "{{provider}}" = "xai" ]; then
+    URL="https://api.x.ai/v1"
+    API_KEY=$XAI_API_KEY
   fi
 
   curl -XGET -H "Authorization: Bearer $API_KEY" $URL/models | jq '[.data.[] | {id, type, owned_by, aliases}]'

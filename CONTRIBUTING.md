@@ -33,7 +33,7 @@ The environement variables can also be defined in a `.env` file at the root of t
 
 1. Launch the development services:
 ```
-    docker-compose -f compose.dev.yml up
+    docker-compose -f compose.dev.yml up postgres
 ```
 
 2. Create the first migration script:
@@ -128,3 +128,4 @@ To run unit tests, use :
 ```
  ruff format --config=pyproject.toml file_path
 ```
+
