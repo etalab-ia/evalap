@@ -18,9 +18,12 @@ if TYPE_CHECKING:
     import evalap.api.schemas as schemas
 
 
-def get_judge_model(model: Union[str, "models.Model"]) -> "schemas.Model":
-    if isinstance(model, schemas.EgBaseModel):
-        model = schemas.Model.model_validate(model)
+def get_judge_model(model: Union[str, "models.Model"]) -> "schemas.ModelCreate":
+    import evalap.api.models as models
+    import evalap.api.schemas as schemas
+
+    if isinstance(model, models.Base):
+        model = schemas.ModelCreate.model_validate(model)
     elif isinstance(model, str):
         url, headers = get_api_url(model)
         model = schemas.ModelCreate(

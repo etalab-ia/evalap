@@ -64,7 +64,7 @@ def judge_complexity_metric(output, output_true, **kwargs):
     ]
     model = get_judge_model(config["model"])
     aiclient = LlmClient(base_url=model.base_url, api_key=model.api_key)
-    result = aiclient.generate(model=config["model"], messages=messages, **config["sampling_params"])
+    result = aiclient.generate(model.name, messages=messages, **config["sampling_params"])
     observation = result.choices[0].message.content
     think, answer = split_think_answer(observation)
 

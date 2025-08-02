@@ -225,7 +225,8 @@ def display_experiment_details(experimentset, experiments_df):
             cols = st.columns(2)
             with cols[0]:
                 st.write(f"**Dataset:** {experiment['dataset']['name']}")
-                st.write(f"**Judge model:** {experiment['judge_model']}")
+                if experiment.get("judge_model"):
+                    st.write(f"**Judge model:** {experiment['judge_model']['name']}")
             with cols[1]:
                 model_name = experiment.get("model") or "Undefined Model"
                 st.write(f"**Model:** {model_name}")
@@ -352,7 +353,7 @@ def display_experiment_set_score(experimentset, experiments_df):
     size = experiments[0]["dataset"]["size"]
 
     available_judges = sorted(
-        list(set(expe.get("judge_model") for expe in experiments if expe.get("judge_model")))
+        list(set(expe["judge_model"]["name"] for expe in experiments if expe.get("judge_model")))
     ) or ["No_judge_found"]
 
     rows = []
