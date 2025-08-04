@@ -90,4 +90,4 @@ def judge_complexity_metric(output, output_true, **kwargs):
 
     observation_ = {"answer": answer, "think":think, "scores": scores, "thematique": thematique}
 
-    return int(scores["global"]), json.dumps(observation_)
+    return int(scores["global"]), json.dumps(observation_), result

@@ -73,4 +73,4 @@ def judge_notator_metric(output, output_true, **kwargs):
         score = float(score)
     except ValueError:
         score = None
-    return score, observation
+    return score, observation, result

@@ -506,33 +506,56 @@ def get_ops_metrics(db: Session):
     }
 
 
-def get_ops_eco(db: Session):
-    def convert_range_to_value(value):
-        if isinstance(value, dict) and "min" in value and "max" in value:
-            return (value["min"] + value["max"]) / 2
-        return value
+def _convert_range_to_value(value):
+    if isinstance(value, dict) and "min" in value and "max" in value:
+        return (value["min"] + value["max"]) / 2
+    return value
 
-    def extract_emission_values(emission_dict):
-        result = {}
-        for key, value in emission_dict.items():
-            if isinstance(value, dict):
-                if "value" in value:
-                    result[key] = convert_range_to_value(value["value"])
-                else:
-                    nested = extract_emission_values(value)
-                    result.update({f"{key}_{k}": v for k, v in nested.items()})
-        return result
 
-    answers = db.query(models.Answer).filter(models.Answer.emission_carbon.isnot(None)).all()
+def _extract_emission_values(emission_dict):
+    if not emission_dict:
+        return {}
 
-    if not answers:
+    if isinstance(emission_dict, str) and emission_dict.lower() == "null":
+        return {}
+
+    if not isinstance(emission_dict, dict):
+        return {}
+
+    result = {}
+    for key, value in emission_dict.items():
+        if isinstance(value, dict):
+            if "value" in value:
+                result[key] = _convert_range_to_value(value["value"])
+            else:
+                nested = _extract_emission_values(value)
+                result.update({f"{key}_{k}": v for k, v in nested.items()})
+    return result
+
+
+def _aggregate_emissions(entries):
+    if not entries:
         return {
             "total_emissions": {},
-            "total_answers_with_emissions": 0,
+            "total_entries_with_emissions": 0,
             "first_emission_date": None,
         }
 
-    first_emission_date = min(a.created_at for a in answers)
+    filtered_entries = [
+        e
+        for e in entries
+        if e.emission_carbon
+        and not (isinstance(e.emission_carbon, str) and e.emission_carbon.lower() == "null")
+    ]
+
+    if not filtered_entries:
+        return {
+            "total_emissions": {},
+            "total_entries_with_emissions": 0,
+            "first_emission_date": None,
+        }
+
+    first_emission_date = min(e.created_at for e in filtered_entries)
     total_emissions = {
         k: 0
         for k in [
@@ -550,16 +573,37 @@ def get_ops_eco(db: Session):
         ]
     }
 
-    for answer in answers:
-        emissions = extract_emission_values(answer.emission_carbon)
+    for entry in filtered_entries:
+        emission_carbon = entry.emission_carbon
+        if isinstance(emission_carbon, str) and emission_carbon.lower() == "null":
+            emissions = {}
+        elif isinstance(emission_carbon, dict):
+            emissions = _extract_emission_values(emission_carbon)
+        else:
+            emissions = {}
+
         for key in total_emissions:
             total_emissions[key] += emissions.get(key, 0)
 
     return {
         "total_emissions": total_emissions,
-        "total_answers_with_emissions": len(answers),
+        "total_entries_with_emissions": len(filtered_entries),
         "first_emission_date": first_emission_date,
     }
+
+
+def get_ops_eco_answers(db: Session):
+    answers = db.query(models.Answer).filter(models.Answer.emission_carbon.isnot(None)).all()
+    result = _aggregate_emissions(answers)
+    return result
+
+
+def get_ops_eco_observation_table(db: Session):
+    observations = (
+        db.query(models.ObservationTable).filter(models.ObservationTable.emission_carbon.isnot(None)).all()
+    )
+    result = _aggregate_emissions(observations)
+    return result
 
 
 #

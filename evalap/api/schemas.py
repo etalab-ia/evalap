@@ -544,10 +544,15 @@ class OpsMetrics(BaseModel):
     distinct_models: list[ModelInfo]
 
 
-class OpsEco(BaseModel):
+class OpsEcoDetails(BaseModel):
     total_emissions: dict[str, float]
-    total_answers_with_emissions: int
+    total_entries_with_emissions: int
     first_emission_date: datetime | None
+
+
+class OpsEcoGlobal(BaseModel):
+    answers: OpsEcoDetails
+    observation_table: OpsEcoDetails
 
 
 #

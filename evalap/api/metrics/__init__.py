@@ -108,7 +108,7 @@ class MetricRegistry:
                 metric.measure(test_case)
 
             if hasattr(metric, "reason"):
-                return metric.score, metric.reason
+                return metric.score, metric.reason, None
             return metric.score
 
         self._metrics[name] = {

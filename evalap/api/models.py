@@ -155,6 +155,7 @@ class ObservationTable(Base):
     num_line = Column(Integer)
     error_msg = Column(Text)
     execution_time = Column(Integer)
+    emission_carbon = Column(JSON)  # dict[ecologits]
 
     # One
     result_id = Column(Integer, ForeignKey("results.id"))
