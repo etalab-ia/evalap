@@ -38,8 +38,8 @@ def upgrade() -> None:
     for experiment_id, model_name in experiments:
         # Insert new model with name from judge_model and empty strings for required fields
         model_id = db.execute(
-            sa.text("""INSERT INTO models (name, base_url, api_key)
-                    VALUES (:name, '', '')
+            sa.text("""INSERT INTO models (name, base_url, api_key, has_raw_output)
+                    VALUES (:name, '', '', false)
                     RETURNING id
                     """),
             {"name": model_name},
