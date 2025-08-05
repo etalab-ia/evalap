@@ -46,7 +46,7 @@ def upgrade() -> None:
         )
 
         # Update this specific experiment to use the new model_id
-        op.execute(
+        db.execute(
             sa.text("""UPDATE experiments
                     SET judge_model_id = :model_id
                     WHERE id = :experiment_id
