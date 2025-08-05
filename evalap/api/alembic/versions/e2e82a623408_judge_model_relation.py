@@ -26,11 +26,13 @@ def upgrade() -> None:
     # Update old judge_model values
     # --
     # Get all experiments with judge_model
-    experiments = op.execute("""
+    experiments = op.execute(
+        sa.text("""
         SELECT id, judge_model
         FROM experiments
         WHERE judge_model IS NOT NULL AND judge_model != ''
-    """).fetchall()
+    """)
+    ).fetchall()
 
     # Create a new model entry for EACH experiment
     for experiment_id, model_name in experiments:
