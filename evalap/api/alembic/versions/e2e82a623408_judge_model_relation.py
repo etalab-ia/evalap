@@ -25,24 +25,25 @@ def upgrade() -> None:
 
     # Update old judge_model values
     # --
+    db = op.get_bind()
     # Get all experiments with judge_model
-    experiments = op.execute(
+    experiments = db.execute(
         sa.text("""SELECT id, judge_model
                 FROM experiments
                 WHERE judge_model IS NOT NULL AND judge_model != ''
                 """)
-    ).fetchall()
+    )
 
     # Create a new model entry for EACH experiment
     for experiment_id, model_name in experiments:
         # Insert new model with name from judge_model and empty strings for required fields
-        model_id = op.execute(
+        model_id = db.execute(
             sa.text("""INSERT INTO models (name, base_url, api_key)
                     VALUES (:name, '', '')
                     RETURNING id
                     """),
             {"name": model_name},
-        ).fetchone()[0]
+        )
 
         # Update this specific experiment to use the new model_id
         op.execute(
