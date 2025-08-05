@@ -43,7 +43,7 @@ def upgrade() -> None:
                     RETURNING id
                     """),
             {"name": model_name},
-        )
+        ).scalar()
 
         # Update this specific experiment to use the new model_id
         db.execute(
