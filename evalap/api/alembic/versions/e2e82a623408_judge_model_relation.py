@@ -27,11 +27,10 @@ def upgrade() -> None:
     # --
     # Get all experiments with judge_model
     experiments = op.execute(
-        sa.text("""
-        SELECT id, judge_model
-        FROM experiments
-        WHERE judge_model IS NOT NULL AND judge_model != ''
-    """)
+        sa.text("""SELECT id, judge_model
+                FROM experiments
+                WHERE judge_model IS NOT NULL AND judge_model != ''
+                """)
     ).fetchall()
 
     # Create a new model entry for EACH experiment
