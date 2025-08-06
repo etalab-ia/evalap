@@ -242,7 +242,7 @@ def patch_experiment(id: int, experiment_patch: schemas.ExperimentPatch, db: Ses
         )
 
     # Parameters you can not patch
-    if experiment_patch.judge_model and experiment_patch.judge_model != db_exp.judge_model:
+    if experiment_patch.judge_model and not schemas.is_equal(experiment_patch.judge_model, db_exp.judge_model):
         raise HTTPException(
             status_code=400,
             detail="You cannot patch the judge_model in an experiment.",
@@ -283,7 +283,7 @@ def delete_experiment(
 
 @router.get(
     "/experiment/{id}",
-    response_model=schemas.ExperimentRO
+    response_model=schemas.Experiment
     | schemas.ExperimentWithResults
     | schemas.ExperimentWithAnswers
     | schemas.ExperimentFullWithEco
@@ -314,7 +314,7 @@ def read_experiment(
     elif with_answers:
         return schemas.ExperimentWithAnswers.model_validate(experiment)
     else:
-        return schemas.ExperimentRO.model_validate(experiment)
+        return schemas.Experiment.model_validate(experiment)
 
 
 @router.get(
@@ -385,12 +385,13 @@ def patch_experimentset(
         expset = experimentset_patch.to_table_init(db)
         # Check the judge_model unicity
         # --
+        #@TODO; Ensure judge nad new_judge are dict for comparaitI
         judge = next((e.judge_model for e in db_expset.experiments if e.judge_model), None)
         new_judge = next(
             (e["judge_model"] for e in (expset.get("experiments") or []) if e.get("judge_model")), None
         )
         # Judge and new_judge must be defined as we can have some experiments that won't use llm-as-a-judge model.
-        if judge and new_judge and judge != new_judge:
+        if judge and new_judge and not schemas.is_equal(judge, new_judge):
             raise HTTPException(
                 status_code=400,
                 detail="You cannot patch the judge_model in an experiment.",
@@ -424,7 +425,7 @@ def patch_experimentset(
 
 @router.get(
     "/experiment_sets",
-    response_model=list[schemas.ExperimentSetRO],
+    response_model=list[schemas.ExperimentSet],
     tags=["experiment_set"],
 )
 def read_experimentsets(skip: int = 0, limit: int = 100, backward: bool = True, db: Session = Depends(get_db)):
@@ -437,7 +438,7 @@ def read_experimentsets(skip: int = 0, limit: int = 100, backward: bool = True, 
 
 @router.get(
     "/experiment_set/{id}",
-    response_model=schemas.ExperimentSetRO,
+    response_model=schemas.ExperimentSet,
     tags=["experiment_set"],
 )
 def read_experimentset(id: int, db: Session = Depends(get_db)):

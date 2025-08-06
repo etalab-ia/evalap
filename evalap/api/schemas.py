@@ -9,7 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field, create_model
 from sqlalchemy.orm import Session
 
 import evalap.api.models as models
-from evalap.clients.llm import LlmApiModels
+from evalap.clients.llm import LlmApiModels, get_api_url
 from evalap.api.errors import SchemaError
 from evalap.api.metrics import metric_registry
 from evalap.utils import build_param_grid
@@ -250,7 +250,7 @@ class ExperimentBase(EgBaseModel):
     name: str
     readme: str | None = None
     experiment_set_id: int | None = None
-    judge_model: Literal[*LlmApiModels._all_models()] | None = None
+    judge_model: ModelCreate | Literal[*LlmApiModels._all_models()] | None = None
     with_vision: bool = Field(
         False,
         description="Add the image to the user message if an 'img' field is present in the dataset (parquet).",
@@ -312,6 +312,15 @@ class ExperimentCreate(ExperimentBase):
             model = self.model
         obj["model"] = model
 
+        # Handle judge_model
+        if isinstance(self.judge_model, str):
+            url, headers = get_api_url(self.judge_model)
+            obj["judge_model"] = {
+                "name": self.judge_model,
+                "base_url": url,
+                "api_key": (headers.get("Authorization") or headers.get("x-api-key") or "").split()[-1],
+            }
+
         # Handle Results
         results = []
         for metric_name in self.metrics:
@@ -365,21 +374,18 @@ class Experiment(ExperimentBase):
 
     dataset: Dataset
     model: Model | None
+    judge_model: Model | None
 
 
-class ExperimentRO(Experiment):
-    judge_model: str | None
-
-
-class ExperimentWithResults(ExperimentRO):
+class ExperimentWithResults(Experiment):
     results: list[Result] | None
 
 
-class ExperimentWithAnswers(ExperimentRO):
+class ExperimentWithAnswers(Experiment):
     answers: list[Answer] | None
 
 
-class ExperimentFull(ExperimentRO):
+class ExperimentFull(Experiment):
     answers: list[Answer] | None = None
     results: list[Result] | None = None
 
@@ -452,7 +458,7 @@ class ExperimentSetCreate(ExperimentSetBase):
 
         # Ensure judge_model are all equal
         if obj.get("experiments"):
-            if len(set([x["judge_model"] for x in obj["experiments"] if x["judge_model"]])) > 1:
+            if len(set([x["judge_model"]["name"] for x in obj["experiments"] if x["judge_model"]])) > 1:
                 raise SchemaError("The juge_model must be the same for all experiments in a set.")
 
         return obj
@@ -462,10 +468,6 @@ class ExperimentSet(ExperimentSetBase):
     id: int
     created_at: datetime
     experiments: list[Experiment] | None
-
-
-class ExperimentSetRO(ExperimentSet):
-    experiments: list[ExperimentRO] | None
 
 
 # For the special `cv` parameters passed at creation
@@ -516,7 +518,7 @@ class LeaderboardEntry(BaseModel):
     created_at: datetime
     experiment_set_id: Optional[int] = None
     experiment_set_name: Optional[str] = None
-    judge_model: Optional[str] = None
+    judge_model: Optional[str | dict] = None
 
 
 class Leaderboard(EgBaseModel):

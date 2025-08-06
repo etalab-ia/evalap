@@ -124,6 +124,44 @@ In this scenario, the model schema is different:
 After running the experiment, the API returns a success response if it starts without errors. EvalAP manages experiments asynchronously, and you can check the status and results through the interface or by querying the API directly.
 
 
+
+### Configuring a LLM-as-a-Judge Model
+
+When using metrics like `judge_precision` that rely on an LLM to evaluate outputs, you can customize which model acts as the judge. By default, EvalAP uses a small pre-configured model, but you can specify your own using the `judge_model` parameter in your experiment configuration.
+
+You can specify the judge model in two ways:
+
+1. **Using a model name string**: EvalAP will use the first available model matching this name from your configured providers (To configure a provider, you just need to have the appropriate provider API key set in your environment before launching EvalAP, e.g. `OPENAI_API_KEY`, `MISTRAL_API_KEY`).
+2. **Using a complete model configuration**: Provide the model name, base URL, and API key.
+
+
+
+Here's a simple example:
+
+```python
+# Using a model name string
+experiment = {
+    "name": "judge_precision",
+    "dataset": "my_dataset",
+    "model": {"name": "gpt-4o", "base_url": "https://api.openai.com/v1", "api_key": os.getenv("OPENAI_API_KEY")},
+    "metrics": ["judge_precision", "generation_time"],
+    "judge_model": "gpt-4-turbo"  # Specify which model to use as judge
+}
+
+# Or using a complete model configuration
+experiment = {
+    "name": "judge_precision",
+    "dataset": "my_dataset",
+    "model": {"name": "gpt-4o", "base_url": "https://api.openai.com/v1", "api_key": os.getenv("OPENAI_API_KEY")},
+    "metrics": ["judge_precision", "generation_time"],
+    "judge_model": {
+        "name": "claude-3-opus-20240229",
+        "base_url": "https://api.anthropic.com/v1",
+        "api_key": os.getenv("ANTHROPIC_API_KEY")
+    }
+}
+```
+
 ## Viewing Experiment Results and Progress
 
 After launching an experiment:
