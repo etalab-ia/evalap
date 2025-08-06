@@ -1,7 +1,7 @@
 from evalap.clients import LlmClient, split_think_answer
 from evalap.utils import render_jinja
 
-from . import metric_registry, get_judge_model
+from . import metric_registry
 
 _template = """
 Etant donnée la question A suivante :
@@ -51,7 +51,7 @@ def judge_precision_metric(output, output_true, **kwargs):
             "content": render_jinja(_template, output=output, output_true=output_true, **kwargs),
         }
     ]
-    model = get_judge_model(config["model"])
+    model = config["model"]
     aiclient = LlmClient(base_url=model.base_url, api_key=model.api_key)
     result = aiclient.generate(model=model.name, messages=messages, **config["sampling_params"])
     observation = result.choices[0].message.content
