@@ -60,19 +60,21 @@ def fetch_experiment_results(exp_id: int) -> dict:
 
 @st.cache_data(ttl=300)
 def fetch_leaderboard(
-    metric_name: str = DEFAULT_METRIC,
-    dataset_name: str | None = None,
-    judge_model: str | None = None,
-    limit: int = 100,
+        metric_name: str = DEFAULT_METRIC,
+        dataset_name: str | None = None,
+        judge_model: str | None = None,
+        limit: int = 100,
 ) -> dict:
-    """Fetches leaderboard data with caching."""
-    endpoint = "/leaderboard"
     params = {"metric_name": metric_name}
     if dataset_name:
         params["dataset_name"] = dataset_name
-    if judge_model and judge_model != "All":  # Only add judge_model if it's not "All"
+    if judge_model and judge_model != "All":
         params["judge_model"] = judge_model
-    return fetch("get", endpoint, params)
+
+    # Drop key with None
+    params = {k: v for k, v in params.items() if v is not None}
+
+    return fetch("get", "/leaderboard", params)
 
 
 @st.cache_data(ttl=300)
@@ -114,7 +116,7 @@ def display_model_production(model_info: dict, default_metric: str) -> None:
             st.info(f"No results found for experiment {exp_id}")
             return
 
-        metrics_data = {"Model": model_name, "Judge_model": results["judge_model"]}
+        metrics_data = {"Model": model_name, "Judge_model": results["judge_model"]["name"]}
         tokens, times = [], []
 
         for result in results["results"]:

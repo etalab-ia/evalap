@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import pyarrow.parquet as pq
 from sqlalchemy import and_, column, desc, func, select
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload, aliased
 
 import evalap.api.models as models
 import evalap.api.schemas as schemas
@@ -398,6 +398,7 @@ def get_leaderboard(
     limit: int = 100,
     offset: int = 0,
 ):
+    JudgeModel = aliased(models.Model)
     # Subquery
     main_metric_subquery = (
         select(models.Result.experiment_id, func.avg(models.ObservationTable.score).label("main_score"))
@@ -420,9 +421,10 @@ def get_leaderboard(
             models.Experiment.created_at.label("created_at"),
             models.Experiment.experiment_set_id,
             models.ExperimentSet.name.label("experiment_set_name"),
-            #models.Experiment.judge_model.label("judge_model"),
+            JudgeModel.name.label("judge_model_name"),
         )
         .join(models.Model, models.Experiment.model_id == models.Model.id)
+        .join(JudgeModel, models.Experiment.judge_model_id == JudgeModel.id)
         .join(models.Dataset, models.Experiment.dataset_id == models.Dataset.id)
         .join(main_metric_subquery, models.Experiment.id == main_metric_subquery.c.experiment_id)
         .outerjoin(models.ExperimentSet, models.Experiment.experiment_set_id == models.ExperimentSet.id)
@@ -432,7 +434,7 @@ def get_leaderboard(
         query = query.where(models.Dataset.name == dataset_name)
 
     if judge_model:
-        query = query.where(models.Experiment.judge_model == judge_model)
+        query = query.where(JudgeModel.name == judge_model)
 
     query = query.order_by(desc("main_metric_score")).limit(limit).offset(offset)
 
@@ -452,7 +454,6 @@ def get_leaderboard(
             )
             .group_by(models.Result.metric_name)
         )
-
         other_metrics = db.execute(other_metrics_query).fetchall()
 
         other_metrics_dict = {
@@ -464,7 +465,7 @@ def get_leaderboard(
             experiment_name=result.experiment_name,
             model_name=result.model_name,
             dataset_name=result.dataset_name,
-            main_metric_score=float(result.main_metric_score) if result.main_metric_score else None,
+            main_metric_score=float(result.main_metric_score) if result.main_metric_score is not None else None,
             other_metrics=other_metrics_dict,
             system_prompt=result.system_prompt,
             sampling_param={k: str(v) for k, v in (result.sampling_params or {}).items()},
@@ -472,12 +473,11 @@ def get_leaderboard(
             created_at=result.created_at,
             experiment_set_id=result.experiment_set_id,
             experiment_set_name=result.experiment_set_name,
-            judge_model=result.judge_model,
+            judge_model=result.judge_model_name,
         )
         entries.append(entry)
 
     return schemas.Leaderboard(entries=entries)
-
 
 #
 # Ops
