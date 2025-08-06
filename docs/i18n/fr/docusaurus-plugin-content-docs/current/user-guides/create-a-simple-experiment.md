@@ -158,6 +158,7 @@ experiment = {
         "api_key": os.getenv("ANTHROPIC_API_KEY")
     }
 }
+```
 
 ## Consulter les Résultats et la Progression de l'Expérience
 
