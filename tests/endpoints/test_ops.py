@@ -49,8 +49,7 @@ def assert_ops_metrics_types(metrics_dict):
 
 
 class TestEndpointsOpsMetrics(TestApi):
-    @pytest.mark.parametrize("ops_metrics", ops_metrics_cases)
-    def test_read_ops_metrics(self, client: TestClient, ops_metrics):
+    def test_read_ops_metrics(self, client: TestClient):
         response = ops.read_ops_metrics(client)
         log_and_assert(response, 200)
         data = response.json()
@@ -75,9 +74,7 @@ def assert_emissions_dict(emissions_dict):
             f"The '{key}' field is not a float or int: {value} (type: {type(value)})"
 
 class TestEndpointsOpsEco(TestApi):
-    @pytest.mark.parametrize("ops_eco", ops_eco_cases)
-
-    def test_read_eco_metrics(self, client: TestClient, ops_eco):
+    def test_read_eco_metrics(self, client: TestClient):
         response = ops.read_ops_eco(client)
         log_and_assert(response, 200)
         data = response.json()
