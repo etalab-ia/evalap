@@ -10,8 +10,8 @@ import evalap.api.crud as crud
 import evalap.api.models as models
 from evalap.api.config import DEFAULT_JUDGE_MODEL
 from evalap.api.db import SessionLocal
-from evalap.api.metrics import metric_registry
-from evalap.clients import MCPBridgeClient, multi_step_generate, split_think_answer, LlmClient
+from evalap.api.metrics import metric_registry, get_judge_model
+from evalap.clients import MCPBridgeClient, multi_step_generate, split_think_answer
 from evalap.logger import logger
 from evalap.runners import MessageType, dispatch_tasks
 from evalap.utils import Timer, get_parquet_row_by_index, image_to_base64, run_with_timeout
@@ -233,8 +233,9 @@ def generate_observation(message: dict, mcp_bridge: MCPBridgeClient):
                         ignore_error = True
                     raise ValueError(f"The metric {msg.metric_name} require a non null {require} value.")
 
-            # Extra metric params
-            metric_params["model"] = result.experiment.judge_model or DEFAULT_JUDGE_MODEL
+            # Set the Judge model for the metric
+            judge_model = get_judge_model(result.experiment.judge_model or DEFAULT_JUDGE_MODEL)
+            metric_params["model"] = judge_model
 
             # Compute metric
             with Timer() as timer:
@@ -256,10 +257,9 @@ def generate_observation(message: dict, mcp_bridge: MCPBridgeClient):
             # Carbon emission for observations calcul
             if hasattr(obs_result, "usage") and hasattr(obs_result.usage, "completion_tokens"):
                 try:
-                    base_url, _ = LlmClient().get_url_and_headers(metric_params["model"])
                     emission_carbon = impact_carbon(
-                        metric_params["model"],
-                        base_url,
+                        judge_model.name,
+                        judge_model.base_url,
                         obs_result.usage.completion_tokens,
                         timer.execution_time,
                     )

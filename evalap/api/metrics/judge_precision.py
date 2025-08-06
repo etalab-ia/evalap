@@ -51,8 +51,9 @@ def judge_precision_metric(output, output_true, **kwargs):
             "content": render_jinja(_template, output=output, output_true=output_true, **kwargs),
         }
     ]
-    aiclient = LlmClient()
-    result = aiclient.generate(model=config["model"], messages=messages, **config["sampling_params"])
+    model = config["model"]
+    aiclient = LlmClient(base_url=model.base_url, api_key=model.api_key)
+    result = aiclient.generate(model=model.name, messages=messages, **config["sampling_params"])
     observation = result.choices[0].message.content
     think, answer = split_think_answer(observation)
     score = answer.strip(" \n\"'.%")
