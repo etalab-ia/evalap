@@ -407,9 +407,7 @@ def display_experiment_set_score(experimentset, experiments_df):
     def highlight_min_max(df):
         highlight_df = pd.DataFrame("", index=df.index, columns=df.columns)
 
-        inverse_highlight = {
-            "generation_time": True,
-        }
+        inverse_highlight = ["generation_time"]
 
         for col in df.columns:
             if col in ["id", "Id"]:
@@ -420,9 +418,7 @@ def display_experiment_set_score(experimentset, experiments_df):
                 max_idx = col_means.idxmax()
                 min_idx = col_means.idxmin()
 
-                invert = inverse_highlight.get(col, False)
-
-                if invert:
+                if col in inverse_highlight:
                     highlight_df.loc[max_idx, col] = "font-weight: bold; color: red"
                     highlight_df.loc[min_idx, col] = "font-weight: bold; color: green"
                 else:
