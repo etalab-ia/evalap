@@ -410,13 +410,17 @@ def display_experiment_set_score(experimentset, experiments_df):
 
         # For each column, find the min and max values and style them
         for col in df.columns:
-            if col in ["id", "Id"]:
+            if col in ["id", "Id", "out"]:
                 continue
 
             col_means = df[col].apply(_extract_mean)
             if col_means.dtype in [np.float64, np.int64]:
-                max_idx = col_means.idxmax()
-                min_idx = col_means.idxmin()
+                if col in ["generation_time"]:
+                    max_idx = col_means.idxmin()
+                    min_idx = col_means.dixmax()
+                else:
+                    max_idx = col_means.idxmax()
+                    min_idx = col_means.idxmin()
                 highlight_df.loc[max_idx, col] = "font-weight: bold; color: green"
                 highlight_df.loc[min_idx, col] = "font-weight: bold; color: red"
 
