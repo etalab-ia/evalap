@@ -405,10 +405,12 @@ def display_experiment_set_score(experimentset, experiments_df):
 
     # To highlight min/max values in each column
     def highlight_min_max(df):
-        # Create an empty DataFrame with the same shape as our original
         highlight_df = pd.DataFrame("", index=df.index, columns=df.columns)
 
-        # For each column, find the min and max values and style them
+        inverse_highlight = {
+            "generation_time": True,
+        }
+
         for col in df.columns:
             if col in ["id", "Id"]:
                 continue
@@ -417,8 +419,15 @@ def display_experiment_set_score(experimentset, experiments_df):
             if col_means.dtype in [np.float64, np.int64]:
                 max_idx = col_means.idxmax()
                 min_idx = col_means.idxmin()
-                highlight_df.loc[max_idx, col] = "font-weight: bold; color: green"
-                highlight_df.loc[min_idx, col] = "font-weight: bold; color: red"
+
+                invert = inverse_highlight.get(col, False)
+
+                if invert:
+                    highlight_df.loc[max_idx, col] = "font-weight: bold; color: red"
+                    highlight_df.loc[min_idx, col] = "font-weight: bold; color: green"
+                else:
+                    highlight_df.loc[max_idx, col] = "font-weight: bold; color: green"
+                    highlight_df.loc[min_idx, col] = "font-weight: bold; color: red"
 
         return highlight_df
 
