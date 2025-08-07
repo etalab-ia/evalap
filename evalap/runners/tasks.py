@@ -249,7 +249,6 @@ def generate_observation(message: dict, mcp_bridge: MCPBridgeClient):
                 score, observation, obs_result = metric_result
             else:
                 score = metric_result
-                obs_result = None
 
             if isinstance(score, (float, int)):
                 # Fix SQL schema error with np.float64/int64
