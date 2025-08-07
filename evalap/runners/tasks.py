@@ -189,6 +189,7 @@ def generate_observation(message: dict, mcp_bridge: MCPBridgeClient):
         answer = crud.get_answer(db, experiment_id=msg.exp_id, num_line=msg.line_id)
         score = None
         observation = None
+        obs_result = None
         error_msg = None
         metadata = {}
         emission_carbon = None
@@ -243,10 +244,17 @@ def generate_observation(message: dict, mcp_bridge: MCPBridgeClient):
                 # metric_result = run_with_timeout(
                 #     metric_fun, 300, msg.output, msg.output_true, **metric_params
                 # )
+                logger.info(f">>>>> METRIC RESULT for {metric}: {metric_result}")
+
             if isinstance(metric_result, tuple):
                 score, observation, obs_result = metric_result
+                logger.info(f">>>>> score: {score}")
+                logger.info(f">>>>> observation: {observation}")
+                logger.info(f">>>>> obs_result: {obs_result}")
             else:
                 score = metric_result
+                obs_result = None
+                logger.info(f">>>>> score (because not tuple): {score}")
 
             if isinstance(score, (float, int)):
                 # Fix SQL schema error with np.float64/int64
@@ -255,7 +263,7 @@ def generate_observation(message: dict, mcp_bridge: MCPBridgeClient):
                 raise ValueError("Unsuported score type: %s %s" % (type(score), score))
 
             # Carbon emission for observations calcul
-            if hasattr(obs_result, "usage") and hasattr(obs_result.usage, "completion_tokens"):
+            if obs_result and hasattr(obs_result, "usage") and hasattr(obs_result.usage, "completion_tokens"):
                 try:
                     emission_carbon = impact_carbon(
                         judge_model.name,
