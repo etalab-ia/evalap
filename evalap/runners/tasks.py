@@ -244,17 +244,12 @@ def generate_observation(message: dict, mcp_bridge: MCPBridgeClient):
                 # metric_result = run_with_timeout(
                 #     metric_fun, 300, msg.output, msg.output_true, **metric_params
                 # )
-                logger.info(f">>>>> METRIC RESULT for {metric}: {metric_result}")
 
             if isinstance(metric_result, tuple):
                 score, observation, obs_result = metric_result
-                logger.info(f">>>>> score: {score}")
-                logger.info(f">>>>> observation: {observation}")
-                logger.info(f">>>>> obs_result: {obs_result}")
             else:
                 score = metric_result
                 obs_result = None
-                logger.info(f">>>>> score (because not tuple): {score}")
 
             if isinstance(score, (float, int)):
                 # Fix SQL schema error with np.float64/int64
