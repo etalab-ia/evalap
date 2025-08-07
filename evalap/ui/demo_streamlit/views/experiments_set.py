@@ -408,6 +408,8 @@ def display_experiment_set_score(experimentset, experiments_df):
         # Create an empty DataFrame with the same shape as our original
         highlight_df = pd.DataFrame("", index=df.index, columns=df.columns)
 
+        inverse_highlight = ["generation_time"]
+
         # For each column, find the min and max values and style them
         for col in df.columns:
             if col in ["id", "Id"]:
@@ -417,8 +419,13 @@ def display_experiment_set_score(experimentset, experiments_df):
             if col_means.dtype in [np.float64, np.int64]:
                 max_idx = col_means.idxmax()
                 min_idx = col_means.idxmin()
-                highlight_df.loc[max_idx, col] = "font-weight: bold; color: green"
-                highlight_df.loc[min_idx, col] = "font-weight: bold; color: red"
+
+                if col in inverse_highlight:
+                    highlight_df.loc[max_idx, col] = "font-weight: bold; color: red"
+                    highlight_df.loc[min_idx, col] = "font-weight: bold; color: green"
+                else:
+                    highlight_df.loc[max_idx, col] = "font-weight: bold; color: green"
+                    highlight_df.loc[min_idx, col] = "font-weight: bold; color: red"
 
         return highlight_df
 
