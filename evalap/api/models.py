@@ -30,7 +30,6 @@ def is_equal(model1, model2):
             # Schema
             value = v.model_dump()
         elif isinstance(data, Base):
-            # import evalap.api.schemas as schemas
             # Model (sql)
             model_class_name = v.__class__.__name__
             # Try to find the schema class
