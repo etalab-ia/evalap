@@ -73,8 +73,10 @@ def _remove_commons_items(model_params: list[dict], first=True) -> list[dict]:
 
 def _rename_model_variants(experiments: list) -> list:
     """
-    Inplace add a _name attribute to experiment several model name are equal to help
-    distinguish them
+    Inplace add a _name attribute to experiment when
+    several model names are equal to help distinguish them.
+
+    Note: Model.aliased_name will take precedence.
     """
     names = [expe["model"]["name"] for expe in experiments if expe.get("model")]
     if len(set(names)) == len(names):
@@ -82,7 +84,7 @@ def _rename_model_variants(experiments: list) -> list:
 
     names = []
     for i, expe in enumerate(experiments):
-        if not expe.get("model"):
+        if not expe.get("model") or expe["model"].get("aliased_name"):
             continue
 
         name = expe["model"]["name"]
