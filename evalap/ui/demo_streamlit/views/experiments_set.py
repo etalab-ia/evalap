@@ -405,10 +405,12 @@ def display_experiment_set_score(experimentset, experiments_df):
 
     # To highlight min/max values in each column
     def highlight_min_max(df):
+        # Create an empty DataFrame with the same shape as our original
         highlight_df = pd.DataFrame("", index=df.index, columns=df.columns)
 
         inverse_highlight = ["generation_time"]
 
+        # For each column, find the min and max values and style them
         for col in df.columns:
             if col in ["id", "Id"]:
                 continue
