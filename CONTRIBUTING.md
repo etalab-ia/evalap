@@ -11,7 +11,8 @@ evalap/
 │   ├── api/        --> The evaluation API source code
 │   ├── runner/     --> The runner (message passing) source code
 │   ├── mcp/        --> The MCP client.
-│   └── ui/         --> [WIP] The user interface code source
+│   └── ui/         --> The user interface code source
+│   └── docs/       --> The documentation code source
 ├── tests/      --> The tests
 └── notebooks/  --> Example and demo notebooks
 ```

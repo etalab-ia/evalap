@@ -347,7 +347,7 @@ def _format_experiments_score_df(experiments: list, df: pd.DataFrame) -> (bool, 
 
 
 def display_experiment_set_score(experimentset, experiments_df):
-    """Affiche les scores de l'ensemble d'expériences."""
+    """Displays the scores for the set of experiments."""
     experiments = experimentset.get("experiments", [])
     _rename_model_variants(experiments)
     size = experiments[0]["dataset"]["size"]
@@ -403,6 +403,33 @@ def display_experiment_set_score(experimentset, experiments_df):
 
     _sort_score_df(df, df_support)
 
+    # Metric filter
+    available_metrics = [col for col in df.columns if col not in ["model", "Id"]]
+    #color for multiselect
+    def colorize_multiselect_options_single_color(color: list[str]) -> None:
+        css = f"""
+        <style>
+        .stMultiSelect div[data-baseweb="select"] span[data-baseweb="tag"] {{
+            background-color: {color} !important;
+            color: black !important;  /* couleur du texte, à adapter */
+        }}
+        </style>
+        """
+        st.markdown(css, unsafe_allow_html=True)
+
+    selected_metrics = st.multiselect(
+        "Select metrics to display",
+        options=available_metrics,
+        default=available_metrics,
+    )
+    colorize_multiselect_options_single_color("ghostWhite")
+
+    columns_to_show = ["model"] + selected_metrics
+    df_filtered = df[columns_to_show]
+
+    support_columns_to_show = ["model"] + [f"{metric}_support" for metric in selected_metrics if f"{metric}_support" in df_support.columns]
+    df_support_filtered = df_support[support_columns_to_show]
+
     # To highlight min/max values in each column
     def highlight_min_max(df):
         # Create an empty DataFrame with the same shape as our original
@@ -412,7 +439,7 @@ def display_experiment_set_score(experimentset, experiments_df):
 
         # For each column, find the min and max values and style them
         for col in df.columns:
-            if col in ["id", "Id"]:
+            if col in ["id", "Id", "model"]:
                 continue
 
             col_means = df[col].apply(_extract_mean)
@@ -443,24 +470,22 @@ def display_experiment_set_score(experimentset, experiments_df):
     if len(available_judges) > 1:
         st.warning(f"Multiple judge models found: {', '.join(available_judges)}")
 
-    float_columns = df.select_dtypes(include=["float"]).columns
+    float_columns = df_filtered.select_dtypes(include=["float"]).columns
     st.dataframe(
-        # Apply styling
-        df.style.apply(highlight_min_max, axis=None).format("{:.2f}", subset=float_columns),
+        df_filtered.style.apply(highlight_min_max, axis=None).format("{:.2f}", subset=float_columns),
         use_container_width=True,
         hide_index=True,
         column_config={"Id": st.column_config.TextColumn(width="small")},
     )
 
     st.write("---")
-    st.write(f"**Support:** the numbers of item on wich the metrics is computed (total items = {size})")
+    st.write(f"**Support:** the numbers of item on which the metrics is computed (total items = {size})")
     st.dataframe(
-        df_support,
+        df_support_filtered,
         use_container_width=True,
         hide_index=True,
         column_config={"Id": st.column_config.TextColumn(width="small")},
     )
-
 
 def count_unique_models_and_metrics(exp_set: dict[str, any]) -> tuple[int, int]:
     unique_models: set[str] = set()
