@@ -26,10 +26,10 @@ def is_equal(model1, model2) -> bool:
     """
     data = []
     for v in (model1, model2):
-        if isinstance(data, schemas.EgBaseModel):
+        if isinstance(v, schemas.EgBaseModel):
             # Schema
             value = v.model_dump()
-        elif isinstance(data, Base):
+        elif isinstance(v, Base):
             # Model (sql)
             model_class_name = v.__class__.__name__
             # Try to find the schema class
@@ -38,7 +38,7 @@ def is_equal(model1, model2) -> bool:
                 value = schema_class.model_validate(v).model_dump()
             else:
                 raise ValueError(f"No schema found for model {model_class_name}")
-        elif isinstance(data, dict):
+        elif isinstance(v, dict):
             # Raw dict
             value = v
         else:
