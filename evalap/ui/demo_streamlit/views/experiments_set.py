@@ -347,7 +347,7 @@ def _format_experiments_score_df(experiments: list, df: pd.DataFrame) -> (bool, 
 
 
 def display_experiment_set_score(experimentset, experiments_df):
-    """Affiche les scores de l'ensemble d'expériences."""
+    """Displays the scores for the set of experiments."""
     experiments = experimentset.get("experiments", [])
     _rename_model_variants(experiments)
     size = experiments[0]["dataset"]["size"]
