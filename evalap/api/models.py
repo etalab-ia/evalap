@@ -23,7 +23,14 @@ Base = declarative_base()
 def is_equal(model1, model2) -> bool:
     """Check if two data model are equal,
     Either they come from a model, a schema or a dict
+
+    Note: This os a lazy check; we ignore model ID field, and hidden fileds like api_key...
+          In fact, we check the "Create" version of the schema, eventually by doing a schema regression.
+          See the judge_model equality usage to ensure patch route behavior.
     """
+    if model1 == model2:
+        return True
+
     data = []
     for v in (model1, model2):
         if isinstance(v, schemas.EgBaseModel):
@@ -34,17 +41,27 @@ def is_equal(model1, model2) -> bool:
             model_class_name = v.__class__.__name__
             # Try to find the schema class
             if hasattr(schemas, model_class_name):
-                schema_class = getattr(schemas, model_class_name)
+                if hasattr(schemas, model_class_name + "Create"):
+                    schema_class = getattr(schemas, model_class_name + "Create")
+                else:
+                    schema_class = getattr(schemas, model_class_name)
                 value = schema_class.model_validate(v).model_dump()
             else:
                 raise ValueError(f"No schema found for model {model_class_name}")
         elif isinstance(v, dict):
             # Raw dict
-            value = v
+            value = v.copy()
         else:
             raise ValueError(f"Unknown type for data {type(v)}")
 
         data.append(value)
+
+    # Remove special and hidden attributes
+    special_attrs = ["id", "api_key"]
+    data = [{k: v for k, v in d.items() if k not in special_attrs} for d in data]
+
+    for d in data:
+        print(d)
 
     return all(d == data[0] for d in data)
 

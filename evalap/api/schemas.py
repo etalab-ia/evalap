@@ -315,11 +315,11 @@ class ExperimentCreate(ExperimentBase):
         # Handle judge_model
         if isinstance(self.judge_model, str):
             url, headers = get_api_url(self.judge_model)
-            obj["judge_model"] = {
+            obj["judge_model"] = ModelCreate(**{
                 "name": self.judge_model,
                 "base_url": url,
                 "api_key": (headers.get("Authorization") or headers.get("x-api-key") or "").split()[-1],
-            }
+            }).model_dump()
 
         # Handle Results
         results = []
