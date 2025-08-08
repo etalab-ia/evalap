@@ -15,6 +15,7 @@ import evalap.api.schemas as schemas
 from evalap.api.db import get_db
 from evalap.api.errors import CustomIntegrityError, SchemaError
 from evalap.api.metrics import Metric, metric_registry
+from evalap.api.models import is_equal
 from evalap.api.security import admin_only
 from evalap.clients import LlmClient, MCPBridgeClient, multi_step_generate
 from evalap.logger import logger
@@ -242,7 +243,7 @@ def patch_experiment(id: int, experiment_patch: schemas.ExperimentPatch, db: Ses
         )
 
     # Parameters you can not patch
-    if experiment_patch.judge_model and not schemas.is_equal(experiment_patch.judge_model, db_exp.judge_model):
+    if experiment_patch.judge_model and not is_equal(experiment_patch.judge_model, db_exp.judge_model):
         raise HTTPException(
             status_code=400,
             detail="You cannot patch the judge_model in an experiment.",
@@ -391,7 +392,7 @@ def patch_experimentset(
             (e["judge_model"] for e in (expset.get("experiments") or []) if e.get("judge_model")), None
         )
         # Judge and new_judge must be defined as we can have some experiments that won't use llm-as-a-judge model.
-        if judge and new_judge and not schemas.is_equal(judge, new_judge):
+        if judge and new_judge and not is_equal(judge, new_judge):
             raise HTTPException(
                 status_code=400,
                 detail="You cannot patch the judge_model in an experiment.",
