@@ -20,7 +20,7 @@ Base = declarative_base()
 
 # By convention, we reserve the String type for Enum defined in the schema scope.
 #
-def is_equal(model1, model2):
+def is_equal(model1, model2) -> bool:
     """Check if two data model are equal,
     Either they come from a model, a schema or a dict
     """
