@@ -405,29 +405,42 @@ def display_experiment_set_score(experimentset, experiments_df):
 
     # Metric filter
     available_metrics = [col for col in df.columns if col not in ["model", "Id"]]
-    #color for multiselect
-    def colorize_multiselect_options_single_color(color: list[str]) -> None:
-        css = f"""
-        <style>
-        .stMultiSelect div[data-baseweb="select"] span[data-baseweb="tag"] {{
-            background-color: {color} !important;
-            color: black !important;  /* couleur du texte, à adapter */
-        }}
-        </style>
-        """
-        st.markdown(css, unsafe_allow_html=True)
 
     selected_metrics = st.multiselect(
         "Select metrics to display",
         options=available_metrics,
         default=available_metrics,
     )
-    colorize_multiselect_options_single_color("ghostWhite")
+
+    # Style for the multiselect input
+    st.markdown(
+        """
+                <style>
+                /* Light mode */
+                @media (prefers-color-scheme: light) {
+                    .stMultiSelect div[data-baseweb="select"] span[data-baseweb="tag"] {
+                        background-color: azure !important;
+                        color: black !important;
+                    }
+                }
+                /* Dark mode */
+                @media (prefers-color-scheme: dark) {
+                    .stMultiSelect div[data-baseweb="select"] span[data-baseweb="tag"] {
+                        background-color: midnightblue;
+                        color: white !important;
+                    }
+                }
+                </style>
+                """,
+        unsafe_allow_html=True,
+    )
 
     columns_to_show = ["model"] + selected_metrics
     df_filtered = df[columns_to_show]
 
-    support_columns_to_show = ["model"] + [f"{metric}_support" for metric in selected_metrics if f"{metric}_support" in df_support.columns]
+    support_columns_to_show = ["model"] + [
+        f"{metric}_support" for metric in selected_metrics if f"{metric}_support" in df_support.columns
+    ]
     df_support_filtered = df_support[support_columns_to_show]
 
     # To highlight min/max values in each column
@@ -486,6 +499,7 @@ def display_experiment_set_score(experimentset, experiments_df):
         hide_index=True,
         column_config={"Id": st.column_config.TextColumn(width="small")},
     )
+
 
 def count_unique_models_and_metrics(exp_set: dict[str, any]) -> tuple[int, int]:
     unique_models: set[str] = set()
@@ -579,7 +593,7 @@ def report_ops_global(exp_set):
     if gwp_total is None:
         carbon_str = "NR"
     elif gwp_total < 1:
-        carbon_str = f"{gwp_total*1000:.1f} gCO₂eq"
+        carbon_str = f"{gwp_total * 1000:.1f} gCO₂eq"
     else:
         carbon_str = f"{gwp_total:.3f} kgCO₂eq"
 

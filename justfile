@@ -41,7 +41,7 @@ list-model provider="albert":
 
   curl -XGET -H "Authorization: Bearer $API_KEY" $URL/models | jq '[.data.[] | {id, type, owned_by, aliases}]'
 
-chat-completion model="mistralai/Mistral-Small-3.1-24B-Instruct-2503" provider="albert":
+chat-completion model="mistralai/Mistral-Small-3.2-24B-Instruct-2506" provider="albert":
   #!/usr/bin/env sh
   if [ "{{provider}}" = "albert" ]; then
     URL="https://albert.api.etalab.gouv.fr/v1"
