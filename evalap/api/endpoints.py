@@ -243,7 +243,7 @@ def patch_experiment(id: int, experiment_patch: schemas.ExperimentPatch, db: Ses
         )
 
     # Parameters you can not patch
-    if not is_equal(experiment_patch.judge_model, db_exp.judge_model):
+    if experiment_patch.judge_model and not is_equal(db_exp.judge_model, experiment_patch.judge_model):
         raise HTTPException(
             status_code=400,
             detail="You cannot patch the judge_model in an experiment.",
@@ -392,7 +392,7 @@ def patch_experimentset(
             (e["judge_model"] for e in (expset.get("experiments") or []) if e.get("judge_model")), None
         )
         # Judge and new_judge must be defined as we can have some experiments that won't use llm-as-a-judge model.
-        if not is_equal(judge, new_judge):
+        if new_judge and not is_equal(judge, new_judge):
             raise HTTPException(
                 status_code=400,
                 detail="You cannot patch the judge_model in an experiment.",
