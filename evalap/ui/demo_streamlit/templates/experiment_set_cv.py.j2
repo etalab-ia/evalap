@@ -1,0 +1,29 @@
+import requests
+
+# Configuration
+EVALAP_API_URL = "YOUR_EVALAP_API_URL"  # Replace with your API URL
+headers = {"Authorization": "Bearer YOUR_EVALAP_API_TOKEN"}  # Replace with your token
+
+# Experiment set configuration
+expset_name = "{{ name }}"
+expset_readme = """{{ readme }}"""
+
+# Experiments configuration
+cv = {{ cv | tojson(indent=4) }}
+
+# Create experiment set
+expset = {
+    "name": expset_name,
+    "readme": expset_readme,
+    "cv": cv
+}
+
+# Send request to create experiment set
+response = requests.post(f'{EVALAP_API_URL}/experiment_set', json=expset, headers=headers)
+
+if response.status_code == 200:
+    result = response.json()
+    print(f"Experiment set created successfully! ID: {result.get('id')}")
+else:
+    print(f"Error creating experiment set: {response.status_code}")
+    print(response.text)
