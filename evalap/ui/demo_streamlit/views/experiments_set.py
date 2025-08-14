@@ -1,5 +1,6 @@
 import json
 import re
+import sys
 import time
 from collections import defaultdict
 from copy import deepcopy
@@ -10,8 +11,11 @@ import numpy as np
 import pandas as pd
 import plotly.express as px
 import streamlit as st
-from utils import fetch, _rename_model_variants, _format_model_params
+from template_manager import TemplateManager
+from utils import _format_model_params, _rename_model_variants, fetch
+from experimentset_utils import convert_experimentset_to_create
 
+import schemas
 
 #
 # Cached method for critical data fetching
@@ -710,10 +714,16 @@ def display_ops_analysis(experimentset):
     display_failure_analysis(experimentset)
 
 
+# Initialize template manager
+template_manager = TemplateManager()
+
+
 def show_header(experimentset):
     status, counts = _get_expset_status(experimentset)
     st.markdown(f"## {experimentset['name']}")
-    col1, col2 = st.columns([1 / 12, 1])
+
+    # Add copy button in the header row
+    col1, col2, col3 = st.columns([1 / 12, 1, 0.2])
     with col1:
         st.markdown(f"**Id**: {experimentset['id']}")
     with col2:
@@ -722,7 +732,43 @@ def show_header(experimentset):
         except ValueError:
             when = "N/A"
         st.caption(f"Created the {when}")
-    st.markdown(f"**Readme:** {experimentset.get('readme', 'No description available')}")
+    with col3:
+        with st.popover("📋 Copy code"):
+            try:
+                st.markdown(
+                    "This code allows you to reproduce an experiment set.  \n"
+                    "**Caution**: the code might be incomplete, review it carefully and uses it at your own risks"
+                )
+                copy_format = st.radio("Format:", ["Python", "cURL"], key=f"copy_format_{experimentset['id']}")
+                exp_create = convert_experimentset_to_create(experimentset)
+
+                # Generate code based on format
+                if copy_format == "Python":
+                    code = template_manager.render_python(**exp_create)
+                    lang = "python"
+                else:
+                    code = template_manager.render_curl(**exp_create)
+                    lang = "bash"
+
+                st.code(code, language=lang)
+
+                # Copy button
+                if st.button("📋 Copy to clipboard", key=f"copy_btn_{experimentset['id']}"):
+                    st.components.v1.html(
+                        f"""
+                        <script>
+                        navigator.clipboard.writeText(`{code.replace("`", "\\`")}`)
+                            .then(() => parent.window.postMessage('copied', '*'));
+                        </script>
+                        """,
+                        height=0,
+                    )
+                    st.success("✅ Copied to clipboard!")
+
+            except Exception as e:
+                print("Failed: to render copy code template: %s" % str(e))
+
+    st.markdown(f"{experimentset.get('readme', 'No description available')}")
 
     finished_ratio = 0
     failure_ratio = 0
@@ -860,12 +906,16 @@ def main():
                 st.warning(message)
 
         df = experiments_df  # alias
+        warnings_to_show = []
         if not (df["Status"] == "finished").all():
-            show_warning_in_tabs("Warning: some experiments are not finished.")
+            warnings_to_show.append("some experiments are not finished.")
         if df["Num success"].sum() != df["Num try"].sum():
-            show_warning_in_tabs("Warning: some answers are failed.")
+            warnings_to_show.append("some answers are failed.")
         if df["Num observation success"].sum() != df["Num observation try"].sum():
-            show_warning_in_tabs("Warning: some metrics are failed.")
+            warnings_to_show.append("some metrics are failed.")
+
+        if warnings_to_show:
+            show_warning_in_tabs("Warning: " + "AND".join(warnings_to_show))
 
         with tab1:
             tab_index[1]["func"](experimentset, experiments_df)
