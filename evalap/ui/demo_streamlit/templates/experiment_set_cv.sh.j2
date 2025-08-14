@@ -1,0 +1,8 @@
+curl -X POST "YOUR_EVALAP_API_URL/experiment_set" \
+  -H "Authorization: Bearer YOUR_EVALAP_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": {{ name }}
+    "readme"; {{ readme }},
+    "cv":{{ cv | tojson(indent=2) }}
+  }'
