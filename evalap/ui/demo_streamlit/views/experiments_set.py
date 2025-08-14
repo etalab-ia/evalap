@@ -722,7 +722,7 @@ def show_header(experimentset):
         except ValueError:
             when = "N/A"
         st.caption(f"Created the {when}")
-    st.markdown(f"**Readme:** {experimentset.get('readme', 'No description available')}")
+    st.markdown(f"{experimentset.get('readme', 'No description available')}")
 
     finished_ratio = 0
     failure_ratio = 0
@@ -860,12 +860,16 @@ def main():
                 st.warning(message)
 
         df = experiments_df  # alias
+        warnings_to_show = []
         if not (df["Status"] == "finished").all():
-            show_warning_in_tabs("Warning: some experiments are not finished.")
+            warnings_to_show.append("some experiments are not finished.")
         if df["Num success"].sum() != df["Num try"].sum():
-            show_warning_in_tabs("Warning: some answers are failed.")
+            warnings_to_show.append("some answers are failed.")
         if df["Num observation success"].sum() != df["Num observation try"].sum():
-            show_warning_in_tabs("Warning: some metrics are failed.")
+            warnings_to_show.append("some metrics are failed.")
+
+        if warnings_to_show:
+            show_warning_in_tabs("Warning: " + "AND".join(warnings_to_show))
 
         with tab1:
             tab_index[1]["func"](experimentset, experiments_df)
