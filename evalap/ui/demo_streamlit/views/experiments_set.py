@@ -908,14 +908,14 @@ def main():
         df = experiments_df  # alias
         warnings_to_show = []
         if not (df["Status"] == "finished").all():
-            warnings_to_show.append("some experiments are not finished.")
+            warnings_to_show.append("some experiments are not finished")
         if df["Num success"].sum() != df["Num try"].sum():
-            warnings_to_show.append("some answers are failed.")
+            warnings_to_show.append("some answers are failed")
         if df["Num observation success"].sum() != df["Num observation try"].sum():
-            warnings_to_show.append("some metrics are failed.")
+            warnings_to_show.append("some metrics are failed")
 
         if warnings_to_show:
-            show_warning_in_tabs("Warning: " + "AND".join(warnings_to_show))
+            show_warning_in_tabs("Warning: " + " AND ".join(warnings_to_show))
 
         with tab1:
             tab_index[1]["func"](experimentset, experiments_df)
