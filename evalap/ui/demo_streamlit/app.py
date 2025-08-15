@@ -23,3 +23,4 @@ st.markdown(custom_css, unsafe_allow_html=True)
 pg = st.navigation([get_page(route) for route in ROUTES])
 
 pg.run()
+
