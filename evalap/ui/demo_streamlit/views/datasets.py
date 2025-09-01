@@ -1,10 +1,21 @@
 from datetime import datetime
+import pandas as pd
 import streamlit as st
 from utils import fetch
-
+import json
 from streamlit import session_state
 
 session_state.layout = "wide"
+
+
+
+def _fetch_dataset_id(id: int) -> dict:
+    return fetch("get", f"/dataset/{id}")
+
+def _fetch_dataset(id: int) -> dict:
+    return fetch("get", "/dataset", {"id": id, "with_df": True})
+
+
 
 
 def main():
@@ -50,6 +61,20 @@ def main():
                     st.caption(f"Default metric: {dataset['default_metric']}")
                 with col4:
                     st.caption(f"Created the {when}")
+
+                st.write("dataset id")
+                data = _fetch_dataset(dataset['id'])
+                if data:
+                    df_str = data.get("df", "")
+                    if df_str != "{}" and df_str.strip() != "":
+                        try:
+                            df_json = json.loads(df_str)
+                            df = pd.DataFrame(df_json)
+                            if not df.empty:
+                                st.write(df)
+                        except Exception:
+                            pass
+
                 st.divider()
 
     with right_menu:
