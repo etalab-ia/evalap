@@ -16,6 +16,74 @@ def _fetch_dataset(id: int) -> dict:
     return fetch("get", "/dataset", {"id": id, "with_df": True})
 
 
+def _toggle_preview_button(dataset_id: int, label: str = "👀 Show/Hide Data Preview") -> bool:
+    if st.button(label, key=f"toggle_{dataset_id}"):
+        state_key = f"show_df_{dataset_id}"
+        st.session_state[state_key] = not st.session_state.get(state_key, False)
+    return st.session_state.get(f"show_df_{dataset_id}", False)
+
+
+def _load_dataset_preview(dataset_id: int) -> pd.DataFrame | None:
+    with st.spinner("Loading dataset preview..."):
+        data = _fetch_dataset(dataset_id)
+        if not data:
+            st.error("Failed to fetch dataset")
+            return None
+
+        df_str = data.get("df", "")
+        if not df_str or df_str.strip() in ("{}", ""):
+            st.info("No data available for preview")
+            return None
+
+        try:
+            df_json = json.loads(df_str)
+            df = pd.DataFrame(df_json)
+            if df.empty:
+                st.error("Failed to load dataset or dataset is empty")
+                return None
+            return df
+        except Exception as e:
+            st.error(f"Error loading dataset: {e}")
+            return None
+
+
+def _render_dataset_dataframe(df: pd.DataFrame, dataset_id: int):
+    col_display1, col_display2 = st.columns(2)
+    with col_display1:
+        row_options = [10, 50, 100]
+        available_options = [opt for opt in row_options if opt <= len(df)]
+        if len(df) > max(available_options, default=0) or (
+            len(df) not in available_options and len(df) <= 500
+        ):
+            available_options.append(f"All ({len(df)})")
+
+        choice = st.radio(
+            "Rows to display:",
+            options=available_options,
+            horizontal=True,
+            key=f"rows_{dataset_id}",
+        )
+        max_rows = len(df) if isinstance(choice, str) and choice.startswith("All") else choice
+
+    with col_display2:
+        show_info = st.checkbox("Show dataset info", key=f"info_{dataset_id}")
+
+    st.dataframe(
+        df.head(max_rows),
+        use_container_width=True,
+        height=min(400, max_rows * 35 + 100),
+    )
+
+    if show_info:
+        with st.container(border=True):
+            col_info1, col_info2 = st.columns(2)
+            with col_info1:
+                st.success(f"Dataset loaded: {len(df)} rows × {len(df.columns)} columns")
+            with col_info2:
+                st.write("**Data types:**")
+                st.write(df.dtypes.to_frame("Type"))
+
+
 def main():
     st.title("Datasets")
 
@@ -61,84 +129,10 @@ def main():
                     st.caption(f"Created the {when}")
 
                 # See dataset content if df
-                if st.button(f"👀  Show/Hide Data Preview", key=f"toggle_{dataset['id']}"):
-                    if f"show_df_{dataset['id']}" not in st.session_state:
-                        st.session_state[f"show_df_{dataset['id']}"] = False
-                    st.session_state[f"show_df_{dataset['id']}"] = not st.session_state[
-                        f"show_df_{dataset['id']}"
-                    ]
-
-                if st.session_state.get(f"show_df_{dataset['id']}", False):
-                    with st.spinner("Loading dataset preview..."):
-                        data = _fetch_dataset(dataset["id"])
-                        if data:
-                            df_str = data.get("df", "")
-                            if df_str != "{}" and df_str.strip() != "":
-                                try:
-                                    df_json = json.loads(df_str)
-                                    df = pd.DataFrame(df_json)
-                                    if not df.empty:
-                                        col_display1, col_display2 = st.columns(2)
-
-                                        with col_display1:
-                                            row_options = [
-                                                10,
-                                                50,
-                                                100,
-                                            ]
-                                            available_options = [opt for opt in row_options if opt <= len(df)]
-
-                                            max_available_option = (
-                                                max(available_options) if available_options else 0
-                                            )
-                                            if len(df) > max_available_option or (
-                                                len(df) not in available_options and len(df) <= 500
-                                            ):
-                                                available_options.append(f"All ({len(df)})")
-
-                                            choice = st.radio(
-                                                "Rows to display:",
-                                                options=available_options,
-                                                horizontal=True,
-                                                key=f"rows_{dataset['id']}",
-                                            )
-
-                                            # Gérer le cas "All (X)"
-                                            if isinstance(choice, str) and choice.startswith("All"):
-                                                max_rows = len(df)
-                                            else:
-                                                max_rows = choice
-
-                                        with col_display2:
-                                            show_info = st.checkbox(
-                                                "Show dataset info", key=f"info_{dataset['id']}"
-                                            )
-
-                                        st.dataframe(
-                                            df.head(max_rows),
-                                            use_container_width=True,
-                                            height=min(400, max_rows * 35 + 100),
-                                        )
-
-                                        if show_info:
-                                            with st.container(border=True):
-                                                col_info1, col_info2 = st.columns(2)
-                                                with col_info1:
-                                                    st.success(
-                                                        f"Dataset loaded: {len(df)} rows × {len(df.columns)} columns"
-                                                    )
-
-                                                with col_info2:
-                                                    st.write("**Data types:**")
-                                                    st.write(df.dtypes.to_frame("Type"))
-                                    else:
-                                        st.error("Failed to load dataset or dataset is empty")
-                                except Exception as e:
-                                    st.error(f"Error loading dataset: {str(e)}")
-                            else:
-                                st.info("No data available for preview")
-                        else:
-                            st.error("Failed to fetch dataset")
+                if _toggle_preview_button(dataset["id"]):
+                    df = _load_dataset_preview(dataset["id"])
+                    if df is not None:
+                        _render_dataset_dataframe(df, dataset["id"])
 
                 st.divider()
 
