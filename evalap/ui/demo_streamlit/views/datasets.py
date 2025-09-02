@@ -1,9 +1,11 @@
+import json
 from datetime import datetime
+
 import pandas as pd
 import streamlit as st
-from utils import fetch
-import json
 from streamlit import session_state
+
+from utils import fetch
 
 session_state.layout = "wide"
 
