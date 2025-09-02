@@ -8,10 +8,6 @@ from streamlit import session_state
 session_state.layout = "wide"
 
 
-def _fetch_dataset_id(id: int) -> dict:
-    return fetch("get", f"/dataset/{id}")
-
-
 def _fetch_dataset(id: int) -> dict:
     return fetch("get", "/dataset", {"id": id, "with_df": True})
 
