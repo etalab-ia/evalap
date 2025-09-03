@@ -206,7 +206,7 @@ def display_experiment_set_overview(experimentset, experiments_df):
 
     st.dataframe(
         experiments_df,
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
         height=dynamic_height,
         column_config={"Id": st.column_config.TextColumn(width="small")},
@@ -239,7 +239,7 @@ def display_experiment_details(experimentset, experiments_df):
 
             st.dataframe(
                 full_df,
-                use_container_width=True,
+                width="stretch",
                 hide_index=False,
                 column_config={"Id": st.column_config.TextColumn(width="small")},
             )
@@ -523,7 +523,7 @@ def display_experiment_set_score(experimentset, experiments_df):
     float_columns = df_filtered.select_dtypes(include=["float"]).columns
     st.dataframe(
         df_filtered.style.apply(highlight_min_max, axis=None).format("{:.2f}", subset=float_columns),
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
         column_config={"Id": st.column_config.TextColumn(width="small")},
     )
@@ -532,7 +532,7 @@ def display_experiment_set_score(experimentset, experiments_df):
     st.write(f"**Support:** the numbers of item on which the metrics is computed (total items = {size})")
     st.dataframe(
         df_support_filtered,
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
         column_config={"Id": st.column_config.TextColumn(width="small")},
     )
@@ -675,7 +675,7 @@ def report_ops_global(exp_set):
     report_df = pd.DataFrame(report_data)
     st.dataframe(
         report_df,
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
     )
 
