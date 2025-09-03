@@ -1,5 +1,6 @@
 import json
 from datetime import datetime
+from typing import Optional
 
 import pandas as pd
 import streamlit as st
@@ -21,28 +22,33 @@ def _toggle_preview_button(dataset_id: int, label: str = "👀 Show/Hide Data Pr
     return st.session_state.get(f"show_df_{dataset_id}", False)
 
 
-def _load_dataset_preview(dataset_id: int) -> pd.DataFrame | None:
+def _parse_dataset_to_df(df_str: str) -> Optional[pd.DataFrame]:
+    """Convert dataset JSON string into a DataFrame, or return None if invalid."""
+    if not df_str or df_str.strip() in ("{}", ""):
+        return None
+
+    try:
+        df_json = json.loads(df_str)
+        df = pd.DataFrame(df_json)
+        return df if not df.empty else None
+    except (json.JSONDecodeError, ValueError, TypeError):
+        return None
+
+
+def _load_dataset_preview(dataset_id: int) -> Optional[pd.DataFrame]:
+    """Load a dataset preview with Streamlit feedback messages."""
     with st.spinner("Loading dataset preview..."):
         data = _fetch_dataset(dataset_id)
-        if not data:
+        if data is None:
             st.error("Failed to fetch dataset")
             return None
 
-        df_str = data.get("df", "")
-        if not df_str or df_str.strip() in ("{}", ""):
-            st.info("No data available for preview")
+        df = _parse_dataset_to_df(data.get("df", ""))
+        if df is None:
+            st.info("No valid data available for preview")
             return None
 
-        try:
-            df_json = json.loads(df_str)
-            df = pd.DataFrame(df_json)
-            if df.empty:
-                st.error("Failed to load dataset or dataset is empty")
-                return None
-            return df
-        except Exception as e:
-            st.error(f"Error loading dataset: {e}")
-            return None
+        return df
 
 
 def _render_dataset_dataframe(df: pd.DataFrame, dataset_id: int):
@@ -68,7 +74,7 @@ def _render_dataset_dataframe(df: pd.DataFrame, dataset_id: int):
 
     st.dataframe(
         df.head(max_rows),
-        use_container_width=True,
+        width="stretch",
         height=min(400, max_rows * 35 + 100),
     )
 
@@ -82,12 +88,24 @@ def _render_dataset_dataframe(df: pd.DataFrame, dataset_id: int):
                 st.write(df.dtypes.to_frame("Type"))
 
 
+def _should_skip_dataset(dataset: dict) -> bool:
+    """Check if dataset should be skipped from display."""
+    return "output" in dataset.get("columns", [])
+
+
+def _get_dataset_columns(dataset: dict) -> list:
+    """Get dataset columns, preferring 'columns' over 'parquet_columns'."""
+    return dataset["columns"] or dataset["parquet_columns"]
+
+
 def main():
     st.title("Datasets")
 
     datasets = fetch("get", "/datasets")
     if not datasets:
         return st.warning("No datasets yet to display")
+
+    filtered_datasets = [dataset for dataset in datasets if not _should_skip_dataset(dataset)]
 
     # Main content
     main_content, right_menu = st.columns([8, 2])
@@ -97,12 +115,10 @@ def main():
             st.write("""Avalaible datasets
                      """)
 
-        for dataset in datasets:
-            if "output" in dataset["columns"]:
-                # @DEBUG: dataset to be removed soon (linked old experiments with the "upstream" dataset)
-                continue
-
+        for dataset in filtered_datasets:
             when = datetime.fromisoformat(dataset["created_at"]).strftime("%d %B %Y")
+            columns = _get_dataset_columns(dataset)
+
             with st.container():
                 st.markdown(
                     f"<div id='{dataset['name'].lower().replace(' ', '-')}'></div>",
