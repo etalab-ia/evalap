@@ -675,7 +675,7 @@ def report_ops_global(exp_set):
     report_df = pd.DataFrame(report_data)
     st.dataframe(
         report_df,
-        width="stretch",
+        use_container_width=True,
         hide_index=True,
     )
 
