@@ -74,7 +74,7 @@ def _render_dataset_dataframe(df: pd.DataFrame, dataset_id: int):
 
     st.dataframe(
         df.head(max_rows),
-        width="stretch",
+        use_container_width=True,
         height=min(400, max_rows * 35 + 100),
     )
 
