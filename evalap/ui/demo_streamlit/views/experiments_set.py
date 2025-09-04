@@ -6,16 +6,18 @@ from collections import defaultdict
 from copy import deepcopy
 from datetime import datetime
 from io import StringIO
+from urllib.parse import quote, unquote
 
 import numpy as np
 import pandas as pd
 import plotly.express as px
 import streamlit as st
+
 from template_manager import TemplateManager
 from utils import _format_model_params, _rename_model_variants, fetch
 from experimentset_utils import convert_experimentset_to_create
-
 import schemas
+
 
 #
 # Cached method for critical data fetching
@@ -350,6 +352,29 @@ def _format_experiments_score_df(experiments: list, df: pd.DataFrame) -> (bool, 
     return has_repeat, df
 
 
+def init_metrics_filter_from_url(available_metrics):
+    """Initialisation of metrics filter since URL"""
+    query_params = st.query_params
+
+    if "metrics" in query_params:
+        metrics_param = query_params["metrics"]
+        url_metrics = [unquote(metric.strip()) for metric in metrics_param.split(",")]
+        selected_metrics = [m for m in url_metrics if m in available_metrics]
+        return selected_metrics if selected_metrics else available_metrics
+    else:
+        return available_metrics
+
+
+def update_metrics_in_url(selected_metrics, available_metrics):
+    """Update URL link since metric filter"""
+    if set(selected_metrics) == set(available_metrics):
+        if "metrics" in st.query_params:
+            del st.query_params["metrics"]
+    else:
+        metrics_encoded = ",".join(quote(metric) for metric in selected_metrics)
+        st.query_params["metrics"] = metrics_encoded
+
+
 def display_experiment_set_score(experimentset, experiments_df):
     """Displays the scores for the set of experiments."""
     experiments = experimentset.get("experiments", [])
@@ -410,11 +435,20 @@ def display_experiment_set_score(experimentset, experiments_df):
     # Metric filter
     available_metrics = [col for col in df.columns if col not in ["model", "Id"]]
 
+    # Initialisation from URL
+    default_selected_metrics = init_metrics_filter_from_url(available_metrics)
+
     selected_metrics = st.multiselect(
         "Select metrics to display",
         options=available_metrics,
-        default=available_metrics,
+        default=default_selected_metrics,
+        key="metrics_filter",
     )
+
+    # Update URL
+    current_url_metrics = init_metrics_filter_from_url(available_metrics)
+    if set(selected_metrics) != set(current_url_metrics):
+        update_metrics_in_url(selected_metrics, available_metrics)
 
     # Style for the multiselect input
     st.markdown(
