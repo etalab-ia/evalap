@@ -508,6 +508,7 @@ def display_experiment_set_score(experimentset, experiments_df):
         return highlight_df
 
     # Show
+    # --
     col1, col2 = st.columns([6, 2])
     with col1:
         text = "**Score:** Averaged score on experiments metrics"
