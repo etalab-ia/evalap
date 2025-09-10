@@ -20,6 +20,13 @@ ROUTES = [
         "title": "Leaderboard",
         "description": "Best models ranking list (by products)",
         "icon": ":material/trophy:",
+    },       
+     {
+        "id": "prompt_analyze",
+        "path": "views/prompt_analyze.py",
+        "title": "Prompt analyze",
+        "description": "anlyze differents prompts for your product",
+        "icon": ":material/trophy:",
     },
     {
         "id": "experiments_set",
