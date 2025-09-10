@@ -769,35 +769,67 @@ def show_header(experimentset):
     with col3:
         with st.popover("📋 Copy code"):
             try:
+                exp_create = convert_experimentset_to_create(experimentset)
                 st.markdown(
                     "This code allows you to reproduce an experiment set.  \n"
                     "**Caution**: the code might be incomplete, review it carefully and uses it at your own risks"
                 )
-                copy_format = st.radio("Format:", ["Python", "cURL"], key=f"copy_format_{experimentset['id']}")
-                exp_create = convert_experimentset_to_create(experimentset)
 
-                # Generate code based on format
-                if copy_format == "Python":
-                    code = template_manager.render_python(**exp_create)
-                    lang = "python"
-                else:
-                    code = template_manager.render_curl(**exp_create)
-                    lang = "bash"
+                col1, col2 = st.columns([0.7, 0.3])
+                with col1:
+                    # Generate code based on format
+                    copy_format = st.radio("Format:", ["Python", "cURL"], key=f"copy_format_{experimentset['id']}")
+                    if copy_format == "Python":
+                        code = template_manager.render_python(**exp_create)
+                        lang = "python"
+                    else:
+                        code = template_manager.render_curl(**exp_create)
+                        lang = "bash"
 
-                st.code(code, language=lang)
-
-                # Copy button
-                if st.button("📋 Copy to clipboard", key=f"copy_btn_{experimentset['id']}"):
+                with col2:
+                    # Put the copy button in evidence
+                    # --
+                    # Create a copy button with embedded JavaScript
+                    copy_btn_key = f"copy_btn_{experimentset['id']}"
                     st.components.v1.html(
                         f"""
-                        <script>
-                        navigator.clipboard.writeText(`{code.replace("`", "\\`")}`)
-                            .then(() => parent.window.postMessage('copied', '*'));
-                        </script>
-                        """,
-                        height=0,
+                    <button
+                        id="{copy_btn_key}"
+                        onclick="copyToClipboard(this)"
+                        style="background-color:#4CAF50; color:white; border:none; padding:8px 16px; border-radius:8px; cursor:pointer; margin-top:2rem;">
+                        📋 Copy to clipboard
+                    </button>
+
+                    <script>
+                    function copyToClipboard(button) {{
+                        const originalText = button.innerHTML;
+                        const text = {json.dumps(code)};
+
+                        // Use the clipboard API to copy the text
+                        navigator.clipboard.writeText(text)
+                            .then(() => {{
+                                // Update button text with checkmark
+                                button.innerHTML = "✅ Copied!";
+
+                                // Restore original text after 3 seconds
+                                setTimeout(() => {{
+                                    button.innerHTML = originalText;
+                                }}, 3000);
+                            }})
+                            .catch(err => {{
+                                console.error('Failed to copy: ', err);
+                                button.innerHTML = "❌ Failed to copy";
+                                setTimeout(() => {{
+                                    button.innerHTML = originalText;
+                                }}, 3000);
+                            }});
+                    }}
+                    </script>
+                    """,
+                        height=100,
                     )
-                    st.success("✅ Copied to clipboard!")
+
+                st.code(code, language=lang)
 
             except Exception as e:
                 print("Failed: to render copy code template: %s" % str(e))
@@ -836,6 +868,18 @@ def main():
         st.session_state["expset_id"] = expid
         st.query_params.expset = expid
 
+        # Horizontal menu toolbar
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            if st.button(":arrow_left: Go back", key="go_back"):
+                st.session_state["expset_id"] = None
+                st.query_params.pop("expset")
+                st.rerun()
+
+        with col2:
+            if st.button("🔄 Refresh", key="refresh_experimentset"):
+                st.rerun()
+
         # Get the expset (or the orphan experiments)
         if expid.isdigit():
             experimentset = next((x for x in experiment_sets if x["id"] == int(expid)), None)
@@ -858,18 +902,6 @@ def main():
 
         if not experimentset.get("experiments"):
             return st.warning("No experiments yet to display")
-
-        # Horizontal menu toolbar
-        col1, col2 = st.columns([3, 1])
-        with col1:
-            if st.button(":arrow_left: Go back", key="go_back"):
-                st.session_state["expset_id"] = None
-                st.query_params.pop("expset")
-                st.rerun()
-
-        with col2:
-            if st.button("🔄 Refresh", key="refresh_experimentset"):
-                st.rerun()
 
         experiments_df = pd.DataFrame(
             [
