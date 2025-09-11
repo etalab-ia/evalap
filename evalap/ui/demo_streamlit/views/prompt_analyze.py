@@ -1,5 +1,4 @@
 import os
-import pandas as pd
 from datetime import datetime
 import streamlit as st
 from utils import fetch
@@ -7,8 +6,7 @@ from utils import fetch
 EVALAP_API_KEY = os.getenv("EVALAP_API_KEY")
 ALBERT_API_KEY = os.getenv("ALBERT_API_KEY")
 
-# default params
-DEFAULT_JUDGE_MODEL = "gpt-4o1"
+DEFAULT_JUDGE_MODEL = "gpt-4.1"
 DEFAULT_METRICS = [
     "judge_notator",
     "judge_precision",
@@ -48,59 +46,32 @@ def patch_experiment_set(expset_id, patch_data, headers):
 
 
 def model_config_section(session_key: str):
-    """Gestion des modèles : choix limité à albert-large et albert-small, suppression conditionnelle"""
-    if session_key not in st.session_state:
-        st.session_state[session_key] = [
-            {
-                "provider": "albert-api",
-                "model_name": "",
-                "temperature": DEFAULT_TEMPERATURE,
-                "provider_url": DEFAULT_PROVIDER_URL,
-                "api_key": DEFAULT_API_KEY,
-            }
-        ]
-    model_configs = st.session_state[session_key]
+    if session_key not in st.session_state or not isinstance(st.session_state[session_key], dict):
+        st.session_state[session_key] = {
+            "albert-large": False,
+            "albert-small": False,
+        }
+    model_selection = st.session_state[session_key]
 
-    def add_model():
-        model_configs.append(
-            {
-                "provider": "albert-api",
-                "model_name": "",
-                "temperature": DEFAULT_TEMPERATURE,
-                "provider_url": DEFAULT_PROVIDER_URL,
-                "api_key": DEFAULT_API_KEY,
-            }
+    st.markdown("Modèles")
+    cols = st.columns(8)
+    with cols[0]:
+        model_selection["albert-large"] = st.checkbox(
+            "albert-large",
+            value=model_selection["albert-large"],
+            key=f"{session_key}_albert_large",
+        )
+    with cols[1]:
+        model_selection["albert-small"] = st.checkbox(
+            "albert-small",
+            value=model_selection["albert-small"],
+            key=f"{session_key}_albert_small",
         )
 
-    def delete_model(i):
-        if 0 <= i < len(model_configs) and len(model_configs) > 1:
-            model_configs.pop(i)
-
-    for i, config in enumerate(model_configs):
-        cols = st.columns(2)
-        with cols[0]:
-            model_configs[i]["model_name"] = st.selectbox(
-                f"Modèle #{i + 1}",
-                options=["", "albert-large", "albert-small"],
-                index=["", "albert-large", "albert-small"].index(config.get("model_name", ""))
-                if config.get("model_name", "") in ["", "albert-large", "albert-small"]
-                else 0,
-                key=f"model_name_{session_key}_{i}",
-            )
-        with cols[1]:
-            if len(model_configs) >= 2:
-                st.write("")
-                st.write("")
-                if st.button("❌", key=f"delete_model_{session_key}_{i}"):
-                    delete_model(i)
-                    st.rerun()
-
-    st.button("➕ Ajouter un modèle", on_click=add_model, key=f"add_model_button_{session_key}")
-    return model_configs
+    return model_selection
 
 
 def prompt_section(session_key: str, prompt_label: str = "Prompt", height: int = 100):
-    """Gestion des prompts dynamiques (ajout, suppression), renvoie la liste"""
     if session_key not in st.session_state:
         st.session_state[session_key] = [""]
 
@@ -113,7 +84,6 @@ def prompt_section(session_key: str, prompt_label: str = "Prompt", height: int =
         if 0 <= i < len(prompts):
             prompts.pop(i)
 
-    # Affichage premier prompt
     if prompts:
         cols = st.columns([8, 1])
         with cols[0]:
@@ -123,7 +93,7 @@ def prompt_section(session_key: str, prompt_label: str = "Prompt", height: int =
         with cols[1]:
             if len(prompts) > 1 and st.button("❌", key=f"delete_{session_key}_0"):
                 delete_prompt(0)
-                st.rerun()
+                st.experimental_rerun()
 
     st.button(f"➕ Ajouter un {prompt_label.lower()}", on_click=add_prompt)
 
@@ -136,21 +106,23 @@ def prompt_section(session_key: str, prompt_label: str = "Prompt", height: int =
         with cols[1]:
             if st.button("❌", key=f"delete_{session_key}_{i}"):
                 delete_prompt(i)
-                st.rerun()
+                st.experimental_rerun()
 
     return prompts
 
 
 def creation_experimental_section():
     with st.expander("À propos de la création d'une expérimentation"):
-        st.markdown("""
+        st.markdown(
+            """
             Pour créer une expérimentation qui compare différents prompts sur votre cas d'usage, il vous faut plusieurs éléments :  
             - un nom de produit auquel associé les tests. 
             - le dataset de l'expérimentation (on ne peut en sélectionner qu'un)
             - les collections (si RAG)
-            - le modèle 
+            - le(s) modèle(s) 
             - le/les prompts à évaluer 
-        """)
+        """
+        )
 
     st.markdown("### Données d'expérimentation")
     st.caption("Disponible uniquement pour albert-large (pour le moment)")
@@ -171,11 +143,14 @@ def creation_experimental_section():
             key="main_collection_select",
         )
 
-    model_configs = model_config_section("model_configs")
+    model_selection = model_config_section("model_configs")
     prompts = prompt_section("prompts", "Prompt")
 
     st.divider()
     if st.button("Évaluer les prompts 🚀"):
+        if not product_name or dataset == "Sélectionner un dataset":
+            st.error("Merci de renseigner le nom du produit et de sélectionner un dataset valide.")
+            return
         expset_name = f"analyse_prompt_{product_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         common_params = {
             "dataset": dataset,
@@ -183,18 +158,24 @@ def creation_experimental_section():
             "judge_model": DEFAULT_JUDGE_MODEL,
         }
 
-        model_configs_for_exp = [
-            {
-                "name": cfg["model_name"],
-                "base_url": DEFAULT_PROVIDER_URL,
-                "api_key": DEFAULT_API_KEY,
-                "system_prompt": prompt.strip(),
-                "sampling_params": {"temperature": DEFAULT_TEMPERATURE},
-            }
-            for cfg in model_configs
-            for prompt in prompts
-            if cfg["model_name"] and prompt.strip()
-        ]
+        model_configs_for_exp = []
+        for model_name, selected in model_selection.items():
+            if selected:
+                for prompt in prompts:
+                    if prompt.strip():
+                        model_configs_for_exp.append(
+                            {
+                                "name": model_name,
+                                "base_url": DEFAULT_PROVIDER_URL,
+                                "api_key": DEFAULT_API_KEY,
+                                "system_prompt": prompt.strip(),
+                                "sampling_params": {"temperature": DEFAULT_TEMPERATURE},
+                            }
+                        )
+
+        if not model_configs_for_exp:
+            st.error("Veuillez sélectionner au moins un modèle et saisir au moins un prompt.")
+            return
 
         expset = {
             "name": expset_name,
@@ -220,13 +201,15 @@ def creation_experimental_section():
 
 def patch_experimental_section():
     with st.expander("À propos de l'ajout de prompts"):
-        st.markdown("""
+        st.markdown(
+            """
             Il vous faut :  
             - l'identifiant Id de l'expérimentation à enrichir  
             - le dataset de l'expérimentation (le même nom que celui associé à l'experiment set existant)
-            - le modèle à ajouter aux tests
+            - le(s) modèle(s) à ajouter aux tests
             - le prompt à ajouter aux tests
-        """)
+        """
+        )
     st.subheader("Ajouter des prompts à un experiment set existant (PATCH)")
 
     col1, col2 = st.columns(2)
@@ -239,24 +222,30 @@ def patch_experimental_section():
             key="patch_dataset_select",
         )
 
-    model_configs_patch = model_config_section("model_configs_patch")
+    model_selection_patch = model_config_section("model_configs_patch")
     prompts_patch = prompt_section("prompts_to_patch", "Prompt à patcher", height=80)
 
     st.divider()
 
     if st.button("Patch l'experiment set 🚀") and expset_id and patch_dataset and prompts_patch:
-        models_to_patch = [
-            {
-                "name": cfg["model_name"],
-                "base_url": DEFAULT_PROVIDER_URL,
-                "api_key": DEFAULT_API_KEY,
-                "system_prompt": prompt.strip(),
-                "sampling_params": {"temperature": DEFAULT_TEMPERATURE},
-            }
-            for cfg in model_configs_patch
-            for prompt in prompts_patch
-            if cfg["model_name"] and prompt.strip()
-        ]
+        models_to_patch = []
+        for model_name, selected in model_selection_patch.items():
+            if selected:
+                for prompt in prompts_patch:
+                    if prompt.strip():
+                        models_to_patch.append(
+                            {
+                                "name": model_name,
+                                "base_url": DEFAULT_PROVIDER_URL,
+                                "api_key": DEFAULT_API_KEY,
+                                "system_prompt": prompt.strip(),
+                                "sampling_params": {"temperature": DEFAULT_TEMPERATURE},
+                            }
+                        )
+
+        if not models_to_patch:
+            st.error("Veuillez sélectionner au moins un modèle et saisir au moins un prompt pour patcher.")
+            return
 
         metrics = ["judge_notator", "generation_time", "nb_tokens_prompt", "energy_consumption"]
 
@@ -288,14 +277,7 @@ def patch_experimental_section():
 
 
 def main():
-    st.sidebar.title("EvalAP")
-    st.sidebar.write("Mon tableau de bord (En construction)")
-    st.sidebar.button("➕ Nouveau produit (En construction)", disabled=True)
-    st.sidebar.button("➕ Nouveau dataset (En construction)", disabled=True)
-
     st.title("Expérimentations de prompt")
-    st.subheader("Tâches complexes")
-
     st.divider()
 
     tab1, tab2 = st.tabs(
