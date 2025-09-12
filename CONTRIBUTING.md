@@ -3,7 +3,6 @@
 The stack is based on Fastapi+pydantic+sqlachemy for the API in conjonction with ZeroMQ for the Runner.
 The project includes an UI/UX based on Streamlit [WIP].
 
-
 ```
 evalap/
 ├── justfile    --> just is a handy way to save and run project-specific commands. See https://just.systems
@@ -19,7 +18,7 @@ evalap/
 
 ## Environment
 
-The project needs the following API key to be set perform LLM based metrics: 
+The project needs the following API key to be set perform LLM based metrics:
 
 ```bash
 export OPENAI_API_KEY="You secret key"
@@ -29,40 +28,57 @@ All the project global settings and environmant variables are handled in `evalap
 
 The environement variables can also be defined in a `.env` file at the root of the project.
 
+## Python Requirements
 
-## Database initialization 
+Install python requirements with [uv](https://docs.astral.sh/uv/getting-started/installation/):
+
+```
+    uv sync --all-extras
+```
+
+or pip if you prefer:
+
+```
+    pip install .
+```
+
+## Database initialization
 
 1. Launch the development services:
+
 ```
     docker-compose -f compose.dev.yml up postgres
 ```
 
 2. Create the first migration script:
+
 ```
     alembic -c evalap/api/alembic.ini revision --autogenerate -m "Table Initialization"
 ```
 
 3. Initialize/Update the database schema:
+
 ```
     alembic -c evalap/api/alembic.ini upgrade head
 ```
+
 4. If you modify the schema :
+
 ```
     alembic -c evalap/api/alembic.ini revision --autogenerate -m "text explication"
-    alembic -c evalap/api/alembic.ini upgrade head  
+    alembic -c evalap/api/alembic.ini upgrade head
 ```
 
 ## Run API
 
-1. Install the requirements (in .venv if you prefer)
-```
-    pip install .
-```
-2. Launch the API:
+1. Launch the API:
+
 ```
     uvicorn evalap.api.main:app --reload
 ```
-3. Launch the runner:
+
+2. Launch the runner:
+
 ```
     PYTHONPATH="." python -m evalap.runners
     # To change the default loggin level you can do:
@@ -73,25 +89,21 @@ The environement variables can also be defined in a `.env` file at the root of t
 
 Access the API documentation at: http://localhost:8000/redoc (or http://localhost:8000/docs if you prefer the legacy version).
 
-
 ## Streamlit Application
 
-To run the streamlit frontend, run : 
+To run the streamlit frontend, run :
 
     streamlit run evalap/ui/demo_streamlit/app.py --server.runOnSave true
-
 
 ## Jupyter Tutorial
 
 The `notebook/` directory contains examples of API usage.
 
-
 ## Adding new metrics
 
 Each single metric should be defined in a file in `evalap/api/metrics/{metric_name}.py`.
 The file should be self-contained, i.e contains the eventual prompt and settings related to the metric.
-The metric should be decorated as followinf example to be registed as a known metric of EVALAP: 
-
+The metric should be decorated as followinf example to be registed as a known metric of EVALAP:
 
 ```python
 from . import metric_registry
@@ -111,22 +123,20 @@ def metric_name_metric(output:str, output_true:str, **kwargs) -> float:
     #return score, observation
 ```
 
-
 ## Unit Tests
 
 Tests can be found in api/tests.
-To run unit tests, use : 
+To run unit tests, use :
 
     pytest
-
 
 ## Install python package
 
     python -m pip install build twine
     twine upload dist/*
 
-## use ruff 
+## use ruff
+
 ```
  ruff format --config=pyproject.toml file_path
 ```
-
