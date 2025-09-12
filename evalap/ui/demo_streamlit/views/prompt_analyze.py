@@ -3,8 +3,10 @@ from datetime import datetime
 import streamlit as st
 from utils import fetch
 
+
 EVALAP_API_KEY = os.getenv("EVALAP_API_KEY")
 ALBERT_API_KEY = os.getenv("ALBERT_API_KEY")
+
 
 DEFAULT_JUDGE_MODEL = "gpt-4.1"
 DEFAULT_METRICS = [
@@ -102,7 +104,7 @@ def prompt_section(session_key: str, prompt_label: str = "Prompt", height: int =
         with cols[1]:
             if len(prompts) > 1 and st.button("❌", key=f"delete_{session_key}_0"):
                 delete_prompt(0)
-                st.experimental_rerun()
+                st.rerun()
 
     st.button(f"➕ Ajouter un {prompt_label.lower()}", on_click=add_prompt)
 
@@ -115,184 +117,180 @@ def prompt_section(session_key: str, prompt_label: str = "Prompt", height: int =
         with cols[1]:
             if st.button("❌", key=f"delete_{session_key}_{i}"):
                 delete_prompt(i)
-                st.experimental_rerun()
+                st.rerun()
 
     return prompts
 
 
-def creation_experimental_section():
-    with st.expander("À propos de la création d'une expérimentation"):
-        st.markdown(
-            """
-            Pour créer une expérimentation qui compare différents prompts sur votre cas d'usage, il vous faut plusieurs éléments :  
-            - un nom de produit auquel associé les tests. 
-            - le dataset de l'expérimentation (on ne peut en sélectionner qu'un)
-            - les collections (si RAG)
-            - le(s) modèle(s) 
-            - le/les prompts à évaluer 
-        """
-        )
+def experimental_section(
+    mode: str,
+    session_key_models: str,
+    session_key_prompts: str,
+):
+    assert mode in ("create", "patch")
+
+    with st.expander(f"À propos de {'la création' if mode == 'create' else "l'ajout de prompts"}"):
+        if mode == "create":
+            st.markdown(
+                """
+                Pour créer une expérimentation qui compare différents prompts sur votre cas d'usage, il vous faut plusieurs éléments :  
+                - un nom de produit auquel associer les tests. 
+                - le dataset de l'expérimentation (on ne peut en sélectionner qu'un)
+                - les collections (si RAG, sélection multiple possible)
+                - le(s) modèle(s) 
+                - le/les prompts à évaluer 
+                """
+            )
+        else:
+            st.markdown(
+                """
+                Il vous faut :  
+                - l'identifiant Id de l'expérimentation à enrichir  
+                - le dataset de l'expérimentation (le même nom que celui associé à l'experiment set existant)
+                - le(s) modèle(s) à ajouter aux tests
+                - le(s) prompt(s) à ajouter aux tests
+                - les collections (si RAG, sélection multiple possible)
+                """
+            )
 
     st.markdown("### Données d'expérimentation")
     styled_markdown("Informations générales")
 
-    col1, col2, col3 = st.columns(3)
+    cols = st.columns(3)
 
-    with col1:
-        product_name = st.text_input("Nom du produit", placeholder="ex: Assistant IA", key="main_product_name")
-    with col2:
+    if mode == "create":
+        with cols[0]:
+            product_name = st.text_input(
+                "Nom du produit", placeholder="ex: Assistant IA", key="main_product_name"
+            )
+    else:
+        with cols[0]:
+            expset_id = st.text_input("ID de l'experiment set à enrichir", key="patch_expset_id")
+
+    with cols[1]:
         datasets = list_datasets()
         dataset = st.selectbox(
-            "Dataset d'évaluation", ["Sélectionner un dataset"] + datasets, key="main_dataset_select"
-        )
-    with col3:
-        collection = st.selectbox(
-            "Collections publiques (En construction)",
-            ["Sélectionner collection", "Collection Publique 1", "Collection Publique 2"],
-            key="main_collection_select",
+            "Dataset d'évaluation",
+            ["Sélectionner un dataset"] + datasets,
+            key="main_dataset_select" if mode == "create" else "patch_dataset_select",
         )
 
-    model_selection = model_config_section("model_configs")
-    prompts = prompt_section("prompts", "Prompt")
+    with cols[2]:
+        collections = st.multiselect(
+            "Collections publiques (En construction)",
+            options=[783, 784, 785],
+            default=[],
+            key="main_collection_select" if mode == "create" else "patch_collection_select",
+        )
+
+    model_selection = model_config_section(session_key_models)
+    prompts = prompt_section(
+        session_key_prompts, "Prompt à tester" if mode == "create" else "Prompt à ajouter"
+    )
 
     st.divider()
-    if st.button("Évaluer les prompts 🚀"):
-        if not product_name or dataset == "Sélectionner un dataset":
+    button_label = (
+        "Évaluer les prompts 🚀" if mode == "create" else "Ajouter ces prompts à l'experimentation 🚀"
+    )
+    button_clicked = st.button(button_label)
+
+    if button_clicked:
+        if mode == "create" and (not product_name or dataset == "Sélectionner un dataset"):
             st.error("Merci de renseigner le nom du produit et de sélectionner un dataset valide.")
             return
-        expset_name = f"analyse_prompt_{product_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        if mode == "patch":
+            if not expset_id or expset_id.strip() == "":
+                st.error("Merci de renseigner l'ID de l'experiment set à enrichir.")
+                return
+            if not dataset or dataset == "Sélectionner un dataset":
+                st.error("Merci de sélectionner un dataset valide.")
+                return
+        if not prompts or all(not p.strip() for p in prompts):
+            st.error("Veuillez saisir au moins un prompt.")
+            return
+        if not any(selected for selected in model_selection.values()):
+            st.error("Veuillez sélectionner au moins un modèle.")
+            return
+
+        expset_name = None
+        if mode == "create":
+            expset_name = f"analyse_prompt_{product_name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+
         common_params = {
             "dataset": dataset,
             "metrics": DEFAULT_METRICS,
             "judge_model": DEFAULT_JUDGE_MODEL,
         }
 
-        model_configs_for_exp = []
+        model_configs = []
         for model_name, selected in model_selection.items():
             if selected:
                 for prompt in prompts:
-                    if prompt.strip():
-                        model_configs_for_exp.append(
-                            {
-                                "name": model_name,
-                                "base_url": DEFAULT_PROVIDER_URL,
-                                "api_key": DEFAULT_API_KEY,
-                                "system_prompt": prompt.strip(),
-                                "sampling_params": {"temperature": DEFAULT_TEMPERATURE},
+                    prompt = prompt.strip()
+                    if prompt:
+                        model_config = {
+                            "name": model_name,
+                            "base_url": DEFAULT_PROVIDER_URL,
+                            "api_key": DEFAULT_API_KEY,
+                            "system_prompt": prompt,
+                            "sampling_params": {"temperature": DEFAULT_TEMPERATURE},
+                        }
+                        if collections:
+                            model_config["extra_params"] = {
+                                "search": True,
+                                "search_args": {
+                                    "method": "semantic",
+                                    "collections": collections,
+                                    "k": 10,
+                                },
                             }
-                        )
+                        model_configs.append(model_config)
 
-        if not model_configs_for_exp:
-            st.error("Veuillez sélectionner au moins un modèle et saisir au moins un prompt.")
+        if not model_configs:
+            st.error("Aucun modèle ou prompt valide.")
             return
-
-        expset = {
-            "name": expset_name,
-            "readme": "Baseline prompt",
-            "cv": {
-                "common_params": common_params,
-                "grid_params": {"model": model_configs_for_exp},
-                "repeat": 1,
-            },
-        }
 
         headers = {"Authorization": f"Bearer {EVALAP_API_KEY}"}
-        result = post_experiment_set(expset, headers)
 
-        if result and "id" in result:
-            expset_id = result["id"]
-            st.success(f"Experiment set créé: {result['name']} (ID: {expset_id})")
-            dashboard_url = f"/experiments_set?expset={expset_id}"
-            st.markdown(f"[🔗 Voir les résultats détaillés dans le dashboard]({dashboard_url})")
-        else:
-            st.error("Erreur lors de la création de l'experiment set")
-
-
-def patch_experimental_section():
-    with st.expander("À propos de l'ajout de prompts"):
-        st.markdown(
-            """
-            Il vous faut :  
-            - l'identifiant Id de l'expérimentation à enrichir  
-            - le dataset de l'expérimentation (le même nom que celui associé à l'experiment set existant)
-            - le(s) modèle(s) à ajouter aux tests
-            - le prompt à ajouter aux tests
-        """
-        )
-    st.subheader("Ajouter des prompts à une experimentation existante")
-    styled_markdown("Informations sur l'expérimentation")
-
-    col1, col2 = st.columns(2)
-    with col1:
-        expset_id = st.text_input("ID de l'experiment set à enrichir", key="patch_expset_id")
-    with col2:
-        patch_dataset = st.selectbox(
-            "Dataset d'évaluation à utiliser",
-            ["Sélectionner un dataset"] + list_datasets(),
-            key="patch_dataset_select",
-        )
-
-    model_selection_patch = model_config_section("model_configs_patch")
-    prompts_patch = prompt_section("prompts_to_patch", "Prompt à ajouter", height=80)
-
-    st.divider()
-
-    if (
-        st.button("Ajouter ces prompts à l'experimentation 🚀")
-        and expset_id
-        and patch_dataset
-        and prompts_patch
-    ):
-        models_to_patch = []
-        for model_name, selected in model_selection_patch.items():
-            if selected:
-                for prompt in prompts_patch:
-                    if prompt.strip():
-                        models_to_patch.append(
-                            {
-                                "name": model_name,
-                                "base_url": DEFAULT_PROVIDER_URL,
-                                "api_key": DEFAULT_API_KEY,
-                                "system_prompt": prompt.strip(),
-                                "sampling_params": {"temperature": DEFAULT_TEMPERATURE},
-                            }
-                        )
-
-        if not models_to_patch:
-            st.error("Veuillez sélectionner au moins un modèle et saisir au moins un prompt pour patcher.")
-            return
-
-        new_model = {"model": models_to_patch}
-
-        common_params = {
-            "dataset": patch_dataset,
-            "metrics": DEFAULT_METRICS,
-            "judge_model": DEFAULT_JUDGE_MODEL,
-        }
-
-        patch_data = {
-            "cv": {
-                "common_params": common_params,
-                "grid_params": new_model,
-                "repeat": 1,
+        if mode == "create":
+            expset = {
+                "name": expset_name,
+                "readme": "Baseline prompt",
+                "cv": {
+                    "common_params": common_params,
+                    "grid_params": {"model": model_configs},
+                    "repeat": 1,
+                },
             }
-        }
-
-        headers = {"Authorization": f"Bearer {EVALAP_API_KEY}"}
-        result = patch_experiment_set(expset_id, patch_data, headers)
-
-        if result:
-            st.success(
-                f"Ajout avec succès dans l'expérience ID {expset_id} de {len(models_to_patch)} nouveau(x) modèle(s)/prompt(s)"
-            )
+            result = post_experiment_set(expset, headers)
+            if result and "id" in result:
+                st.success(f"Experiment set créé: {result['name']} (ID: {result['id']})")
+                dashboard_url = f"/experiments_set?expset={result['id']}"
+                st.markdown(f"[🔗 Voir les résultats détaillés dans le dashboard]({dashboard_url})")
+            else:
+                st.error("Erreur lors de la création de l'experiment set")
         else:
-            st.error("Patch impossible.")
+            patch_data = {
+                "cv": {
+                    "common_params": common_params,
+                    "grid_params": {"model": model_configs},
+                    "repeat": 1,
+                }
+            }
+            result = patch_experiment_set(expset_id, patch_data, headers)
+            if result:
+                st.success(
+                    f"Ajout avec succès dans l'expérience ID {expset_id} de {len(model_configs)} nouveau(x) modèle(s)/prompt(s)"
+                )
+            else:
+                st.error("Patch impossible.")
 
 
 def main():
     st.title("Expérimentations de prompt")
     st.write(
-        "Vous pouvez ici experimenter des prompts sur votre cas d'usage, en utilisant les modèles albert-large et/ou albert_small proposés par **Albert API**. "
+        "Vous pouvez ici expérimenter des prompts sur votre cas d'usage, "
+        "en utilisant les modèles albert-large et/ou albert-small proposés par **Albert API**."
     )
     st.divider()
 
@@ -301,10 +299,12 @@ def main():
     )
 
     with tab1:
-        creation_experimental_section()
+        experimental_section(mode="create", session_key_models="model_configs", session_key_prompts="prompts")
 
     with tab2:
-        patch_experimental_section()
+        experimental_section(
+            mode="patch", session_key_models="model_configs_patch", session_key_prompts="prompts_to_patch"
+        )
 
 
 main()
