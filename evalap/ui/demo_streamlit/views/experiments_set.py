@@ -778,7 +778,9 @@ def show_header(experimentset):
                 col1, col2 = st.columns([0.7, 0.3])
                 with col1:
                     # Generate code based on format
-                    copy_format = st.radio("Format:", ["Python", "cURL"], key=f"copy_format_{experimentset['id']}")
+                    copy_format = st.radio(
+                        "Format:", ["Python", "cURL"], key=f"copy_format_{experimentset['id']}"
+                    )
                     if copy_format == "Python":
                         code = template_manager.render_python(**exp_create)
                         lang = "python"
@@ -883,10 +885,11 @@ def main():
         # Get the expset (or the orphan experiments)
         if expid.isdigit():
             experimentset = next((x for x in experiment_sets if x["id"] == int(expid)), None)
+            force_refresh = experimentset is None
             experimentset = _fetch_experimentset(
                 expid,
                 experimentset,
-                refresh=st.session_state.get("refresh_experimentset"),
+                refresh=force_refresh or st.session_state.get("refresh_experimentset"),
             )
         elif expid == "orphan":
             experimentset = {
