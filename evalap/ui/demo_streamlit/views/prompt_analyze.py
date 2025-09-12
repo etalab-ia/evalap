@@ -21,6 +21,13 @@ DEFAULT_PROVIDER_URL = "https://albert.api.etalab.gouv.fr/v1"
 DEFAULT_API_KEY = ALBERT_API_KEY
 
 
+def styled_markdown(text):
+    st.markdown(
+        f"<span style='color: #000091; font-size: 1.0em; font-weight: bold;'>{text}</span>",
+        unsafe_allow_html=True,
+    )
+
+
 def _should_skip_dataset(dataset: dict) -> bool:
     return "output" in dataset.get("columns", [])
 
@@ -53,7 +60,7 @@ def model_config_section(session_key: str):
         }
     model_selection = st.session_state[session_key]
 
-    st.markdown("Modèles")
+    styled_markdown("Modèles Albert API")
     cols = st.columns(8)
     with cols[0]:
         model_selection["albert-large"] = st.checkbox(
@@ -72,6 +79,8 @@ def model_config_section(session_key: str):
 
 
 def prompt_section(session_key: str, prompt_label: str = "Prompt", height: int = 100):
+    styled_markdown("Prompts à tester")
+
     if session_key not in st.session_state:
         st.session_state[session_key] = [""]
 
@@ -125,7 +134,7 @@ def creation_experimental_section():
         )
 
     st.markdown("### Données d'expérimentation")
-    st.caption("Disponible uniquement pour albert-large (pour le moment)")
+    styled_markdown("Informations générales")
 
     col1, col2, col3 = st.columns(3)
 
@@ -210,14 +219,15 @@ def patch_experimental_section():
             - le prompt à ajouter aux tests
         """
         )
-    st.subheader("Ajouter des prompts à un experiment set existant (PATCH)")
+    st.subheader("Ajouter des prompts à une experimentation existante")
+    styled_markdown("Informations sur l'expérimentation")
 
     col1, col2 = st.columns(2)
     with col1:
         expset_id = st.text_input("ID de l'experiment set à enrichir", key="patch_expset_id")
     with col2:
         patch_dataset = st.selectbox(
-            "Dataset d'évaluation à utiliser (PATCH)",
+            "Dataset d'évaluation à utiliser",
             ["Sélectionner un dataset"] + list_datasets(),
             key="patch_dataset_select",
         )
@@ -227,7 +237,12 @@ def patch_experimental_section():
 
     st.divider()
 
-    if st.button("Patch l'experiment set 🚀") and expset_id and patch_dataset and prompts_patch:
+    if (
+        st.button("Ajouter ces prompts à l'experimentation 🚀")
+        and expset_id
+        and patch_dataset
+        and prompts_patch
+    ):
         models_to_patch = []
         for model_name, selected in model_selection_patch.items():
             if selected:
@@ -247,13 +262,11 @@ def patch_experimental_section():
             st.error("Veuillez sélectionner au moins un modèle et saisir au moins un prompt pour patcher.")
             return
 
-        metrics = ["judge_notator", "generation_time", "nb_tokens_prompt", "energy_consumption"]
-
         new_model = {"model": models_to_patch}
 
         common_params = {
             "dataset": patch_dataset,
-            "metrics": metrics,
+            "metrics": DEFAULT_METRICS,
             "judge_model": DEFAULT_JUDGE_MODEL,
         }
 
@@ -278,6 +291,9 @@ def patch_experimental_section():
 
 def main():
     st.title("Expérimentations de prompt")
+    st.write(
+        "Vous pouvez ici experimenter des prompts sur votre cas d'usage, en utilisant les modèles albert-large et/ou albert_small proposés par **Albert API**. "
+    )
     st.divider()
 
     tab1, tab2 = st.tabs(
