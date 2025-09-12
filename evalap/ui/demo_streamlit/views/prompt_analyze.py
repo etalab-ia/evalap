@@ -233,7 +233,7 @@ def patch_experimental_section():
         )
 
     model_selection_patch = model_config_section("model_configs_patch")
-    prompts_patch = prompt_section("prompts_to_patch", "Prompt à patcher", height=80)
+    prompts_patch = prompt_section("prompts_to_patch", "Prompt à ajouter", height=80)
 
     st.divider()
 
