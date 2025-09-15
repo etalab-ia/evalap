@@ -103,7 +103,7 @@ def run_expe(args):
         resp = response.json()
 
     if "id" in resp:
-        expset_id = resp["id"]
+        #expset_id = resp["id"]
         print(f"Created expset: {resp['name']} ({resp['id']})")
     else:
         print(resp)

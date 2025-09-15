@@ -21,7 +21,7 @@ def ocr_json_precision_metric(output, output_true, **kwargs):
         blocks = json.loads(output)
         # assume json is a list of "visual) blocks that, between other, contains the 'text' attribute.
         output = "\n\n".join((x.get("text") or "") for x in blocks)
-    except:
+    except Exception:
         pass
     score = stringfuzz.ratio(output, output_true)
     score = float(score)
