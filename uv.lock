@@ -582,12 +582,12 @@ dependencies = [
 test = [
     { name = "pytest" },
     { name = "pytest-asyncio" },
-    { name = "pytest-cov" },
 ]
 
 [package.dev-dependencies]
 dev = [
     { name = "pre-commit" },
+    { name = "pytest-cov" },
     { name = "ruff" },
 ]
 
@@ -609,7 +609,6 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.11.7,<3.0.0" },
     { name = "pytest", marker = "extra == 'test'", specifier = "==8.3.3" },
     { name = "pytest-asyncio", marker = "extra == 'test'", specifier = "==0.24.0" },
-    { name = "pytest-cov", marker = "extra == 'test'", specifier = ">=7.0.0" },
     { name = "python-dotenv", specifier = ">=1.1.1,<2.0.0" },
     { name = "pyzmq", specifier = "~=26.2.0" },
     { name = "ragas", specifier = "~=0.2.14" },
@@ -626,6 +625,7 @@ provides-extras = ["test"]
 [package.metadata.requires-dev]
 dev = [
     { name = "pre-commit", specifier = ">=4.3.0" },
+    { name = "pytest-cov", specifier = ">=7.0.0" },
     { name = "ruff", specifier = ">=0.13.0" },
 ]
 
