@@ -241,11 +241,11 @@ def process_leaderboard_data(
     df = df.dropna(subset=[score_column])
 
     # Separate repeat and non-repeat experiments
-    df_repeat_false = df[df["repeat"] == False]
+    df_repeat_false = df[not df["repeat"]]
     df_repeat_false[f"{score_column}_mean"] = df_repeat_false[score_column]
     df_repeat_false["count"] = 1
 
-    df_repeat_true = df[df["repeat"] == True]
+    df_repeat_true = df[df["repeat"]]
 
     # Aggregate repeated experiments
     if not df_repeat_true.empty:

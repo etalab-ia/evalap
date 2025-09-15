@@ -261,7 +261,7 @@ def _find_default_sort_metric(columns):
 def _extract_mean(value):
     try:
         return float(value.split("±")[0].strip())
-    except:
+    except Exception:
         return value  # Return original value if not in expected format
 
 
@@ -309,7 +309,7 @@ def _check_repeat_mode(experiments: list) -> bool:
 
 def _format_experiments_score_df(experiments: list, df: pd.DataFrame) -> (bool, pd.DataFrame):
     experiment_ids = [expe["id"] for expe in experiments]
-    experiment_names = [expe["name"] for expe in experiments]
+    #experiment_names = [expe["name"] for expe in experiments]
     is_repeat_mode = _check_repeat_mode(experiments)
     result = None
 
@@ -948,7 +948,7 @@ def main():
                 "func": display_ops_analysis,
             },
         }
-        tab_reverse = {d["key"]: k for k, d in tab_index.items()}
+        # tab_reverse = {d["key"]: k for k, d in tab_index.items()}
         # @TODO: how to catch the tab click in order to set the current url query to tab key ?
 
         tab1, tab2, tab3, tab4 = st.tabs(

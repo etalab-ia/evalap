@@ -160,7 +160,7 @@ def _find_default_sort_metric(columns):
 def _extract_mean(value):
     try:
         return float(value.split("±")[0].strip())
-    except:
+    except Exception:
         return value  # Return original value if not in expected format
 
 
