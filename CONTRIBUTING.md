@@ -18,15 +18,15 @@ evalap/
 
 ## Environment
 
-The project needs the following API key to be set perform LLM based metrics:
+At a minimum, the project needs the following API key to be set perform LLM based metrics:
 
 ```bash
 export OPENAI_API_KEY="You secret key"
 ```
 
-All the project global settings and environmant variables are handled in `evalap/api/config.py`.
-
 The environement variables can also be defined in a `.env` file at the root of the project. See the `.env.example` file for an example.
+
+All the project global settings and environmant variables are handled in `evalap/api/config.py`.
 
 ## System Requirements
 
