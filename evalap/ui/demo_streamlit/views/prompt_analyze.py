@@ -1,13 +1,13 @@
 import os
 from datetime import datetime
 import streamlit as st
+import requests
 from utils import fetch
-
 
 EVALAP_API_KEY = os.getenv("EVALAP_API_KEY")
 ALBERT_API_KEY = os.getenv("ALBERT_API_KEY")
 
-
+# config
 DEFAULT_JUDGE_MODEL = "gpt-4.1"
 DEFAULT_METRICS = [
     "judge_notator",
@@ -21,6 +21,26 @@ DEFAULT_METRICS = [
 DEFAULT_TEMPERATURE = 0.2
 DEFAULT_PROVIDER_URL = "https://albert.api.etalab.gouv.fr/v1"
 DEFAULT_API_KEY = ALBERT_API_KEY
+DEFAULT_METHOD_COLLECTION = "semantic"
+
+
+def get_public_collections(api_key):
+    url = f"{DEFAULT_PROVIDER_URL}/collections"
+    headers = {
+        "accept": "application/json",
+        "Authorization": f"Bearer {DEFAULT_API_KEY}",
+    }
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        data = response.json()
+        return [
+            {"id": collection["id"], "name": collection["name"]}
+            for collection in data["data"]
+            if collection.get("visibility") == "public"
+        ]
+    else:
+        st.error(f"Erreur récupération collections publiques : {response.status_code}")
+        return []
 
 
 def styled_markdown(text):
@@ -104,7 +124,7 @@ def prompt_section(session_key: str, prompt_label: str = "Prompt", height: int =
         with cols[1]:
             if len(prompts) > 1 and st.button("❌", key=f"delete_{session_key}_0"):
                 delete_prompt(0)
-                st.rerun()
+                st.experimental_rerun()
 
     st.button(f"➕ Ajouter un {prompt_label.lower()}", on_click=add_prompt)
 
@@ -117,7 +137,7 @@ def prompt_section(session_key: str, prompt_label: str = "Prompt", height: int =
         with cols[1]:
             if st.button("❌", key=f"delete_{session_key}_{i}"):
                 delete_prompt(i)
-                st.rerun()
+                st.experimental_rerun()
 
     return prompts
 
@@ -129,7 +149,8 @@ def experimental_section(
 ):
     assert mode in ("create", "patch")
 
-    with st.expander(f"À propos de {'la création' if mode == 'create' else "l'ajout de prompts"}"):
+    expander_label = "la création" if mode == "create" else "l'ajout de prompts"
+    with st.expander(f"À propos de {expander_label}"):
         if mode == "create":
             st.markdown(
                 """
@@ -175,13 +196,20 @@ def experimental_section(
             key="main_dataset_select" if mode == "create" else "patch_dataset_select",
         )
 
+    # Public Collection name from ALbert API
+    public_collections = get_public_collections(DEFAULT_API_KEY)
+    collection_names = [col["name"] for col in public_collections]
+
     with cols[2]:
-        collections = st.multiselect(
-            "Collections publiques (En construction)",
-            options=[783, 784, 785],
-            default=[],
+        collections_selected_names = st.multiselect(
+            "Collections publiques",
+            options=collection_names,
             key="main_collection_select" if mode == "create" else "patch_collection_select",
         )
+
+    collections_selected_ids = [
+        col["id"] for col in public_collections if col["name"] in collections_selected_names
+    ]
 
     model_selection = model_config_section(session_key_models)
     prompts = prompt_section(
@@ -235,12 +263,12 @@ def experimental_section(
                             "system_prompt": prompt,
                             "sampling_params": {"temperature": DEFAULT_TEMPERATURE},
                         }
-                        if collections:
+                        if collections_selected_ids:
                             model_config["extra_params"] = {
                                 "search": True,
                                 "search_args": {
-                                    "method": "semantic",
-                                    "collections": collections,
+                                    "method": DEFAULT_METHOD_COLLECTION,
+                                    "collections": collections_selected_ids,
                                     "k": 10,
                                 },
                             }
