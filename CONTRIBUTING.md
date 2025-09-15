@@ -50,19 +50,13 @@ or pip if you prefer:
     docker-compose -f compose.dev.yml up postgres
 ```
 
-2. Create the first migration script:
-
-```
-    alembic -c evalap/api/alembic.ini revision --autogenerate -m "Table Initialization"
-```
-
-3. Initialize/Update the database schema:
+2. Initialize/Update the database schema:
 
 ```
     alembic -c evalap/api/alembic.ini upgrade head
 ```
 
-4. If you modify the schema :
+3. If you modify the schema :
 
 ```
     alembic -c evalap/api/alembic.ini revision --autogenerate -m "text explication"
