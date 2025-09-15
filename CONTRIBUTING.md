@@ -28,6 +28,10 @@ All the project global settings and environmant variables are handled in `evalap
 
 The environement variables can also be defined in a `.env` file at the root of the project.
 
+## System Requirements
+
+Install [just](https://just.systems) to run project-specific commands. You will also need to install [jq](https://stedolan.github.io/jq/download/) to parse JSON responses.
+
 ## Python Requirements
 
 Install python requirements with [uv](https://docs.astral.sh/uv/getting-started/installation/):

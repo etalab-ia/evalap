@@ -1,4 +1,5 @@
 set quiet
+set dotenv-load
 
 work_dir := `pwd`
 
@@ -69,7 +70,7 @@ chat-completion model="mistralai/Mistral-Small-3.2-24B-Instruct-2506" provider="
           {"role": "system", "content": "Answer dramatically and with emojis."},
           {"role": "user", "content": "Combien de fois 'p' dans développer ? Combien font 2*10+50-20 ?"}
         ]
-      }' 
+      }'
 
 chat-completion-cortex:
   #!/usr/bin/env bash
