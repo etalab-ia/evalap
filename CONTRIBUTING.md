@@ -26,7 +26,7 @@ export OPENAI_API_KEY="You secret key"
 
 All the project global settings and environmant variables are handled in `evalap/api/config.py`.
 
-The environement variables can also be defined in a `.env` file at the root of the project.
+The environement variables can also be defined in a `.env` file at the root of the project. See the `.env.example` file for an example.
 
 ## System Requirements
 
