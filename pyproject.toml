@@ -87,4 +87,9 @@ exclude = ["alembic/versions/"]
 known-third-party = ["alembic"]
 known-first-party = ["api", "config", "tests", "ui"]
 
+[dependency-groups]
+dev = [
+    "ruff>=0.13.0",
+]
+
 
