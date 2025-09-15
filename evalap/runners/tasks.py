@@ -14,7 +14,7 @@ from evalap.api.metrics import metric_registry, get_judge_model
 from evalap.clients import MCPBridgeClient, multi_step_generate, split_think_answer
 from evalap.logger import logger
 from evalap.runners import MessageType, dispatch_tasks
-from evalap.utils import Timer, get_parquet_row_by_index, image_to_base64, run_with_timeout
+from evalap.utils import Timer, get_parquet_row_by_index, image_to_base64
 from evalap.utils_eco import impact_carbon
 
 

@@ -1,7 +1,5 @@
-import threading
 
-from fastapi import APIRouter, FastAPI
-from fastapi.responses import RedirectResponse
+from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 
 from evalap.api.config import (

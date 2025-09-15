@@ -4,12 +4,12 @@ from typing import Generator
 import numpy as np
 import pandas as pd
 import pyarrow.parquet as pq
-from sqlalchemy import and_, column, desc, func, select
+from sqlalchemy import and_, desc, func, select
 from sqlalchemy.orm import Session, joinedload, aliased
 
 import evalap.api.models as models
 import evalap.api.schemas as schemas
-from evalap.api.errors import CustomIntegrityError, SchemaError
+from evalap.api.errors import SchemaError
 from evalap.api.metrics import Metric, metric_registry
 from evalap.api.models import create_object_from_dict
 from evalap.utils import get_parquet_row_by_index

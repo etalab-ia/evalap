@@ -1,8 +1,7 @@
 import json
 from rapidfuzz import fuzz as stringfuzz
 
-from evalap.clients import LlmClient, split_think_answer
-from evalap.utils import render_jinja, extract_code
+from evalap.utils import extract_code
 
 from . import metric_registry
 

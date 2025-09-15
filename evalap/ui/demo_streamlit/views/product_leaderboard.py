@@ -1,11 +1,6 @@
-from itertools import groupby
-from operator import itemgetter
 from pathlib import Path
-import json
 import re
-from collections import defaultdict
-from copy import deepcopy
-from typing import List, Dict, Optional, Tuple, Any
+from typing import List, Dict, Optional, Any
 
 import numpy as np
 import pandas as pd
@@ -31,10 +26,10 @@ def load_product_config() -> dict:
         if not config:
             st.error(f"⚠️ The configuration file at `{config_path}` is empty.")
             return {"products": {}}
-    except yaml.YAMLError as err:
+    except yaml.YAMLError:
         st.error(f"❌  Syntax error in YAML (file : `{config_path}`):\n\n``````")
         return {"products": {}}
-    except Exception as e:
+    except Exception:
         st.error(f"❌ Error loading configuration file (`{config_path}`):\n\n``````")
         return {"products": {}}
 

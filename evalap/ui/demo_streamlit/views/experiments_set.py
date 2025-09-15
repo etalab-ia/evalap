@@ -1,22 +1,17 @@
 import json
 import re
-import sys
-import time
 from collections import defaultdict
-from copy import deepcopy
 from datetime import datetime
 from io import StringIO
 from urllib.parse import quote, unquote
 
 import numpy as np
 import pandas as pd
-import plotly.express as px
 import streamlit as st
 
 from template_manager import TemplateManager
 from utils import _format_model_params, _rename_model_variants, fetch
 from experimentset_utils import convert_experimentset_to_create
-import schemas
 
 
 #
@@ -422,7 +417,7 @@ def display_experiment_set_score(experimentset, experiments_df):
 
     try:
         has_repeat, df = _format_experiments_score_df(experiments, df)
-    except (ValueError, TypeError) as err:
+    except (ValueError, TypeError):
         st.error("No valid result found, try again later...")
         return
 

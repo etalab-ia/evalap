@@ -1,4 +1,3 @@
-import logging
 from pathlib import Path
 import toml
 from ecologits.tracers.utils import compute_llm_impacts, electricity_mixes
