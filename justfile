@@ -194,3 +194,36 @@ get-experiment expid:
 
 rainfrog:
   rainfrog --url postgres://postgres:changeme@localhost:5432/evalap_dev
+
+# Run both API and runner in parallel with Ctrl-C handling
+run log_level="INFO":
+  #!/usr/bin/env bash
+  echo "Starting evalap services..."
+  echo "API: http://localhost:8000"
+  echo "Runner: starting with LOG_LEVEL={{log_level}}"
+  echo "Press Ctrl-C to stop all services"
+  
+  # Function to cleanup background processes
+  cleanup() {
+    echo ""
+    echo "Shutting down services..."
+    kill $API_PID $RUNNER_PID 2>/dev/null || true
+    wait
+    echo "All services stopped"
+    exit 0
+  }
+  
+  # Set trap for Ctrl-C
+  trap cleanup SIGINT SIGTERM
+  
+  # Start API in background
+  uvicorn evalap.api.main:app --reload &
+  API_PID=$!
+  
+  # Start runner in background
+  LOG_LEVEL="{{log_level}}" PYTHONPATH="." python -m evalap.runners &
+  RUNNER_PID=$!
+  
+  # Wait for both processes
+  wait $API_PID $RUNNER_PID
+
