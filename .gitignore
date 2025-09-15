@@ -31,7 +31,7 @@ lib64/
 
 # Jupyter Notebook
 .ipynb_checkpoints
-.virtual_documents/ 
+.virtual_documents/
 
 # Environments
 .DS_Store
@@ -89,3 +89,4 @@ pdm.lock
 *.lock
 .envrc
 .direnv/
+!uv.lock
