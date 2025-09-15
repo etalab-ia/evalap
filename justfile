@@ -195,11 +195,12 @@ get-experiment expid:
 rainfrog:
   rainfrog --url postgres://postgres:changeme@localhost:5432/evalap_dev
 
-# Run both API and runner in parallel with Ctrl-C handling
+# Run API, runner, and streamlit in parallel with Ctrl-C handling
 run log_level="INFO":
   #!/usr/bin/env bash
   echo "Starting evalap services..."
   echo "API: http://localhost:8000"
+  echo "Streamlit: http://localhost:8501"
   echo "Runner: starting with LOG_LEVEL={{log_level}}"
   echo "Press Ctrl-C to stop all services"
   
@@ -207,7 +208,7 @@ run log_level="INFO":
   cleanup() {
     echo ""
     echo "Shutting down services..."
-    kill $API_PID $RUNNER_PID 2>/dev/null || true
+    kill $API_PID $RUNNER_PID $STREAMLIT_PID 2>/dev/null || true
     wait
     echo "All services stopped"
     exit 0
@@ -224,6 +225,10 @@ run log_level="INFO":
   LOG_LEVEL="{{log_level}}" PYTHONPATH="." python -m evalap.runners &
   RUNNER_PID=$!
   
-  # Wait for both processes
-  wait $API_PID $RUNNER_PID
+  # Start streamlit in background with headless mode
+  streamlit run evalap/ui/demo_streamlit/app.py --server.runOnSave true --server.headless=true &
+  STREAMLIT_PID=$!
+  
+  # Wait for all processes
+  wait $API_PID $RUNNER_PID $STREAMLIT_PID
 

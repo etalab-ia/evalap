@@ -91,7 +91,7 @@ Access the API documentation at: http://localhost:8000/redoc (or http://localhos
 
 To run the streamlit frontend, run :
 
-    streamlit run evalap/ui/demo_streamlit/app.py --server.runOnSave true
+    streamlit run evalap/ui/demo_streamlit/app.py --server.runOnSave true --server.headless=true
 
 ## Jupyter Tutorial
 
