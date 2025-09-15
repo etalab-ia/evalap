@@ -24,6 +24,13 @@ DEFAULT_API_KEY = ALBERT_API_KEY
 DEFAULT_METHOD_COLLECTION = "semantic"
 
 
+def styled_markdown(text):
+    st.markdown(
+        f"<span style='color: #000091; font-size: 1.0em; font-weight: bold;'>{text}</span>",
+        unsafe_allow_html=True,
+    )
+
+
 def get_public_collections(api_key):
     url = f"{DEFAULT_PROVIDER_URL}/collections"
     headers = {
@@ -41,13 +48,6 @@ def get_public_collections(api_key):
     else:
         st.error(f"Erreur récupération collections publiques : {response.status_code}")
         return []
-
-
-def styled_markdown(text):
-    st.markdown(
-        f"<span style='color: #000091; font-size: 1.0em; font-weight: bold;'>{text}</span>",
-        unsafe_allow_html=True,
-    )
 
 
 def _should_skip_dataset(dataset: dict) -> bool:
