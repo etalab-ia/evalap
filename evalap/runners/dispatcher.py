@@ -11,7 +11,6 @@ import evalap.api.crud as crud
 import evalap.api.models as models
 import evalap.api.schemas as schemas
 from evalap.api.config import ZMQ_SENDER_URL
-from evalap.logger import logger
 
 
 class MessageType(str, Enum):

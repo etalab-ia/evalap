@@ -256,3 +256,7 @@ publish:
 
 format:
   ruff format --config=pyproject.toml .
+
+lint *args="":
+  ruff check --config=pyproject.toml {{args}} .
+

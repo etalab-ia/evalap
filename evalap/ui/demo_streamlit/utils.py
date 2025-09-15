@@ -1,6 +1,5 @@
 import json
 import re
-import time
 from collections import defaultdict
 from copy import deepcopy
 import pandas as pd

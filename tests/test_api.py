@@ -1,6 +1,5 @@
-from sqlalchemy.orm import Session
 
-from evalap.api.db import engine, SessionLocal
+from evalap.api.db import engine
 from evalap.api.models import Base
 
 
