@@ -3,7 +3,6 @@ from evalap.api.models import (
     Dataset,
     Experiment,
     ExperimentSet,
-    Metric,
     ObservationTable,
     Result,
 )
@@ -13,7 +12,6 @@ __all__ = [
     "Dataset",
     "Experiment",
     "ExperimentSet",
-    "Metric",
     "ObservationTable",
     "Result",
 ]
