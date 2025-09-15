@@ -259,3 +259,10 @@ format:
 
 lint *args="":
   ruff check --config=pyproject.toml {{args}} .
+
+sync:
+  uv sync --all-extras
+  uv run pre-commit install
+
+clean-hooks:
+  uv run pre-commit uninstall

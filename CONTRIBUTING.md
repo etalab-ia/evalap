@@ -30,21 +30,17 @@ All the project global settings and environmant variables are handled in `evalap
 
 ## System Requirements
 
-Install [just](https://just.systems) to run project-specific commands. You will also need to install [jq](https://stedolan.github.io/jq/download/) to parse JSON responses.
+Install [just](https://just.systems) to run project-specific commands. You will also need to install [jq](https://stedolan.github.io/jq/download/) to parse JSON responses. You will need [uv](https://docs.astral.sh/uv/getting-started/installation/) to install python requirements
 
 ## Python Requirements
 
-Install python requirements with [uv](https://docs.astral.sh/uv/getting-started/installation/):
+Install python requirements with:
 
 ```
-    uv sync --all-extras
+    just sync
 ```
 
-or pip if you prefer:
-
-```
-    pip install .
-```
+This will also install pre-commit hooks.
 
 ## Database initialization
 
@@ -77,6 +73,8 @@ or pip if you prefer:
 
 ## Run the API and runner
 
+If needed you can run the API and runner separately:
+
 1. Launch the API:
 
 ```
@@ -97,7 +95,7 @@ Access the API documentation at: http://localhost:8000/redoc (or http://localhos
 
 ## Streamlit Application
 
-To run the streamlit frontend, run :
+To run the streamlit frontend separately, run :
 
     streamlit run evalap/ui/demo_streamlit/app.py --server.runOnSave true --server.headless=true
 
