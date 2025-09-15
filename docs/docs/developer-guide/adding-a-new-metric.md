@@ -77,42 +77,42 @@ _config = {
 def my_custom_metric(output, output_true, **kwargs):
     """
     Compute the custom metric score.
-    
+
     Args:
         output: The model's output to evaluate
         output_true: The expected/reference output
         **kwargs: Additional parameters (e.g., query, context)
-        
+
     Returns:
         tuple: (score, observation) where score is numeric and observation is explanation
     """
     # For LLM-as-judge metrics
     config = _config | {k: v for k, v in kwargs.items() if k in _config}
-    
+
     messages = [
         {
             "role": "user",
             "content": render_jinja(_template, output=output, output_true=output_true, **kwargs),
         }
     ]
-    
+
     aiclient = LlmClient()
     result = aiclient.generate(
-        model=config["model"], 
-        messages=messages, 
+        model=config["model"],
+        messages=messages,
         **config["sampling_params"]
     )
-    
+
     observation = result.choices[0].message.content
     think, answer = split_think_answer(observation)
-    
+
     # Parse the score
     score = answer.strip(" \n\"'.%")
     try:
         score = float(score)
     except ValueError:
         score = None
-        
+
     return score, observation
 ```
 
@@ -136,16 +136,16 @@ def exact_match_metric(output, output_true, **kwargs):
     # Normalize strings for comparison
     output_normalized = output.strip().lower()
     expected_normalized = output_true.strip().lower()
-    
+
     # Calculate score
     score = 1.0 if output_normalized == expected_normalized else 0.0
-    
+
     # Provide explanation
     if score == 1.0:
         observation = "Exact match found"
     else:
         observation = f"No match: expected '{output_true}' but got '{output}'"
-    
+
     return score, observation
 ```
 
@@ -176,7 +176,7 @@ from evalap.api.metrics import metric_registry
 
 def test_my_custom_metric():
     metric_func = metric_registry.get_metric_function("my_custom_metric")
-    
+
     # Test perfect match
     score, observation = metric_func(
         output="Paris is the capital of France",
@@ -184,7 +184,7 @@ def test_my_custom_metric():
         query="What is the capital of France?"
     )
     assert score == 1.0
-    
+
     # Test partial match
     score, observation = metric_func(
         output="Paris",
@@ -192,7 +192,7 @@ def test_my_custom_metric():
         query="What is the capital of France?"
     )
     assert 0 < score < 1
-    
+
     # Test no match
     score, observation = metric_func(
         output="London is the capital of UK",
