@@ -134,15 +134,12 @@ def metric_name_metric(output:str, output_true:str, **kwargs) -> float:
 Tests can be found in api/tests.
 To run unit tests, use :
 
-    pytest
+    just test
 
 ## Install python package
 
-    python -m pip install build twine
-    twine upload dist/*
+    just publish
 
 ## use ruff
 
-```
- ruff format --config=pyproject.toml file_path
-```
+    just format
