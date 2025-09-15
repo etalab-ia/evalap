@@ -309,7 +309,7 @@ def _check_repeat_mode(experiments: list) -> bool:
 
 def _format_experiments_score_df(experiments: list, df: pd.DataFrame) -> (bool, pd.DataFrame):
     experiment_ids = [expe["id"] for expe in experiments]
-    #experiment_names = [expe["name"] for expe in experiments]
+    # experiment_names = [expe["name"] for expe in experiments]
     is_repeat_mode = _check_repeat_mode(experiments)
     result = None
 

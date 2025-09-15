@@ -11,7 +11,7 @@ from evalap.api.models import (
 __all__ = [
     "Answer",
     "Dataset",
-    "Experiment", 
+    "Experiment",
     "ExperimentSet",
     "Metric",
     "ObservationTable",
