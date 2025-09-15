@@ -157,7 +157,7 @@ def experimental_section(
                 Pour créer une expérimentation qui compare différents prompts sur votre cas d'usage, il vous faut plusieurs éléments :  
                 - un nom de produit auquel associer les tests. 
                 - le dataset de l'expérimentation (on ne peut en sélectionner qu'un)
-                - les collections (si RAG, sélection multiple possible)
+                - les collections (les documents qui servent de base de connaissances pour le système)
                 - le(s) modèle(s) 
                 - le/les prompts à évaluer 
                 """
@@ -168,9 +168,9 @@ def experimental_section(
                 Il vous faut :  
                 - l'identifiant Id de l'expérimentation à enrichir  
                 - le dataset de l'expérimentation (le même nom que celui associé à l'experiment set existant)
+                - les collections (les documents qui servent de base de connaissances pour le système)
                 - le(s) modèle(s) à ajouter aux tests
                 - le(s) prompt(s) à ajouter aux tests
-                - les collections (si RAG, sélection multiple possible)
                 """
             )
 
