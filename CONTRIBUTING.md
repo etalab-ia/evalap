@@ -67,7 +67,15 @@ or pip if you prefer:
     alembic -c evalap/api/alembic.ini upgrade head
 ```
 
-## Run API
+## Run all services
+
+1. Launch the API, runner and streamlit:
+
+```
+    just run
+```
+
+## Run the API and runner
 
 1. Launch the API:
 
