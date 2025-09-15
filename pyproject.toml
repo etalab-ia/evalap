@@ -66,9 +66,11 @@ distribution = false
 # Tests
 
 [project.optional-dependencies]
-test = ["pytest==8.3.3",
+test = [
+    "pytest==8.3.3",
         "pytest-asyncio==0.24.0",
-        ]
+        "pytest-cov>=7.0.0",
+]
 
 [tool.pytest.ini_options]
 asyncio_default_fixture_loop_scope = "function"

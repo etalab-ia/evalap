@@ -56,6 +56,7 @@ venv.bak/
 .coverage
 .pytest_cache/
 htmlcov/
+coverage.xml
 
 # pyenv & rye
 .python-version
