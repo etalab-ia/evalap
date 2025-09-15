@@ -128,7 +128,6 @@ def dispatch_tasks(db, db_exp, message_type: MessageType):
 
         # Iterate dataset and metrics
         for num_line, row in crud.get_dataset_iterator(db_exp):
-
             # Retrieve the answer
             a = (
                 db.query(models.Answer)

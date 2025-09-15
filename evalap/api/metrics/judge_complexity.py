@@ -88,6 +88,6 @@ def judge_complexity_metric(output, output_true, **kwargs):
         elif line.startswith("Thématique :"):
             thematique = line.split(":", 1)[1].strip()
 
-    observation_ = {"answer": answer, "think":think, "scores": scores, "thematique": thematique}
+    observation_ = {"answer": answer, "think": think, "scores": scores, "thematique": thematique}
 
     return int(scores["global"]), json.dumps(observation_), result

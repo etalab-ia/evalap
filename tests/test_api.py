@@ -11,5 +11,4 @@ class TestApi:
         Base.metadata.drop_all(bind=engine)
         Base.metadata.create_all(bind=engine)
         # eventually initialize db data.
-        #db: Session = SessionLocal()
-
+        # db: Session = SessionLocal()

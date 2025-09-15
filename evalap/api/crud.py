@@ -465,7 +465,9 @@ def get_leaderboard(
             experiment_name=result.experiment_name,
             model_name=result.model_name,
             dataset_name=result.dataset_name,
-            main_metric_score=float(result.main_metric_score) if result.main_metric_score is not None else None,
+            main_metric_score=float(result.main_metric_score)
+            if result.main_metric_score is not None
+            else None,
             other_metrics=other_metrics_dict,
             system_prompt=result.system_prompt,
             sampling_param={k: str(v) for k, v in (result.sampling_params or {}).items()},
@@ -478,6 +480,7 @@ def get_leaderboard(
         entries.append(entry)
 
     return schemas.Leaderboard(entries=entries)
+
 
 #
 # Ops

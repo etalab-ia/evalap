@@ -145,7 +145,10 @@ def multi_step_generate(
 
             tools_count[tool_call.function.name] += 1
             # Avoid deep search recursion
-            if tool_call.function.name.startswith("search") and tools_count[tool_call.function.name] >= max_steps_search:
+            if (
+                tool_call.function.name.startswith("search")
+                and tools_count[tool_call.function.name] >= max_steps_search
+            ):
                 cpt = max_steps
 
         steps.append(substeps)
