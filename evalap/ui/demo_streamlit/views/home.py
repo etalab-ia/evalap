@@ -3,7 +3,7 @@ from PIL import Image
 import streamlit as st
 from routes import ROUTES
 from pathlib import Path
-#from streamlit_card import card
+# from streamlit_card import card
 
 
 def get_logo(filename="evalap_logo.png"):
@@ -24,7 +24,8 @@ with col1:
 with col2:
     st.title("Welcome to EvalAP")
 
-st.markdown("""
+st.markdown(
+    """
 <style>
     /* Increase font size for page links */
     .stPageLink {
@@ -37,17 +38,18 @@ st.markdown("""
         font-weight: 500 !important;
     }
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 for route in ROUTES:
     if route["id"] in ["home"] or route.get("is_hidden"):
         continue
     st.page_link(route["path"], label=f"{route['title']}: {route['description']}", icon=route["icon"])
-    #card(
+    # card(
     #    title= route['title'],
     #    text=route['description'],
-    #)
+    # )
 
 
 st.markdown("Explore [our documentation](/doc) for more information.")
-

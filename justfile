@@ -247,7 +247,6 @@ run log_level="INFO":
   # Wait for all processes
   wait $API_PID $RUNNER_PID $STREAMLIT_PID
 
-
 test:
   pytest
 

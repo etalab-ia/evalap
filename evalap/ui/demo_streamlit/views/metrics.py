@@ -62,18 +62,19 @@ def main():
             """,
                 unsafe_allow_html=True,
             )
-            
+
             # Add clickable links for each metric under its type
             for metric in metrics_group:
-                metric_id = metric['name'].lower().replace(' ', '-')
+                metric_id = metric["name"].lower().replace(" ", "-")
                 st.markdown(
                     f"""
                     <a href="#{metric_id}" style="color:grey; margin-left:15px;"
                        onclick="document.getElementById('{metric_id}').scrollIntoView({{behavior: 'smooth'}});">
-                        {metric['name']}
+                        {metric["name"]}
                     </a><br>
                 """,
                     unsafe_allow_html=True,
                 )
+
 
 main()
