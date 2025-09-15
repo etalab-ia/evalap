@@ -15,6 +15,21 @@ jobs:
       matrix:
         python-version: ["3.12"]
 
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: evalap_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -42,7 +57,15 @@ jobs:
       - name: Check formatting
         run: uv run ruff format --check --diff
 
+      - name: Setup test database
+        env:
+          POSTGRES_URL: postgresql+psycopg2://postgres:postgres@localhost:5432/evalap_test
+        run: |
+          uv run alembic -c evalap/api/alembic.ini upgrade head
+
       - name: Run tests
+        env:
+          POSTGRES_URL: postgresql+psycopg2://postgres:postgres@localhost:5432/evalap_test
         run: uv run pytest -v --tb=short --cov=evalap --cov-report=xml
 
       - name: Upload coverage to Codecov
