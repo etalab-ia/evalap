@@ -65,6 +65,7 @@ jobs:
 
       - name: Run tests
         env:
+          ALBERT_API_KEY: ${{ secrets.ALBERT_API_KEY }}
           POSTGRES_URL: postgresql+psycopg2://postgres:postgres@localhost:5432/evalap_test
         run: uv run pytest -v --tb=short --cov=evalap --cov-report=xml
 
