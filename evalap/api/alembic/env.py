@@ -3,7 +3,7 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy import engine_from_config, pool
 
-from evalap.api.base import Base
+from evalap.api.models import Base
 from evalap.api.config import DATABASE_URI
 from evalap.api.db import create_database_if_not_exists
 
