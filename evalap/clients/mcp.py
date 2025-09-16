@@ -4,9 +4,11 @@ from collections import defaultdict
 import requests
 
 from evalap.api.config import MCP_BRIDGE_URL
-from evalap.clients import ChatCompletionResponse, LlmClient
+from evalap.clients.schemas.openai import ChatCompletionResponse
 from evalap.logger import logger
 from evalap.utils import log_and_raise_for_status
+
+from .llm import LlmClient
 
 
 class MCPBridgeClient:
