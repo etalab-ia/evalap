@@ -14,9 +14,9 @@ def extract_template_variable(py_file):
         with open(py_file, "r", encoding="utf-8") as f:
             content = f.read()
         result = re.search(r'_template\s*=\s*([\'"]{3})([\s\S]*?)\1', content, re.DOTALL)
-        return result.group(2).strip() if result else "**Définition introuvable dans le fichier.**"
+        return result.group(2).strip() if result else "**Definition not found in file.**"
     except FileNotFoundError:
-        return "**Fichier non trouvé : {}**".format(py_file)
+        return "**Files not found :  {}**".format(py_file)
 
 
 def main():
@@ -59,7 +59,7 @@ def main():
                     # pop up for definition
                     if metric["name"].startswith("judge_"):
                         definition = extract_template_variable(f"evalap/api/metrics/{metric['name']}.py")
-                        with st.popover("Voir la définition"):
+                        with st.popover("see definition"):
                             st.markdown(definition, unsafe_allow_html=True)
 
                     st.divider()
