@@ -10,7 +10,6 @@ from typing import Sequence, Union
 
 from alembic import op
 
-
 # revision identifiers, used by Alembic.
 revision: str = "502a68292e65"
 down_revision: Union[str, None] = "0d299020f16a"

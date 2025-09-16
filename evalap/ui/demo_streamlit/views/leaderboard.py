@@ -1,9 +1,9 @@
 from itertools import groupby
 from operator import itemgetter
+
 import pandas as pd
 import streamlit as st
-from utils import fetch, calculate_tokens_per_second
-
+from utils import calculate_tokens_per_second, fetch
 
 DEFAULT_METRIC = "judge_notator"
 

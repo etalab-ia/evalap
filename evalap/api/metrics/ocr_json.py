@@ -1,4 +1,5 @@
 import json
+
 from rapidfuzz import fuzz as stringfuzz
 
 from evalap.utils import extract_code

@@ -1,7 +1,8 @@
+from collections import defaultdict
 from datetime import datetime
+
 import streamlit as st
 from utils import fetch
-from collections import defaultdict
 
 
 def calculate_lightbulb_consumption(impact_energy_value):

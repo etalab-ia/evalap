@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import pyarrow.parquet as pq
 from sqlalchemy import and_, desc, func, select
-from sqlalchemy.orm import Session, joinedload, aliased
+from sqlalchemy.orm import Session, aliased, joinedload
 
 import evalap.api.models as models
 import evalap.api.schemas as schemas

@@ -1,12 +1,13 @@
+import hashlib
 import json
 import re
 from collections import defaultdict
 from copy import deepcopy
+from typing import Optional
+
 import pandas as pd
 import requests
 import streamlit as st
-from typing import Optional
-import hashlib
 
 API_BASE_URL = "http://localhost:8000/v1"
 

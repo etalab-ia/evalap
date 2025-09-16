@@ -10,7 +10,7 @@ import evalap.api.crud as crud
 import evalap.api.models as models
 from evalap.api.config import DEFAULT_JUDGE_MODEL
 from evalap.api.db import SessionLocal
-from evalap.api.metrics import metric_registry, get_judge_model
+from evalap.api.metrics import get_judge_model, metric_registry
 from evalap.clients import MCPBridgeClient, multi_step_generate, split_think_answer
 from evalap.logger import logger
 from evalap.runners import MessageType, dispatch_tasks
