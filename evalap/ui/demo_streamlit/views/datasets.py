@@ -1,4 +1,6 @@
+import io
 import json
+import os
 from datetime import datetime
 from typing import Optional
 
@@ -7,6 +9,8 @@ import streamlit as st
 from streamlit import session_state
 
 from utils import fetch
+
+EVALAP_API_KEY = os.getenv("EVALAP_API_KEY")
 
 session_state.layout = "wide"
 
@@ -33,6 +37,74 @@ def _parse_dataset_to_df(df_str: str) -> Optional[pd.DataFrame]:
         return df if not df.empty else None
     except (json.JSONDecodeError, ValueError, TypeError):
         return None
+
+
+def _validate_uploaded_dataset(df: pd.DataFrame) -> bool:
+    required_cols = {"query", "output_true"}
+    df_cols = set(df.columns)
+    return required_cols.issubset(df_cols)
+
+
+def _post_dataset_to_api(name: str, df: pd.DataFrame, readme: str = "") -> dict:
+    dataset = {
+        "name": name,
+        "df": df.to_json(),
+        "readme": readme,
+        "default_metric": "judge_notator",
+    }
+
+    headers = {"Authorization": f"Bearer {EVALAP_API_KEY}"}
+    response = fetch("post", "/dataset", data=dataset, headers=headers)
+    return response
+
+
+def _handle_file_upload():
+    uploaded_file = st.file_uploader(
+        "Upload dataset (CSV ou Excel)",
+        type=["csv", "xls", "xlsx"],
+        key="dataset_uploader",
+        help="Fichier CSV ou Excel contenant au minimum les colonnes 'query' et 'output_true'"
+    )
+
+    if uploaded_file is not None:
+        st.session_state["uploaded_file"] = uploaded_file
+    elif "uploaded_file" in st.session_state:
+        uploaded_file = st.session_state["uploaded_file"]
+
+    if uploaded_file is not None:
+        try:
+            if uploaded_file.name.endswith(".csv"):
+                try:
+                    df = pd.read_csv(uploaded_file, delimiter=';', on_bad_lines='skip')
+                except Exception:
+                    uploaded_file.seek(0)
+                    df = pd.read_csv(uploaded_file, on_bad_lines='skip')
+            else:
+                df = pd.read_excel(uploaded_file)
+
+            # Check columns
+            if _validate_uploaded_dataset(df):
+                st.success(f"Fichier chargé avec succès, {len(df)} lignes détectées.")
+
+                # User input info
+                name = st.text_input("Nom du dataset", value=uploaded_file.name.split(".")[0], key="dataset_name")
+                readme = st.text_area("Description (readme)", key="dataset_readme")
+
+                if st.button("Envoyer le dataset à l'API"):
+                    result = _post_dataset_to_api(name, df, readme)
+                    if result:
+                        st.success(f"Dataset créé avec succès : ID {result.get('id')}")
+                        del st.session_state["uploaded_file"]
+                    else:
+                        st.error("Erreur lors de la création du dataset.")
+
+                # Displaying the first lines
+                st.dataframe(df.head(10), use_container_width=True)
+            else:
+                st.error("Le fichier doit contenir au moins les colonnes 'query' et 'output_true'.")
+        except Exception as e:
+            st.error(f"Erreur lors du chargement du fichier : {e}")
+
 
 
 def _load_dataset_preview(dataset_id: int) -> Optional[pd.DataFrame]:
@@ -150,6 +222,7 @@ def main():
 
                 st.divider()
 
+
     with right_menu:
         st.markdown("###### Quick Navigation")
         for dataset in datasets:
@@ -168,5 +241,10 @@ def main():
                 unsafe_allow_html=True,
             )
 
+        #Post new dataset
+        with st.container():
+            st.divider() 
+            st.subheader("Ajouter un nouveau dataset")
+            _handle_file_upload()
 
 main()
