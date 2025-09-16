@@ -84,6 +84,14 @@ python_functions = ["test_*"]
 line-length = 111
 exclude = ["alembic/versions/"]
 
+[tool.ruff.lint]
+select = [
+    "I",  # isort
+
+]
+fixable = ["ALL"]
+unfixable = []
+
 [tool.ruff.lint.isort]
 known-third-party = ["alembic"]
 known-first-party = ["api", "config", "tests", "ui"]

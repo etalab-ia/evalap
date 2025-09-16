@@ -257,8 +257,8 @@ publish:
 format:
   ruff format --config=pyproject.toml .
 
-lint *args="":
-  ruff check --config=pyproject.toml {{args}} .
+lint:
+  ruff check --config=pyproject.toml --fix .
 
 sync:
   uv sync --all-extras
