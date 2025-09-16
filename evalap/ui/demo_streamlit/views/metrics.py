@@ -1,3 +1,4 @@
+import re
 import streamlit as st
 from utils import fetch
 from itertools import groupby
@@ -6,6 +7,16 @@ from operator import itemgetter
 from streamlit import session_state
 
 session_state.layout = "wide"
+
+
+def extract_template_variable(py_file):
+    try:
+        with open(py_file, "r", encoding="utf-8") as f:
+            content = f.read()
+        result = re.search(r'_template\s*=\s*([\'"]{3})([\s\S]*?)\1', content, re.DOTALL)
+        return result.group(2).strip() if result else "**Définition introuvable dans le fichier.**"
+    except FileNotFoundError:
+        return "**Fichier non trouvé : {}**".format(py_file)
 
 
 def main():
@@ -44,6 +55,13 @@ def main():
                         f"Required fields: {', '.join(map(lambda x: '**' + x + '**', metric['require']))}"
                     )
                     st.write(metric["description"])
+
+                    # pop up for definition
+                    if metric["name"].startswith("judge_"):
+                        definition = extract_template_variable(f"evalap/api/metrics/{metric['name']}.py")
+                        with st.popover("Voir la définition"):
+                            st.markdown(definition, unsafe_allow_html=True)
+
                     st.divider()
 
     # Navigation menu
@@ -62,18 +80,19 @@ def main():
             """,
                 unsafe_allow_html=True,
             )
-            
+
             # Add clickable links for each metric under its type
             for metric in metrics_group:
-                metric_id = metric['name'].lower().replace(' ', '-')
+                metric_id = metric["name"].lower().replace(" ", "-")
                 st.markdown(
                     f"""
                     <a href="#{metric_id}" style="color:grey; margin-left:15px;"
                        onclick="document.getElementById('{metric_id}').scrollIntoView({{behavior: 'smooth'}});">
-                        {metric['name']}
+                        {metric["name"]}
                     </a><br>
                 """,
                     unsafe_allow_html=True,
                 )
+
 
 main()
