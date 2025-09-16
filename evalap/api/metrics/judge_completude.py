@@ -3,7 +3,6 @@ from evalap.utils import render_jinja
 
 from . import metric_registry
 
-
 _template = """
 Vous êtes un assistant IA chargé d'évaluer et de comparer deux textes pour déterminer si le Texte B est plus ou moins similaire (au sens de l'intention) au Texte A, sachant que A est la vérité terrain et B une réponse donnée par un autre LLM.
 

@@ -87,7 +87,6 @@ exclude = ["alembic/versions/"]
 [tool.ruff.lint]
 select = [
     "I",  # isort
-
 ]
 fixable = ["ALL"]
 unfixable = []

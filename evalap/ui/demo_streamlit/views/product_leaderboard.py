@@ -1,13 +1,12 @@
-from pathlib import Path
 import re
-from typing import List, Dict, Optional, Any
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
 import streamlit as st
 import yaml
-
-from utils import fetch, _rename_model_variants, calculate_tokens_per_second
+from utils import _rename_model_variants, calculate_tokens_per_second, fetch
 
 DEFAULT_METRIC = "judge_exactness"
 

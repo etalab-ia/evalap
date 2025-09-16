@@ -1,7 +1,7 @@
 from fastapi.testclient import TestClient
 
 from tests.test_api import TestApi
-from tests.utils import ops, log_and_assert
+from tests.utils import log_and_assert, ops
 
 ops_metrics_cases = [
     {

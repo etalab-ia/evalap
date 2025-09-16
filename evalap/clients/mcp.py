@@ -1,7 +1,7 @@
 import json
+from collections import defaultdict
 
 import requests
-from collections import defaultdict
 
 from evalap.api.config import MCP_BRIDGE_URL
 from evalap.clients import ChatCompletionResponse, LlmClient

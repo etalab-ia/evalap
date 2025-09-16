@@ -6,14 +6,13 @@ Create Date: 2024-12-14 19:23:16.657125
 
 """
 
-from io import StringIO
 import json
+from io import StringIO
 from typing import Sequence, Union
 
-from alembic import op
 import pandas as pd
 import sqlalchemy as sa
-
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "0d299020f16a"
