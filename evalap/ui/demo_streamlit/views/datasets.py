@@ -63,7 +63,7 @@ def _handle_file_upload():
         "Upload dataset (CSV ou Excel)",
         type=["csv", "xls", "xlsx"],
         key="dataset_uploader",
-        help="Fichier CSV ou Excel contenant au minimum les colonnes 'query' et 'output_true'",
+        help="CSV or Excel file containing at least the columns ‘query’ and 'output_true'",
     )
 
     if uploaded_file is not None:
@@ -84,21 +84,21 @@ def _handle_file_upload():
 
             # Check columns
             if _validate_uploaded_dataset(df):
-                st.success(f"Fichier chargé avec succès, {len(df)} lignes détectées.")
+                st.success(f"File load with success, {len(df)} detected lines.")
 
                 # User input info
                 name = st.text_input(
-                    "Nom du dataset", value=uploaded_file.name.split(".")[0], key="dataset_name"
+                    "Name of dataset", value=uploaded_file.name.split(".")[0], key="dataset_name"
                 )
                 readme = st.text_area("Description (readme)", key="dataset_readme")
 
-                if st.button("Envoyer le dataset à l'API EvalAP"):
+                if st.button("Send the dataset to the EvalAP API"):
                     result = _post_dataset_to_api(name, df, readme)
                     if result:
-                        st.success(f"Dataset créé avec succès : ID {result.get('id')}")
+                        st.success(f"Dataset created successfully : ID {result.get('id')}")
                         del st.session_state["uploaded_file"]
                     else:
-                        st.error("Erreur lors de la création du dataset.")
+                        st.error("Error creating dataset")
 
             else:
                 st.error("Le fichier doit contenir au moins les colonnes 'query' et 'output_true'.")
