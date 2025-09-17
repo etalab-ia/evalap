@@ -107,7 +107,7 @@ The `notebook/` directory contains examples of API usage.
 
 Each single metric should be defined in a file in `evalap/api/metrics/{metric_name}.py`.
 The file should be self-contained, i.e contains the eventual prompt and settings related to the metric.
-The metric should be decorated as followinf example to be registed as a known metric of EVALAP:
+The metric should be decorated as following example to be registed as a known metric of EVALAP:
 
 ```python
 from . import metric_registry
