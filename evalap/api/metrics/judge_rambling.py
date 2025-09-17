@@ -47,7 +47,7 @@ _config = {
 
 @metric_registry.register(
     name="judge_rambling",
-    description="[1-10] rambling score between output and output_true",
+    description="[1-10] La métrique 'judge_rambling' mesure la quantité de contenu non pertinent ou hors sujet dans une réponse par rapport à la question posée. Elle attribue une note de 1 (réponse totalement pertinente) à 10 (réponse majoritairement hors sujet), aidant à détecter et limiter les divagations dans les réponses des agents IA.",
     metric_type="llm",
     require=["output", "output_true", "query"],
 )

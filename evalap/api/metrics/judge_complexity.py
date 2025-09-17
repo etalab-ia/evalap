@@ -50,7 +50,7 @@ _config = {
 
 @metric_registry.register(
     name="judge_complexity",
-    description="[0-10] score complexity of query, thematic...",
+    description="[0-10] La métrique 'judge_complexity' évalue la complexité d'une demande administrative selon sa clarté, le nombre d'administrations impliquées, et la complexité des procédures nécessaires. Elle sert à identifier la difficulté globale d’une question pour mieux orienter la prise en charge et les ressources à mobiliser. Cette métrique est utile pour prioriser les demandes simples ou complexes dans un cadre administratif.",
     metric_type="dataset",
     require=["query"],
 )
@@ -88,6 +88,6 @@ def judge_complexity_metric(output, output_true, **kwargs):
         elif line.startswith("Thématique :"):
             thematique = line.split(":", 1)[1].strip()
 
-    observation_ = {"answer": answer, "think":think, "scores": scores, "thematique": thematique}
+    observation_ = {"answer": answer, "think": think, "scores": scores, "thematique": thematique}
 
     return int(scores["global"]), json.dumps(observation_), result
