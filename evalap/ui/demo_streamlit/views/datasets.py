@@ -54,7 +54,7 @@ def _post_dataset_to_api(name: str, df: pd.DataFrame, readme: str = "") -> dict:
     }
 
     headers = {"Authorization": f"Bearer {EVALAP_API_KEY}"}
-    response = fetch("post", "/dataset", data=dataset, headers=headers)
+    response = fetch("post", "/dataset", dataset, headers)
     return response
 
 
@@ -63,7 +63,7 @@ def _handle_file_upload():
         "Upload dataset (CSV ou Excel)",
         type=["csv", "xls", "xlsx"],
         key="dataset_uploader",
-        help="Fichier CSV ou Excel contenant au minimum les colonnes 'query' et 'output_true'"
+        help="Fichier CSV ou Excel contenant au minimum les colonnes 'query' et 'output_true'",
     )
 
     if uploaded_file is not None:
@@ -75,10 +75,10 @@ def _handle_file_upload():
         try:
             if uploaded_file.name.endswith(".csv"):
                 try:
-                    df = pd.read_csv(uploaded_file, delimiter=';', on_bad_lines='skip')
+                    df = pd.read_csv(uploaded_file, delimiter=";", on_bad_lines="skip")
                 except Exception:
                     uploaded_file.seek(0)
-                    df = pd.read_csv(uploaded_file, on_bad_lines='skip')
+                    df = pd.read_csv(uploaded_file, on_bad_lines="skip")
             else:
                 df = pd.read_excel(uploaded_file)
 
@@ -87,10 +87,12 @@ def _handle_file_upload():
                 st.success(f"Fichier chargé avec succès, {len(df)} lignes détectées.")
 
                 # User input info
-                name = st.text_input("Nom du dataset", value=uploaded_file.name.split(".")[0], key="dataset_name")
+                name = st.text_input(
+                    "Nom du dataset", value=uploaded_file.name.split(".")[0], key="dataset_name"
+                )
                 readme = st.text_area("Description (readme)", key="dataset_readme")
 
-                if st.button("Envoyer le dataset à l'API"):
+                if st.button("Envoyer le dataset à l'API EvalAP"):
                     result = _post_dataset_to_api(name, df, readme)
                     if result:
                         st.success(f"Dataset créé avec succès : ID {result.get('id')}")
@@ -98,13 +100,10 @@ def _handle_file_upload():
                     else:
                         st.error("Erreur lors de la création du dataset.")
 
-                # Displaying the first lines
-                st.dataframe(df.head(10), use_container_width=True)
             else:
                 st.error("Le fichier doit contenir au moins les colonnes 'query' et 'output_true'.")
         except Exception as e:
             st.error(f"Erreur lors du chargement du fichier : {e}")
-
 
 
 def _load_dataset_preview(dataset_id: int) -> Optional[pd.DataFrame]:
@@ -187,6 +186,14 @@ def main():
             st.write("""Avalaible datasets
                      """)
 
+        with st.expander("Add new dataset", expanded=False):
+            st.info(
+                """Your dataset must be loaded into EvalAP only once. It will then be accessible for all your experiments.
+                You must give it a name and write a brief description that will be visible to everyone.
+                The file must contain at least the question (called query) and the ground truth (called output_true)."""
+            )
+            _handle_file_upload()
+
         for dataset in filtered_datasets:
             when = datetime.fromisoformat(dataset["created_at"]).strftime("%d %B %Y")
             columns = _get_dataset_columns(dataset)
@@ -222,7 +229,6 @@ def main():
 
                 st.divider()
 
-
     with right_menu:
         st.markdown("###### Quick Navigation")
         for dataset in datasets:
@@ -241,10 +247,5 @@ def main():
                 unsafe_allow_html=True,
             )
 
-        #Post new dataset
-        with st.container():
-            st.divider() 
-            st.subheader("Ajouter un nouveau dataset")
-            _handle_file_upload()
 
 main()
