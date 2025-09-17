@@ -25,7 +25,7 @@ ROUTES = [
         "id": "prompt_analyze",
         "path": "views/prompt_analyze.py",
         "title": "Prompt analyze",
-        "description": "anlyze differents prompts for your product",
+        "description": "analyze differents prompts for your product",
         "icon": ":material/trophy:",
     },
     {

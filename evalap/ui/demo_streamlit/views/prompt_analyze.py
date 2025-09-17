@@ -31,6 +31,31 @@ def styled_markdown(text):
     )
 
 
+button_style = """
+<style>
+.custom-button {
+    background-color: transparent;       /* Pas de fond */
+    color: #000091;                      /* Texte bleu DSFR */
+    border: 2px solid #000091;           /* Contour bleu DSFR */
+    padding: 12px 28px;
+    font-size: 20px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+}
+.custom-button:hover {
+    background-color: #000091;           /* Fond bleu DSFR au survol */
+    color: white;                        /* Texte blanc au survol */
+    border-color: #000091;
+}
+</style>
+"""
+
+
 def get_public_collections(api_key):
     url = f"{DEFAULT_PROVIDER_URL}/collections"
     headers = {
@@ -292,11 +317,22 @@ def experimental_section(
             }
             result = post_experiment_set(expset, headers)
             if result and "id" in result:
-                st.success(f"Experiment set créé: {result['name']} (ID: {result['id']})")
-                dashboard_url = f"/experiments_set?expset={result['id']}"
-                st.markdown(f"[🔗 Voir les résultats détaillés dans le dashboard]({dashboard_url})")
+                expset_id = result["id"]
+                st.success(f"Experiment set créé: {result['name']} (ID: {expset_id})")
+                st.info(
+                    "🚨 Note importante : conservez cet ID dans vos notes personnelles. "
+                    "L'application est en version bêta et ne possède pas d'authentification ni de persistance."
+                )
+
+                dashboard_url = f"/experiments_set?expset={expset_id}"
+                st.markdown(button_style, unsafe_allow_html=True)
+                st.markdown(
+                    f'<a href="{dashboard_url}" class="custom-button">Voir les résultats détaillés dans le dashboard</a>',
+                    unsafe_allow_html=True,
+                )
             else:
                 st.error("Erreur lors de la création de l'experiment set")
+
         else:
             patch_data = {
                 "cv": {
@@ -310,6 +346,16 @@ def experimental_section(
                 st.success(
                     f"Ajout avec succès dans l'expérience ID {expset_id} de {len(model_configs)} nouveau(x) modèle(s)/prompt(s)"
                 )
+                st.info(
+                    "🚨 Note importante : L'application est en version bêta, il se peut que les prompts ajoutés n'apparaissent pas de suite dans le dashboard. Il faut alors attendre un peu et cliquer sur le bouton refresh"
+                )
+                dashboard_url_patch = f"/experiments_set?expset={expset_id}"
+                st.markdown(button_style, unsafe_allow_html=True)
+                st.markdown(
+                    f'<a href="{dashboard_url_patch}" class="custom-button">Voir les résultats détaillés dans le dashboard</a>',
+                    unsafe_allow_html=True,
+                )
+
             else:
                 st.error("Patch impossible.")
 

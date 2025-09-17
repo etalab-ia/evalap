@@ -7,6 +7,8 @@ from copy import deepcopy
 from datetime import datetime
 from io import StringIO
 from urllib.parse import quote, unquote
+from operator import itemgetter
+from itertools import groupby
 
 import numpy as np
 import pandas as pd
@@ -61,6 +63,23 @@ def __fetch_experimentset(expid, partial_expset, refresh=False):
     return experimentset
 
 
+def get_metrics():
+    """
+    Récupère la liste complète des métriques avec leurs types.
+    """
+    metrics = fetch("get", "/metrics")
+    if not metrics:
+        return []
+    return metrics
+
+
+def get_metrics_non_ops(metrics):
+    """
+    Filtre les noms de métriques ne faisant pas partie des ops.
+    """
+    return [m["name"] for m in metrics if m.get("type") != "ops"]
+
+
 #
 # @TODO: codefactor and triage
 #
@@ -95,7 +114,7 @@ def _get_expset_status(expset: dict) -> tuple[dict, dict]:
 
 def _get_experiment_data(exp_id):
     """
-    for each exp_id, returns query, answer true, answer llm and metrics
+    for each exp_id, returns query, answer true, answer llm and metrics (not ops)
     """
     expe = _fetch(
         "get",
@@ -105,6 +124,12 @@ def _get_experiment_data(exp_id):
     )
     if not expe:
         return None
+
+    metrics = fetch("get", "/metrics")
+    if not metrics:
+        allowed_metrics = []
+    else:
+        allowed_metrics = [m["name"] for m in metrics if m.get("type") != "ops"]
 
     df = pd.read_json(StringIO(expe["dataset"]["df"]))
 
@@ -123,8 +148,15 @@ def _get_experiment_data(exp_id):
     if "results" in expe:
         for result in expe["results"]:
             metric_name = result["metric_name"]
+            if metric_name not in allowed_metrics:
+                continue
             observations = {obs["num_line"]: obs["score"] for obs in result["observation_table"]}
             df[f"result_{metric_name}"] = df.index.map(observations)
+
+    if not df.empty:
+        result_cols = sorted([col for col in df.columns if col.startswith("result_")])
+        other_cols = [col for col in df.columns if not col.startswith("result_")]
+        df = df[other_cols + result_cols]
 
     return df
 
@@ -352,6 +384,14 @@ def _format_experiments_score_df(experiments: list, df: pd.DataFrame) -> (bool, 
     return has_repeat, df
 
 
+def _check_support_variation(df_support: pd.DataFrame) -> bool:
+    metric_cols = [col for col in df_support.columns if col != "model"]
+    for col in metric_cols:
+        if df_support[col].nunique(dropna=True) > 1:
+            return True
+    return False
+
+
 def init_metrics_filter_from_url(available_metrics):
     """Initialisation of metrics filter since URL"""
     query_params = st.query_params
@@ -427,6 +467,7 @@ def display_experiment_set_score(experimentset, experiments_df):
         return
 
     df_support = pd.DataFrame(rows_support)
+    has_failed = _check_support_variation(df_support)
     df_support = _sort_columns(df_support, [])
     _, df_support = _format_experiments_score_df(experiments, df_support)
 
@@ -529,14 +570,15 @@ def display_experiment_set_score(experimentset, experiments_df):
         column_config={"Id": st.column_config.TextColumn(width="small")},
     )
 
-    st.write("---")
-    st.write(f"**Support:** the numbers of item on which the metrics is computed (total items = {size})")
-    st.dataframe(
-        df_support_filtered,
-        use_container_width=True,
-        hide_index=True,
-        column_config={"Id": st.column_config.TextColumn(width="small")},
-    )
+    if has_failed:
+        st.write("---")
+        st.write(f"**Support:** the numbers of item on which the metrics is computed (total items = {size})")
+        st.dataframe(
+            df_support_filtered,
+            use_container_width=True,
+            hide_index=True,
+            column_config={"Id": st.column_config.TextColumn(width="small")},
+        )
 
 
 def count_unique_models_and_metrics(exp_set: dict[str, any]) -> tuple[int, int]:
@@ -904,18 +946,18 @@ def main():
                 "func": display_experiment_set_score,
             },
             2: {
-                "key": "overview",
-                "title": "📊 Set Overview",
-                "func": display_experiment_set_overview,
-            },
-            3: {
                 "key": "details",
                 "title": "📝 Details by Experiment",
                 "func": display_experiment_details,
             },
+            3: {
+                "key": "overview",
+                "title": "📊 Set Overview",
+                "func": display_experiment_set_overview,
+            },
             4: {
                 "key": "ops",
-                "title": "🚨 Ops Analysis",
+                "title": "🚨 Global infos",
                 "func": display_ops_analysis,
             },
         }
