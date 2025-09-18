@@ -95,6 +95,10 @@ unfixable = []
 known-third-party = ["alembic"]
 known-first-party = ["api", "config", "tests", "ui"]
 
+[tool.ruff.lint.per-file-ignores]
+# Ignore E711 for SQLAlchemy null comparisons
+"evalap/api/crud.py" = ["E711"]
+
 [dependency-groups]
 dev = [
     "pre-commit>=4.3.0",
