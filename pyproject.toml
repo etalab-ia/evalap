@@ -82,7 +82,7 @@ python_functions = ["test_*"]
 
 [tool.ruff]
 line-length = 111
-exclude = ["alembic/versions/"]
+exclude = ["alembic/versions/", "notebooks/"]
 
 [tool.ruff.lint]
 select = [
