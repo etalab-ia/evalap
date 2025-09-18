@@ -53,7 +53,7 @@ def judge_precision_metric(output, output_true, **kwargs):
         }
     ]
     if system_prompt:
-        messages = [{"role": "system", "content": model.system_prompt}] + messages
+        messages = [{"role": "system", "content": system_prompt}] + messages
     aiclient = LlmClient(base_url=model.base_url, api_key=model.api_key)
     result = aiclient.generate(model=model.name, messages=messages, **sampling_params)
     observation = result.choices[0].message.content
