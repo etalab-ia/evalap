@@ -9,9 +9,10 @@ Create Date: 2025-02-21 19:51:30.316070
 from io import StringIO
 from typing import Sequence, Union
 
+from alembic import op
 import pandas as pd
 import sqlalchemy as sa
-from alembic import op
+
 
 # revision identifiers, used by Alembic.
 revision: str = "7e2ab5bde05b"
