@@ -878,10 +878,11 @@ def main():
         # Get the expset (or the orphan experiments)
         if expid.isdigit():
             experimentset = next((x for x in experiment_sets if x["id"] == int(expid)), None)
+            force_refresh = experimentset is None
             experimentset = _fetch_experimentset(
                 expid,
                 experimentset,
-                refresh=st.session_state.get("refresh_experimentset"),
+                refresh=force_refresh or st.session_state.get("refresh_experimentset"),
             )
         elif expid == "orphan":
             experimentset = {
