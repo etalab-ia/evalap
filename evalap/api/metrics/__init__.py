@@ -6,8 +6,9 @@ from typing import TYPE_CHECKING, Union
 
 import inflection
 from deepeval.key_handler import KEY_FILE_HANDLER
+from deepeval.models.base_model import DeepEvalBaseLLM
 
-from evalap.clients import get_api_url
+from evalap.clients import LlmClient, get_api_url, split_think_answer
 from evalap.utils import import_classes
 
 # FIX deepeval: OSError: [Errno 24] Too many open files: '.deepeval'
@@ -56,6 +57,38 @@ class Metric:
         return cls(**{k: v for k, v in d.items() if k not in ["func"]})
 
 
+class CustomModel(DeepEvalBaseLLM):
+    def __init__(self, model: "models.Model"):
+        self._model = model
+
+    def load_model(self):
+        # @DEBUG: is it depeval "compatibble" ?
+        return self._model
+
+    def get_model_name(self) -> str:
+        return self._model.name
+
+    def generate(self, prompt: str) -> str:
+        model = self._model
+        sampling_params = model.sampling_params or {}
+        messages = [
+            {
+                "role": "user",
+                "content": prompt,
+            }
+        ]
+        if model.system_prompt:
+            messages = [{"role": "system", "content": model.system_prompt}] + messages
+        aiclient = LlmClient(base_url=model.base_url, api_key=model.api_key)
+        result = aiclient.generate(model=model.name, messages=messages, **sampling_params)
+        observation = result.choices[0].message.content
+        think, answer = split_think_answer(observation)
+        return answer
+
+    async def a_generate(self, prompt: str) -> str:
+        return self.generate(prompt)
+
+
 class MetricRegistry:
     deepeval_require_map = {
         "input": "query",
@@ -92,9 +125,8 @@ class MetricRegistry:
 
         def wrapped_metric(output, output_true=None, **metric_params):
             # Metric computation
-            # @TODO: pass extra metric param at class intialization!
-            # @TODO: used named/dict metric_input instead of *args ?
-            metric = metric_class(model=metric_params.get("model"))
+            model = CustomModel(metric_params["model"])
+            metric = metric_class(model=model)
             test_case = LLMTestCase(
                 **{
                     reverse_require_map[k]: v
