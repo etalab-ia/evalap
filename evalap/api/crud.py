@@ -234,7 +234,7 @@ def get_experiments(
     if set_id:
         query = query.filter(models.Experiment.experiment_set_id == set_id)
     if orphan:
-        query = query.filter(models.Experiment.experiment_set_id is None)
+        query = query.filter(models.Experiment.experiment_set_id == None)
     return query.offset(skip).limit(limit).options(joinedload(models.Experiment.results)).all()
 
 
