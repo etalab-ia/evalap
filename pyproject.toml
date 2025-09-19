@@ -104,4 +104,5 @@ dev = [
     "pre-commit>=4.3.0",
     "ruff>=0.13.0",
     "pytest-cov>=7.0.0",
+    "ipykernel>=6.30.1",
 ]
