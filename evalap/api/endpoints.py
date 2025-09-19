@@ -57,7 +57,7 @@ def read_datasets(db: Session = Depends(get_db)):
 def read_dataset(id: int, with_df: bool = False, db: Session = Depends(get_db)):
     dataset = crud.get_dataset(db, id)
     if dataset is None:
-        raise HTTPException(status_code=404, detail="Dataset not found")
+        raise HTTPException(status_code=410, detail="Dataset not found")
 
     if with_df:
         return schemas.DatasetFull.model_validate(dataset)
@@ -76,11 +76,11 @@ def read_dataset_by_query(
     if name:
         dataset = crud.get_dataset_by_name(db, name)
         if dataset is None:
-            raise HTTPException(status_code=404, detail="Dataset with given name not found")
+            raise HTTPException(status_code=410, detail="Dataset with given name not found")
     if id:
         dataset = crud.get_dataset(db, id)
         if dataset is None:
-            raise HTTPException(status_code=404, detail="Dataset not found")
+            raise HTTPException(status_code=410, detail="Dataset not found")
 
     if dataset:
         if with_df:
@@ -95,7 +95,7 @@ def read_dataset_by_query(
 def patch_dataset(id: int, dataset_patch: schemas.DatasetPatch, db: Session = Depends(get_db)):
     db_dataset = crud.update_dataset(db, id, dataset_patch)
     if db_dataset is None:
-        raise HTTPException(status_code=404, detail="Dataset not found")
+        raise HTTPException(status_code=410, detail="Dataset not found")
 
     return db_dataset
 
@@ -107,7 +107,7 @@ def patch_dataset(id: int, dataset_patch: schemas.DatasetPatch, db: Session = De
 def delete_dataset(id: int, db: Session = Depends(get_db), admin_check=Depends(admin_only)):
     try:
         if not crud.remove_dataset(db, id):
-            raise HTTPException(status_code=404, detail="Dataset not found")
+            raise HTTPException(status_code=410, detail="Dataset not found")
         return "ok"
     except (SchemaError, ValidationError) as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -131,7 +131,7 @@ async def upload_parquet_dataset(id: int, request: Request, db: Session = Depend
     # Fetch the dataset from the database
     dataset = crud.get_dataset(db, id)
     if dataset is None:
-        raise HTTPException(status_code=404, detail="Dataset not found")
+        raise HTTPException(status_code=410, detail="Dataset not found")
 
     # Create the directory structure if it doesn't exist
     data_dir = "/data/datasets"
@@ -232,7 +232,7 @@ def create_experiment(experiment: schemas.ExperimentCreate, db: Session = Depend
 def patch_experiment(id: int, experiment_patch: schemas.ExperimentPatch, db: Session = Depends(get_db)):
     db_exp = crud.update_experiment(db, id, experiment_patch)
     if db_exp is None:
-        raise HTTPException(status_code=404, detail="Experiment not found")
+        raise HTTPException(status_code=410, detail="Experiment not found")
     elif db_exp.experiment_status not in [
         schemas.ExperimentStatus.pending,
         schemas.ExperimentStatus.finished,
@@ -278,7 +278,7 @@ def delete_experiment(
     admin_check=Depends(admin_only),
 ):
     if not crud.remove_experiment(db, id):
-        raise HTTPException(status_code=404, detail="Experiment not found")
+        raise HTTPException(status_code=410, detail="Experiment not found")
     return "ok"
 
 
@@ -302,7 +302,7 @@ def read_experiment(
 ):
     experiment = crud.get_experiment(db, id)
     if experiment is None:
-        raise HTTPException(status_code=404, detail="Experiment not found")
+        raise HTTPException(status_code=410, detail="Experiment not found")
 
     if with_dataset:
         return schemas.ExperimentFullWithDataset.model_validate(experiment)
@@ -336,7 +336,7 @@ def read_experiments(
     )
 
     if not experiments:
-        raise HTTPException(status_code=404, detail="No experiments found")
+        raise HTTPException(status_code=410, detail="No experiments found")
 
     return experiments
 
@@ -380,7 +380,7 @@ def patch_experimentset(
 ):
     db_expset = crud.update_experimentset(db, id, experimentset_patch)
     if db_expset is None:
-        raise HTTPException(status_code=404, detail="Experiment not found")
+        raise HTTPException(status_code=410, detail="Experiment not found")
 
     try:
         expset = experimentset_patch.to_table_init(db)
@@ -432,7 +432,7 @@ def patch_experimentset(
 def read_experimentsets(skip: int = 0, limit: int = 100, backward: bool = True, db: Session = Depends(get_db)):
     experimentsets = crud.get_experimentsets(db, skip=skip, limit=limit, backward=backward)
     if experimentsets is None:
-        raise HTTPException(status_code=404, detail="ExperimentSets not found")
+        raise HTTPException(status_code=410, detail="ExperimentSets not found")
     return experimentsets
     # return [schemas.ExperimentSet.model_validate(x) for x in experimentsets]
 
@@ -445,7 +445,7 @@ def read_experimentsets(skip: int = 0, limit: int = 100, backward: bool = True, 
 def read_experimentset(id: int, db: Session = Depends(get_db)):
     experimentset = crud.get_experimentset(db, id)
     if experimentset is None:
-        raise HTTPException(status_code=404, detail="ExperimentSet not found")
+        raise HTTPException(status_code=410, detail="ExperimentSet not found")
     return experimentset
 
 
@@ -455,7 +455,7 @@ def read_experimentset(id: int, db: Session = Depends(get_db)):
 )
 def delete_experimentset(id: int, db: Session = Depends(get_db), admin_check=Depends(admin_only)):
     if not crud.remove_experimentset(db, id):
-        raise HTTPException(status_code=404, detail="ExperimentSet not found")
+        raise HTTPException(status_code=410, detail="ExperimentSet not found")
     return "ok"
 
 
@@ -475,7 +475,7 @@ def retry_runs(
 ):
     experimentset = crud.get_experimentset(db, id)
     if experimentset is None:
-        raise HTTPException(status_code=404, detail="ExperimentSet not found")
+        raise HTTPException(status_code=410, detail="ExperimentSet not found")
 
     rr = schemas.RetryRuns(
         experiment_ids=[], result_ids=[], unfinished_experiment_ids=[], unfinished_result_ids=[]
@@ -804,7 +804,7 @@ def get_loadtesting(run_id: int, db: Session = Depends(get_db)):
 def remove_loadtesting(run_id: int, db: Session = Depends(get_db)):
     try:
         if not crud.remove_loadtesting(db, run_id):
-            raise HTTPException(status_code=404, detail="LoadTesting not found")
+            raise HTTPException(status_code=410, detail="LoadTesting not found")
         return "ok"
 
     except IntegrityError as e:
