@@ -4,7 +4,7 @@ from . import metric_registry
 @metric_registry.register(
     name="output_length",
     description="Number of words of the output",
-    metric_type="llm",
+    metric_type="ops",
     require=["output"],
 )
 def output_length_metric(output, *args, **kwargs):
