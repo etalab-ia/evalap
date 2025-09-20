@@ -215,8 +215,7 @@ class ChatCompletionRequest(OpenAIBaseModel):
     echo: Optional[bool] = Field(
         default=False,
         description=(
-            "If true, the new message will be prepended with the last message "
-            "if they belong to the same role."
+            "If true, the new message will be prepended with the last message if they belong to the same role."
         ),
     )
     add_generation_prompt: Optional[bool] = Field(
@@ -258,8 +257,7 @@ class ChatCompletionRequest(OpenAIBaseModel):
     chat_template_kwargs: Optional[Dict[str, Any]] = Field(
         default=None,
         description=(
-            "Additional kwargs to pass to the template renderer. "
-            "Will be accessible by the chat template."
+            "Additional kwargs to pass to the template renderer. Will be accessible by the chat template."
         ),
     )
     include_stop_str_in_output: Optional[bool] = Field(
@@ -295,9 +293,7 @@ class ChatCompletionRequest(OpenAIBaseModel):
     )
     guided_whitespace_pattern: Optional[str] = Field(
         default=None,
-        description=(
-            "If specified, will override the default whitespace pattern for guided json decoding."
-        ),
+        description=("If specified, will override the default whitespace pattern for guided json decoding."),
     )
 
     # doc: end-chat-completion-extra-params
@@ -487,9 +483,7 @@ class CompletionRequest(OpenAIBaseModel):
     )
     guided_whitespace_pattern: Optional[str] = Field(
         default=None,
-        description=(
-            "If specified, will override the default whitespace pattern for guided json decoding."
-        ),
+        description=("If specified, will override the default whitespace pattern for guided json decoding."),
     )
 
     # doc: end-completion-extra-params

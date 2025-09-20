@@ -137,7 +137,7 @@ class MetricRegistry:
             )
             try:
                 metric.measure(test_case, _show_indicator=False)
-            except TypeError as e:  # External metric, like RAGAS does not have _show_indicator attr
+            except TypeError:  # External metric, like RAGAS does not have _show_indicator attr
                 metric.measure(test_case)
 
             if hasattr(metric, "reason"):

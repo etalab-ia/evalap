@@ -7,7 +7,7 @@ All notable changes to this project will be documented in this file.
 
 ### 🚀 Features
 
-- Support thinking model in judge 
+- Support thinking model in judge
 - Add nb_tool_call as ops metrics + add MCP_BRIFGE_URL + format
 - Parquet dataset support + ocr metrics + notebook demo
 - Add and handle new with_vision and prelude_prompt attribute

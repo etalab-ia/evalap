@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
+
 env:
   IMAGE_NAME: ghcr.io/${{ github.repository }}/evalap
   IMAGE_TAG: ${{ github.sha }}

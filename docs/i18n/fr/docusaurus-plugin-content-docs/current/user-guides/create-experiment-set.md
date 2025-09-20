@@ -71,8 +71,8 @@ expset = {
     "name": expset_name,
     "readme": expset_readme,
     "cv": {
-        "common_params": common_params, 
-        "grid_params": grid_params, 
+        "common_params": common_params,
+        "grid_params": grid_params,
         "repeat": 3  # Run each combination 3 times to measure variability
     }
 }
@@ -116,8 +116,8 @@ expset = {
             "name": "gpt4o_standard",
             "dataset": "qa_benchmark_v2",
             "model": {
-                "name": "gpt-4o", 
-                "base_url": "https://api.openai.com/v1", 
+                "name": "gpt-4o",
+                "base_url": "https://api.openai.com/v1",
                 "api_key": os.getenv("OPENAI_API_KEY"),
                 "sampling_params": {"temperature": 0.0}
             },
@@ -127,8 +127,8 @@ expset = {
             "name": "gpt4o_creative",
             "dataset": "qa_benchmark_v2",
             "model": {
-                "name": "gpt-4o", 
-                "base_url": "https://api.openai.com/v1", 
+                "name": "gpt-4o",
+                "base_url": "https://api.openai.com/v1",
                 "api_key": os.getenv("OPENAI_API_KEY"),
                 "sampling_params": {"temperature": 0.7}
             },

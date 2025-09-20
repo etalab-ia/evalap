@@ -1,8 +1,7 @@
-import pytest
 from fastapi.testclient import TestClient
 
 from tests.test_api import TestApi
-from tests.utils import ops, log_and_assert
+from tests.utils import log_and_assert, ops
 
 ops_metrics_cases = [
     {
@@ -13,7 +12,7 @@ ops_metrics_cases = [
         "unique_observations": 5,
         "distinct_models": ["model1", "model2"],
     },
-    #ops metrics empty
+    # ops metrics empty
     {
         "experiment_sets": 0,
         "unique_experiments": 0,
@@ -22,7 +21,6 @@ ops_metrics_cases = [
         "unique_observations": 0,
         "distinct_models": [],
     },
-
 ]
 
 
@@ -39,8 +37,9 @@ def assert_ops_metrics_types(metrics_dict):
 
     for key in numeric_keys:
         assert key in metrics_dict, f"Missing key in response: {key}"
-        assert isinstance(metrics_dict[key],
-                          (int, float)), f"The '{key}' field must be a float or int: {type(metrics_dict[key])}"
+        assert isinstance(metrics_dict[key], (int, float)), (
+            f"The '{key}' field must be a float or int: {type(metrics_dict[key])}"
+        )
 
     assert "distinct_models" in metrics_dict
     assert isinstance(metrics_dict["distinct_models"], list), "'distinct_models' must be a list"
@@ -57,21 +56,28 @@ class TestEndpointsOpsMetrics(TestApi):
 
 
 ops_eco_cases = [
-    {'answers': {'total_emissions': {},
-                 'total_entries_with_emissions': 3119,
-                 'first_emission_date': '2025-06-12T17:30:24.745014'},
-     'observation_table': {'total_emissions': {},
-                           'total_entries_with_emissions': 0,
-                           'first_emission_date': None}},
-
+    {
+        "answers": {
+            "total_emissions": {},
+            "total_entries_with_emissions": 3119,
+            "first_emission_date": "2025-06-12T17:30:24.745014",
+        },
+        "observation_table": {
+            "total_emissions": {},
+            "total_entries_with_emissions": 0,
+            "first_emission_date": None,
+        },
+    },
 ]
+
 
 def assert_emissions_dict(emissions_dict):
     assert isinstance(emissions_dict, dict)
     for key, value in emissions_dict.items():
-        assert isinstance(value, (float,
-                                  int)), \
+        assert isinstance(value, (float, int)), (
             f"The '{key}' field is not a float or int: {value} (type: {type(value)})"
+        )
+
 
 class TestEndpointsOpsEco(TestApi):
     def test_read_eco_metrics(self, client: TestClient):
@@ -79,11 +85,16 @@ class TestEndpointsOpsEco(TestApi):
         log_and_assert(response, 200)
         data = response.json()
 
-        assert_emissions_dict(data['answers']['total_emissions'])
-        assert isinstance(data['answers']['total_entries_with_emissions'], int)
-        assert isinstance(data['answers']['first_emission_date'], str) or data['answers']['first_emission_date'] is None
+        assert_emissions_dict(data["answers"]["total_emissions"])
+        assert isinstance(data["answers"]["total_entries_with_emissions"], int)
+        assert (
+            isinstance(data["answers"]["first_emission_date"], str)
+            or data["answers"]["first_emission_date"] is None
+        )
 
-        assert_emissions_dict(data['observation_table']['total_emissions'])
-        assert isinstance(data['observation_table']['total_entries_with_emissions'], int)
-        assert isinstance(data['observation_table']['first_emission_date'], str) or data['observation_table'][
-            'first_emission_date'] is None
+        assert_emissions_dict(data["observation_table"]["total_emissions"])
+        assert isinstance(data["observation_table"]["total_entries_with_emissions"], int)
+        assert (
+            isinstance(data["observation_table"]["first_emission_date"], str)
+            or data["observation_table"]["first_emission_date"] is None
+        )

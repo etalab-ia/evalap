@@ -38,4 +38,3 @@ MCP browser server:
 - https://github.com/microsoft/playwright-mcp
 - https://github.com/blackwhite084/playwright-plus-python-mcp
 - https://github.com/executeautomation/mcp-playwright
-

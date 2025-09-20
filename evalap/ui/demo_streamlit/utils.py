@@ -1,13 +1,13 @@
+import hashlib
 import json
 import re
-import time
 from collections import defaultdict
 from copy import deepcopy
+from typing import Optional
+
 import pandas as pd
 import requests
 import streamlit as st
-from typing import Optional
-import hashlib
 
 API_BASE_URL = "http://localhost:8000/v1"
 
@@ -161,7 +161,7 @@ def _find_default_sort_metric(columns):
 def _extract_mean(value):
     try:
         return float(value.split("±")[0].strip())
-    except:
+    except Exception:
         return value  # Return original value if not in expected format
 
 

@@ -21,9 +21,7 @@ class CustomIntegrityError(Exception):
 
     def to_http_response(self):
         """Convert the exception to a JSON response."""
-        return JSONResponse(
-            status_code=400, content={"error": "IntegrityError", "detail": self.message}
-        )
+        return JSONResponse(status_code=400, content={"error": "IntegrityError", "detail": self.message})
 
     @classmethod
     def from_integrity_error(cls, orig_error):

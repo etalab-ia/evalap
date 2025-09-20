@@ -15,7 +15,7 @@ COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 # Install dependency
 # --
 RUN uv pip install --no-cache --system .
-# For the API and webapp 
+# For the API and webapp
 RUN apt-get update
 RUN apt-get install -y supervisor
 # For the doc
