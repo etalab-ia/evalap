@@ -39,7 +39,7 @@ _config = {
 
 @metric_registry.register(
     name="judge_exactness",
-    description="Binary similarity between output and output_true",
+    description="La métrique 'judge_exactness' indique simplement si la réponse générée par un agent correspond exactement à la bonne réponse attendue. Elle retourne 1 si la réponse est bien similaire à la vérité terrain, sinon 0. Cette métrique sert à valider la correspondance précise dans des cas où la fidélité stricte à la bonne réponse est essentielle.",
     metric_type="llm",
     require=["output", "output_true", "query"],
 )
