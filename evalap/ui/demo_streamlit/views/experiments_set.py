@@ -486,7 +486,7 @@ def display_experiment_set_score(experimentset, experiments_df):
         # Create an empty DataFrame with the same shape as our original
         highlight_df = pd.DataFrame("", index=df.index, columns=df.columns)
 
-        inverse_highlight = ["generation_time"]
+        inverse_highlight = ["generation_time", "judge_rambling"]
 
         # For each column, find the min and max values and style them
         for col in df.columns:
