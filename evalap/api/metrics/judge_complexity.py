@@ -50,7 +50,7 @@ _config = {
 
 @metric_registry.register(
     name="judge_complexity",
-    description="[0-10] La métrique 'judge_complexity' évalue la complexité d'une demande administrative selon sa clarté, le nombre d'administrations impliquées, et la complexité des procédures nécessaires. Elle sert à identifier la difficulté globale d’une question pour mieux orienter la prise en charge et les ressources à mobiliser. Cette métrique est utile pour prioriser les demandes simples ou complexes dans un cadre administratif.",
+    description="[0-10] The 'judge_complexity' metric assesses the complexity of an administrative request based on its clarity, the number of administrations involved, and the complexity of the necessary procedures. It is used to identify the overall difficulty of an issue in order to better guide the handling and resources to be mobilized. This metric is useful for prioritizing simple or complex requests in an administrative setting.",
     metric_type="dataset",
     require=["query"],
 )

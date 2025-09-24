@@ -51,7 +51,7 @@ _config = {
 
 @metric_registry.register(
     name="judge_notator",
-    description="[1-10] La métrique 'judge_notator' évalue la similarité sémantique entre la réponse attendue et la réponse générée en donnant une note de 1 à 10. Elle mesure dans quelle mesure les deux réponses partagent le même sens global, même si les mots ou formulations diffèrent, afin d’apprécier la fidélité sémantique au-delà de la simple correspondance lexicale.",
+    description="[1-10] The 'judge_notator' metric evaluates the semantic similarity between the expected response and the generated response by giving a score from 1 to 10. It measures the extent to which the two responses share the same overall meaning, even if the words or phrasing differ, in order to assess semantic fidelity beyond simple lexical correspondence.",
     metric_type="llm",
     require=["output", "output_true", "query"],
 )

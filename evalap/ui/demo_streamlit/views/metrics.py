@@ -59,7 +59,7 @@ def main():
                     # pop up for definition
                     if metric["name"].startswith("judge_"):
                         definition = extract_template_variable(f"evalap/api/metrics/{metric['name']}.py")
-                        with st.popover("see definition"):
+                        with st.popover("Show me the prompt"):
                             st.markdown(definition, unsafe_allow_html=True)
 
                     st.divider()

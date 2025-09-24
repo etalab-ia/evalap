@@ -44,7 +44,7 @@ _config = {
 
 @metric_registry.register(
     name="judge_completude",
-    description="[0-100] La métrique 'judge_completude' donne un score de 0 à 100 qui mesure dans quelle mesure une réponse couvre toutes les informations importantes présentes dans le texte de référence. Elle s’utilise pour vérifier que la réponse d’un modèle ne laisse rien d’essentiel de côté, notamment dans des contextes administratifs exigeants la complétude des données.",
+    description="[0-100] The 'judge_completude' metric gives a score from 0 to 100 that measures the extent to which a response covers all the important information present in the reference text. It is used to verify that a model's response does not leave out anything essential, particularly in administrative contexts that require data completeness.",
     metric_type="llm",
     require=["output", "output_true"],
 )

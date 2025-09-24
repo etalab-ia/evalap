@@ -39,7 +39,7 @@ _config = {
 
 @metric_registry.register(
     name="judge_precision",
-    description="[0;1] La métrique 'judge_precision' indique si la réponse attendue est bien contenue dans la réponse alternative donnée. Elle répond 1 si oui, sinon 0. Elle sert à vérifier que les informations clés attendues sont présentes dans la réponse fournie, garantissant ainsi une réponse précise et complète.",
+    description="[0;1] The 'judge_precision' metric indicates whether the expected response is contained in the alternative response given. It returns 1 if yes, otherwise 0. It is used to verify that the expected key information is present in the response provided, thus ensuring an accurate and complete response.",
     metric_type="llm",
     require=["output", "output_true", "query"],
 )
