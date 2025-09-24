@@ -4,7 +4,6 @@ from evalap.utils import render_jinja
 from . import metric_registry
 
 
-
 _template = """
 Vous êtes un assistant IA chargé d'évaluer et de comparer deux textes pour déterminer si le Texte B est plus ou moins similaire (au sens de l'intention) au Texte A, sachant que A est la vérité terrain et B une réponse donnée par un autre LLM.
 
@@ -44,7 +43,7 @@ _config = {
 
 @metric_registry.register(
     name="judge_completude",
-    description="[0-100] score of the completude correspondance between output and output_true",
+    description="[0-100] The 'judge_completude' metric gives a score from 0 to 100 that measures the extent to which a response covers all the important information present in the reference text. It is used to verify that a model's response does not leave out anything essential, particularly in administrative contexts that require data completeness.",
     metric_type="llm",
     require=["output", "output_true"],
 )
