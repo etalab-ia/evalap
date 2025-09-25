@@ -386,7 +386,6 @@ def patch_experimentset(
         expset = experimentset_patch.to_table_init(db)
         # Check the judge_model unicity
         # --
-        #@TODO; Ensure judge nad new_judge are dict for comparaitI
         judge = next((e.judge_model for e in db_expset.experiments if e.judge_model), None)
         new_judge = next(
             (e["judge_model"] for e in (expset.get("experiments") or []) if e.get("judge_model")), None
