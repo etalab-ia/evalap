@@ -16,7 +16,7 @@ from evalap.api.db import get_db
 from evalap.api.errors import CustomIntegrityError, SchemaError
 from evalap.api.metrics import Metric, metric_registry
 from evalap.api.models import is_equal
-from evalap.api.security import admin_only
+from evalap.api.security import admin_only, get_current_user
 from evalap.clients import LlmClient, MCPBridgeClient, multi_step_generate
 from evalap.logger import logger
 from evalap.runners import dispatch_retries, dispatch_tasks
