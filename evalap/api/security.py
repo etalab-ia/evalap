@@ -4,7 +4,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from evalap.api.config import ADMIN_TOKENS, USER_TOKENS
 
 # Security scheme for Bearer tokens
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 
 
 async def admin_only(x_evalap_admin: str = Header(default=None)):
@@ -23,8 +23,8 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
         # Allow if no user tokens are given at startup
         return "ok"
 
-    token = credentials.credentials
     try:
+        token = credentials.credentials
         return USER_TOKENS[token]
     except:
         raise HTTPException(
