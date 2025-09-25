@@ -20,7 +20,7 @@ def fetch(method, endpoint, data=None, token=None):
 
     # Setup authorization
     # --
-    if method == "get" and not token:
+    if method == "get":
         token = token if token else EVALAP_FRONTEND_TOKEN
 
     if token:
