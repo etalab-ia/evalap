@@ -1,7 +1,7 @@
 import os
 import re
 from dataclasses import dataclass, field
-from typing import Generator
+from typing import Generator, Optional, Tuple
 
 import requests
 
@@ -221,13 +221,15 @@ class LlmClient:
 #
 
 
-def split_think_answer(answer: str, think_token="</think>") -> (str | None, str):
-    think, tag, answer = answer.partition("</think>")
-    if tag:
-        answer = answer.strip()
-        think = (think + tag).strip()
+def split_think_answer(answer: str, think_token="</think>") -> Tuple[Optional[str], str]:
+    """Separate the reasoning token from the regular answer if any"""
+    pattern = re.escape(think_token)
+    match = re.search(pattern, answer, re.IGNORECASE)
+    if match:
+        start, end = match.span()
+        think = answer[:end].strip()
+        answer = answer[end:].strip()
+        return think, answer
     else:
-        answer = think.strip()
-        think = None
-
-    return think, answer
+        # behave like original logic
+        return None, answer.strip()
