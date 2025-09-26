@@ -4,7 +4,7 @@ import streamlit as st
 import requests
 from utils import fetch
 
-EVALAP_API_KEY = os.getenv("EVALAP_API_KEY")
+USER_API_KEY = os.getenv("USER_API_KEY")
 ALBERT_API_KEY = os.getenv("ALBERT_API_KEY")
 
 # config
@@ -87,16 +87,16 @@ def list_datasets() -> list[str]:
     return [ds["name"] for ds in datasets if not _should_skip_dataset(ds)]
 
 
-def post_dataset(dataset, headers):
-    return fetch("post", "/dataset", dataset, headers)
+def post_dataset(dataset, token):
+    return fetch("post", "/dataset", dataset, token)
 
 
-def post_experiment_set(expset, headers):
-    return fetch("post", "/experiment_set", data=expset, headers=headers)
+def post_experiment_set(expset, token):
+    return fetch("post", "/experiment_set", data=expset, token=token)
 
 
-def patch_experiment_set(expset_id, patch_data, headers):
-    return fetch("patch", f"/experiment_set/{expset_id}", data=patch_data, headers=headers)
+def patch_experiment_set(expset_id, patch_data, token):
+    return fetch("patch", f"/experiment_set/{expset_id}", data=patch_data, token=token)
 
 
 def model_config_section(session_key: str):
@@ -303,8 +303,6 @@ def experimental_section(
             st.error("Aucun modèle ou prompt valide.")
             return
 
-        headers = {"Authorization": f"Bearer {EVALAP_API_KEY}"}
-
         if mode == "create":
             expset = {
                 "name": expset_name,
@@ -315,7 +313,7 @@ def experimental_section(
                     "repeat": 1,
                 },
             }
-            result = post_experiment_set(expset, headers)
+            result = post_experiment_set(expset, USER_API_KEY)
             if result and "id" in result:
                 expset_id = result["id"]
                 st.success(f"Experiment set créé: {result['name']} (ID: {expset_id})")
@@ -341,7 +339,7 @@ def experimental_section(
                     "repeat": 1,
                 }
             }
-            result = patch_experiment_set(expset_id, patch_data, headers)
+            result = patch_experiment_set(expset_id, patch_data, USER_API_KEY)
             if result:
                 st.success(
                     f"Ajout avec succès dans l'expérience ID {expset_id} de {len(model_configs)} nouveau(x) modèle(s)/prompt(s)"
