@@ -5,7 +5,6 @@ from typing import Optional
 import pandas as pd
 import streamlit as st
 from streamlit import session_state
-
 from utils import fetch
 
 session_state.layout = "wide"
@@ -117,7 +116,7 @@ def main():
 
         for dataset in filtered_datasets:
             when = datetime.fromisoformat(dataset["created_at"]).strftime("%d %B %Y")
-            columns = _get_dataset_columns(dataset)
+            # columns = _get_dataset_columns(dataset)
 
             with st.container():
                 st.markdown(

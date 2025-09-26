@@ -12,4 +12,3 @@ OCR AI lib:
 Datasets:
 - https://huggingface.co/datasets/getomni-ai/ocr-benchmark
 - https://huggingface.co/datasets/datalab-to/marker_benchmark
-

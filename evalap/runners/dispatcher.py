@@ -11,7 +11,6 @@ import evalap.api.crud as crud
 import evalap.api.models as models
 import evalap.api.schemas as schemas
 from evalap.api.config import ZMQ_SENDER_URL
-from evalap.logger import logger
 
 
 class MessageType(str, Enum):
@@ -128,7 +127,6 @@ def dispatch_tasks(db, db_exp, message_type: MessageType):
 
         # Iterate dataset and metrics
         for num_line, row in crud.get_dataset_iterator(db_exp):
-
             # Retrieve the answer
             a = (
                 db.query(models.Answer)

@@ -4,12 +4,12 @@ from typing import Generator
 import numpy as np
 import pandas as pd
 import pyarrow.parquet as pq
-from sqlalchemy import and_, column, desc, func, select
-from sqlalchemy.orm import Session, joinedload, aliased
+from sqlalchemy import and_, desc, func, select
+from sqlalchemy.orm import Session, aliased, joinedload
 
 import evalap.api.models as models
 import evalap.api.schemas as schemas
-from evalap.api.errors import CustomIntegrityError, SchemaError
+from evalap.api.errors import SchemaError
 from evalap.api.metrics import Metric, metric_registry
 from evalap.api.models import create_object_from_dict
 from evalap.utils import get_parquet_row_by_index
@@ -465,7 +465,9 @@ def get_leaderboard(
             experiment_name=result.experiment_name,
             model_name=result.model_name,
             dataset_name=result.dataset_name,
-            main_metric_score=float(result.main_metric_score) if result.main_metric_score is not None else None,
+            main_metric_score=float(result.main_metric_score)
+            if result.main_metric_score is not None
+            else None,
             other_metrics=other_metrics_dict,
             system_prompt=result.system_prompt,
             sampling_param={k: str(v) for k, v in (result.sampling_params or {}).items()},
@@ -478,6 +480,7 @@ def get_leaderboard(
         entries.append(entry)
 
     return schemas.Leaderboard(entries=entries)
+
 
 #
 # Ops

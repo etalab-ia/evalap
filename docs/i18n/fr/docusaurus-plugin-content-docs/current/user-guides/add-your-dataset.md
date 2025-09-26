@@ -7,7 +7,7 @@ sidebar_position: 1
 Ce guide vous accompagnera dans le processus d'ajout d'un nouveau jeu de données à Evalap pour l'évaluation de modèles.
 Vous pouvez ajouter un jeu de données par programmation en utilisant l'API Evalap.
 
-Deux formats sont pris en charge : 
+Deux formats sont pris en charge :
 
 - Données de type CSV (dataframes)
 - Format Parquet (pour les jeux de données plus volumineux)

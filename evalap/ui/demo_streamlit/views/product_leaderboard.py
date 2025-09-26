@@ -1,23 +1,17 @@
-from itertools import groupby
-from operator import itemgetter
-from pathlib import Path
-import json
 import re
-from collections import defaultdict
-from copy import deepcopy
-from typing import List, Dict, Optional, Tuple, Any
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
 import streamlit as st
 import yaml
-
-from utils import fetch, _rename_model_variants, calculate_tokens_per_second
+from utils import _rename_model_variants, calculate_tokens_per_second, fetch
 
 DEFAULT_METRIC = "judge_exactness"
 
 
-#@st.cache_data(ttl=300)
+# @st.cache_data(ttl=300)
 def load_product_config() -> dict:
     config_path = Path("evalap") / "config" / "products" / "product_config.yml"
 
@@ -31,15 +25,11 @@ def load_product_config() -> dict:
         if not config:
             st.error(f"⚠️ The configuration file at `{config_path}` is empty.")
             return {"products": {}}
-    except yaml.YAMLError as err:
-        st.error(
-            f"❌  Syntax error in YAML (file : `{config_path}`):\n\n``````"
-        )
+    except yaml.YAMLError:
+        st.error(f"❌  Syntax error in YAML (file : `{config_path}`):\n\n``````")
         return {"products": {}}
-    except Exception as e:
-        st.error(
-            f"❌ Error loading configuration file (`{config_path}`):\n\n``````"
-        )
+    except Exception:
+        st.error(f"❌ Error loading configuration file (`{config_path}`):\n\n``````")
         return {"products": {}}
 
     if "products" not in config or not config.get("products"):
@@ -52,7 +42,6 @@ def load_product_config() -> dict:
     return config
 
 
-
 def fetch_experiment_results(exp_id: int) -> dict:
     """Fetches results for a single experiment."""
     return fetch("get", f"/experiment/{exp_id}", {"with_dataset": "true"})
@@ -60,10 +49,10 @@ def fetch_experiment_results(exp_id: int) -> dict:
 
 @st.cache_data(ttl=300)
 def fetch_leaderboard(
-        metric_name: str = DEFAULT_METRIC,
-        dataset_name: str | None = None,
-        judge_model: str | None = None,
-        limit: int = 100,
+    metric_name: str = DEFAULT_METRIC,
+    dataset_name: str | None = None,
+    judge_model: str | None = None,
+    limit: int = 100,
 ) -> dict:
     params = {"metric_name": metric_name}
     if dataset_name:
@@ -251,11 +240,11 @@ def process_leaderboard_data(
     df = df.dropna(subset=[score_column])
 
     # Separate repeat and non-repeat experiments
-    df_repeat_false = df[df["repeat"] == False]
+    df_repeat_false = df[not df["repeat"]]
     df_repeat_false[f"{score_column}_mean"] = df_repeat_false[score_column]
     df_repeat_false["count"] = 1
 
-    df_repeat_true = df[df["repeat"] == True]
+    df_repeat_true = df[df["repeat"]]
 
     # Aggregate repeated experiments
     if not df_repeat_true.empty:
@@ -388,7 +377,7 @@ def main() -> None:
 
     product_config = load_product_config()
 
-    if not product_config.get("products"):  
+    if not product_config.get("products"):
         st.info("No product configuration found.")
         st.stop()
 

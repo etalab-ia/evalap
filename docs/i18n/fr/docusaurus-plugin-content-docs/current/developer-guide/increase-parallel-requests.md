@@ -48,4 +48,3 @@ The optimal number of parallel requests depends on several factors:
 - Timeouts or connection errors
 - System resource exhaustion
 - Throttling messages from the API provider
-

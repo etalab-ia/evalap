@@ -64,7 +64,7 @@ HEADERS = {
 
 # Design the experiment
 experiment = {
-    "name": "my_experiment_name", 
+    "name": "my_experiment_name",
     "dataset": "my_dataset", # name identifier of the dataset
     "model": {"name": "gpt-4o", "base_url": "https://api.openai.com/v1", "api_key": os.getenv("OPENAI_API_KEY")},
     "metrics": ["judge_precision", "generation_time", "output_length"],
@@ -99,7 +99,7 @@ HEADERS = {
 
 # Design the experiment with a custom model
 experiment = {
-    "name": "my_custom_model_experiment", 
+    "name": "my_custom_model_experiment",
     "dataset": "my_dataset", # name identifier of the dataset
     "model": {
         "aliased_name": "my-custom-model",  # A name to identify this model
@@ -178,4 +178,3 @@ After launching an experiment:
 :::tip Next Steps: Experiment Sets
 After creating your first experiment, consider using **Experiment Sets** to compare multiple models or configurations. Experiment sets allow you to run related experiments together, making it easier to draw meaningful comparisons and conclusions. They're essential for robust evaluations that account for model variability and provide comparative insights. Learn more in our [Create an Experiment Set](./create-experiment-set) guide.
 :::
-

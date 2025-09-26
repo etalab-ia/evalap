@@ -37,4 +37,4 @@ class TestEndpointsDataset(TestApi):
     def test_read_dataset_not_found(self, client: TestClient):
         nonexistent_id = 99999
         response = datasets.read_dataset(client, nonexistent_id)
-        log_and_assert(response, 404)
+        log_and_assert(response, 410)

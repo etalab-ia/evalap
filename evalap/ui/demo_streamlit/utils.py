@@ -13,6 +13,7 @@ import streamlit as st
 API_BASE_URL = "http://localhost:8000/v1"
 EVALAP_FRONTEND_TOKEN = os.getenv("EVALAP_FRONTEND_TOKEN")
 
+
 def fetch(method, endpoint, data=None, token=None):
     func = getattr(requests, method)
     q = ""
@@ -32,7 +33,6 @@ def fetch(method, endpoint, data=None, token=None):
         q = "?" + "&".join([f"{k}={v}" for k, v in data.items()])
     elif data:
         kw["json"] = data
-
 
     response = func(f"{API_BASE_URL}{endpoint}{q}", **kw)
     if response.status_code == 200:
@@ -174,7 +174,7 @@ def _find_default_sort_metric(columns):
 def _extract_mean(value):
     try:
         return float(value.split("±")[0].strip())
-    except:
+    except Exception:
         return value  # Return original value if not in expected format
 
 
