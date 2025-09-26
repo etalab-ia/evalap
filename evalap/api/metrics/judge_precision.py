@@ -38,7 +38,7 @@ _config = {
 
 @metric_registry.register(
     name="judge_precision",
-    description="Binary precision of the output_true. Equal to one if the correct answer is contained in the given answer.",
+    description="[0;1] The 'judge_precision' metric indicates whether the expected response is contained in the alternative response given. It returns 1 if yes, otherwise 0. It is used to verify that the expected key information is present in the response provided, thus ensuring an accurate and complete response.",
     metric_type="llm",
     require=["output", "output_true", "query"],
 )

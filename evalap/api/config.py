@@ -1,4 +1,5 @@
 import importlib.metadata
+import json
 import logging
 import os
 import tempfile
@@ -50,7 +51,11 @@ MFS_API_KEY_V2 = os.getenv("MFS_API_KEY_V2")
 #######################################################################
 ### Auth
 #######################################################################
+
 ADMIN_TOKENS = [os.getenv("ADMIN_TOKEN")] if os.getenv("ADMIN_TOKEN") else []
+USER_TOKENS = json.loads(os.getenv("USER_API_KEYS", "null"))
+if USER_TOKENS:
+    USER_TOKENS = {v: k for k, v in USER_TOKENS.items()}
 
 
 #######################################################################

@@ -50,7 +50,7 @@ _config = {
 
 @metric_registry.register(
     name="judge_complexity",
-    description="[0-10] score complexity of query, thematic...",
+    description="[0-10] The 'judge_complexity' metric assesses the complexity of an administrative request based on its clarity, the number of administrations involved, and the complexity of the necessary procedures. It is used to identify the overall difficulty of an issue in order to better guide the handling and resources to be mobilized. This metric is useful for prioritizing simple or complex requests in an administrative setting.",
     metric_type="dataset",
     require=["query"],
 )
