@@ -47,21 +47,24 @@ _config = {
 
 @metric_registry.register(
     name="judge_rambling",
-    description="[1-10] rambling score between output and output_true",
+    description="[1-10] The 'judge_rambling' metric measures the amount of irrelevant or off-topic content in a response relative to the question asked. It assigns a score from 1 (completely relevant response) to 10 (mostly off-topic response), helping to detect and limit rambling in AI agent responses.",
     metric_type="llm",
     require=["output", "output_true", "query"],
 )
 def judge_pertinence_metric(output, output_true, **kwargs):
-    config = _config | {k: v for k, v in kwargs.items() if k in _config}
+    model = kwargs["model"]
+    system_prompt =  model.system_prompt or _config.get("system_prompt")
+    sampling_params = _config.get("sampling_params", {}) | (model.sampling_params or {})
     messages = [
         {
             "role": "user",
             "content": render_jinja(_template, output=output, output_true=output_true, **kwargs),
         }
     ]
-    model = config["model"]
+    if system_prompt:
+        messages = [{"role": "system", "content": system_prompt}] + messages
     aiclient = LlmClient(base_url=model.base_url, api_key=model.api_key)
-    result = aiclient.generate(model=model.name, messages=messages, **config["sampling_params"])
+    result = aiclient.generate(model=model.name, messages=messages, **sampling_params)
     observation = result.choices[0].message.content
     think, answer = split_think_answer(observation)
     score = answer.strip(" \n\"'.%")

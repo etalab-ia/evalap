@@ -42,7 +42,6 @@ A vous.
 """.strip()
 
 _config = {
-    "model": "gpt-4o",
     # "system_prompt": "Tu donnes...."
     "sampling_params": {"temperature": 0.2},
 }
@@ -50,21 +49,24 @@ _config = {
 
 @metric_registry.register(
     name="judge_complexity",
-    description="[0-10] score complexity of query, thematic...",
+    description="[0-10] The 'judge_complexity' metric assesses the complexity of an administrative request based on its clarity, the number of administrations involved, and the complexity of the necessary procedures. It is used to identify the overall difficulty of an issue in order to better guide the handling and resources to be mobilized. This metric is useful for prioritizing simple or complex requests in an administrative setting.",
     metric_type="dataset",
     require=["query"],
 )
 def judge_complexity_metric(output, output_true, **kwargs):
-    config = _config | {k: v for k, v in kwargs.items() if k in _config}
+    model = kwargs["model"]
+    system_prompt =  model.system_prompt or _config.get("system_prompt")
+    sampling_params = _config.get("sampling_params", {}) | (model.sampling_params or {})
     messages = [
         {
             "role": "user",
             "content": render_jinja(_template, output=output, output_true=output_true, **kwargs),
         }
     ]
-    model = config["model"]
+    if system_prompt:
+        messages = [{"role": "system", "content": system_prompt}] + messages
     aiclient = LlmClient(base_url=model.base_url, api_key=model.api_key)
-    result = aiclient.generate(model.name, messages=messages, **config["sampling_params"])
+    result = aiclient.generate(model=model.name, messages=messages, **sampling_params)
     observation = result.choices[0].message.content
     think, answer = split_think_answer(observation)
 
@@ -88,6 +90,6 @@ def judge_complexity_metric(output, output_true, **kwargs):
         elif line.startswith("Thématique :"):
             thematique = line.split(":", 1)[1].strip()
 
-    observation_ = {"answer": answer, "think":think, "scores": scores, "thematique": thematique}
+    observation_ = {"answer": answer, "think": think, "scores": scores, "thematique": thematique}
 
     return int(scores["global"]), json.dumps(observation_), result
