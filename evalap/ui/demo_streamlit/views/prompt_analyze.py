@@ -171,6 +171,7 @@ def experimental_section(
     mode: str,
     session_key_models: str,
     session_key_prompts: str,
+    user_api_key: str,
 ):
     assert mode in ("create", "patch")
 
@@ -313,7 +314,7 @@ def experimental_section(
                     "repeat": 1,
                 },
             }
-            result = post_experiment_set(expset, USER_API_KEY)
+            result = post_experiment_set(expset, user_api_key)
             if result and "id" in result:
                 expset_id = result["id"]
                 st.success(f"Experiment set créé: {result['name']} (ID: {expset_id})")
@@ -339,7 +340,7 @@ def experimental_section(
                     "repeat": 1,
                 }
             }
-            result = patch_experiment_set(expset_id, patch_data, USER_API_KEY)
+            result = patch_experiment_set(expset_id, patch_data, user_api_key)
             if result:
                 st.success(
                     f"Ajout avec succès dans l'expérience ID {expset_id} de {len(model_configs)} nouveau(x) modèle(s)/prompt(s)"
@@ -361,21 +362,38 @@ def experimental_section(
 def main():
     st.title("Expérimentations de prompt")
     st.write(
-        "Vous pouvez ici expérimenter des prompts sur votre cas d'usage, "
+        "Vous pouvez ici expérimenter des prompts sur votre cas d'usage,   "
         "en utilisant les modèles albert-large et/ou albert-small proposés par **Albert API**."
+        )
+    st.write("Pour obtenir une clef d'accès, vous pouvez prendre contact avec ..."#TODO 
     )
     st.divider()
+
+
+    # USER API KEY
+    user_api_key = st.text_input(
+        "Entrer votre clef d'accès", 
+        type="password", 
+        key="user_api_key_input"
+    )
+    if not user_api_key:
+        st.warning("Merci de renseigner votre clef d'accès.")
+        st.stop()
+
+
 
     tab1, tab2 = st.tabs(
         ["Création d'une expérimentation", "Ajouter des prompts à une experimentation existante"]
     )
 
     with tab1:
-        experimental_section(mode="create", session_key_models="model_configs", session_key_prompts="prompts")
+        experimental_section(
+            mode="create", session_key_models="model_configs", session_key_prompts="prompts", user_api_key=user_api_key,
+            )
 
     with tab2:
         experimental_section(
-            mode="patch", session_key_models="model_configs_patch", session_key_prompts="prompts_to_patch"
+            mode="patch", session_key_models="model_configs_patch", session_key_prompts="prompts_to_patch", user_api_key=user_api_key,
         )
 
 
