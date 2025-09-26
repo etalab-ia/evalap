@@ -4,7 +4,6 @@ import streamlit as st
 import requests
 from utils import fetch
 
-USER_API_KEY = os.getenv("USER_API_KEY")
 ALBERT_API_KEY = os.getenv("ALBERT_API_KEY")
 
 # config
