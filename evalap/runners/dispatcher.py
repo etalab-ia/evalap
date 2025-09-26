@@ -24,9 +24,9 @@ def _fix_answer_num_count(db, db_exp, commit=True):
     counts = (
         db.query(
             func.count(models.Answer.id).label("num_try"),
-            func.count(
-                case(((models.Answer.answer is not None) & (models.Answer.error_msg is None), 1))
-            ).label("num_success"),
+            func.count(case(((models.Answer.answer != None) & (models.Answer.error_msg == None), 1))).label(
+                "num_success"
+            ),
         )
         .filter(models.Answer.experiment_id == db_exp.id)
         .one()
@@ -49,8 +49,7 @@ def _fix_result_num_count(db, result, commit=True):
             func.count(
                 case(
                     (
-                        (models.ObservationTable.score is not None)
-                        & (models.ObservationTable.error_msg is None),
+                        (models.ObservationTable.score != None) & (models.ObservationTable.error_msg == None),
                         1,
                     )
                 )
