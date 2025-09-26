@@ -379,7 +379,10 @@ def main():
         st.warning("Merci de renseigner votre clef d'accès.")
         st.stop()
 
-
+    verif_authent = fetch("get", "/metrics", token=user_api_key)
+    if verif_authent is None:
+        st.error("Clef API invalide.")
+        st.stop()
 
     tab1, tab2 = st.tabs(
         ["Création d'une expérimentation", "Ajouter des prompts à une experimentation existante"]
