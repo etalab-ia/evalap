@@ -3,7 +3,7 @@ from . import metric_registry
 
 @metric_registry.register(
     name="qcm_exactness",
-    description="[0;1] La métrique 'qcm_exactness' vérifie simplement si la réponse donnée à une question à choix multiple (QCM) est exactement égale à la bonne réponse attendue. Elle retourne 1 pour une correspondance parfaite, sinon 0, permettant de valider la justesse binaire des réponses aux QCM. Cette métrique est à utiliser uniquement pour des cas d'usage de QCM",
+    description="[0;1] The 'qcm_exactness' metric simply checks whether the answer given to a multiple-choice question (MCQ) is exactly equal to the expected correct answer. It returns 1 for a perfect match, otherwise 0, allowing you to validate the binary accuracy of MCQ answers. This metric should only be used for MCQ use cases.",
     metric_type="llm",
     require=["output", "output_true"],
 )
