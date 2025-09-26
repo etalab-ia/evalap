@@ -35,10 +35,14 @@ def fetch(method, endpoint, data=None, token=None):
 
 
     response = func(f"{API_BASE_URL}{endpoint}{q}", **kw)
-    if response.status_code == 200:
+    if response.status_code in (200, 201):
         return response.json()
     else:
-        st.error(f"Failed to fetch data from {endpoint}.")
+        st.error(
+            f"Failed to fetch data from {endpoint}."
+            f" Status code: {response.status_code}"
+            f" Response content: {response.text}"
+        )
         return None
 
 
