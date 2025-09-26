@@ -47,7 +47,7 @@ _config = {
 
 @metric_registry.register(
     name="judge_relevant",
-    description="[1-10] relevance score between output and output_true",
+    description="[1-10] The 'judge_relevant' metric assesses whether the response provided contains all the essential elements of the expected response. It gives a score from 1 to 10 depending on the degree to which these elements are present, and is used to measure the precise relevance of the response in an administrative context.",
     metric_type="llm",
     require=["output", "output_true", "query"],
 )

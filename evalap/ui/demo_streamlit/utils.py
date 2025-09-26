@@ -1,5 +1,6 @@
 import hashlib
 import json
+import os
 import re
 from collections import defaultdict
 from copy import deepcopy
@@ -10,12 +11,24 @@ import requests
 import streamlit as st
 
 API_BASE_URL = "http://localhost:8000/v1"
+EVALAP_FRONTEND_TOKEN = os.getenv("EVALAP_FRONTEND_TOKEN")
 
 
-def fetch(method, endpoint, data=None):
+def fetch(method, endpoint, data=None, token=None):
     func = getattr(requests, method)
     q = ""
     kw = {}
+
+    # Setup authorization
+    # --
+    if method == "get":
+        token = token if token else EVALAP_FRONTEND_TOKEN
+
+    if token:
+        kw["headers"] = {"Authorization": f"Bearer {token}"}
+
+    # Setup HTTP payload
+    # --
     if method == "get" and data:
         q = "?" + "&".join([f"{k}={v}" for k, v in data.items()])
     elif data:
