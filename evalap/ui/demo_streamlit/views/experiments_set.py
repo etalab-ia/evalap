@@ -46,7 +46,6 @@ def _fetch_experimentset(expid, partial_expset, refresh=False):
 
 @st.cache_data(ttl=600, max_entries=3)
 def __fetch_experimentset(expid, partial_expset):
-
     experimentset = partial_expset
     if not experimentset:
         raise ValueError("experimentset not found: %s" % expid)
