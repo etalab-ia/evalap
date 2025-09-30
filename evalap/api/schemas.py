@@ -439,7 +439,7 @@ class ExperimentSetCreate(ExperimentSetBase):
     experiments: list[ExperimentCreate] | None = None
     cv: GridCV | None = None
 
-    def to_table_init(self, db: Session) -> dict:
+    def to_table_init(self, db: Session, expe_size: int = 0) -> dict:
         obj = self.recurse_table_init(db)
 
         if self.experiments is not None and self.cv is not None:
@@ -448,7 +448,7 @@ class ExperimentSetCreate(ExperimentSetBase):
         # Handle Experiments
         if self.cv is not None:
             experiments = []
-            i = 0
+            i = expe_size
             for experiment in build_param_grid(self.cv.common_params, self.cv.grid_params):
                 for _ in range(self.cv.repeat):
                     experiment["name"] = f"{self.name}__{i}"
