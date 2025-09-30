@@ -232,9 +232,17 @@ def generate_observation(message: dict, mcp_bridge: MCPBridgeClient):
                         ignore_error = True
                     raise ValueError(f"The metric {msg.metric_name} require a non null {require} value.")
 
-            # Set the Judge model for the metric
-            judge_model = get_judge_model(result.experiment.judge_model or DEFAULT_JUDGE_MODEL)
-            metric_params["model"] = judge_model
+            # Set the model for the metric
+            # For ops metrics, use the original model; for llm metrics, use the judge model
+            if metric.type == "ops":
+                # For ops metrics, pass the original model from the experiment
+                metric_params["model"] = result.experiment.model
+                # Also set judge_model for carbon impact calculation later
+                judge_model = result.experiment.model
+            else:
+                # For llm metrics, use the judge model
+                judge_model = get_judge_model(result.experiment.judge_model or DEFAULT_JUDGE_MODEL)
+                metric_params["model"] = judge_model
 
             # Compute metric
             with Timer() as timer:
