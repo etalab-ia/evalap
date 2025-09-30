@@ -315,11 +315,13 @@ class ExperimentCreate(ExperimentBase):
         # Handle judge_model
         if isinstance(self.judge_model, str):
             url, headers = get_api_url(self.judge_model)
-            obj["judge_model"] = ModelCreate(**{
-                "name": self.judge_model,
-                "base_url": url,
-                "api_key": (headers.get("Authorization") or headers.get("x-api-key") or "").split()[-1],
-            }).model_dump()
+            obj["judge_model"] = ModelCreate(
+                **{
+                    "name": self.judge_model,
+                    "base_url": url,
+                    "api_key": (headers.get("Authorization") or headers.get("x-api-key") or "").split()[-1],
+                }
+            ).model_dump()
 
         # Handle Results
         results = []
@@ -437,7 +439,7 @@ class ExperimentSetCreate(ExperimentSetBase):
     experiments: list[ExperimentCreate] | None = None
     cv: GridCV | None = None
 
-    def to_table_init(self, db: Session) -> dict:
+    def to_table_init(self, db: Session, expe_size: int = 0) -> dict:
         obj = self.recurse_table_init(db)
 
         if self.experiments is not None and self.cv is not None:
@@ -446,7 +448,7 @@ class ExperimentSetCreate(ExperimentSetBase):
         # Handle Experiments
         if self.cv is not None:
             experiments = []
-            i = 0
+            i = expe_size
             for experiment in build_param_grid(self.cv.common_params, self.cv.grid_params):
                 for _ in range(self.cv.repeat):
                     experiment["name"] = f"{self.name}__{i}"
