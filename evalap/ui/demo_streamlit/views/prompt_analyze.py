@@ -368,9 +368,25 @@ def main():
     )
     st.divider()
 
-
     # USER API KEY
     user_api_key = st.text_input("Entrer votre clef d'accès", type="password", key="user_api_key_input")
+
+    # Resetting prompts
+    if "last_api_key" not in st.session_state:
+        st.session_state["last_api_key"] = ""
+
+    if user_api_key != st.session_state["last_api_key"]:
+        st.session_state["last_api_key"] = user_api_key
+        st.session_state["prompts"] = [""]
+        st.session_state["prompts_to_patch"] = [""]
+        st.session_state["model_configs"] = {
+            "albert-large": False,
+            "albert-small": False,
+        }
+        st.session_state["model_configs_patch"] = {
+            "albert-large": False,
+            "albert-small": False,
+        }
     if not user_api_key:
         st.warning("Merci de renseigner votre clef d'accès.")
         st.stop()
