@@ -148,7 +148,7 @@ def prompt_section(session_key: str, prompt_label: str = "Prompt", height: int =
         with cols[1]:
             if len(prompts) > 1 and st.button("❌", key=f"delete_{session_key}_0"):
                 delete_prompt(0)
-                st.experimental_rerun()
+                st.rerun()
 
     st.button(f"➕ Ajouter un {prompt_label.lower()}", on_click=add_prompt)
 
@@ -161,7 +161,7 @@ def prompt_section(session_key: str, prompt_label: str = "Prompt", height: int =
         with cols[1]:
             if st.button("❌", key=f"delete_{session_key}_{i}"):
                 delete_prompt(i)
-                st.experimental_rerun()
+                st.rerun()
 
     return prompts
 
@@ -367,6 +367,7 @@ def main():
         "Cette évaluation nécessite une clé d'accès EvalAP. Demander votre clé d'accès via le [canal Tchap](https://www.tchap.gouv.fr/#/room/!gpLYRJyIwdkcHBGYeC:agent.dinum.tchap.gouv.fr)"
     )
     st.divider()
+
 
     # USER API KEY
     user_api_key = st.text_input("Entrer votre clef d'accès", type="password", key="user_api_key_input")
