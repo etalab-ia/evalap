@@ -359,29 +359,27 @@ def experimental_section(
 
 
 def main():
-    st.title("Expérimentations de prompt")
+    st.title("Expérimentations de prompt [BETA]")
     st.write(
-        "Vous pouvez ici expérimenter des prompts sur votre cas d'usage,   "
-        "en utilisant les modèles albert-large et/ou albert-small proposés par **Albert API**."
-        )
-    st.write("Pour obtenir une clef d'accès, vous pouvez prendre contact avec ..."#TODO 
+        "L'experimentations de **prompt** est en phase bêta, uniquement pour évaluer des agents IA basés sur les **modèles** et **collections** publiques disponibles sur **Albert API**."
+    )
+    st.write(
+        "Cette évaluation nécessite une clé d'accès EvalAP. Demander votre clé d'accès via le [canal Tchap](https://www.tchap.gouv.fr/#/room/!gpLYRJyIwdkcHBGYeC:agent.dinum.tchap.gouv.fr)"
     )
     st.divider()
 
-
     # USER API KEY
-    user_api_key = st.text_input(
-        "Entrer votre clef d'accès", 
-        type="password", 
-        key="user_api_key_input"
-    )
+    user_api_key = st.text_input("Entrer votre clef d'accès", type="password", key="user_api_key_input")
     if not user_api_key:
         st.warning("Merci de renseigner votre clef d'accès.")
         st.stop()
 
-    verif_authent = fetch("get", "/metrics", token=user_api_key)
+    verif_authent = fetch("get", "/metrics", token=user_api_key, show_error=False)
     if verif_authent is None:
-        st.error("Clef API invalide.")
+        st.error("Votre clé d'accès EvalAP est invalide.")
+        st.info(
+            "Si vous n'avez pas de clé d'accès EvalAP, demandez une clé via le [canal Tchap](https://www.tchap.gouv.fr/#/room/!gpLYRJyIwdkcHBGYeC:agent.dinum.tchap.gouv.fr)"
+        )
         st.stop()
 
     tab1, tab2 = st.tabs(
@@ -390,12 +388,18 @@ def main():
 
     with tab1:
         experimental_section(
-            mode="create", session_key_models="model_configs", session_key_prompts="prompts", user_api_key=user_api_key,
-            )
+            mode="create",
+            session_key_models="model_configs",
+            session_key_prompts="prompts",
+            user_api_key=user_api_key,
+        )
 
     with tab2:
         experimental_section(
-            mode="patch", session_key_models="model_configs_patch", session_key_prompts="prompts_to_patch", user_api_key=user_api_key,
+            mode="patch",
+            session_key_models="model_configs_patch",
+            session_key_prompts="prompts_to_patch",
+            user_api_key=user_api_key,
         )
 
 

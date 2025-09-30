@@ -13,7 +13,8 @@ import streamlit as st
 API_BASE_URL = "http://localhost:8000/v1"
 EVALAP_FRONTEND_TOKEN = os.getenv("EVALAP_FRONTEND_TOKEN")
 
-def fetch(method, endpoint, data=None, token=None):
+
+def fetch(method, endpoint, data=None, token=None, show_error=True):
     func = getattr(requests, method)
     q = ""
     kw = {}
@@ -33,17 +34,17 @@ def fetch(method, endpoint, data=None, token=None):
     elif data:
         kw["json"] = data
 
-
     response = func(f"{API_BASE_URL}{endpoint}{q}", **kw)
     if response.status_code in (200, 201):
         return response.json()
-    else:
+
+    if show_error:
         st.error(
             f"Failed to fetch data from {endpoint}."
             f" Status code: {response.status_code}"
             f" Response content: {response.text}"
         )
-        return None
+    return None
 
 
 def hash_string(input_string, bits=8):
