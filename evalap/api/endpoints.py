@@ -417,7 +417,7 @@ def patch_experimentset(
         raise HTTPException(status_code=410, detail="Experiment not found")
 
     try:
-        expset = experimentset_patch.to_table_init(db)
+        expset = experimentset_patch.to_table_init(db, expe_size=len(db_expset.experiments or []))
         # Check the judge_model unicity
         # --
         judge = next((e.judge_model for e in db_expset.experiments if e.judge_model), None)
