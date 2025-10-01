@@ -2,7 +2,7 @@
 sidebar_position: 4
 ---
 
-# Exécuter les réponses localement avec vLLM
+# Générer les réponses localement avec vLLM
 
 Ce guide vous accompagne dans le processus de génération de réponses de modèles localement en utilisant des machines équipées de GPU, puis de soumission d'expériences à Evalap.
 Nous fournissons deux scripts utilitaires pour vous aider à accomplir cela :
