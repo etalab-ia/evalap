@@ -1,356 +1,246 @@
 import json
+import re
 from evalap.clients import LlmClient, split_think_answer
-from evalap.utils import render_jinja
 from deepdiff import DeepDiff
-
-
 from . import metric_registry
 
 
-_config = {
-    "sampling_params": {"temperature": 0.1},  # Low temperature for consistent structured output
-}
-
-
-def count_total_values(data):
+def parse_json_from_response(response: str) -> dict | None:
     """
-    Recursively count all values in a nested data structure.
-    This includes:
-    - All leaf values (strings, numbers, booleans, None)
-    - Each item in arrays/lists
-    - Each key-value pair in objects/dictionaries
+    Extract and parse JSON from an LLM response.
+    Handles responses that may contain extra text or markdown formatting.
     """
-    if data is None:
-        return 1
-    elif isinstance(data, (str, int, float, bool)):
-        return 1
-    elif isinstance(data, list):
-        return sum(count_total_values(item) for item in data)
-    elif isinstance(data, dict):
-        return sum(count_total_values(value) for value in data.values())
-    else:
-        return 1  # For any other type
-
-
-def calculate_similarity_score(expected_data, extracted_data, diff):
-    """
-    Calculate similarity score based on total number of values rather than just keys.
+    # Try to parse the response directly
+    try:
+        return json.loads(response)
+    except json.JSONDecodeError:
+        pass
     
-    Args:
-        expected_data: Ground truth data structure
-        extracted_data: LLM extracted data structure  
-        diff: DeepDiff result between expected and extracted data
+    # Try to find JSON in the response using regex
+    # Look for content between curly braces
+    json_match = re.search(r'\{.*\}', response, re.DOTALL)
+    if json_match:
+        try:
+            return json.loads(json_match.group())
+        except json.JSONDecodeError:
+            pass
+    
+    # Try to find JSON in markdown code blocks
+    code_block_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', response, re.DOTALL)
+    if code_block_match:
+        try:
+            return json.loads(code_block_match.group(1))
+        except json.JSONDecodeError:
+            pass
+    
+    return None
+
+
+def calculate_similarity_score(expected_data: dict, extracted_data: dict) -> tuple[float, dict]:
+    """
+    Calculate similarity score between expected and extracted JSON data.
     
     Returns:
-        float: Score between 0 and 1, where 1 is perfect match
+        tuple: (overall_score, detailed_scores)
     """
-    if expected_data is None and extracted_data is None:
-        return 1.0
-    if expected_data is None or extracted_data is None:
-        return 0.0
+    if not expected_data or not extracted_data:
+        return 0.0, {}
+    
+    # Use DeepDiff to find differences
+    diff = DeepDiff(expected_data, extracted_data, ignore_order=True)
     
     if not diff:
-        return 1.0
+        return 1.0, {"status": "perfect_match"}
     
-    # Count total values in expected data
-    total_expected_values = count_total_values(expected_data)
+    # Calculate scores for each field
+    field_scores = {}
+    total_score = 0
+    field_count = 0
     
-    # Count the number of differences
-    diff_count = 0
+    # Get all fields from both dictionaries
+    all_fields = set(expected_data.keys()) | set(extracted_data.keys())
     
-    # Count value changes
-    diff_count += len(diff.get('values_changed', {}))
-    
-    # Count type changes
-    diff_count += len(diff.get('type_changes', {}))
-    
-    # Count missing items (in expected but not in extracted)
-    for removed_items in diff.get('dictionary_item_removed', {}).values():
-        diff_count += count_total_values(removed_items)
-    for removed_items in diff.get('iterable_item_removed', {}).values():
-        diff_count += count_total_values(removed_items)
-    
-    # Count extra items (in extracted but not in expected)  
-    for added_items in diff.get('dictionary_item_added', {}).values():
-        diff_count += count_total_values(added_items)
-    for added_items in diff.get('iterable_item_added', {}).values():
-        diff_count += count_total_values(added_items)
-    
-    # Calculate score
-    if total_expected_values == 0:
-        return 1.0 if diff_count == 0 else 0.0
-    
-    score = max(0.0, 1.0 - (diff_count / total_expected_values))
-    return score
-
-
-def calculate_key_level_scores(expected_data, extracted_data):
-    """
-    Calculate similarity scores for each top-level key in the JSON structure.
-    
-    Args:
-        expected_data: Ground truth data structure (dict)
-        extracted_data: LLM extracted data structure (dict)
-    
-    Returns:
-        dict: Dictionary mapping each key to its similarity score
-    """
-    if not isinstance(expected_data, dict) or not isinstance(extracted_data, dict):
-        return {}
-    
-    key_scores = {}
-    all_keys = set(expected_data.keys()) | set(extracted_data.keys())
-    print(">>> ALL KEYS", all_keys)
-    
-    for key in all_keys:
-        expected_value = expected_data.get(key)
-        extracted_value = extracted_data.get(key)
+    for field in all_fields:
+        field_count += 1
+        expected_value = expected_data.get(field, [])
+        extracted_value = extracted_data.get(field, [])
         
-        # Calculate diff for this specific key
-        key_diff = DeepDiff(expected_value, extracted_value, ignore_order=True)
-        
-        # Calculate score for this key
-        key_score = calculate_similarity_score(expected_value, extracted_value, key_diff)
-        key_scores[key] = key_score
+        # Calculate field-specific score
+        if field not in expected_data:
+            # Extra field in extracted
+            field_scores[field] = {"score": 0, "reason": "unexpected_field"}
+        elif field not in extracted_data:
+            # Missing field in extracted
+            field_scores[field] = {"score": 0, "reason": "missing_field"}
+        elif isinstance(expected_value, list) and isinstance(extracted_value, list):
+            # Compare lists
+            expected_set = set(expected_value)
+            extracted_set = set(extracted_value)
+            
+            if expected_set == extracted_set:
+                field_scores[field] = {"score": 1.0, "reason": "exact_match"}
+                total_score += 1.0
+            else:
+                # Calculate Jaccard similarity
+                intersection = expected_set & extracted_set
+                union = expected_set | extracted_set
+                if union:
+                    jaccard_score = len(intersection) / len(union)
+                    field_scores[field] = {
+                        "score": jaccard_score,
+                        "missing": list(expected_set - extracted_set),
+                        "extra": list(extracted_set - expected_set),
+                        "correct": list(intersection)
+                    }
+                    total_score += jaccard_score
+                else:
+                    field_scores[field] = {"score": 1.0, "reason": "both_empty"}
+                    total_score += 1.0
+        else:
+            # Direct comparison for non-list fields
+            if expected_value == extracted_value:
+                field_scores[field] = {"score": 1.0, "reason": "exact_match"}
+                total_score += 1.0
+            else:
+                field_scores[field] = {
+                    "score": 0,
+                    "expected": expected_value,
+                    "got": extracted_value
+                }
     
-    return key_scores
-
-
-def describe_diff(diff):
-    """
-    Compare LLM extracted data to ground truth and return a human-readable report:
-    - Present in ground truth but missing in LLM output
-    - Present in LLM output but not in ground truth
-    - Present in both but different values
-    """
-    if not diff:
-        return "Perfect match! The LLM output exactly matches the ground truth."
-
-    descriptions = []
-
-    # Values that changed
-    for path, change in diff.get('values_changed', {}).items():
-        descriptions.append(
-            f"- At {path}, value differs: ground truth has '{change['old_value']}', LLM output has '{change['new_value']}'"
-        )
-
-    # Type changes
-    for path, change in diff.get('type_changes', {}).items():
-        descriptions.append(
-            f"- At {path}, type differs: ground truth is {change['old_type']} ('{change['old_value']}'), LLM output is {change['new_type']} ('{change['new_value']}')"
-        )
-
-    # Missing items in LLM output
-    for path, value in diff.get('dictionary_item_removed', {}).items():
-        descriptions.append(f"- Present in ground truth but missing in LLM output: {path} → {value}")
-    for path, value in diff.get('iterable_item_removed', {}).items():
-        descriptions.append(f"- Present in ground truth but missing in LLM output: {path} → {value}")
-
-    # Extra items in LLM output
-    for path, value in diff.get('dictionary_item_added', {}).items():
-        descriptions.append(f"- Present in LLM output but not in ground truth: {path} → {value}")
-    for path, value in diff.get('iterable_item_added', {}).items():
-        descriptions.append(f"- Present in LLM output but not in ground truth: {path} → {value}")
-
-    return "\n".join(descriptions)
+    overall_score = total_score / field_count if field_count > 0 else 0
+    
+    return overall_score, field_scores
 
 
 @metric_registry.register(
     name="llm_structured_output",
-    description="Extract structured content from raw text using LLM with JSON schema",
-    metric_type="ops",  # This is an ops metric - it does its own evaluation
+    description="Extract structured content from raw text using LLM and compare with ground truth",
+    metric_type="llm",  # Mark as LLM type since it uses LLM for extraction
     require=["output", "output_true", "query"],
 )
 def llm_structured_output_metric(output, output_true, **kwargs):
     """
-    Extract structured content from raw text using LLM with JSON schema.
-
+    Extract structured content from raw text using LLM and compare with ground truth.
+    
+    This metric:
+    1. Takes raw text from 'output' parameter
+    2. Uses judge_model (with its prompts and parameters) to extract structured data
+    3. Compares extracted JSON with ground truth JSON
+    4. Returns similarity scores
+    
     Args:
         output: The raw text to extract structured information from
         output_true: The expected structured output (ground truth) as JSON string
-        query: The query/context (may contain schema information)
+        query: The original query/context (included for compatibility)
         **kwargs: Additional parameters including:
-            - json_schema: The JSON schema defining what to extract
-            - model: The model configuration
-
+            - model: The judge_model configuration containing:
+                - prelude_prompt: The extraction prompt template (with {text} placeholder)
+                - system_prompt: Optional system prompt
+                - sampling_params: Temperature and other generation parameters
+    
     Returns:
-        tuple: (score, observation, result, keys_scores) where:
-            - score: Overall similarity score between extracted and expected output (0-1)
-            - observation: Detailed comparison and extracted JSON
-            - result: Raw API response
-            - keys_scores: Dict mapping each top-level key to its similarity score
+        tuple: (score, observation, result) where:
+            - score: Overall similarity score between extracted and expected (0-1)
+            - observation: Detailed comparison results as JSON string
+            - result: Raw LLM API response
     """
-    # For ops metrics, we get the original model
-    model = kwargs.get("model")
-    if model is None:
-        print("DEBUG: model is None in llm_structured_output_metric")
-        return None, "Model is None", None
+    # Get the judge model configuration
+    print("KWARGS", kwargs)
+    judge_model = kwargs.get("model")
+    if not judge_model:
+        return None, json.dumps({"error": "No judge model provided"}), None
     
-    # Get json_schema from sampling_params (where it should be passed via response_format)
-    json_schema = None
+    # Get the text to analyze from output parameter
+    text_to_analyze = output
     
-    # Primary location: sampling_params.response_format.json_schema
-    if hasattr(model, "sampling_params") and model.sampling_params:
-        response_format = model.sampling_params.get("response_format", {})
-        if response_format and "json_schema" in response_format:
-            # Extract the schema from the response_format structure
-            json_schema_obj = response_format.get("json_schema", {})
-            if isinstance(json_schema_obj, dict):
-                json_schema = json_schema_obj.get("schema", json_schema_obj)
-            print(f"DEBUG: Found json_schema in sampling_params.response_format")
+    # Build the extraction prompt
+    # The prelude_prompt should contain the extraction instructions and JSON schema
+    # It should have a {text} placeholder that we replace with the actual text
+    extraction_prompt = getattr(judge_model, "prelude_prompt", None)
+    system_prompt = getattr(judge_model, "system_prompt", None)
     
-    # Fallback: check if passed directly in kwargs
-    if not json_schema and "json_schema" in kwargs:
-        json_schema = kwargs["json_schema"]
-        print(f"DEBUG: Found json_schema in kwargs")
-    
-    if not json_schema:
-        print(f"DEBUG: No json_schema found!")
-        print(f"DEBUG: model.extra_params = {getattr(model, 'extra_params', 'N/A')}")
-        print(f"DEBUG: model.sampling_params = {getattr(model, 'sampling_params', 'N/A')}")
-        # Use a default schema if none provided
-        json_schema = {
-            "type": "object",
-            "properties": {
-                "persons": {
-                    "type": "array",
-                    "items": {"type": "string"}
-                },
-                "locations": {
-                    "type": "array",
-                    "items": {"type": "string"}
-                },
-                "organizations": {
-                    "type": "array",
-                    "items": {"type": "string"}
-                }
-            },
-            "required": ["persons", "locations", "organizations"]
-        }
-        print("DEBUG: Using default json_schema")
-    
-    # Get the text to analyze from output (not query)
-    text_to_analyze = output  # The output is the text we need to analyze
-    query_text = kwargs.get("query", "")
-    
-    # Setup model parameters
-    system_prompt = getattr(model, "system_prompt", None)
-    sampling_params = _config.get("sampling_params", {}).copy()
-    if hasattr(model, "sampling_params") and model.sampling_params:
-        for k, v in model.sampling_params.items():
-            if k != "response_format":  # We'll add our own response_format
-                sampling_params[k] = v
+    if not extraction_prompt:
+        # Fallback to a simple default prompt if none provided
+        extraction_prompt = """Extract structured information from the following text and return as JSON.
+Text: {text}
 
-    # Check if model supports response_format (OpenAI-style)
-    model_name = getattr(model, "name", "unknown")
-    supports_response_format = model_name not in ["albert-large", "albert-small", "albert-api"]
+Return only valid JSON."""
     
-    # Create the extraction prompt
-    import json
-    schema_str = json.dumps(json_schema, indent=2)
+    # Replace the {text} placeholder with the actual text
+    prompt_content = extraction_prompt.replace("{text}", text_to_analyze)
     
-    if supports_response_format:
-        # Model supports response_format, keep prompt simple
-        prompt_content = f"""Extract structured information from the following text according to the JSON schema.
-
-Text to analyze:
-{text_to_analyze}
-
-Extract entities matching the schema and return as JSON."""
-        
-        # Add response_format to sampling_params
-        sampling_params["response_format"] = {
-            "type": "json_schema",
-            "json_schema": {
-                "name": "data_extraction",
-                "schema": json_schema,
-                "strict": True
-            }
-        }
-    else:
-        # Model doesn't support response_format, include schema in prompt
-        prompt_content = f"""Extract structured information from the following text.
-
-You MUST return your response as valid JSON matching this exact schema:
-{schema_str}
-
-Text to analyze:
-{text_to_analyze}
-
-Important: Return ONLY valid JSON that matches the schema above. Do not include any other text, explanation, or markdown formatting."""
-
+    # Build messages for the LLM
     messages = [{"role": "user", "content": prompt_content}]
     if system_prompt:
         messages.insert(0, {"role": "system", "content": system_prompt})
-
-    # Debug output
-    print("\n\n>>>>> DEBUG INFO:")
-    print(">>>>> json_schema:", json_schema is not None)
-    print(">>>>> model name:", model_name)
-    print(">>>>> supports_response_format:", supports_response_format)
-    print(">>>>> sampling_params keys:", list(sampling_params.keys()))
     
-    # Call the LLM
-    aiclient = LlmClient(base_url=getattr(model, "base_url", None), api_key=getattr(model, "api_key", None))
-    result = aiclient.generate(model=model_name, messages=messages, **sampling_params)
-
-    observation = result.choices[0].message.content
-    think, answer = split_think_answer(observation)
-
-    # Parse the extracted JSON
-    extracted_data = None
+    # Get sampling parameters from judge_model
+    sampling_params = {}
+    if hasattr(judge_model, "sampling_params") and judge_model.sampling_params:
+        sampling_params = judge_model.sampling_params.copy()
+    
+    # Call the LLM to extract structured data
     try:
-        extracted_data = json.loads(answer if answer else observation)
-    except json.JSONDecodeError:
-        # Try to find JSON in the response
-        import re
-        json_match = re.search(r'\{.*\}', answer if answer else observation, re.DOTALL)
-        if json_match:
-            try:
-                extracted_data = json.loads(json_match.group())
-            except:
-                pass
+        aiclient = LlmClient(
+            base_url=getattr(judge_model, "base_url", None),
+            api_key=getattr(judge_model, "api_key", None)
+        )
+        
+        result = aiclient.generate(
+            model=getattr(judge_model, "name", "unknown"),
+            messages=messages,
+            **sampling_params
+        )
+        
+        # Get the LLM response
+        llm_response = result.choices[0].message.content
+        think, answer = split_think_answer(llm_response)
+        
+    except Exception as e:
+        error_msg = f"LLM extraction failed: {str(e)}"
+        return 0.0, json.dumps({"error": error_msg}), None
+    
+    # Parse the extracted JSON from the LLM response
+    extracted_data = parse_json_from_response(answer if answer else llm_response)
     
     # Parse the expected output (ground truth)
-    expected_data = None
     try:
-        expected_data = json.loads(output_true)
-    except json.JSONDecodeError:
-        print(f"DEBUG: Failed to parse output_true as JSON: {output_true[:200]}...")
+        expected_data = json.loads(output_true) if isinstance(output_true, str) else output_true
+    except json.JSONDecodeError as e:
+        return 0.0, json.dumps({
+            "error": f"Failed to parse ground truth JSON: {str(e)}",
+            "output_true": output_true[:500]
+        }), result
+    
+    # Handle extraction failures
+    if extracted_data is None:
+        observation = {
+            "score": 0.0,
+            "error": "Failed to extract valid JSON from LLM response",
+            "llm_response": (answer if answer else llm_response)[:500],
+            "expected_data": expected_data
+        }
+        return 0.0, json.dumps(observation, indent=2), result
     
     # Calculate similarity scores
-    score = 0.0
-    observation_dict = {}
+    overall_score, field_scores = calculate_similarity_score(expected_data, extracted_data)
     
-    if extracted_data is None:
-        observation_dict = {
-            "error": "Failed to extract valid JSON from LLM response",
-            "llm_response": (answer if answer else observation)[:500]
+    # Build detailed observation
+    observation = {
+        "score": overall_score,
+        "extracted_data": extracted_data,
+        "expected_data": expected_data,
+        "field_scores": field_scores,
+        "extraction_details": {
+            "model": getattr(judge_model, "name", "unknown"),
+            "temperature": sampling_params.get("temperature", "unknown"),
+            "prompt_type": getattr(judge_model, "aliased_name", "unknown")
         }
-    elif expected_data is None:
-        observation_dict = {
-            "error": "Failed to parse expected output as JSON",
-            "output_true": output_true[:500]
-        }
-    else:
-        # Calculate similarity
-        diff = DeepDiff(expected_data, extracted_data, ignore_order=True)
-        score = calculate_similarity_score(expected_data, extracted_data, diff)
-        keys_scores = calculate_key_level_scores(expected_data, extracted_data)
-        
-        observation_dict = {
-            "score": score,
-            "extracted_data": extracted_data,
-            "expected_data": expected_data,
-            "key_scores": keys_scores,
-            "differences": describe_diff(diff) if diff else "Perfect match"
-        }
+    }
     
-    print(f">>><<< extracted_data: {extracted_data}")
-    print(f">>><<< expected_data: {expected_data}")
-    print(f">>><<< score: {score}")
+    # Add thinking process if available
+    if think:
+        observation["llm_thinking"] = think[:500]  # Truncate for storage
     
-    # Convert observation dict to JSON string for storage
-    observation = json.dumps(observation_dict, indent=2)
-    
-    return score, observation, result
+    return overall_score, json.dumps(observation, indent=2), result

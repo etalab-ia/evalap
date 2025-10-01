@@ -747,6 +747,127 @@ def display_ops_analysis(experimentset):
     display_failure_analysis(experimentset)
 
 
+def display_structured_output_analysis(experimentset):
+    """Display structured output analysis for all experiments"""
+    st.subheader("📝 Structured Output Analysis")
+    
+    # Collect data from all experiments
+    table_data = []
+    
+    for experiment in experimentset.get("experiments", []):
+        # Get model name
+        if experiment.get("model"):
+            model_name = experiment["model"].get("aliased_name") or experiment["model"].get("name", "Unknown")
+        else:
+            model_name = f"Undefined model ({experiment.get('name', 'Unknown')})"
+        
+        # Look for structured output results
+        for result in experiment.get("results", []):
+            if result.get("metric_name") == "llm_structured_output":
+                observation_table = result.get("observation_table", [])
+                
+                # Process each observation
+                total_score = 0
+                success_count = 0
+                failure_count = 0
+                perfect_matches = 0
+                extraction_errors = []
+                
+                for obs in observation_table:
+                    if obs.get("observation"):
+                        try:
+                            # Parse the JSON observation
+                            obs_data = json.loads(obs["observation"])
+                            
+                            # Count successes and failures
+                            score = obs.get("score", 0)
+                            if score == 1:
+                                success_count += 1
+                            else:
+                                failure_count += 1
+                            
+                            total_score += score
+                            
+                            # Check for perfect matches
+                            if obs_data.get("field_scores", {}).get("status") == "perfect_match":
+                                perfect_matches += 1
+                            
+                            # Collect errors
+                            if "error" in obs_data:
+                                extraction_errors.append(obs_data["error"])
+                                
+                        except (json.JSONDecodeError, TypeError):
+                            # Handle parsing errors
+                            failure_count += 1
+                
+                # Calculate statistics
+                total_observations = len(observation_table)
+                avg_score = total_score / total_observations if total_observations > 0 else 0
+                
+                # Add row to table
+                table_data.append({
+                    "Model": model_name,
+                    "Experiment": experiment.get("name", "Unknown"),
+                    "Total Items": total_observations,
+                    "Success Rate": f"{(success_count/total_observations*100):.1f}%" if total_observations > 0 else "N/A",
+                    "Failure Rate": f"{(failure_count/total_observations*100):.1f}%" if total_observations > 0 else "N/A",
+                    "Average Score": f"{avg_score:.3f}",
+                    "Perfect Matches": perfect_matches,
+                    "Errors": len(extraction_errors),
+                })
+    
+    if table_data:
+        # Convert to DataFrame and display
+        df = pd.DataFrame(table_data)
+        
+        # Sort by average score descending
+        df.sort_values(by="Average Score", ascending=False, inplace=True)
+        
+        st.dataframe(
+            df,
+            use_container_width=True,
+            hide_index=True,
+            column_config={
+                "Model": st.column_config.TextColumn(width="medium"),
+                "Experiment": st.column_config.TextColumn(width="medium"),
+                "Total Items": st.column_config.NumberColumn(width="small"),
+                "Success Rate": st.column_config.TextColumn(width="small"),
+                "Failure Rate": st.column_config.TextColumn(width="small"),
+                "Average Score": st.column_config.TextColumn(width="small"),
+                "Perfect Matches": st.column_config.NumberColumn(width="small"),
+                "Errors": st.column_config.NumberColumn(width="small"),
+            }
+        )
+        
+        # Show detailed breakdown if any errors exist
+        if any(row["Errors"] > 0 for row in table_data):
+            with st.expander("Error Details", expanded=False):
+                for experiment in experimentset.get("experiments", []):
+                    model_name = experiment.get("model", {}).get("name", experiment.get("name", "Unknown"))
+                    
+                    for result in experiment.get("results", []):
+                        if result.get("metric_name") == "llm_structured_output":
+                            errors = []
+                            for obs in result.get("observation_table", []):
+                                if obs.get("observation"):
+                                    try:
+                                        obs_data = json.loads(obs["observation"])
+                                        if "error" in obs_data:
+                                            errors.append({
+                                                "Line": obs.get("num_line", "N/A"),
+                                                "Error": obs_data["error"]
+                                            })
+                                    except:
+                                        pass
+                            
+                            if errors:
+                                st.write(f"**{model_name}**")
+                                error_df = pd.DataFrame(errors)
+                                st.dataframe(error_df, use_container_width=True, hide_index=True)
+    else:
+        st.info("No structured output results found in this experiment set.")
+
+
 # Initialize template manager
 template_manager = TemplateManager()
 
@@ -952,16 +1073,22 @@ def main():
                 "title": "🚨 Ops Analysis",
                 "func": display_ops_analysis,
             },
+            5: {
+                "key": "structured_output",
+                "title": "📋 Structured Output",
+                "func": display_structured_output_analysis,
+            },
         }
         tab_reverse = {d["key"]: k for k, d in tab_index.items()}
         # @TODO: how to catch the tab click in order to set the current url query to tab key ?
 
-        tab1, tab2, tab3, tab4 = st.tabs(
+        tab1, tab2, tab3, tab4, tab5 = st.tabs(
             [
                 tab_index[1]["title"],
                 tab_index[2]["title"],
                 tab_index[3]["title"],
                 tab_index[4]["title"],
+                tab_index[5]["title"],
             ]
         )
 
@@ -993,6 +1120,8 @@ def main():
             tab_index[3]["func"](experimentset, experiments_df)
         with tab4:
             tab_index[4]["func"](experimentset)
+        with tab5:
+            tab_index[5]["func"](experimentset)
 
     else:
         col1, col2 = st.columns([3, 1])
