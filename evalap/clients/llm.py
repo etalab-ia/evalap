@@ -63,6 +63,7 @@ class LlmApiModels:
     def _sync_openai_api_models(cls):
         self = cls()
 
+        unsupported_models = ["gpt-5"]
         for provider, _ in self.__dict__.items():
             if provider.startswith("_"):
                 continue
@@ -76,7 +77,7 @@ class LlmApiModels:
                 logger.warning(f"Model discovery error: {e}")
                 continue
             models_data = response.json()
-            models = {model["id"] for model in models_data["data"]}
+            models = {model["id"] for model in models_data["data"] if model["id"] not in unsupported_models}
             models |= {alias for model in models_data["data"] for alias in (model.get("aliases") or [])}
             setattr(self, provider, models)
 
@@ -116,7 +117,11 @@ class LlmClient:
         url = self.base_url
         headers = {}
         if self.api_key:
-            headers["Authorization"] = f"Bearer {self.api_key}"
+            if model.startswith("claude"):
+                headers["x-api-key"] = self.api_key
+                headers["anthropic-version"] = "2023-06-01"
+            else:
+                headers["Authorization"] = f"Bearer {self.api_key}"
         else:
             _url, h = get_api_url(model)
             url = _url or url
