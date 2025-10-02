@@ -25,7 +25,7 @@ DEFAULT_METHOD_COLLECTION = "semantic"
 
 def styled_markdown(text):
     st.markdown(
-        f"<span style='color: #000091; font-size: 1.0em; font-weight: bold;'>{text}</span>",
+        f"<span style='color: #668bf2; font-size: 1.0em; font-weight: bold;'>{text}</span>",
         unsafe_allow_html=True,
     )
 
