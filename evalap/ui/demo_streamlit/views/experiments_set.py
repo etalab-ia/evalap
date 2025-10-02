@@ -973,14 +973,14 @@ def main():
                 "func": display_experiment_set_score,
             },
             2: {
-                "key": "details",
-                "title": "📝 Details by Experiment",
-                "func": display_experiment_details,
-            },
-            3: {
                 "key": "overview",
                 "title": "📊 Set Overview",
                 "func": display_experiment_set_overview,
+            },
+            3: {
+                "key": "details",
+                "title": "📝 Details by Experiment",
+                "func": display_experiment_details,
             },
             4: {
                 "key": "ops",
