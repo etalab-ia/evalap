@@ -16,7 +16,7 @@ from evalap.api.db import get_db
 from evalap.api.errors import CustomIntegrityError, SchemaError
 from evalap.api.metrics import Metric, metric_registry
 from evalap.api.models import is_equal
-from evalap.api.security import admin_only
+from evalap.api.security import admin_only, get_current_user
 from evalap.clients import LlmClient, MCPBridgeClient, multi_step_generate
 from evalap.logger import logger
 from evalap.runners import dispatch_retries, dispatch_tasks
@@ -36,7 +36,9 @@ def _needs_output(db_exp):
 
 
 @router.post("/dataset", response_model=schemas.Dataset, tags=["datasets"])
-def create_dataset(dataset: schemas.DatasetCreate, db: Session = Depends(get_db)):
+def create_dataset(
+    dataset: schemas.DatasetCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)
+):
     try:
         db_dataset = crud.create_dataset(db, dataset)
         return db_dataset
@@ -49,15 +51,17 @@ def create_dataset(dataset: schemas.DatasetCreate, db: Session = Depends(get_db)
 
 
 @router.get("/datasets", response_model=list[schemas.Dataset], tags=["datasets"])
-def read_datasets(db: Session = Depends(get_db)):
+def read_datasets(db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     return crud.get_datasets(db)
 
 
 @router.get("/dataset/{id}", response_model=schemas.Dataset | schemas.DatasetFull, tags=["datasets"])
-def read_dataset(id: int, with_df: bool = False, db: Session = Depends(get_db)):
+def read_dataset(
+    id: int, with_df: bool = False, db: Session = Depends(get_db), current_user=Depends(get_current_user)
+):
     dataset = crud.get_dataset(db, id)
     if dataset is None:
-        raise HTTPException(status_code=404, detail="Dataset not found")
+        raise HTTPException(status_code=410, detail="Dataset not found")
 
     if with_df:
         return schemas.DatasetFull.model_validate(dataset)
@@ -71,16 +75,17 @@ def read_dataset_by_query(
     name: str | None = None,
     with_df: bool = False,
     db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
 ):
     dataset = None
     if name:
         dataset = crud.get_dataset_by_name(db, name)
         if dataset is None:
-            raise HTTPException(status_code=404, detail="Dataset with given name not found")
+            raise HTTPException(status_code=410, detail="Dataset with given name not found")
     if id:
         dataset = crud.get_dataset(db, id)
         if dataset is None:
-            raise HTTPException(status_code=404, detail="Dataset not found")
+            raise HTTPException(status_code=410, detail="Dataset not found")
 
     if dataset:
         if with_df:
@@ -92,10 +97,15 @@ def read_dataset_by_query(
 
 
 @router.patch("/dataset/{id}", response_model=schemas.Dataset, tags=["datasets"])
-def patch_dataset(id: int, dataset_patch: schemas.DatasetPatch, db: Session = Depends(get_db)):
+def patch_dataset(
+    id: int,
+    dataset_patch: schemas.DatasetPatch,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
     db_dataset = crud.update_dataset(db, id, dataset_patch)
     if db_dataset is None:
-        raise HTTPException(status_code=404, detail="Dataset not found")
+        raise HTTPException(status_code=410, detail="Dataset not found")
 
     return db_dataset
 
@@ -104,10 +114,15 @@ def patch_dataset(id: int, dataset_patch: schemas.DatasetPatch, db: Session = De
     "/dataset/{id}",
     tags=["datasets"],
 )
-def delete_dataset(id: int, db: Session = Depends(get_db), admin_check=Depends(admin_only)):
+def delete_dataset(
+    id: int,
+    db: Session = Depends(get_db),
+    admin_check=Depends(admin_only),
+    current_user=Depends(get_current_user),
+):
     try:
         if not crud.remove_dataset(db, id):
-            raise HTTPException(status_code=404, detail="Dataset not found")
+            raise HTTPException(status_code=410, detail="Dataset not found")
         return "ok"
     except (SchemaError, ValidationError) as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -119,7 +134,9 @@ def delete_dataset(id: int, db: Session = Depends(get_db), admin_check=Depends(a
 
 # @TODO write /dataset/{id}/download_parquet
 @router.post("/dataset/{id}/upload_parquet", response_model=schemas.Dataset, tags=["datasets"])
-async def upload_parquet_dataset(id: int, request: Request, db: Session = Depends(get_db)):
+async def upload_parquet_dataset(
+    id: int, request: Request, db: Session = Depends(get_db), current_user=Depends(get_current_user)
+):
     """
     Endpoint to handle streaming upload of Parquet data for a specific dataset.
 
@@ -131,7 +148,7 @@ async def upload_parquet_dataset(id: int, request: Request, db: Session = Depend
     # Fetch the dataset from the database
     dataset = crud.get_dataset(db, id)
     if dataset is None:
-        raise HTTPException(status_code=404, detail="Dataset not found")
+        raise HTTPException(status_code=410, detail="Dataset not found")
 
     # Create the directory structure if it doesn't exist
     data_dir = "/data/datasets"
@@ -190,7 +207,7 @@ async def upload_parquet_dataset(id: int, request: Request, db: Session = Depend
 
 
 @router.get("/metrics", response_model=list[Metric], tags=["metrics"])
-def read_metrics(db: Session = Depends(get_db)):
+def read_metrics(db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     return crud.get_metrics(db)
 
 
@@ -205,7 +222,9 @@ def read_metrics(db: Session = Depends(get_db)):
     description="Launch an experiment. If a model is given, it will be use to generate the model output (answer), otherwise it will use the `output` column of the given dataset.",
     tags=["experiments"],
 )
-def create_experiment(experiment: schemas.ExperimentCreate, db: Session = Depends(get_db)):
+def create_experiment(
+    experiment: schemas.ExperimentCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)
+):
     try:
         db_exp = crud.create_experiment(db, experiment)
         if _needs_output(db_exp):
@@ -229,10 +248,15 @@ def create_experiment(experiment: schemas.ExperimentCreate, db: Session = Depend
     description="Update an experiment. The given metrics will be added (or rerun) to the existing results for this experiments. Use rerun_answers if want to re-generate the answers/output.",
     tags=["experiments"],
 )
-def patch_experiment(id: int, experiment_patch: schemas.ExperimentPatch, db: Session = Depends(get_db)):
+def patch_experiment(
+    id: int,
+    experiment_patch: schemas.ExperimentPatch,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
     db_exp = crud.update_experiment(db, id, experiment_patch)
     if db_exp is None:
-        raise HTTPException(status_code=404, detail="Experiment not found")
+        raise HTTPException(status_code=410, detail="Experiment not found")
     elif db_exp.experiment_status not in [
         schemas.ExperimentStatus.pending,
         schemas.ExperimentStatus.finished,
@@ -276,9 +300,10 @@ def delete_experiment(
     id: int,
     db: Session = Depends(get_db),
     admin_check=Depends(admin_only),
+    current_user=Depends(get_current_user),
 ):
     if not crud.remove_experiment(db, id):
-        raise HTTPException(status_code=404, detail="Experiment not found")
+        raise HTTPException(status_code=410, detail="Experiment not found")
     return "ok"
 
 
@@ -299,10 +324,11 @@ def read_experiment(
     with_dataset: bool = False,
     with_eco: bool = False,
     db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
 ):
     experiment = crud.get_experiment(db, id)
     if experiment is None:
-        raise HTTPException(status_code=404, detail="Experiment not found")
+        raise HTTPException(status_code=410, detail="Experiment not found")
 
     if with_dataset:
         return schemas.ExperimentFullWithDataset.model_validate(experiment)
@@ -330,13 +356,14 @@ def read_experiments(
     set_id: int | None = None,
     orphan: bool = True,
     db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
 ):
     experiments = crud.get_experiments(
         db, skip=skip, limit=limit, backward=backward, set_id=set_id, orphan=orphan
     )
 
     if not experiments:
-        raise HTTPException(status_code=404, detail="No experiments found")
+        raise HTTPException(status_code=410, detail="No experiments found")
 
     return experiments
 
@@ -351,7 +378,11 @@ def read_experiments(
     response_model=schemas.ExperimentSet,
     tags=["experiment_set"],
 )
-def create_experimentset(experimentset: schemas.ExperimentSetCreate, db: Session = Depends(get_db)):
+def create_experimentset(
+    experimentset: schemas.ExperimentSetCreate,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
     try:
         db_expset = crud.create_experimentset(db, experimentset)
         for db_exp in db_expset.experiments:
@@ -376,17 +407,19 @@ def create_experimentset(experimentset: schemas.ExperimentSetCreate, db: Session
     tags=["experiment_set"],
 )
 def patch_experimentset(
-    id: int, experimentset_patch: schemas.ExperimentSetPatch, db: Session = Depends(get_db)
+    id: int,
+    experimentset_patch: schemas.ExperimentSetPatch,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
 ):
     db_expset = crud.update_experimentset(db, id, experimentset_patch)
     if db_expset is None:
-        raise HTTPException(status_code=404, detail="Experiment not found")
+        raise HTTPException(status_code=410, detail="Experiment not found")
 
     try:
-        expset = experimentset_patch.to_table_init(db)
+        expset = experimentset_patch.to_table_init(db, expe_size=len(db_expset.experiments or []))
         # Check the judge_model unicity
         # --
-        #@TODO; Ensure judge nad new_judge are dict for comparaitI
         judge = next((e.judge_model for e in db_expset.experiments if e.judge_model), None)
         new_judge = next(
             (e["judge_model"] for e in (expset.get("experiments") or []) if e.get("judge_model")), None
@@ -429,10 +462,16 @@ def patch_experimentset(
     response_model=list[schemas.ExperimentSet],
     tags=["experiment_set"],
 )
-def read_experimentsets(skip: int = 0, limit: int = 100, backward: bool = True, db: Session = Depends(get_db)):
+def read_experimentsets(
+    skip: int = 0,
+    limit: int = 100,
+    backward: bool = True,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
     experimentsets = crud.get_experimentsets(db, skip=skip, limit=limit, backward=backward)
     if experimentsets is None:
-        raise HTTPException(status_code=404, detail="ExperimentSets not found")
+        raise HTTPException(status_code=410, detail="ExperimentSets not found")
     return experimentsets
     # return [schemas.ExperimentSet.model_validate(x) for x in experimentsets]
 
@@ -442,10 +481,10 @@ def read_experimentsets(skip: int = 0, limit: int = 100, backward: bool = True, 
     response_model=schemas.ExperimentSet,
     tags=["experiment_set"],
 )
-def read_experimentset(id: int, db: Session = Depends(get_db)):
+def read_experimentset(id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     experimentset = crud.get_experimentset(db, id)
     if experimentset is None:
-        raise HTTPException(status_code=404, detail="ExperimentSet not found")
+        raise HTTPException(status_code=410, detail="ExperimentSet not found")
     return experimentset
 
 
@@ -453,9 +492,14 @@ def read_experimentset(id: int, db: Session = Depends(get_db)):
     "/experiment_set/{id}",
     tags=["experiment_set"],
 )
-def delete_experimentset(id: int, db: Session = Depends(get_db), admin_check=Depends(admin_only)):
+def delete_experimentset(
+    id: int,
+    db: Session = Depends(get_db),
+    admin_check=Depends(admin_only),
+    current_user=Depends(get_current_user),
+):
     if not crud.remove_experimentset(db, id):
-        raise HTTPException(status_code=404, detail="ExperimentSet not found")
+        raise HTTPException(status_code=410, detail="ExperimentSet not found")
     return "ok"
 
 
@@ -472,10 +516,11 @@ def retry_runs(
         description="Force retry of all unfinished runs, by resetting their status to pending. <!> Warning this can cause incoherent num_try/num_success value if another runner work on the same experiments.",
     ),
     db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
 ):
     experimentset = crud.get_experimentset(db, id)
     if experimentset is None:
-        raise HTTPException(status_code=404, detail="ExperimentSet not found")
+        raise HTTPException(status_code=410, detail="ExperimentSet not found")
 
     rr = schemas.RetryRuns(
         experiment_ids=[], result_ids=[], unfinished_experiment_ids=[], unfinished_result_ids=[]
@@ -543,6 +588,7 @@ def read_leaderboard(
     judge_model: str = None,
     limit: int = 100,
     db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
 ):
     return crud.get_leaderboard(
         db, metric_name=metric_name, dataset_name=dataset_name, judge_model=judge_model, limit=limit
@@ -555,12 +601,12 @@ def read_leaderboard(
 
 
 @router.get("/ops_metrics", response_model=schemas.OpsMetrics, tags=["ops"])
-def read_ops_metrics(db: Session = Depends(get_db)):
+def read_ops_metrics(db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     return crud.get_ops_metrics(db)
 
 
 @router.get("/ops_eco", response_model=schemas.OpsEcoGlobal, tags=["ops"])
-def read_ops_eco(db: Session = Depends(get_db)):
+def read_ops_eco(db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     answers_data = crud.get_ops_eco_answers(db)
     observations_data = crud.get_ops_eco_observation_table(db)
     return {
@@ -623,7 +669,9 @@ def _generate(input: GenerateInput):
 
 
 @router.post("/generate", response_model=schemas.Answer, tags=["generate"])
-async def generate(input: GenerateInput, db: Session = Depends(get_db)):
+async def generate(
+    input: GenerateInput, db: Session = Depends(get_db), current_user=Depends(get_current_user)
+):
     answer = None
     think = None
     error_msg = None
@@ -673,7 +721,9 @@ async def generate(input: GenerateInput, db: Session = Depends(get_db)):
     """,
     tags=["locust"],
 )
-def create_locustrun(run: schemas.LocustRunCreate, db: Session = Depends(get_db)):
+def create_locustrun(
+    run: schemas.LocustRunCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)
+):
     try:
         db_run = crud.create_locustrun(db, run)
         return db_run
@@ -692,7 +742,13 @@ def create_locustrun(run: schemas.LocustRunCreate, db: Session = Depends(get_db)
     description="Get the list of locust runs",
     tags=["locust"],
 )
-def get_locustruns(skip: int = 0, limit: int = 100, backward: bool = True, db: Session = Depends(get_db)):
+def get_locustruns(
+    skip: int = 0,
+    limit: int = 100,
+    backward: bool = True,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
     try:
         db_runs = crud.get_locustruns(db, skip=skip, limit=limit, backward=backward)
         return db_runs
@@ -711,7 +767,7 @@ def get_locustruns(skip: int = 0, limit: int = 100, backward: bool = True, db: S
     description="Get locust run with data.",
     tags=["locust"],
 )
-def get_locustrun(run_id: int, db: Session = Depends(get_db)):
+def get_locustrun(run_id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     try:
         db_run = crud.get_locustrun(db, run_id)
         return db_run
@@ -745,7 +801,9 @@ def get_locustrun(run_id: int, db: Session = Depends(get_db)):
     """,
     tags=["loadtesting"],
 )
-def create_loadtesting(run: schemas.LoadTestingCreate, db: Session = Depends(get_db)):
+def create_loadtesting(
+    run: schemas.LoadTestingCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)
+):
     try:
         db_run = crud.create_loadtesting(db, run)
         return db_run
@@ -764,7 +822,13 @@ def create_loadtesting(run: schemas.LoadTestingCreate, db: Session = Depends(get
     description="Get the list of loadtesting runs",
     tags=["loadtesting"],
 )
-def get_loadtestings(skip: int = 0, limit: int = 100, backward: bool = True, db: Session = Depends(get_db)):
+def get_loadtestings(
+    skip: int = 0,
+    limit: int = 100,
+    backward: bool = True,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
     try:
         db_runs = crud.get_loadtestings(db, skip=skip, limit=limit, backward=backward)
         return db_runs
@@ -783,7 +847,7 @@ def get_loadtestings(skip: int = 0, limit: int = 100, backward: bool = True, db:
     description="Get loadtesting run with data.",
     tags=["loadtesting"],
 )
-def get_loadtesting(run_id: int, db: Session = Depends(get_db)):
+def get_loadtesting(run_id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     try:
         db_run = crud.get_loadtesting(db, run_id)
         return db_run
@@ -801,10 +865,10 @@ def get_loadtesting(run_id: int, db: Session = Depends(get_db)):
     description="Remove loadtesting run.",
     tags=["loadtesting"],
 )
-def remove_loadtesting(run_id: int, db: Session = Depends(get_db)):
+def remove_loadtesting(run_id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     try:
         if not crud.remove_loadtesting(db, run_id):
-            raise HTTPException(status_code=404, detail="LoadTesting not found")
+            raise HTTPException(status_code=410, detail="LoadTesting not found")
         return "ok"
 
     except IntegrityError as e:

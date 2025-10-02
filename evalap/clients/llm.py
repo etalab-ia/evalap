@@ -1,7 +1,7 @@
 import os
 import re
 from dataclasses import dataclass, field
-from typing import Generator
+from typing import Generator, Optional, Tuple
 
 import requests
 
@@ -63,6 +63,7 @@ class LlmApiModels:
     def _sync_openai_api_models(cls):
         self = cls()
 
+        unsupported_models = ["gpt-5"]
         for provider, _ in self.__dict__.items():
             if provider.startswith("_"):
                 continue
@@ -76,7 +77,7 @@ class LlmApiModels:
                 logger.warning(f"Model discovery error: {e}")
                 continue
             models_data = response.json()
-            models = {model["id"] for model in models_data["data"]}
+            models = {model["id"] for model in models_data["data"] if model["id"] not in unsupported_models}
             models |= {alias for model in models_data["data"] for alias in (model.get("aliases") or [])}
             setattr(self, provider, models)
 
@@ -116,7 +117,11 @@ class LlmClient:
         url = self.base_url
         headers = {}
         if self.api_key:
-            headers["Authorization"] = f"Bearer {self.api_key}"
+            if model.startswith("claude"):
+                headers["x-api-key"] = self.api_key
+                headers["anthropic-version"] = "2023-06-01"
+            else:
+                headers["Authorization"] = f"Bearer {self.api_key}"
         else:
             _url, h = get_api_url(model)
             url = _url or url
@@ -221,13 +226,15 @@ class LlmClient:
 #
 
 
-def split_think_answer(answer: str, think_token="</think>") -> (str | None, str):
-    think, tag, answer = answer.partition("</think>")
-    if tag:
-        answer = answer.strip()
-        think = (think + tag).strip()
+def split_think_answer(answer: str, think_token="</think>") -> Tuple[Optional[str], str]:
+    """Separate the reasoning token from the regular answer if any"""
+    pattern = re.escape(think_token)
+    match = re.search(pattern, answer, re.IGNORECASE)
+    if match:
+        start, end = match.span()
+        think = answer[:end].strip()
+        answer = answer[end:].strip()
+        return think, answer
     else:
-        answer = think.strip()
-        think = None
-
-    return think, answer
+        # behave like original logic
+        return None, answer.strip()

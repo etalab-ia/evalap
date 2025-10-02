@@ -60,9 +60,6 @@ def is_equal(model1, model2) -> bool:
     special_attrs = ["id", "api_key"]
     data = [{k: v for k, v in d.items() if k not in special_attrs} for d in data]
 
-    for d in data:
-        print(d)
-
     return all(d == data[0] for d in data)
 
 

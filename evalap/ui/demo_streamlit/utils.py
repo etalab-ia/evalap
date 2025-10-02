@@ -1,38 +1,50 @@
+import hashlib
 import json
+import os
 import re
-import time
 from collections import defaultdict
 from copy import deepcopy
+from typing import Optional
+
 import pandas as pd
 import requests
 import streamlit as st
-from typing import Optional
-import hashlib
 
 API_BASE_URL = "http://localhost:8000/v1"
+EVALAP_FRONTEND_TOKEN = os.getenv("EVALAP_FRONTEND_TOKEN")
 
 
-def fetch(method, endpoint, data=None, headers=None):
+def fetch(method, endpoint, data=None, token=None, show_error=True):
     func = getattr(requests, method)
     q = ""
     kw = {}
+
+    # Setup authorization
+    # --
+    if method == "get":
+        token = token if token else EVALAP_FRONTEND_TOKEN
+
+    if token:
+        kw["headers"] = {"Authorization": f"Bearer {token}"}
+
+    # Setup HTTP payload
+    # --
     if method == "get" and data:
         q = "?" + "&".join([f"{k}={v}" for k, v in data.items()])
     elif data:
         kw["json"] = data
-    if headers:
-        kw["headers"] = headers
 
     response = func(f"{API_BASE_URL}{endpoint}{q}", **kw)
     if response.status_code in (200, 201):
         return response.json()
-    else:
+
+    if show_error:
         st.error(
             f"Failed to fetch data from {endpoint}."
             f" Status code: {response.status_code}"
             f" Response content: {response.text}"
         )
-        return None
+    return None
 
 
 

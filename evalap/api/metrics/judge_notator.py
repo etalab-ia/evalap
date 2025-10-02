@@ -43,7 +43,6 @@ Ne retourne que la note, rien d'autre !
 """.strip()
 
 _config = {
-    "model": "gpt-4o",
     # "system_prompt": "Tu donnes...."
     "sampling_params": {"temperature": 0.2},
 }
@@ -51,21 +50,24 @@ _config = {
 
 @metric_registry.register(
     name="judge_notator",
-    description="[1-10] score semantic similarity between output and output_true",
+    description="[1-10] The 'judge_notator' metric evaluates the semantic similarity between the expected response and the generated response by giving a score from 1 to 10. It measures the extent to which the two responses share the same overall meaning, even if the words or phrasing differ, in order to assess semantic fidelity beyond simple lexical correspondence.",
     metric_type="llm",
     require=["output", "output_true", "query"],
 )
 def judge_notator_metric(output, output_true, **kwargs):
-    config = _config | {k: v for k, v in kwargs.items() if k in _config}
+    model = kwargs["model"]
+    system_prompt =  model.system_prompt or _config.get("system_prompt")
+    sampling_params = _config.get("sampling_params", {}) | (model.sampling_params or {})
     messages = [
         {
             "role": "user",
             "content": render_jinja(_template, output=output, output_true=output_true, **kwargs),
         }
     ]
-    model = config["model"]
+    if system_prompt:
+        messages = [{"role": "system", "content": system_prompt}] + messages
     aiclient = LlmClient(base_url=model.base_url, api_key=model.api_key)
-    result = aiclient.generate(model=model.name, messages=messages, **config["sampling_params"])
+    result = aiclient.generate(model=model.name, messages=messages, **sampling_params)
     observation = result.choices[0].message.content
     think, answer = split_think_answer(observation)
     score = answer.strip(" \n\"'.%")
