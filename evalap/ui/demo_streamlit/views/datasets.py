@@ -60,6 +60,7 @@ def _post_dataset_to_api(name: str, df: pd.DataFrame, readme: str, user_api_key:
     return response
 
 
+
 def _handle_file_upload(user_api_key: str):
     uploaded_file = st.file_uploader(
         "Upload dataset (CSV ou Excel)",
@@ -68,56 +69,65 @@ def _handle_file_upload(user_api_key: str):
         help="CSV or Excel file containing at least the columns 'query' and 'output_true'",
     )
 
-    # Save uploaded file in session state to persist across reruns
     if uploaded_file is not None:
-        st.session_state["uploaded_file"] = uploaded_file
-    elif "uploaded_file" in st.session_state:
-        uploaded_file = st.session_state["uploaded_file"]
+        # Do not reset dataset_loaded if same file uploaded
+        if "uploaded_file" not in st.session_state or st.session_state["uploaded_file"].name != uploaded_file.name:
+            st.session_state["uploaded_file"] = uploaded_file
+            st.session_state["dataset_loaded"] = False  # reset if new file
+            if "dataset_name" not in st.session_state:
+                st.session_state["dataset_name"] = uploaded_file.name.split(".")[0]
+            if "dataset_readme" not in st.session_state:
+                st.session_state["dataset_readme"] = ""
+    else:
+        if "uploaded_file" in st.session_state:
+            uploaded_file = st.session_state["uploaded_file"]
+        else:
+            uploaded_file = None
 
-    # Initialize dataset name and readme 
-    if "dataset_name" not in st.session_state and uploaded_file:
-        st.session_state["dataset_name"] = uploaded_file.name.split(".")[0]
-    if "dataset_readme" not in st.session_state:
-        st.session_state["dataset_readme"] = ""
+    if not uploaded_file:
+        st.info("Please upload a dataset file to set name and description.")
+        return
 
-    name = st.text_input("Name of dataset", value=st.session_state.get("dataset_name", ""), key="dataset_name")
-    readme = st.text_area("Description (readme)", value=st.session_state.get("dataset_readme", ""), key="dataset_readme")
+    st.text_input("Name of dataset", key="dataset_name")
+    st.text_area("Description (readme)", key="dataset_readme")
 
     if st.button("Load and verify the dataset"):
-        if uploaded_file is None:
-            st.error("Please upload a file before continuing.")
-            return
-
         try:
-            # Extension management
+            uploaded_file.seek(0)
             if uploaded_file.name.endswith(".csv"):
-                try:
-                    df = pd.read_csv(uploaded_file, delimiter=";", on_bad_lines="skip")
-                except Exception:
-                    uploaded_file.seek(0)
-                    df = pd.read_csv(uploaded_file, on_bad_lines="skip")
+                df = pd.read_csv(uploaded_file, delimiter=";", on_bad_lines="skip")
             else:
                 df = pd.read_excel(uploaded_file)
 
-            # Validate presence of required columns
             if _validate_uploaded_dataset(df):
+                st.session_state["loaded_df"] = df
+                st.session_state["dataset_loaded"] = True
                 st.success(f"File loaded successfully, {len(df)} rows detected.")
-
-                # Send to EvalAP API
-                if st.button("Send the dataset to the EvalAP API"):
-                    result = _post_dataset_to_api(name, df, readme, user_api_key)
-                    if result:
-                        st.success(f"Dataset created successfully: ID {result.get('id')}")
-                        # Clean up session state after successful upload
-                        del st.session_state["uploaded_file"]
-                        st.session_state["dataset_name"] = ""
-                        st.session_state["dataset_readme"] = ""
-                    else:
-                        st.error("Error creating the dataset.")
             else:
+                st.session_state["dataset_loaded"] = False
                 st.error("The file must contain at least the columns 'query' and 'output_true'.")
         except Exception as e:
+            st.session_state["dataset_loaded"] = False
             st.error(f"Error loading file: {e}")
+
+    if st.session_state.get("dataset_loaded", False):
+        if st.button("Send the dataset to the EvalAP API"):
+            current_name = st.session_state.get("dataset_name", "")
+            current_readme = st.session_state.get("dataset_readme", "")
+            df_to_send = st.session_state.get("loaded_df", None)
+
+            if df_to_send is not None:
+                result = _post_dataset_to_api(current_name, df_to_send, current_readme, user_api_key)
+                if result:
+                    st.success(f"Dataset created successfully: ID {result.get('id')}")
+                    del st.session_state["uploaded_file"]
+                    st.session_state["dataset_loaded"] = False
+                    del st.session_state["loaded_df"]
+
+                else:
+                    st.error("Error creating the dataset.")
+            else:
+                st.error("No dataset loaded to send.")
 
 
 def _load_dataset_preview(dataset_id: int) -> Optional[pd.DataFrame]:
