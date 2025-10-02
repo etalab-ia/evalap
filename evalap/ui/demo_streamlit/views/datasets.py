@@ -10,7 +10,6 @@ from streamlit import session_state
 
 from utils import fetch
 
-EVALAP_API_KEY = os.getenv("EVALAP_API_KEY")
 
 session_state.layout = "wide"
 
@@ -45,7 +44,7 @@ def _validate_uploaded_dataset(df: pd.DataFrame) -> bool:
     return required_cols.issubset(df_cols)
 
 
-def _post_dataset_to_api(name: str, df: pd.DataFrame, readme: str = "") -> dict:
+def _post_dataset_to_api(name: str, df: pd.DataFrame, readme: str, user_api_key: str) -> dict:
     dataset = {
         "name": name,
         "df": df.to_json(),
@@ -53,17 +52,21 @@ def _post_dataset_to_api(name: str, df: pd.DataFrame, readme: str = "") -> dict:
         "default_metric": "judge_notator",
     }
 
-    headers = {"Authorization": f"Bearer {EVALAP_API_KEY}"}
-    response = fetch("post", "/dataset", dataset, headers)
+    response = fetch(
+        "post",
+        "/dataset",
+        dataset,
+        user_api_key,
+    )
     return response
 
 
-def _handle_file_upload():
+def _handle_file_upload(user_api_key):
     uploaded_file = st.file_uploader(
         "Upload dataset (CSV ou Excel)",
         type=["csv", "xls", "xlsx"],
         key="dataset_uploader",
-        help="CSV or Excel file containing at least the columns ‘query’ and 'output_true'",
+        help="CSV or Excel file containing at least the columns 'query' and 'output_true'",
     )
 
     if uploaded_file is not None:
@@ -71,8 +74,23 @@ def _handle_file_upload():
     elif "uploaded_file" in st.session_state:
         uploaded_file = st.session_state["uploaded_file"]
 
-    if uploaded_file is not None:
+    if "dataset_name" not in st.session_state:
+        st.session_state["dataset_name"] = uploaded_file.name.split(".")[0] if uploaded_file else ""
+    if "dataset_readme" not in st.session_state:
+        st.session_state["dataset_readme"] = ""
+
+    name = st.text_input("Name of dataset", value=st.session_state["dataset_name"], key="dataset_name")
+    readme = st.text_area(
+        "Description (readme)", value=st.session_state["dataset_readme"], key="dataset_readme"
+    )
+
+    if st.button("Load and verify the dataset"):
+        if uploaded_file is None:
+            st.error("Please upload a file before continuing.")
+            return
+
         try:
+            # Extension management
             if uploaded_file.name.endswith(".csv"):
                 try:
                     df = pd.read_csv(uploaded_file, delimiter=";", on_bad_lines="skip")
@@ -82,28 +100,25 @@ def _handle_file_upload():
             else:
                 df = pd.read_excel(uploaded_file)
 
-            # Check columns
+            # Validation of expected columns in df
             if _validate_uploaded_dataset(df):
-                st.success(f"File load with success, {len(df)} detected lines.")
+                st.success(f"Fichier chargé avec succès, {len(df)} lignes détectées.")
 
-                # User input info
-                name = st.text_input(
-                    "Name of dataset", value=uploaded_file.name.split(".")[0], key="dataset_name"
-                )
-                readme = st.text_area("Description (readme)", key="dataset_readme")
-
+                # if API key is valid
                 if st.button("Send the dataset to the EvalAP API"):
-                    result = _post_dataset_to_api(name, df, readme)
+                    result = _post_dataset_to_api(name, df, readme, user_api_key)
                     if result:
                         st.success(f"Dataset created successfully : ID {result.get('id')}")
+                        # Nettoyage
                         del st.session_state["uploaded_file"]
+                        st.session_state["dataset_name"] = ""
+                        st.session_state["dataset_readme"] = ""
                     else:
-                        st.error("Error creating dataset")
-
+                        st.error("Error creating the dataset.")
             else:
-                st.error("Le fichier doit contenir au moins les colonnes 'query' et 'output_true'.")
+                st.error("The file must contain at least the columns 'query' and 'output_true'.")
         except Exception as e:
-            st.error(f"Erreur lors du chargement du fichier : {e}")
+            st.error(f"Error loading file : {e}")
 
 
 def _load_dataset_preview(dataset_id: int) -> Optional[pd.DataFrame]:
@@ -190,9 +205,24 @@ def main():
             st.info(
                 """Your dataset must be loaded into EvalAP only once. It will then be accessible for all your experiments.
                 You must give it a name and write a brief description that will be visible to everyone.
-                The file must contain at least the question (called query) and the ground truth (called output_true)."""
+                The file must contain at least the question (called query) and the ground truth (called output_true). 
+                You need to have an **EvalAP access key**, you can make the request in the [canal Tchap](https://www.tchap.gouv.fr/#/room/!gpLYRJyIwdkcHBGYeC:agent.dinum.tchap.gouv.fr) 
+                 """
             )
-            _handle_file_upload()
+            user_api_key = st.text_input("Enter your access key", type="password", key="user_api_key_input")
+
+            if user_api_key:
+                # Authentication verification
+                verif_authent = fetch("get", "/metrics", token=user_api_key, show_error=False)
+                if verif_authent is None:
+                    st.error("Your EvalAP access key is invalid.")
+                    st.info(
+                        "If you do not have an EvalAP access key, request one via the [canal Tchap](https://www.tchap.gouv.fr/#/room/!gpLYRJyIwdkcHBGYeC:agent.dinum.tchap.gouv.fr)"
+                    )
+                else:
+                    _handle_file_upload(user_api_key)
+            else:
+                st.warning("Please enter your EvalAP access key before adding a dataset.")
 
         for dataset in filtered_datasets:
             when = datetime.fromisoformat(dataset["created_at"]).strftime("%d %B %Y")
