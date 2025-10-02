@@ -60,7 +60,6 @@ def _post_dataset_to_api(name: str, df: pd.DataFrame, readme: str, user_api_key:
     return response
 
 
-
 def _handle_file_upload(user_api_key: str):
     uploaded_file = st.file_uploader(
         "Upload dataset (CSV ou Excel)",
@@ -71,7 +70,10 @@ def _handle_file_upload(user_api_key: str):
 
     if uploaded_file is not None:
         # Do not reset dataset_loaded if same file uploaded
-        if "uploaded_file" not in st.session_state or st.session_state["uploaded_file"].name != uploaded_file.name:
+        if (
+            "uploaded_file" not in st.session_state
+            or st.session_state["uploaded_file"].name != uploaded_file.name
+        ):
             st.session_state["uploaded_file"] = uploaded_file
             st.session_state["dataset_loaded"] = False  # reset if new file
             if "dataset_name" not in st.session_state:
@@ -202,7 +204,9 @@ def add_dataset_section():
         """
     )
 
-    user_api_key = st.text_input("Enter your EvalAP access key", type="password", key="add_dataset_user_api_key")
+    user_api_key = st.text_input(
+        "Enter your EvalAP access key", type="password", key="add_dataset_user_api_key"
+    )
 
     if not user_api_key:
         st.warning("Please enter your EvalAP access key before adding a dataset.")
