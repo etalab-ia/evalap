@@ -129,11 +129,12 @@ def _get_experiment_data(exp_id):
 
     # Merge answers and metrics into the dataset dataframe
     if "answers" in expe:
-        answers = {answer["num_line"]: answer["answer"] for answer in expe["answers"]}
-        errors = {answer["num_line"]: answer["error_msg"] for answer in expe["answers"]}
-        df["answer"] = df.index.map(answers)
-        if any(error is not None for error in errors.values()):
-            df["answer_errors"] = df.index.map(errors)
+        answer_fields_to_show = ["answer", "error_msg", "context", "retrieval_context"]
+        for field in answer_fields_to_show:
+            values = {answer["num_line"]: answer.get(field) for answer in expe["answers"]}
+            if any(value is not None for value in values.values()):
+                field_name = "answer_" + field if not field.startswith("answer") else field
+                df[field_name] = df.index.map(values)
 
     if "results" in expe:
         for result in expe["results"]:

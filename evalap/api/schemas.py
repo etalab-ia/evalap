@@ -191,6 +191,8 @@ class Answer(EgBaseModel):
     created_at: datetime
     answer: str | None
     think: str | None
+    context: list[str] | None
+    retrieval_context: list[str] | None
     num_line: int
     error_msg: str | None
     execution_time: int | None
