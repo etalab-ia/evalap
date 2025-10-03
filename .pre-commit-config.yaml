@@ -9,16 +9,12 @@ repos:
         args: [
             --fix,
             --exit-non-zero-on-fix,
-            --config=pyproject.toml,
-            "--select=F,Q,I", # Override select rules for pre-commit
+            --config=.pyproject.pre-commit.toml,
           ]
       # Run the formatter
       - id: ruff-format
         types_or: [python, pyi]
-        args: [
-            --config=pyproject.toml,
-            "--select=F,Q,I", # Override select rules for pre-commit
-          ]
+        args: [--config=pyproject.toml]
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
