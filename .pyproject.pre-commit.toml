@@ -1,4 +1,5 @@
+[tool.ruff]
 extend = "pyproject.toml"  # Inherit line-length and other settings
 
-[tool.ruff]
+[tool.ruff.lint]
 select = ["F", "Q", "I"]  # Override only select for pre-commit
