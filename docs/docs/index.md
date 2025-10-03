@@ -7,7 +7,7 @@ sidebar_label: Introduction
 # Documentation Overview
 
 :::info
-Currently, the EvalAP webapp (frontend) is a read-only application to visualize the evaluation data.  
+Currently, the EvalAP webapp (frontend) is a read-only application to visualize the evaluation data.
 To publish datasets and run experiments you must use the EvalAP API, either from the public instance if you have an authorization token or from your own instance if you ar eself-hosting.
 :::
 
@@ -55,4 +55,3 @@ To publish datasets and run experiments you must use the EvalAP API, either from
 You can open issues for bugs you've found or features you think are missing. You can also submit pull requests or open discussion to the Evalap repository.
 
 To get started, take a look at the CONTRIBUTING.md file in [the repository](https://github.com/etalab-ia/evalap).
-

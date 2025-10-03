@@ -7,7 +7,7 @@ sidebar_label: Introduction
 # Vue d'ensemble de la documentation
 
 :::info
-Actuellement, l'application web EvalAP (frontend) est une application en lecture seule permettant de visualiser les données d'évaluation.  
+Actuellement, l'application web EvalAP (frontend) est une application en lecture seule permettant de visualiser les données d'évaluation.
 Pour publier des jeux de données et exécuter des expériences, vous devez utiliser l'API EvalAP, soit depuis l'instance publique si vous disposez d'un jeton d'autorisation, soit depuis votre propre instance si vous l'hébergez vous-même.
 :::
 
@@ -55,4 +55,3 @@ Pour publier des jeux de données et exécuter des expériences, vous devez util
 Vous pouvez ouvrir des issues pour les bugs que vous avez trouvés ou les fonctionnalités qui vous semblent manquantes. Vous pouvez également soumettre des pull requests ou ouvrir des discussions sur le dépôt Evalap.
 
 Pour commencer, consultez le fichier CONTRIBUTING.md dans [le dépôt](https://github.com/etalab-ia/evalap).
-

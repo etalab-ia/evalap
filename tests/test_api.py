@@ -1,6 +1,4 @@
-from sqlalchemy.orm import Session
-
-from evalap.api.db import engine, SessionLocal
+from evalap.api.db import engine
 from evalap.api.models import Base
 
 
@@ -11,5 +9,4 @@ class TestApi:
         Base.metadata.drop_all(bind=engine)
         Base.metadata.create_all(bind=engine)
         # eventually initialize db data.
-        #db: Session = SessionLocal()
-
+        # db: Session = SessionLocal()

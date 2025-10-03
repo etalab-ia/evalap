@@ -1,5 +1,6 @@
 import json
 import re
+
 from evalap.clients import LlmClient, split_think_answer
 from evalap.utils import render_jinja
 
@@ -55,7 +56,7 @@ _config = {
 )
 def judge_complexity_metric(output, output_true, **kwargs):
     model = kwargs["model"]
-    system_prompt =  model.system_prompt or _config.get("system_prompt")
+    system_prompt = model.system_prompt or _config.get("system_prompt")
     sampling_params = _config.get("sampling_params", {}) | (model.sampling_params or {})
     messages = [
         {
