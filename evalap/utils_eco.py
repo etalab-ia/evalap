@@ -1,7 +1,8 @@
-import logging
 from pathlib import Path
+
 import toml
 from ecologits.tracers.utils import compute_llm_impacts, electricity_mixes
+
 from evalap.logger import logger
 
 DEFAULT_PARAMS = {"params": 100, "active_params": 100, "total_params": 100}

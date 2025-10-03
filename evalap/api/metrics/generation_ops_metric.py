@@ -1,5 +1,4 @@
 from . import metric_registry
-from evalap.logger import logger
 
 
 @metric_registry.register(

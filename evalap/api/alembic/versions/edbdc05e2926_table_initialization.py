@@ -1,7 +1,7 @@
 """Table Initialization
 
 Revision ID: edbdc05e2926
-Revises: 
+Revises:
 Create Date: 2024-11-15 20:30:02.280534
 
 """

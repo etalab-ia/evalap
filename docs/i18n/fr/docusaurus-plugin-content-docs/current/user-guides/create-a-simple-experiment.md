@@ -64,7 +64,7 @@ HEADERS = {
 
 # Design the experiment
 experiment = {
-    "name": "my_experiment_name", 
+    "name": "my_experiment_name",
     "dataset": "my_dataset", # name identifier of the dataset
     "model": {"name": "gpt-4o", "base_url": "https://api.openai.com/v1", "api_key": os.getenv("OPENAI_API_KEY")},
     "metrics": ["judge_precision", "generation_time", "output_length"],
@@ -99,7 +99,7 @@ HEADERS = {
 
 # Design the experiment with a custom model
 experiment = {
-    "name": "my_custom_model_experiment", 
+    "name": "my_custom_model_experiment",
     "dataset": "my_dataset", # name identifier of the dataset
     "model": {
         "aliased_name": "my-custom-model",  # A name to identify this model
@@ -176,4 +176,3 @@ Après avoir lancé une expérience :
 :::tip Next Steps: Experiment Sets
 Après avoir créé votre première expérience, envisagez d'utiliser les **Ensembles d'Expériences** pour comparer plusieurs modèles ou configurations. Les ensembles d'expériences vous permettent d'exécuter des expériences connexes ensemble, facilitant ainsi les comparaisons significatives et les conclusions. Ils sont essentiels pour des évaluations robustes qui tiennent compte de la variabilité des modèles et fournissent des aperçus comparatifs. En savoir plus dans notre guide [Créer un Ensemble d'Expériences](./create-experiment-set).
 :::
-

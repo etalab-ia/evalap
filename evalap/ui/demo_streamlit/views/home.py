@@ -1,8 +1,11 @@
 import os
-from PIL import Image
-import streamlit as st
-from routes import ROUTES
 from pathlib import Path
+
+import streamlit as st
+from PIL import Image
+from routes import ROUTES
+
+# from streamlit_card import card
 
 
 def get_logo(filename="evalap_logo.png"):
@@ -100,6 +103,10 @@ for route in ROUTES:
     if route["id"] in ["home"] or route.get("is_hidden"):
         continue
     st.page_link(route["path"], label=f"{route['title']}: {route['description']}", icon=route["icon"])
+    # card(
+    #    title= route['title'],
+    #    text=route['description'],
+    # )
 
 
 st.markdown("Explore [our documentation](/doc) for more information.")

@@ -3,7 +3,6 @@
 The stack is based on Fastapi+pydantic+sqlachemy for the API in conjonction with ZeroMQ for the Runner.
 The project includes an UI/UX based on Streamlit [WIP].
 
-
 ```
 evalap/
 ├── justfile    --> just is a handy way to save and run project-specific commands. See https://just.systems
@@ -19,50 +18,71 @@ evalap/
 
 ## Environment
 
-The project needs the following API key to be set perform LLM based metrics: 
+At a minimum, the project needs the following API key to be set perform LLM based metrics:
 
 ```bash
 export OPENAI_API_KEY="You secret key"
 ```
 
+The environement variables can also be defined in a `.env` file at the root of the project. See the `.env.example` file for an example.
+
 All the project global settings and environmant variables are handled in `evalap/api/config.py`.
 
-The environement variables can also be defined in a `.env` file at the root of the project.
+## System Requirements
 
+Install [just](https://just.systems) to run project-specific commands. You will also need to install [jq](https://stedolan.github.io/jq/download/) to parse JSON responses. You will need [uv](https://docs.astral.sh/uv/getting-started/installation/) to install python requirements
 
-## Database initialization 
+## Python Requirements
+
+Install python requirements with:
+
+```
+    just sync
+```
+
+This will also install pre-commit hooks.
+
+## Database initialization
 
 1. Launch the development services:
+
 ```
     docker-compose -f compose.dev.yml up postgres
 ```
 
-2. Create the first migration script:
-```
-    alembic -c evalap/api/alembic.ini revision --autogenerate -m "Table Initialization"
-```
+2. Initialize/Update the database schema:
 
-3. Initialize/Update the database schema:
 ```
     alembic -c evalap/api/alembic.ini upgrade head
 ```
-4. If you modify the schema :
+
+3. If you modify the schema :
+
 ```
     alembic -c evalap/api/alembic.ini revision --autogenerate -m "text explication"
-    alembic -c evalap/api/alembic.ini upgrade head  
+    alembic -c evalap/api/alembic.ini upgrade head
 ```
 
-## Run API
+## Run all services
 
-1. Install the requirements (in .venv if you prefer)
+1. Launch the API, runner and streamlit:
+
 ```
-    pip install .
+    just run
 ```
-2. Launch the API:
+
+## Run the API and runner
+
+If needed you can run the API and runner separately:
+
+1. Launch the API:
+
 ```
     uvicorn evalap.api.main:app --reload
 ```
-3. Launch the runner:
+
+2. Launch the runner:
+
 ```
     PYTHONPATH="." python -m evalap.runners
     # To change the default loggin level you can do:
@@ -73,25 +93,21 @@ The environement variables can also be defined in a `.env` file at the root of t
 
 Access the API documentation at: http://localhost:8000/redoc (or http://localhost:8000/docs if you prefer the legacy version).
 
-
 ## Streamlit Application
 
-To run the streamlit frontend, run : 
+To run the streamlit frontend separately, run :
 
-    streamlit run evalap/ui/demo_streamlit/app.py --server.runOnSave true
-
+    streamlit run evalap/ui/demo_streamlit/app.py --server.runOnSave true --server.headless=true
 
 ## Jupyter Tutorial
 
 The `notebook/` directory contains examples of API usage.
 
-
 ## Adding new metrics
 
 Each single metric should be defined in a file in `evalap/api/metrics/{metric_name}.py`.
 The file should be self-contained, i.e contains the eventual prompt and settings related to the metric.
-The metric should be decorated as followinf example to be registed as a known metric of EVALAP: 
-
+The metric should be decorated as following example to be registed as a known metric of EVALAP:
 
 ```python
 from . import metric_registry
@@ -111,22 +127,17 @@ def metric_name_metric(output:str, output_true:str, **kwargs) -> float:
     #return score, observation
 ```
 
-
 ## Unit Tests
 
 Tests can be found in api/tests.
-To run unit tests, use : 
+To run unit tests, use :
 
-    pytest
-
+    just test
 
 ## Install python package
 
-    python -m pip install build twine
-    twine upload dist/*
+    just publish
 
-## use ruff 
-```
- ruff format --config=pyproject.toml file_path
-```
+## use ruff
 
+    just format
