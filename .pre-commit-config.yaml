@@ -6,7 +6,12 @@ repos:
       # Run the linter with auto-fixes
       - id: ruff
         types_or: [python, pyi]
-        args: [--fix, --exit-non-zero-on-fix, --config=pyproject.toml]
+        args: [
+            --fix,
+            --exit-non-zero-on-fix,
+            --config=pyproject.toml,
+            "--select=F,Q,I,"
+          ]
       # Run the formatter
       - id: ruff-format
         types_or: [python, pyi]
