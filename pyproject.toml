@@ -86,7 +86,12 @@ exclude = ["evalap/api/alembic/versions/", "notebooks/"]
 
 [tool.ruff.lint]
 select = [
-    "I",  # isort
+    "F",    # Pyflakes (includes undefined variables)
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "Q",    # flake8-quotes (quote style consistency)
+    "B",    # flake8-bugbear (likely bugs and design problems)
+    "I",    # isort
 ]
 fixable = ["ALL"]
 unfixable = []
