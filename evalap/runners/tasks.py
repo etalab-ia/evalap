@@ -98,12 +98,18 @@ def generate_answer(message: dict, mcp_bridge: MCPBridgeClient | None):
             context = None
             retrieval_context = None
 
+            # Extract Retrieval Context
+            # --
             # RAG and context decoding from tools steps result
             if steps:
                 context = [x["tool_result"] for step in steps for x in step]
                 retrieval_context = [x for c in context for x in c.split("\n---\n")]
                 if len(context) == len(retrieval_context):
+                    # @improve: better differentiate context from retrieval_contexdt from tool calls
                     retrieval_context = None
+            # RAG and context from chat response
+            if result.search_results:
+                retrieval_context = [c.chunk.content for c in result.search_results]
 
             # Thinking token extraction (@DEBUG: start sometimes missing ?)
             if answer:
