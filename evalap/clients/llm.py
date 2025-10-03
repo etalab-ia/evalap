@@ -9,7 +9,7 @@ import requests
 from evalap.logger import logger
 from evalap.utils import log_and_raise_for_status, retry
 
-from .schemas.openai_rag import Chunk, RagChatCompletionResponse, Search
+from .schemas.openai_rag import RagChatCompletionResponse
 
 
 @dataclass
