@@ -1,44 +1,35 @@
-from typing import Any, Dict, List, Literal, Optional
+from enum import Enum
+from typing import Any, Dict, List, Literal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
 
 from .openai import ChatCompletionResponse
 
 
-class ChunkMetadata(BaseModel):
-    collection_id: str
-    document_id: str
-    document_name: str
-    document_part: int
-    internet_query: str | None = None
+class SearchMethod(str, Enum):
+    """Enum representing the search methods available (will be displayed in this order in playground)."""
 
-    model_config = ConfigDict(
-        extra="allow",
-    )
+    MULTIAGENT = "multiagent"
+    HYBRID = "hybrid"
+    SEMANTIC = "semantic"
+    LEXICAL = "lexical"
 
 
 class Chunk(BaseModel):
     object: Literal["chunk"] = "chunk"
-    id: str | int | None = None
-    metadata: ChunkMetadata | None = None
+    id: int
     metadata: Dict[str, Any]
     content: str
 
 
 class Search(BaseModel):
+    method: SearchMethod
     score: float
     chunk: Chunk
 
 
-class RagContext(BaseModel):  # mfs
-    strategy: str
-    references: list[str]
-
-
 class RagChatCompletionResponse(ChatCompletionResponse):
-    # Allow to return sources used with the rag
+    # Get the references for RAG usage
     # --
-    # mfs-api
-    rag_context: Optional[list[RagContext]] = None
     # albert-api
     search_results: List[Search] = []
