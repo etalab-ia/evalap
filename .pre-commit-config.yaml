@@ -9,7 +9,8 @@ repos:
         args: [
             --fix,
             --exit-non-zero-on-fix,
-            --config=.pyproject.pre-commit.toml,
+            --config=pyproject.toml,
+            "--select=F,Q,I,"
           ]
       # Run the formatter
       - id: ruff-format
