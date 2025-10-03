@@ -3,8 +3,6 @@ import re
 from collections import defaultdict
 from datetime import datetime
 from io import StringIO
-from itertools import groupby
-from operator import itemgetter
 from urllib.parse import quote, unquote
 
 import numpy as np
