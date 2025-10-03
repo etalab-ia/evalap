@@ -1,6 +1,5 @@
 import logging
 import signal
-import sys
 import threading
 
 import zmq
