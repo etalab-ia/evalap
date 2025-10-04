@@ -77,7 +77,7 @@ with col2:
         <div class="custom-info-box">
             <h3>Key Concepts</h3>
             <ul>
-                <li><b>EvalAP</b> operates using the <em>Experiment Set</em> logic.</li>
+                <li><b>EvalAP</b> operates using the notion of <em>Experiment Set</em>.</li>
                 <li>An <em>Experiment Set</em> groups multiple experiments related for a given evaluation run. For example:
                     <ul>
                         <li>Finding the best system prompt for your use case.</li>
