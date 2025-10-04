@@ -16,8 +16,12 @@ This project provides an API to evaluate [LLM] models and an interface to naviga
 Running evalap for the impatient:
 
 ```
+# Install Dependencies
+# sudo apt install just  # install just in debian/ubuntu
+pip install .
+
+# Launch
 docker compose -f compose.dev.yml up -d postgres
-# sudo apt install just
 just run
 ```
 
