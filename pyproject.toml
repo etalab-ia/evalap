@@ -7,6 +7,7 @@ requires-python = ">=3.12"
 readme = "README.md"
 license = { text = "MIT" }
 keywords = ["IA", "LLM", "evaluation"]
+
 dependencies = [
     # API
     "fastapi~=0.115.2",
@@ -36,7 +37,6 @@ dependencies = [
     "plotly~=5.22.0",
 ]
 
-
 [project.urls]
 Homepage = "https://evalap.etalab.gouv.fr"
 Source = "https://github.com/etalab-ia/evalap"
@@ -46,6 +46,22 @@ Documentation = "https://github.com/etalab-ia/evalap"
 [project.scripts]
 evalap_generate_answers = "evalap.scripts.run_answers.run_answers:main"
 evalap_run_expe = "evalap.scripts.run_expe.run_expe:main"
+
+# Tests
+
+[project.optional-dependencies]
+test = [
+    "pytest==8.3.3",
+    "pytest-asyncio==0.24.0",
+]
+
+[tool.pytest.ini_options]
+asyncio_default_fixture_loop_scope = "function"
+testpaths = ["tests/"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
 
 # Packaging
 
@@ -62,21 +78,6 @@ evalap_config = ["config/*"]
 
 [tool.pdm]
 distribution = false
-
-# Tests
-
-[project.optional-dependencies]
-test = [
-    "pytest==8.3.3",
-        "pytest-asyncio==0.24.0",
-]
-
-[tool.pytest.ini_options]
-asyncio_default_fixture_loop_scope = "function"
-testpaths = ["tests/"]
-python_files = ["test_*.py"]
-python_classes = ["Test*"]
-python_functions = ["test_*"]
 
 # Linter
 
