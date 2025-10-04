@@ -11,6 +11,19 @@ This project provides an API to evaluate [LLM] models and an interface to naviga
 
 ![Logo](images/evalap_overview.png)
 
+## Quickstart
+
+Running evalap for the impatient:
+
+```
+docker compose -f compose.dev.yml up -d postgres
+# sudo apt install just
+just run
+```
+
+You can then access the EvalAP UI at: http://localhost:8501
+and find the EvalAP API at http://localhost:8000/docs
+
 
 ## Ressources
 
