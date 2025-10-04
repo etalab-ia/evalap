@@ -201,15 +201,17 @@ class LlmClient:
 #
 
 
-def split_think_answer(answer: str, think_token="</think>") -> Tuple[Optional[str], str]:
+def split_think_answer(
+    answer: str, think_token: tuple[str, ...] = ("</think>", "[/think]")
+) -> Tuple[Optional[str], str]:
     """Separate the reasoning token from the regular answer if any"""
-    pattern = re.escape(think_token)
-    match = re.search(pattern, answer, re.IGNORECASE)
-    if match:
-        start, end = match.span()
-        think = answer[:end].strip()
-        answer = answer[end:].strip()
-        return think, answer
-    else:
-        # behave like original logic
-        return None, answer.strip()
+    for token in think_token:
+        pattern = re.escape(token)
+        match = re.search(pattern, answer, re.IGNORECASE)
+        if match:
+            start, end = match.span()
+            think = answer[:end].strip()
+            answer = answer[end:].strip()
+            return think, answer
+    # If no tokens found, return original answer
+    return None, answer.strip()
