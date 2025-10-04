@@ -26,7 +26,7 @@ with col1:
 with col2:
     st.title("Bienvenue sur EvalAP")
 
-st.write("") # add a small vertical space
+st.write("")  # add a small vertical space
 
 col1, col2 = st.columns([0.5, 0.5])
 with col1:
@@ -38,8 +38,6 @@ with col1:
         #    title= route['title'],
         #    text=route['description'],
         # )
-
-
 
 
 with col2:
