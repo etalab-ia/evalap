@@ -13,3 +13,7 @@ The available notebooks are:
 - **[run_set_ragmetrics](/notebooks/run_set_ragmetrics_demo.ipynb):** [WIP] This notebook conducts a series of related experiments (Experiment Set) on several retrieval-augmented generation (RAG) LLM models with specialized RAG metrics. Those RAG metrics use the "retriver context" (aka the chunks) to compute the scores.
 
 - **[run_dataset_experiences_demo](/notebooks/run_dataset_experiences_demo.ipynb):** This notebook runs individual experiments on a given dataset with a specified set of metrics. It aggregates and presents the results in a consolidated table and offers graphical visualisations.
+
+- **[albert-eval-brut](/notebooks/albert-raw.ipynb):** Simple evaluation of the raw Albert models.
+
+- **[albert-evals-rag](/notebooks/run_dataset_experiences_demo.ipynb):** RAG evaluation of the Albert models.
