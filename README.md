@@ -21,7 +21,7 @@ docker compose -f compose.dev.yml up -d postgres
 just run
 ```
 
-You can then access the EvalAP UI at: http://localhost:8501
+You can then access the EvalAP UI at: http://localhost:8501  
 and find the EvalAP API at http://localhost:8000/docs
 
 
