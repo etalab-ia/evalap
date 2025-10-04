@@ -30,8 +30,8 @@ and find the EvalAP API at http://localhost:8000/docs
 For guidance on how to use this project, please refer to the following resources:
 
 - The documentation: https://evalap.etalab.gouv.fr/doc
-- the demo notebooks: [notebooks/](notebooks/)
 - The public instance interface: https://evalap.etalab.gouv.fr/
+- the demo notebooks: [notebooks/](notebooks/)
 
 ## Contributing
 
