@@ -38,6 +38,9 @@ list-model provider="albert":
   elif [ "{{provider}}" = "xai" ]; then
     URL="https://api.x.ai/v1"
     API_KEY=$XAI_API_KEY
+  elif [ "{{provider}}" = "mammouth" ]; then
+    URL="https://api.mammouth.ai/v1"
+    API_KEY=$MAMMOUTH_API_KEY
   fi
 
   curl -XGET -H "Authorization: Bearer $API_KEY" $URL/models | jq '[.data.[] | {id, type, owned_by, aliases}]'
