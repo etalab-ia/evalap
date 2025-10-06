@@ -3,7 +3,6 @@ import traceback
 from dataclasses import dataclass, field
 from io import StringIO
 
-import pandas as pd
 from sqlalchemy import update
 
 import evalap.api.crud as crud
@@ -191,6 +190,7 @@ def generate_observation(message: dict, mcp_bridge: MCPBridgeClient):
         print(".", end="", flush=True)
         result = crud.get_result(db, experiment_id=msg.exp_id, metric_name=msg.metric_name)
         answer = crud.get_answer(db, experiment_id=msg.exp_id, num_line=msg.line_id)
+        dataset_row = crud.get_dataset_row(result.experiment, msg.line_id)
         score = None
         observation = None
         obs_result = None
@@ -214,19 +214,27 @@ def generate_observation(message: dict, mcp_bridge: MCPBridgeClient):
             metric = metric_registry.get_metric(msg.metric_name)
             metric_fun = metric_registry.get_metric_function(msg.metric_name)
             if not metric_fun:
-                raise ValueError(f"Metric {msg.metric_name} not found for experiment {msg.exp_id}")
+                raise ValueError(f"Metric '{msg.metric_name}' not found for experiment '{msg.exp_id}'")
             metric_params = {"metadata": metadata}
+
+            # Set the metric parametrization if any
+            require_extra = []
+            if result.metric_params:
+                metric_params.update(result.metric_params)
+                if "prompt" in result.metric_params:
+                    require_extra = metric_registry.get_require_from_prompt_tempalte(
+                        result.metric_params["prompt"]
+                    )
+
             # Add require in metric_params
-            for require in metric.require:
+            for require in metric.require + require_extra:
                 # Add extra inputs required by the metric
                 if require in ["output", "output_true"]:
                     if not getattr(msg, require):
-                        raise ValueError(f"The metric {msg.metric_name} require a non null {require} value.")
+                        raise ValueError(f"The metric '{msg.metric_name}' require a non null `{require}` value.")
                     continue
-                dataset = result.experiment.dataset
-                df = pd.read_json(StringIO(dataset.df))
                 try:
-                    metric_params[require] = df.iloc[msg.line_id][require]
+                    metric_params[require] = dataset_row[require]
                 except KeyError:
                     # If the required param is not in the dataset,
                     # try to get it from the metadata context.
@@ -234,9 +242,9 @@ def generate_observation(message: dict, mcp_bridge: MCPBridgeClient):
 
                 if not metric_params[require]:
                     if require in ["context", "retrieval_context"]:
-                        # A rely in the function calling now, it might not generate result just because the llm don't need it
+                        # We rely on the function calling atm, it might not generate result just because the llm don't need it
                         ignore_error = True
-                    raise ValueError(f"The metric {msg.metric_name} require a non null {require} value.")
+                    raise ValueError(f"The metric '{msg.metric_name}' require a non null `{require}` value.")
 
             # Set the Judge model for the metric
             judge_model = get_judge_model(result.experiment.judge_model or DEFAULT_JUDGE_MODEL)
@@ -288,10 +296,10 @@ def generate_observation(message: dict, mcp_bridge: MCPBridgeClient):
 
         except Exception as e:
             if ignore_error:
-                error_msg = f"Ignoring {msg.metric_name} with missing require field."
+                error_msg = f"Ignoring '{msg.metric_name}' with missing require field."
                 logging.warning(error_msg)
             else:
-                error_msg = f"Observation {msg.metric_name} failed with error: %s" % e
+                error_msg = f"Observation '{msg.metric_name}' failed with error: %s" % e
                 logging.debug(traceback.print_exc())
                 logging.error(error_msg)
         finally:

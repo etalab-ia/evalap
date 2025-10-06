@@ -148,6 +148,7 @@ class Result(Base):
     id = Column(Integer, primary_key=True)
     created_at = Column(DateTime, server_default=func.now())
     metric_name = Column(String)
+    metric_params = Column(JSON) # dict
     num_try = Column(Integer, default=0)
     num_success = Column(Integer, default=0)
     metric_status = Column(String)

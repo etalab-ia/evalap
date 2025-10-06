@@ -104,6 +104,11 @@ experiment = {
     "model": {
         "aliased_name": "my-custom-model",  # A name to identify this model
         "output": ["answer1", "answer2", "answer3"]  # Array of model outputs corresponding to dataset rows
+        # "context": list[str] a list of contextual information pass to the prompt.
+        # "retrieval_context": list[str] a list of retrieved information pass to the prompt.
+        # "reasonin"`: (str) The reasoning output tokens associated to an answer.
+        # (to come) "tools_called"
+        # (to come) "expected_tools"
     },
     "metrics": ["judge_precision", "generation_time", "output_length"],
 }
@@ -113,6 +118,12 @@ response = requests.post(f'{API_URL}/experiment', json=experiment, headers=HEADE
 experiment_id = response.json()["id"]
 print(f"Experiment {experiment_id} is running")
 ```
+
+:::tip Model fields supported
+```markdown
+Consultez la documentation de l'API du schéma ModelRaw pour voir tous les paramètres acceptés pour un modèle personnalisé : https://evalap.etalab.gouv.fr/redoc#tag/experiments/operation/create_experiment_v1_experiment_post
+```
+:::
 
 Dans ce scénario, le schéma du modèle est différent :
 
