@@ -47,7 +47,6 @@ def fetch(method, endpoint, data=None, token=None, show_error=True):
     return None
 
 
-
 def hash_string(input_string, bits=8):
     hash_object = hashlib.sha256(input_string.encode())
     hash_hex = hash_object.hexdigest()
