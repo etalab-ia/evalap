@@ -1,10 +1,10 @@
 import re
-import streamlit as st
-from utils import fetch
 from itertools import groupby
 from operator import itemgetter
 
+import streamlit as st
 from streamlit import session_state
+from utils import fetch
 
 session_state.layout = "wide"
 

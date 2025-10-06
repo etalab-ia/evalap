@@ -6,11 +6,10 @@ from typing import Generator, Optional, Tuple
 import requests
 
 # @TODO: Will be obsolete when MFS will use albert-api to do RAG
-from evalap.api.config import MFS_API_KEY_V2
 from evalap.logger import logger
 from evalap.utils import log_and_raise_for_status, retry
 
-from .schemas.openai_rag import Chunk, RagChatCompletionResponse, Search
+from .schemas.openai_rag import RagChatCompletionResponse
 
 
 @dataclass
@@ -163,30 +162,6 @@ class LlmClient:
         r = response.json()
         # @TODO catch base URL to switch-case the context decoding
         chat = RagChatCompletionResponse(**r)
-        # MFS decoding
-        # @deprecated
-        if hasattr(chat, "rag_context"):
-            refs = sum([x.references for x in chat.rag_context or []], [])
-            chunks = []
-            url, headers = self.get_url_and_headers(model)
-            headers = {"Authorization": f"Bearer {MFS_API_KEY_V2}"}
-
-            # From pyalbert
-            def doc_to_chunk(doc: dict) -> str:
-                context = ""
-                if "context" in doc:
-                    context = "  ( > ".join(doc["context"]) + ")"
-
-                text = "\n".join([doc["title"] + context, doc["introduction"], doc["text"]])
-                return text
-
-            for chunkid in refs:
-                response = requests.get(url.removesuffix("/v1") + f"/v2/get_chunk/{chunkid}", headers=headers)
-                log_and_raise_for_status(response, "MFS fetch chunk")
-                chunk = response.json()
-                chunks.append(doc_to_chunk(chunk))
-
-            chat.search_results = [Search(chunk=Chunk(content=chunk), score=1) for chunk in chunks]
 
         return chat
 
@@ -226,15 +201,17 @@ class LlmClient:
 #
 
 
-def split_think_answer(answer: str, think_token="</think>") -> Tuple[Optional[str], str]:
+def split_think_answer(
+    answer: str, think_token: tuple[str, ...] = ("</think>", "[/think]")
+) -> Tuple[Optional[str], str]:
     """Separate the reasoning token from the regular answer if any"""
-    pattern = re.escape(think_token)
-    match = re.search(pattern, answer, re.IGNORECASE)
-    if match:
-        start, end = match.span()
-        think = answer[:end].strip()
-        answer = answer[end:].strip()
-        return think, answer
-    else:
-        # behave like original logic
-        return None, answer.strip()
+    for token in think_token:
+        pattern = re.escape(token)
+        match = re.search(pattern, answer, re.IGNORECASE)
+        if match:
+            start, end = match.span()
+            think = answer[:end].strip()
+            answer = answer[end:].strip()
+            return think, answer
+    # If no tokens found, return original answer
+    return None, answer.strip()

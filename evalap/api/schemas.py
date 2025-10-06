@@ -9,9 +9,9 @@ from pydantic import BaseModel, ConfigDict, Field, create_model
 from sqlalchemy.orm import Session
 
 import evalap.api.models as models
-from evalap.clients.llm import LlmApiModels, get_api_url
 from evalap.api.errors import SchemaError
 from evalap.api.metrics import metric_registry
+from evalap.clients.llm import LlmApiModels, get_api_url
 from evalap.utils import build_param_grid
 
 
@@ -191,6 +191,8 @@ class Answer(EgBaseModel):
     created_at: datetime
     answer: str | None
     think: str | None
+    context: list[str] | None
+    retrieval_context: list[str] | None
     num_line: int
     error_msg: str | None
     execution_time: int | None

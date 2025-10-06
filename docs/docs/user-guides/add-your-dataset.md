@@ -7,7 +7,7 @@ sidebar_position: 1
 This guide will walk you through the process of adding a new dataset to Evalap for model evaluation.
 You can add a dataset programmatically using the Evalap API.
 
-Two formats are supported : 
+Two formats are supported :
 
 - CSV like data (dataframes)
 - Parquet format (for bigger dataset)

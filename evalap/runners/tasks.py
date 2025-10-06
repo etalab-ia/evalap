@@ -10,11 +10,11 @@ import evalap.api.crud as crud
 import evalap.api.models as models
 from evalap.api.config import DEFAULT_JUDGE_MODEL
 from evalap.api.db import SessionLocal
-from evalap.api.metrics import metric_registry, get_judge_model
+from evalap.api.metrics import get_judge_model, metric_registry
 from evalap.clients import MCPBridgeClient, multi_step_generate, split_think_answer
 from evalap.logger import logger
 from evalap.runners import MessageType, dispatch_tasks
-from evalap.utils import Timer, get_parquet_row_by_index, image_to_base64, run_with_timeout
+from evalap.utils import Timer, get_parquet_row_by_index, image_to_base64
 from evalap.utils_eco import impact_carbon
 
 
@@ -98,12 +98,18 @@ def generate_answer(message: dict, mcp_bridge: MCPBridgeClient | None):
             context = None
             retrieval_context = None
 
+            # Extract Retrieval Context
+            # --
             # RAG and context decoding from tools steps result
             if steps:
                 context = [x["tool_result"] for step in steps for x in step]
                 retrieval_context = [x for c in context for x in c.split("\n---\n")]
                 if len(context) == len(retrieval_context):
+                    # @improve: better differentiate context from retrieval_contexdt from tool calls
                     retrieval_context = None
+            # RAG and context from chat response
+            if result.search_results:
+                retrieval_context = [c.chunk.content for c in result.search_results]
 
             # Thinking token extraction (@DEBUG: start sometimes missing ?)
             if answer:

@@ -1,25 +1,16 @@
 import json
 import re
-import sys
-import time
 from collections import defaultdict
-from copy import deepcopy
 from datetime import datetime
 from io import StringIO
 from urllib.parse import quote, unquote
-from operator import itemgetter
-from itertools import groupby
 
 import numpy as np
 import pandas as pd
-import plotly.express as px
 import streamlit as st
-
+from experimentset_utils import convert_experimentset_to_create
 from template_manager import TemplateManager
 from utils import _format_model_params, _rename_model_variants, fetch
-from experimentset_utils import convert_experimentset_to_create
-import schemas
-
 
 #
 # Cached method for critical data fetching
@@ -138,11 +129,12 @@ def _get_experiment_data(exp_id):
 
     # Merge answers and metrics into the dataset dataframe
     if "answers" in expe:
-        answers = {answer["num_line"]: answer["answer"] for answer in expe["answers"]}
-        errors = {answer["num_line"]: answer["error_msg"] for answer in expe["answers"]}
-        df["answer"] = df.index.map(answers)
-        if any(error is not None for error in errors.values()):
-            df["answer_errors"] = df.index.map(errors)
+        answer_fields_to_show = ["answer", "error_msg", "context", "retrieval_context"]
+        for field in answer_fields_to_show:
+            values = {answer["num_line"]: answer.get(field) for answer in expe["answers"]}
+            if any(value is not None for value in values.values()):
+                field_name = "answer_" + field if not field.startswith("answer") else field
+                df[field_name] = df.index.map(values)
 
     if "results" in expe:
         for result in expe["results"]:
@@ -297,7 +289,7 @@ def _find_default_sort_metric(columns):
 def _extract_mean(value):
     try:
         return float(value.split("±")[0].strip())
-    except:
+    except Exception:
         return value  # Return original value if not in expected format
 
 
@@ -345,7 +337,7 @@ def _check_repeat_mode(experiments: list) -> bool:
 
 def _format_experiments_score_df(experiments: list, df: pd.DataFrame) -> (bool, pd.DataFrame):
     experiment_ids = [expe["id"] for expe in experiments]
-    experiment_names = [expe["name"] for expe in experiments]
+    # experiment_names = [expe["name"] for expe in experiments]
     is_repeat_mode = _check_repeat_mode(experiments)
     result = None
 
@@ -461,7 +453,7 @@ def display_experiment_set_score(experimentset, experiments_df):
 
     try:
         has_repeat, df = _format_experiments_score_df(experiments, df)
-    except (ValueError, TypeError) as err:
+    except (ValueError, TypeError):
         st.error("No valid result found, try again later...")
         return
 
@@ -980,14 +972,14 @@ def main():
                 "func": display_experiment_set_score,
             },
             2: {
-                "key": "details",
-                "title": "📝 Details by Experiment",
-                "func": display_experiment_details,
-            },
-            3: {
                 "key": "overview",
                 "title": "📊 Set Overview",
                 "func": display_experiment_set_overview,
+            },
+            3: {
+                "key": "details",
+                "title": "📝 Details by Experiment",
+                "func": display_experiment_details,
             },
             4: {
                 "key": "ops",
@@ -995,7 +987,7 @@ def main():
                 "func": display_ops_analysis,
             },
         }
-        tab_reverse = {d["key"]: k for k, d in tab_index.items()}
+        # tab_reverse = {d["key"]: k for k, d in tab_index.items()}
         # @TODO: how to catch the tab click in order to set the current url query to tab key ?
 
         tab1, tab2, tab3, tab4 = st.tabs(

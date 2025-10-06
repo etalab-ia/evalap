@@ -1,8 +1,9 @@
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
-from tests.test_api import TestApi
 
 import evalap.utils_eco
+from tests.test_api import TestApi
 
 # Mocks pour les dépendances externes
 MOCK_MODELS_INFO = {

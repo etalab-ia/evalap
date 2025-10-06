@@ -9,9 +9,9 @@ from pydantic import BaseModel, ConfigDict, Field, create_model
 from sqlalchemy.orm import Session
 
 import evalap.api.models as models
-from evalap.clients.llm import LlmApiModels, get_api_url
 from evalap.api.errors import SchemaError
 from evalap.api.metrics import metric_registry
+from evalap.clients.llm import LlmApiModels, get_api_url
 from evalap.utils import build_param_grid
 
 
@@ -315,11 +315,13 @@ class ExperimentCreate(ExperimentBase):
         # Handle judge_model
         if isinstance(self.judge_model, str):
             url, headers = get_api_url(self.judge_model)
-            obj["judge_model"] = ModelCreate(**{
-                "name": self.judge_model,
-                "base_url": url,
-                "api_key": (headers.get("Authorization") or headers.get("x-api-key") or "").split()[-1],
-            }).model_dump()
+            obj["judge_model"] = ModelCreate(
+                **{
+                    "name": self.judge_model,
+                    "base_url": url,
+                    "api_key": (headers.get("Authorization") or headers.get("x-api-key") or "").split()[-1],
+                }
+            ).model_dump()
 
         # Handle Results
         results = []

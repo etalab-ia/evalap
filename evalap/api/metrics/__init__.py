@@ -137,7 +137,7 @@ class MetricRegistry:
             )
             try:
                 metric.measure(test_case, _show_indicator=False)
-            except TypeError as e:  # External metric, like RAGAS does not have _show_indicator attr
+            except TypeError:  # External metric, like RAGAS does not have _show_indicator attr
                 metric.measure(test_case)
 
             if hasattr(metric, "reason"):
@@ -182,11 +182,18 @@ for filename in os.listdir(metrics_directory):
 # --
 package_name = "deepeval.metrics"
 classes = [
+    # @TODO: add metric type to help categorize them ?
+    # "GEval" @FIX # Custom catch
+    # Relevancy
     "AnswerRelevancyMetric",
     "FaithfulnessMetric",
+    "HallucinationMetric",
+    #"PromptAlignmentMetric",  # @FIX: require prompt_instructions metric parameter. See https://github.com/etalab-ia/evalap/issues/24
+    "SummarizationMetric",
+    # Safety
     "BiasMetric",
     "ToxicityMetric",
-    "HallucinationMetric",
+    "PIILeakageMetric",
     # Rag metric (required retrieval_context)
     "ContextualPrecisionMetric",
     "ContextualRecallMetric",
@@ -195,7 +202,7 @@ classes = [
 ]
 more = ["required_params"]
 imported_objs = import_classes(package_name, classes, more=more)
-for class_name, obj in zip(classes, imported_objs):
+for class_name, obj in zip(classes, imported_objs, strict=True):
     if not obj:
         continue
 

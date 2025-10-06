@@ -1,8 +1,8 @@
 import json
+
 from rapidfuzz import fuzz as stringfuzz
 
-from evalap.clients import LlmClient, split_think_answer
-from evalap.utils import render_jinja, extract_code
+from evalap.utils import extract_code
 
 from . import metric_registry
 
@@ -22,7 +22,7 @@ def ocr_json_precision_metric(output, output_true, **kwargs):
         blocks = json.loads(output)
         # assume json is a list of "visual) blocks that, between other, contains the 'text' attribute.
         output = "\n\n".join((x.get("text") or "") for x in blocks)
-    except:
+    except Exception:
         pass
     score = stringfuzz.ratio(output, output_true)
     score = float(score)

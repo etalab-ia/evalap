@@ -1,6 +1,6 @@
 from fastapi.testclient import TestClient
-from evalap.api.config import API_BASE_URL
 
+from evalap.api.config import API_BASE_URL
 
 ROOT_PATH = API_BASE_URL
 
