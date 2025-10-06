@@ -54,6 +54,7 @@ MetricEnum = Enum("MetricEnum", {name: name for name in metric_registry.get_metr
 class MetricParametrized(BaseModel):
     name: str
     params: dict | None = None
+    aliased_name: str | None = None
 
 
 class ExperimentStatus(str, Enum):
@@ -223,6 +224,7 @@ class Observation(EgBaseModel):
 class ResultBase(EgBaseModel):
     metric_name: MetricEnum
     metric_params: dict | None = None
+    metric_aliased_name: str | None = None
 
 
 class ResultCreate(ResultBase):
@@ -337,12 +339,18 @@ class ExperimentCreate(ExperimentBase):
             if isinstance(metric, str):
                 metric_name = metric
                 metric_params = None
+                metric_aliased_name = None
             else:
                 metric_name = metric.name
                 metric_params = metric.params
+                metric_aliased_name = metric.aliased_name
 
             results.append(
-                ResultCreate(metric_name=metric_name, metric_params=metric_params).to_table_init(db)
+                ResultCreate(
+                    metric_name=metric_name,
+                    metric_aliased_name=metric_aliased_name,
+                    metric_params=metric_params,
+                ).to_table_init(db)
             )
 
             # Validate Model and metric compatibility
