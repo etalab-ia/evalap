@@ -34,6 +34,7 @@ const sidebars = {
                 'user-guides/add-your-dataset',
                 'user-guides/create-a-simple-experiment',
                 'user-guides/create-experiment-set',
+                'user-guides/use-custom-llm-judge-prompt',
                 'user-guides/run-answers-locally',
             ],
         },
