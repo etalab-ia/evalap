@@ -1,8 +1,11 @@
 import os
-from PIL import Image
-import streamlit as st
-from routes import ROUTES
 from pathlib import Path
+
+import streamlit as st
+from PIL import Image
+from routes import ROUTES
+
+# from streamlit_card import card
 
 
 def get_logo(filename="evalap_logo.png"):
@@ -78,15 +81,15 @@ st.markdown(
     </style>
 
     <div class="custom-info-box">
-        <h3>Key concepts</h3>
+        <h3>Notions clefs</h3>
         <ul>
-            <li><b>EvalAP</b> works with the Experiment_set logic. </li>
-            <li>An Experiment_set groups together several experiments associated with the same analysis (for example, finding the best prompt system for your use case).</li>
-            <li>To launch an experiment, you need:
+            <li><b>EvalAP</b> fonctionne avec la logique d'Experiment_set.</li>
+            <li>Un Experiment_set regroupe plusieurs experimentations associées à une même analyse (par exemple, la recherche du meilleur prompt system sur votre cas d'usage).</li>
+            <li>Pour lancer une experimentation il vous faut :
                 <ul>
-                    <li> a dataset (you can import one for your use case or select from those already available). </li>
-                    <li>the metrics you will use in your decision-making</li>
-                    <li>the AI models/systems you want to analyze</li>
+                    <li> un dataset produit (vous pouvez en importer un sur votre cas d'usage ou sélectionner parmis ceux déjà disponibles).</li>
+                    <li> les métriques qui vous servirons dans la prise de décisions</li>
+                    <li> les modèles / systèmes IA que vous voulez analyser</li>
                 </ul>
             </li>
         </ul>
@@ -100,6 +103,10 @@ for route in ROUTES:
     if route["id"] in ["home"] or route.get("is_hidden"):
         continue
     st.page_link(route["path"], label=f"{route['title']}: {route['description']}", icon=route["icon"])
+    # card(
+    #    title= route['title'],
+    #    text=route['description'],
+    # )
 
 
 st.markdown("Explore [our documentation](/doc) for more information.")
