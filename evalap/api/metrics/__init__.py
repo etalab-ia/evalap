@@ -182,15 +182,15 @@ for filename in os.listdir(metrics_directory):
 # --
 package_name = "deepeval.metrics"
 classes = [
-    # @TODO: add metric type to help categorize them ?
+    # @TODO: add metric type to help categorize them ?
     # "GEval" @FIX # Custom catch
     # Relevancy
     "AnswerRelevancyMetric",
     "FaithfulnessMetric",
     "HallucinationMetric",
-    #"PromptAlignmentMetric",  # @FIX: require prompt_instructions metric parameter. See https://github.com/etalab-ia/evalap/issues/24
+    # "PromptAlignmentMetric",  # @FIX: require prompt_instructions metric parameter. See https://github.com/etalab-ia/evalap/issues/24
     "SummarizationMetric",
-    # Safety
+    # Safety
     "BiasMetric",
     "ToxicityMetric",
     "PIILeakageMetric",
