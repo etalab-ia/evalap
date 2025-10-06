@@ -1,7 +1,6 @@
 import logging
 import traceback
 from dataclasses import dataclass, field
-from io import StringIO
 
 from sqlalchemy import update
 
@@ -231,7 +230,9 @@ def generate_observation(message: dict, mcp_bridge: MCPBridgeClient):
                 # Add extra inputs required by the metric
                 if require in ["output", "output_true"]:
                     if not getattr(msg, require):
-                        raise ValueError(f"The metric '{msg.metric_name}' require a non null `{require}` value.")
+                        raise ValueError(
+                            f"The metric '{msg.metric_name}' require a non null `{require}` value."
+                        )
                     continue
                 try:
                     metric_params[require] = dataset_row[require]
