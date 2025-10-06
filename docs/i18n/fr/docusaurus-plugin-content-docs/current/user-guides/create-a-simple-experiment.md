@@ -4,7 +4,11 @@ sidebar_position: 2
 
 # Créer une Expérience Simple
 
-Ce guide vous accompagne dans la création et l'exécution d'une expérience d'évaluation simple dans Evalap.
+Ce guide vous accompagne dans la création et l'exécution d'une expérience d'évaluation simple dans EvalAP.
+
+:::info
+Cet article montre comment créer une expérience unique à des fins de simplicité, mais nous recommandons de toujours créer des expériences via les [**ensemble d'expérience**](./create-experiment-set) à la place. En effet, une évaluation n'est généralement pas une unique expérience (appelée orpheline dans EvalAP), mais un groupe d'expériences cohérentes pour comparer des choses. Tous les concepts et paramétrisations exposés dans cet article restent valides et servent de référence pour les Ensembles d'Expérience.
+:::
 
 ## Créer une Expérience via l'API
 
@@ -76,7 +80,7 @@ experiment_id = response.json()["id"]
 print(f"Experiment {experiment_id} is running")
 ```
 
-:::info
+:::tip Champs de Modèle supportés
 Le schéma du modèle prend en charge le passage de paramètres d'échantillonnage, comme la température avec `"model": {..., "sampling_params": {"temperature": 0.2}}`, ou des paramètres supplémentaires pris en charge par l'API Openai utilisée. Consultez le [point de terminaison de création d'expérience](https://evalap.etalab.gouv.fr/redoc#tag/experiments/operation/create_experiment_v1_experiment_post) pour la liste complète des paramètres pris en charge.
 :::
 
@@ -119,7 +123,7 @@ experiment_id = response.json()["id"]
 print(f"Experiment {experiment_id} is running")
 ```
 
-:::tip Model fields supported
+:::tip Champs de Modèle custom supportés
 ```markdown
 Consultez la documentation de l'API du schéma ModelRaw pour voir tous les paramètres acceptés pour un modèle personnalisé : https://evalap.etalab.gouv.fr/redoc#tag/experiments/operation/create_experiment_v1_experiment_post
 ```

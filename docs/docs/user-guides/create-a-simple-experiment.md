@@ -4,7 +4,11 @@ sidebar_position: 2
 
 # Create a Simple Experiment
 
-This guide walks you through creating and running a simple evaluation experiment in Evalap.
+This guide walks you through creating and running a simple evaluation experiment in EvalAP.
+
+:::info
+This article show how to create a single experiment for the sake of simplicity, but we recommend always creating experiments through [**experiment set**](./create-experiment-set) instead. This is because an evaluation is usually not a single experiment (called orphan in EvalAP), but a group of coherent experiments to compare things. All the concepts and parametrizations exposed in this article remains valid and a reference for Experiment Set though.
+:::
 
 ## Creating an Experiment via the API
 
@@ -76,7 +80,7 @@ experiment_id = response.json()["id"]
 print(f"Experiment {experiment_id} is running")
 ```
 
-:::info
+:::tip Model Fields Supported
 The model schema support passing sampling params, such as the temperature like `"model": {..., "sampling_params": {"temperature": 0.2}}`, or extra params since supported by the Openai API used. Check the [experiment creation endpoint](https://evalap.etalab.gouv.fr/redoc#tag/experiments/operation/create_experiment_v1_experiment_post) to full list of supported parameters.
 :::
 
@@ -119,7 +123,7 @@ experiment_id = response.json()["id"]
 print(f"Experiment {experiment_id} is running")
 ```
 
-:::tip Model fields supported
+:::tip Custom Model Fields Supported
 See the API documention of the ModelRaw schema to see all the parameters accepted for a custom model : https://evalap.etalab.gouv.fr/redoc#tag/experiments/operation/create_experiment_v1_experiment_post
 :::
 
@@ -170,6 +174,7 @@ experiment = {
     }
 }
 ```
+
 
 ## Viewing Experiment Results and Progress
 
