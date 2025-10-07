@@ -641,6 +641,7 @@ dependencies = [
     { name = "sqlalchemy" },
     { name = "sqlalchemy-utils" },
     { name = "streamlit" },
+    { name = "supervisor" },
     { name = "toml" },
     { name = "uvicorn" },
 ]
@@ -685,6 +686,7 @@ requires-dist = [
     { name = "sqlalchemy", specifier = "~=2.0.35" },
     { name = "sqlalchemy-utils", specifier = "~=0.41.2" },
     { name = "streamlit", specifier = "~=1.40.1" },
+    { name = "supervisor", specifier = "~=4.2.5" },
     { name = "toml", specifier = "~=0.10.2" },
     { name = "uvicorn", specifier = "~=0.32.0" },
 ]
@@ -2935,6 +2937,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/b0/e5/2bf2daa9c98658f1474bb64e7de030cbc4182b5f2b2196536efedaef02cb/streamlit-1.40.2.tar.gz", hash = "sha256:0cc131fc9b18065feaff8f6f241c81164ad37d8d9e3a85499a0240aaaf6a6a61", size = 8265763, upload-time = "2024-11-25T21:30:32.186Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ae/53/418536f5d0b87bfbe7bbd8c001983c27e9474f82723bd2e529660fd9a534/streamlit-1.40.2-py2.py3-none-any.whl", hash = "sha256:7f6d1379a590f9625a6aee79ca73ceccff03cd2e05a3acbe5fe98915c27a7ffe", size = 8644775, upload-time = "2024-11-25T21:30:28.306Z" },
+]
+
+[[package]]
+name = "supervisor"
+version = "4.2.5"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "setuptools" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/ce/37/517989b05849dd6eaa76c148f24517544704895830a50289cbbf53c7efb9/supervisor-4.2.5.tar.gz", hash = "sha256:34761bae1a23c58192281a5115fb07fbf22c9b0133c08166beffc70fed3ebc12", size = 466073, upload-time = "2022-12-24T01:02:43.705Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/2c/7a/0ad3973941590c040475046fef37a2b08a76691e61aa59540828ee235a6e/supervisor-4.2.5-py2.py3-none-any.whl", hash = "sha256:2ecaede32fc25af814696374b79e42644ecaba5c09494c51016ffda9602d0f08", size = 319561, upload-time = "2022-12-24T01:02:40.814Z" },
 ]
 
 [[package]]

@@ -1,12 +1,12 @@
 # Base stage: Start with Node.js (already includes npm and nodejs)
 FROM node:20-slim AS base
 
-# Install system dependencies (supervisor only, Node is already present)
+# Install minimal system dependencies (Node is already present)
+# ca-certificates needed for uv to download Python
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
     apt-get update && \
     apt-get install -y --no-install-recommends \
-    supervisor \
     ca-certificates
 
 # Install uv from official image
@@ -44,6 +44,6 @@ FROM dependencies AS final
 # Copy application code
 COPY ./docs /app/docs
 COPY ./evalap /app/evalap
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY supervisord.conf /app/supervisord.conf
 
 WORKDIR /app

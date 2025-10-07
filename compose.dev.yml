@@ -19,7 +19,7 @@ services:
 #    ports:
 #      - "8000:8000"
 #      - "8501:8501"
-#    command: ["supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+#    command: ["supervisord", "-c", "/app/supervisord.conf"]
 
 volumes:
   postgres_db:
