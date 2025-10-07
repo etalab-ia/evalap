@@ -1,13 +1,8 @@
 # Base stage: Start with Node.js (already includes npm and nodejs)
 FROM node:20-slim AS base
 
-# Install minimal system dependencies (Node is already present)
-# ca-certificates needed for uv to download Python
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    apt-get update && \
-    apt-get install -y --no-install-recommends \
-    ca-certificates
+# No additional system dependencies needed!
+# node:20-slim already includes Node.js, npm, and SSL/TLS support for uv
 
 # Install uv from official image
 COPY --from=ghcr.io/astral-sh/uv:0.5.11 /uv /uvx /bin/
