@@ -47,7 +47,7 @@ This will also install pre-commit hooks.
 1. Launch the development services:
 
 ```
-    docker-compose -f compose.dev.yml up postgres
+    docker-compose -f compose.dev.yml up -d postgres
 ```
 
 2. Initialize/Update the database schema:
