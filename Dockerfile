@@ -16,7 +16,7 @@ ENV UV_COMPILE_BYTECODE=1 \
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv python install 3.12
 
-# Dependencies stage: Python dependencies
+# Dependencies stage: Install dependencies only (not the project itself)
 FROM base AS dependencies
 
 WORKDIR /app
@@ -24,21 +24,25 @@ WORKDIR /app
 # Copy only dependency files first for better caching
 COPY ./pyproject.toml ./uv.lock /app/
 
-# Install Python dependencies using uv sync with cache mount for faster rebuilds
-# This layer is cached separately and only rebuilt when pyproject.toml or uv.lock changes
-# uv sync creates a virtual environment by default at .venv
+# Install dependencies without the project itself
+# This layer is cached and only rebuilt when dependencies change
+# Uses --no-install-project to skip installing the evalap package itself
 RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --locked --no-dev
+    uv sync --locked --no-dev --no-install-project
 
-# Add the virtual environment to PATH so Python and packages are accessible
-ENV PATH="/app/.venv/bin:$PATH"
-
-# Final stage: Application code
+# Final stage: Application code + project installation
 FROM dependencies AS final
 
 # Copy application code
 COPY ./docs /app/docs
 COPY ./evalap /app/evalap
 COPY supervisord.conf /app/supervisord.conf
+
+# Install the project itself (fast, no dependencies to download)
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --locked --no-dev
+
+# Add the virtual environment to PATH so Python and packages are accessible
+ENV PATH="/app/.venv/bin:$PATH"
 
 WORKDIR /app
