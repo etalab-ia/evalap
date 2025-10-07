@@ -2,12 +2,19 @@ name: PR Checks
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    # Run on these PR events:
+    # - opened: When PR is first created
+    # - synchronize: When new commits are pushed
+    # - reopened: When a closed PR is reopened
+    # - ready_for_review: When a draft PR is marked as ready
+    types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
 
 jobs:
   checks:
     name: Checks
+    # Skip if this is a draft PR (github.event.pull_request.draft is true for draft PRs)
+    if: ${{ !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
