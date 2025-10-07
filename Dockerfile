@@ -23,11 +23,11 @@ FROM base AS dependencies
 WORKDIR /app
 
 # Copy only dependency files first for better caching
-COPY ./pyproject.toml /app/
+COPY ./pyproject.toml ./uv.lock /app/
 
-# Install Python dependencies
-# This layer is cached separately and only rebuilt when pyproject.toml changes
-RUN uv pip install --no-cache --system .
+# Install Python dependencies using uv sync
+# This layer is cached separately and only rebuilt when pyproject.toml or uv.lock changes
+RUN uv sync --locked --no-dev
 
 # Final stage: Application code
 FROM dependencies AS final
