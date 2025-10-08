@@ -24,89 +24,77 @@ with col1:
     st.image(get_logo(), width=150)
 
 with col2:
-    st.title("Bienvenue sur EvalAP")
+    st.title("Welcome to EvalAP")
+
+st.write("")  # add a small vertical space
+
+col1, col2 = st.columns([0.5, 0.5])
+with col1:
+    for route in ROUTES:
+        if route["id"] in ["home"] or route.get("is_hidden"):
+            continue
+        st.page_link(route["path"], label=f"{route['title']}: {route['description']}", icon=route["icon"])
+        # card(
+        #    title= route['title'],
+        #    text=route['description'],
+        # )
 
 
-st.markdown(
-    """
-    <style>
-    /* DSFR Blue and styling for Notions Clefs box */
-    .custom-info-box {
-        border: 2px solid #2323FF; /* Bleu DSFR */
-        padding: 1rem 1.5rem;
-        border-radius: 8px;
-        background-color: #f0f4ff; /* Fond bleu clair */
-        margin-bottom: 20px;
-        font-family: Arial, sans-serif;
-        color: #000;
-    }
-    .custom-info-box h3 {
-        color: #2323FF; /* Bleu DSFR */
-        font-weight: 700;
-        margin-bottom: 10px;
-        font-size: 1.3rem;
-    }
-    .custom-info-box ul {
-        padding-left: 20px; /* Conserve le décalage initial des puces */
-        margin: 0;
-        list-style-type: disc; /* Remet les puces par défaut */
-    }
-    .custom-info-box ul li {
-        margin-bottom: 8px;
-        font-size: 1.1rem;
-    }
+with col2:
+    st.markdown(
+        """
+        <style>
+        /* DSFR Blue and styling for Notions Clefs box */
+        .custom-info-box {
+            border: 2px solid #2323FF; /* Bleu DSFR */
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            background-color: #f0f4ff; /* Fond bleu clair */
+            margin-bottom: 20px;
+            font-family: Arial, sans-serif;
+            color: #000;
+        }
+        .custom-info-box h3 {
+            color: #2323FF; /* Bleu DSFR */
+            font-weight: 700;
+            margin-bottom: 10px;
+            font-size: 1.3rem;
+        }
 
-    /* Style spécifique pour la liste imbriquée */
-    .custom-info-box ul ul {
-        margin-top: 5px; /* Petit espace au-dessus de la sous-liste */
-        margin-bottom: 5px; /* Petit espace en dessous de la sous-liste */
-        list-style-type: "- "; /* Puces en tiret pour la sous-liste */
-        padding-left: 20px; /* Décalage supplémentaire pour la sous-liste */
-    }
-    .custom-info-box ul ul li {
-        font-size: 1rem; /* Taille de police légèrement plus petite pour la sous-liste */
-        color: #333; /* Couleur de texte légèrement différente si désiré */
-    }
+        /* Style for page links */
+        .stPageLink {
+            margin-bottom: 12px !important;
+        }
+        /* Make the link text larger and semi-bold */
+        .stPageLink p {
+            font-size: 1.2rem !important;
+            font-weight: 500 !important;
+        }
+        </style>
 
+        <div class="custom-info-box">
+            <h3>Key Concepts</h3>
+            <ul>
+                <li><b>EvalAP</b> operates using the notion of <em>Experiment Set</em>.</li>
+                <li>An <em>Experiment Set</em> groups multiple experiments related for a given evaluation run. For example:
+                    <ul>
+                        <li>Finding the best system prompt for your use case.</li>
+                        <li>Finding the best parametrization of a RAG engine.</li>
+                        <li>Finding bias or regression in a set of models.</li>
+                    </ul>
+                </li>
+                <li>To run an experiment (set), you need:
+                    <ol>
+                        <li>A dataset - either import your own or choose from available datasets.</li>
+                        <li>One or several metrics - a metric will guide your decision-making.</li>
+                        <li>AI models/systems you want to evaluate.</li>
+                    </ol>
+                </li>
+            </ul>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.write("")
 
-    /* Style for page links */
-    .stPageLink {
-        margin-bottom: 12px !important;
-    }
-    /* Make the link text larger and semi-bold */
-    .stPageLink p {
-        font-size: 1.2rem !important;
-        font-weight: 500 !important;
-    }
-    </style>
-
-    <div class="custom-info-box">
-        <h3>Notions clefs</h3>
-        <ul>
-            <li><b>EvalAP</b> fonctionne avec la logique d'Experiment_set.</li>
-            <li>Un Experiment_set regroupe plusieurs experimentations associées à une même analyse (par exemple, la recherche du meilleur prompt system sur votre cas d'usage).</li>
-            <li>Pour lancer une experimentation il vous faut :
-                <ul>
-                    <li> un dataset produit (vous pouvez en importer un sur votre cas d'usage ou sélectionner parmis ceux déjà disponibles).</li>
-                    <li> les métriques qui vous servirons dans la prise de décisions</li>
-                    <li> les modèles / systèmes IA que vous voulez analyser</li>
-                </ul>
-            </li>
-        </ul>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
-st.write("")
-
-for route in ROUTES:
-    if route["id"] in ["home"] or route.get("is_hidden"):
-        continue
-    st.page_link(route["path"], label=f"{route['title']}: {route['description']}", icon=route["icon"])
-    # card(
-    #    title= route['title'],
-    #    text=route['description'],
-    # )
-
-
-st.markdown("Explore [our documentation](/doc) for more information.")
+    st.markdown("Explore [our documentation](/doc) for more information.")
