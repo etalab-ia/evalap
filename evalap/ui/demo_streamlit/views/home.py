@@ -24,7 +24,7 @@ with col1:
     st.image(get_logo(), width=150)
 
 with col2:
-    st.title("Bienvenue sur EvalAP")
+    st.title("Welcome to EvalAP")
 
 st.write("")  # add a small vertical space
 
