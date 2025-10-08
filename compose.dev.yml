@@ -11,15 +11,15 @@ services:
     volumes:
       - postgres_db:/var/lib/postgresql/data
 
-#  evalap_dev:
-#    build:
-#      context: .
-#      dockerfile: Dockerfile
-#    image: evalap:dev
-#    ports:
-#      - "8000:8000"
-#      - "8501:8501"
-#    command: ["supervisord", "-c", "/app/supervisord.conf"]
+  evalap_dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: evalap:dev
+    ports:
+      - "8000:8000"
+      - "8501:8501"
+    command: ["supervisord", "-c", "/app/supervisord.conf"]
 
 volumes:
   postgres_db:
