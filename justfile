@@ -199,6 +199,7 @@ rainfrog:
   rainfrog --url postgres://postgres:changeme@localhost:5432/evalap_dev
 
 # Run API, runner, and streamlit in parallel with Ctrl-C handling
+# Alternatively you can run EvalAP by building the Docker image with `docker compose.dev.yml -f compose.dev.yml up`
 run log_level="INFO":
   #!/usr/bin/env bash
 

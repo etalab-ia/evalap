@@ -60,7 +60,7 @@ Tous les paramètres globaux du projet et les variables d'environnement sont gé
 1. Lancez les services de développement :
 
 ```bash
-docker compose -f compose.dev.yml up
+docker compose -f compose.dev.yml up postgres
 ```
 
 2. Créez le premier script de migration :
