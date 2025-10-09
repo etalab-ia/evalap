@@ -10,17 +10,31 @@ services:
       POSTGRES_DB: evalap_dev
     volumes:
       - postgres_db:/var/lib/postgresql/data
+    networks:
+      - evalap-network
 
-#  evalap_dev:
-#    build:
-#      context: .
-#      dockerfile: Dockerfile
-#    image: evalap:dev
-#    ports:
-#      - "8000:8000"
-#      - "8501:8501"
-#    command: ["supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+  evalap_dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    environment:
+      POSTGRES_URL: postgresql+psycopg2://postgres:changeme@postgres:5432/evalap_dev
+    image: evalap:dev
+    ports:
+      - "8000:8000"
+      - "8501:8501"
+    command: ["supervisord", "-c", "/app/supervisord.conf"]
+    networks:
+      - evalap-network
+    depends_on:
+      - postgres
 
 volumes:
   postgres_db:
     name: evalap_postgres_db
+
+networks:
+  evalap-network:
+    driver: bridge
