@@ -130,7 +130,12 @@ def convert_experimentset_to_create(experimentset):
         if exp.get("judge_model"):
             exp["judge_model"]["api_key"] = "YOUR_MODEL_API_KEY"
 
-        exp["metrics"] = sorted([r["metric_name"] for r in exp["results"]])
+        exp["metrics"] = [
+            schemas.MetricParametrized(
+                name=r["metric_name"], params=r.get("metric_params"), aliased_name=r.get("metric_aliased_name")
+            )
+            for r in exp["results"]
+        ]
         exp["dataset"] = exp["dataset"]["name"]
 
         exp_create = ExperimentCreateIgnoreExtra.parse_obj(exp)

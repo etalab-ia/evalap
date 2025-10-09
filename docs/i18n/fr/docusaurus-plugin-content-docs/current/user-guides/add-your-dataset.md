@@ -18,21 +18,16 @@ Deux formats sont pris en charge :
 
 Evalap utilise une convention de nommage standard pour les colonnes. Lors de l'ajout de votre jeu de données, vous devez soit nommer vos colonnes en conséquence, soit mapper les colonnes de votre jeu de données à ces noms standards en utilisant le paramètre `columns_map` :
 
-- `query`: (str) la requête d'entrée.
 - `output`: (str) la réponse du modèle.
 - `output_true`: (str) la réponse de référence.
-- `context`: list[str] une liste d'informations contextuelles transmises au prompt.
-- `retrieval_context`: list[str] une liste d'informations récupérées transmises au prompt.
-- `reasoning`: (str) Les tokens de raisonnement associés à une réponse.
-- (à venir) `tools_called`
-- (à venir) `expected_tools`
-
+- `img`: (PIL/bytes) Une image - Supporté via le format parquet uniquement.
+- Tout autre champs que vous pouvez utiliser dans un métrique adhoc.
 
 Si les noms de colonnes de votre jeu de données ne correspondent pas à ces conventions, vous pouvez soit les renommer avant d'ajouter le jeu de données, soit utiliser le paramètre `columns_map` dans la requête pour fournir un mappage entre les noms de convention Evalap et les vôtres.
 
 
 
-Par exemple, si votre jeu de données a des colonnes nommées "question" et "answer", vous les mappez comme ceci :
+Par exemple, si votre jeu de données a une colonne nommée "question", vous pouvez la mapper comme ceci :
 
 ```json
 "columns_map": {"input": "question", "output": "answer"}

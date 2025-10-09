@@ -11,6 +11,7 @@ from itertools import product
 from typing import Any
 
 import pyarrow.parquet as pq
+import requests
 from jinja2 import BaseLoader, Environment
 from PIL import Image
 from requests import Response
@@ -107,8 +108,18 @@ class Timer:
 
 
 #
-# API utils
+# API/HTTP utils
 #
+
+
+# Eventually cache with https://github.com/tkem/cachetools
+# @cached(TTLCache(maxsize=256, ttl=86400))
+def is_valid_url(url: str, timeout: int = 3) -> bool:
+    try:
+        response = requests.head(url, timeout=timeout, allow_redirects=True)
+        return response.status_code < 400
+    except Exception:
+        return False
 
 
 def retry(tries: int = 3, delay: int = 2):

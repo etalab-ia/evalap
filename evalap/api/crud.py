@@ -82,7 +82,10 @@ def remove_dataset(db: Session, dataset_id: int) -> bool:
 
 
 def get_dataset_row(
-    db_exp: models.Experiment, line_id: int, df_fallback=None | pd.DataFrame, columns_map=None
+    db_exp: models.Experiment,
+    line_id: int,
+    df_fallback: pd.DataFrame | None = None,
+    columns_map: dict | None = None,
 ) -> dict:
     if db_exp.with_vision:
         row = get_parquet_row_by_index(db_exp.dataset.parquet_path, line_id)
@@ -101,7 +104,7 @@ def get_dataset_row(
 
 
 def get_dataset_iterator(
-    db_exp: models.Experiment, columns_map=None
+    db_exp: models.Experiment, columns_map: dict | None = None
 ) -> Generator[tuple[int, dict], None, None]:
     if db_exp.with_vision:
         # Parquet based dataset

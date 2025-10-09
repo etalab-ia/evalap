@@ -19,23 +19,19 @@ Two formats are supported :
 Evalap uses a standard column naming convention. When adding your dataset, you need to either name your columns accordingly or map your dataset columns to these standard names using the `columns_map` parameter:
 
 - `query`: (str) the input query.
-- `output`: (str) the model answer.
 - `output_true`: (str) the ground truth answer.
-- `context`: list[str] a list of contextual information pass to the prompt.
-- `retrieval_context`: list[str] a list of retrieved information pass to the prompt.
-- `reasoning`: (str) The reasoning output tokens associated to an answer.
-- (to come) `tools_called`
-- (to come) `expected_tools`
+- `img`: (PIL/bytes) an image - Support in parquet format only.
+- any other field that you can use in adhoc metrics.
 
 
 If the column names of your dataset do not match these conventions, you can either rename them before adding the dataset, or use the parameter `columns_map` in the request to provide a mapping between the Evalap convention names and yours.
 
 
 
-For example, if your dataset has columns named "question" and "answer", you would map them like this:
+For example, if your dataset has a column named "question", you would map them like this:
 
 ```json
-"columns_map": {"input": "question", "output": "answer"}
+"columns_map": {"query": "question"}
 ```
 
 See the [api reference](https://evalap.etalab.gouv.fr/redoc#tag/datasets/operation/create_dataset_v1_dataset_post) for more usage detail.

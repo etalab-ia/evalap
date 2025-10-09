@@ -36,7 +36,7 @@ class EgBaseModel(BaseModel):
             if hasattr(sub_schema, "to_table_init"):
                 obj[k] = sub_schema.to_table_init(db)
             elif isinstance(sub_schema, list):
-                obj[k] = [o.to_table_init(db) if isinstance(o, BaseModel) else o for o in sub_schema]
+                obj[k] = [o.to_table_init(db) if isinstance(o, EgBaseModel) else o for o in sub_schema]
 
         return obj
 
@@ -45,10 +45,16 @@ class EgBaseModel(BaseModel):
 
 
 #
-# Enum
+# Metrics
 #
 
 MetricEnum = Enum("MetricEnum", {name: name for name in metric_registry.get_metric_names()}, type=str)
+
+
+class MetricParametrized(BaseModel):
+    name: str
+    params: dict | None = None
+    aliased_name: str | None = None
 
 
 class ExperimentStatus(str, Enum):
@@ -217,6 +223,8 @@ class Observation(EgBaseModel):
 
 class ResultBase(EgBaseModel):
     metric_name: MetricEnum
+    metric_params: dict | None = None
+    metric_aliased_name: str | None = None
 
 
 class ResultCreate(ResultBase):
@@ -260,7 +268,7 @@ class ExperimentBase(EgBaseModel):
 
 
 class ExperimentCreate(ExperimentBase):
-    metrics: list[MetricEnum]
+    metrics: list[MetricEnum | MetricParametrized]
     dataset: DatasetCreate | str
     model: ModelCreate | ModelRaw
 
@@ -325,35 +333,70 @@ class ExperimentCreate(ExperimentBase):
                 }
             ).model_dump()
 
-        # Handle Results
+        # Handle Metrics Results
         results = []
-        for metric_name in self.metrics:
-            results.append(ResultCreate(metric_name=metric_name).to_table_init(db))
-        obj["results"] = results
+        for metric in self.metrics:
+            if isinstance(metric, str):
+                metric_name = metric
+                metric_params = None
+                metric_aliased_name = None
+            else:
+                metric_name = metric.name
+                metric_params = metric.params
+                metric_aliased_name = metric.aliased_name
 
-        # Validate Model and metric compatibility
-        # --
-        DEBUG_EXCEPTION_REQUIRE = ["context", "retrieval_context"]  # fetch at runtime with tooling
-        require_fields = {
-            require
-            for metric in self.metrics
-            for require in metric_registry.get_metric(metric).require
-            if require not in DEBUG_EXCEPTION_REQUIRE
-        }
-        for require in require_fields:
-            if require in ["output"]:
-                continue
-            if require not in (dataset.columns + dataset.parquet_columns):
-                if dataset.columns_map and dataset.columns_map.get(require) in (
-                    dataset.columns + dataset.parquet_columns
-                ):
-                    # Handle columns_maps
+            results.append(
+                ResultCreate(
+                    metric_name=metric_name,
+                    metric_aliased_name=metric_aliased_name,
+                    metric_params=metric_params,
+                ).to_table_init(db)
+            )
+
+            # Validate Model and metric compatibility
+            # --
+            DEBUG_EXCEPTION_REQUIRE = [
+                "output",
+                "context",
+                "retrieval_context",
+            ]  # fetch at runtime with tooling
+            metric_obj = metric_registry.get_metric(metric_name)
+            # Check require fields
+            required_args = metric_obj.require
+            if not required_args and "prompt" in (metric_params or {}):
+                required_args = metric_registry.get_require_from_prompt_tempalte(metric_params["prompt"])
+
+            for require in required_args:
+                if require in DEBUG_EXCEPTION_REQUIRE:
                     continue
+                if require not in (dataset.columns + dataset.parquet_columns):
+                    if dataset.columns_map and dataset.columns_map.get(require) in (
+                        dataset.columns + dataset.parquet_columns
+                    ):
+                        # Handle columns_maps
+                        continue
+                    raise SchemaError(
+                        f"Metric '{metric_name}' require a parameter `{require}`. "
+                        f"Either your dataset needs to have a `{require}` field or use ModelRaw schema to provide it yourself if its a model generated field."
+                    )
+
+            # Check metric params
+            if not isinstance(metric, str) and metric_params:
+                params = set(metric_params)
+                valid_params = set(metric_obj.required_params or []) | set(metric_obj.optional_params or [])
+                invalid_params = params - valid_params
+                if invalid_params:
+                    raise SchemaError(
+                        f"Invalid parameters for metric '{metric_name}': {invalid_params}. "
+                        f"Valid parameters are: {valid_params}"
+                    )
+            elif metric_obj.required_params:
                 raise SchemaError(
-                    f"You need to provide a `{require}` for one of your metric. "
-                    f"Either your dataset needs to have a `{require}` field or use ModelRaw schema to provide it yourself if its a model generated field."
+                    f"Metric '{metric_name}' has required parameters {metric_obj.required_params} but none were provided. "
+                    f"Use dict format to specify parameters."
                 )
 
+        obj["results"] = results
         return {
             "experiment_status": "pending",
             **obj,

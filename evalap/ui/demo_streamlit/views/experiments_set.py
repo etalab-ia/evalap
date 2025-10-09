@@ -142,6 +142,8 @@ def _get_experiment_data(exp_id):
             if metric_name not in allowed_metrics:
                 continue
             observations = {obs["num_line"]: obs["score"] for obs in result["observation_table"]}
+            if result.get("metric_aliased_name"):
+                metric_name = result["metric_aliased_name"]
             df[f"result_{metric_name}"] = df.index.map(observations)
 
     if not df.empty:
@@ -431,12 +433,12 @@ def display_experiment_set_score(experimentset, experiments_df):
         row_support["model"] = model_name
 
         # Aggregate results/scores
-        for metric_results in expe.get("results", []):
-            metric = metric_results["metric_name"]
-            scores = [x["score"] for x in metric_results["observation_table"] if pd.notna(x.get("score"))]
+        for result in expe.get("results", []):
+            metric_name = result.get("metric_aliased_name") or result["metric_name"]
+            scores = [x["score"] for x in result["observation_table"] if pd.notna(x.get("score"))]
             if scores:
-                row[f"{metric}"] = np.mean(scores)
-                row_support[f"{metric}_support"] = len(scores)
+                row[f"{metric_name}"] = np.mean(scores)
+                row_support[f"{metric_name}_support"] = len(scores)
 
         rows.append(row)
         rows_support.append(row_support)

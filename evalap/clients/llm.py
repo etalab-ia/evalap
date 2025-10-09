@@ -15,7 +15,7 @@ from .schemas.openai_rag import RagChatCompletionResponse
 @dataclass
 class LlmApiUrl:
     albert_prod: str = "https://albert.api.etalab.gouv.fr/v1"
-    albert_staging: str = "https://albert.api.staging.etalab.gouv.fr/v1"
+    # albert_staging: str = "https://albert.api.staging.etalab.gouv.fr/v1"
     mistral: str = "https://api.mistral.ai/v1"
     openai: str = "https://api.openai.com/v1"
     anthropic: str = "https://api.anthropic.com/v1"
@@ -53,7 +53,7 @@ LlmApiUrl = LlmApiUrl()  # headers_keys does not exist otherwise...
 @dataclass
 class LlmApiModels:
     albert_prod: set[str] = field(default_factory=set)
-    albert_staging: set[str] = field(default_factory=set)
+    # albert_staging: set[str] = field(default_factory=set)
     mistral: set[str] = field(default_factory=set)
     openai: set[str] = field(default_factory=set)
     anthropic: set[str] = field(default_factory=set)
