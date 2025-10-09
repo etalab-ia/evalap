@@ -60,7 +60,7 @@ All project global settings and environment variables are handled in `evalap/api
 1. Launch the development services:
 
 ```bash
-docker compose -f compose.dev.yml up
+docker compose -f compose.dev.yml up postgres
 ```
 
 2. Create the first migration script:
