@@ -4,7 +4,11 @@ sidebar_position: 2
 
 # Create a Simple Experiment
 
-This guide walks you through creating and running a simple evaluation experiment in Evalap.
+This guide walks you through creating and running a simple evaluation experiment in EvalAP.
+
+:::info
+This article show how to create a single experiment for the sake of simplicity, but we recommend always creating experiments through [**experiment set**](./create-experiment-set) instead. This is because an evaluation is usually not a single experiment (called orphan in EvalAP), but a group of coherent experiments to compare things. All the concepts and parametrizations exposed in this article remains valid and a reference for Experiment Set though.
+:::
 
 ## Creating an Experiment via the API
 
@@ -76,7 +80,7 @@ experiment_id = response.json()["id"]
 print(f"Experiment {experiment_id} is running")
 ```
 
-:::info
+:::tip Model Fields Supported
 The model schema support passing sampling params, such as the temperature like `"model": {..., "sampling_params": {"temperature": 0.2}}`, or extra params since supported by the Openai API used. Check the [experiment creation endpoint](https://evalap.etalab.gouv.fr/redoc#tag/experiments/operation/create_experiment_v1_experiment_post) to full list of supported parameters.
 :::
 
@@ -104,6 +108,11 @@ experiment = {
     "model": {
         "aliased_name": "my-custom-model",  # A name to identify this model
         "output": ["answer1", "answer2", "answer3"]  # Array of model outputs corresponding to dataset rows
+        # "context": list[str] a list of contextual information pass to the prompt.
+        # "retrieval_context": list[str] a list of retrieved information pass to the prompt.
+        # "reasonin"`: (str) The reasoning output tokens associated to an answer.
+        # (to come) "tools_called"
+        # (to come) "expected_tools"
     },
     "metrics": ["judge_precision", "generation_time", "output_length"],
 }
@@ -113,6 +122,10 @@ response = requests.post(f'{API_URL}/experiment', json=experiment, headers=HEADE
 experiment_id = response.json()["id"]
 print(f"Experiment {experiment_id} is running")
 ```
+
+:::tip Custom Model Fields Supported
+See the API documention of the ModelRaw schema to see all the parameters accepted for a custom model : https://evalap.etalab.gouv.fr/redoc#tag/experiments/operation/create_experiment_v1_experiment_post
+:::
 
 In this scenario, the model schema is different:
 
@@ -161,6 +174,7 @@ experiment = {
     }
 }
 ```
+
 
 ## Viewing Experiment Results and Progress
 

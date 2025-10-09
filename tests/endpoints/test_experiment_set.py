@@ -100,3 +100,8 @@ class TestEndpointsExperimentSet(TestApi):
         log_and_assert(response, 200)
 
         # Delete expset
+
+    def test_schema(self, client: TestClient):
+        # TODO: write test for:
+        # test parametrized metric (and required paremeters errors
+        pass
