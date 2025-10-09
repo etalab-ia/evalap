@@ -1,0 +1,51 @@
+# Python
+.venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info
+dist
+build
+.pytest_cache
+.coverage
+htmlcov
+
+# Node
+node_modules
+npm-debug.log
+
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Documentation build
+docs/build
+docs/.docusaurus
+
+# Notebooks
+notebooks/.ipynb_checkpoints
+
+# Environment
+.env
+.env.local
+
+# CI/CD
+.github
+
+# Other
+*.md
+!README.md
+.pre-commit-config.yaml
+wiki
+images
+scripts

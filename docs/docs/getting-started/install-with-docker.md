@@ -58,7 +58,7 @@ services:
       - "3000:3000"
     volumes:
       - evalap_data:/data
-    command: ["supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+    command: ["supervisord", "-c", "/app/supervisord.conf"]
     depends_on:
       postgres:
         condition: service_started
