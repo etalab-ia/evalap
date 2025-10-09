@@ -97,8 +97,11 @@ select = [
 ]
 fixable = ["ALL"]
 unfixable = []
-# Disable E711 specifically to prevent issues with SQLAlchemy
-ignore = ["E711"]
+ignore = [
+  "E711", # Disable E711 specifically to prevent issues with SQLAlchemy
+  #"F403", # import * 
+  #"F841", # never used variables
+]
 
 [tool.ruff.lint.isort]
 known-third-party = ["alembic"]
