@@ -364,7 +364,7 @@ class ExperimentCreate(ExperimentBase):
             # Check require fields
             required_args = metric_obj.require
             if not required_args and "prompt" in (metric_params or {}):
-                required_args = metric_registry.get_require_from_prompt_tempalte(metric_params["prompt"])
+                required_args = metric_registry.get_require_from_prompt_template(metric_params["prompt"])
 
             for require in required_args:
                 if require in DEBUG_EXCEPTION_REQUIRE:

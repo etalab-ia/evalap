@@ -221,7 +221,7 @@ def generate_observation(message: dict, mcp_bridge: MCPBridgeClient):
             if result.metric_params:
                 metric_params.update(result.metric_params)
                 if "prompt" in result.metric_params:
-                    require_extra = metric_registry.get_require_from_prompt_tempalte(
+                    require_extra = metric_registry.get_require_from_prompt_template(
                         result.metric_params["prompt"]
                     )
 

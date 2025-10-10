@@ -135,7 +135,14 @@ class MetricRegistry:
         def wrapped_metric(output, output_true=None, **metric_params):
             # Metric computation
             model = CustomModel(metric_params["model"])
-            metric = metric_class(model=model)
+            metric = metric_class(
+                model=model,
+                **{
+                    k: v
+                    for k, v in metric_params.items()
+                    if k not in (list(reverse_require_map) + ["model", "metadata"]) # evalap's specific metric data
+                },
+            )  # fmt: off
             test_case = LLMTestCase(
                 **{
                     reverse_require_map[k]: v
@@ -174,7 +181,7 @@ class MetricRegistry:
     def get_metric_names(self) -> list[str]:
         return list(self._metrics.keys())
 
-    def get_require_from_prompt_tempalte(self, prompt: str):
+    def get_require_from_prompt_template(self, prompt: str):
         required_args = re.findall(r"\{\{([^}]+)\}\}", prompt)
         required_args = list(set([var.strip() for var in required_args]))
         return required_args
@@ -203,7 +210,7 @@ classes = [
     "AnswerRelevancyMetric",
     "FaithfulnessMetric",
     "HallucinationMetric",
-    # "PromptAlignmentMetric",  # @FIX: require prompt_instructions metric parameter. See https://github.com/etalab-ia/evalap/issues/24
+    "PromptAlignmentMetric",
     "SummarizationMetric",
     # Safety
     "BiasMetric",
@@ -225,7 +232,7 @@ for class_name, obj in zip(classes, imported_objs, strict=True):
     name = inflection.underscore(class_name.replace("Metric", ""))
 
     # Extract metric URL/description
-    specific_url = f"https://docs.confident-ai.com/docs/metrics-{name}"
+    specific_url = f"https://docs.confident-ai.com/docs/metrics-{name.replace('_', '-')}"
     fallback_url = "https://docs.confident-ai.com/docs/metrics-introduction"
     description = f"see {specific_url if is_valid_url(specific_url) else fallback_url}"
 

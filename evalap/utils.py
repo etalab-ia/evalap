@@ -170,7 +170,7 @@ def log_and_raise_for_status(response: Response, msg_on_error: str = "API Error 
 #
 
 
-def func_inspect(func, ignore:list[str]):
+def func_inspect(func, ignore: list[str]):
     func_info = {}
     # Inspect func method to extract parameters
     try:
@@ -210,6 +210,7 @@ def func_inspect(func, ignore:list[str]):
         func_info["optional_params"] = []
 
     return func_info
+
 
 def import_classes(package_name: str, class_names: list[str], extra: list[str] = None) -> list[dict]:
     """Get a list of class obj from given package name and class_names.
