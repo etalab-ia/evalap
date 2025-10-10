@@ -180,14 +180,7 @@ def func_inspect(func, ignore: list[str]):
         params_without_defaults = []
         for param_name, param in sig.parameters.items():
             # Skip 'self' parameter
-            if param_name in [
-                "self",
-                "model",
-                "evaluation_model",
-                "strict_mode",
-                "async_mode",
-                "verbose_mode",
-            ]:
+            if param_name in ignore:
                 continue
 
             # Skip if it's VAR_KEYWORD (**kwargs) or VAR_POSITIONAL (*args)
