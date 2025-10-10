@@ -109,7 +109,7 @@ def generate_answer(message: dict, mcp_bridge: MCPBridgeClient | None):
             if result.search_results:
                 retrieval_context = [c.chunk.content for c in result.search_results]
 
-            # Thinking token extraction (@DEBUG: start sometimes missing ?)
+            # Thinking token extraction
             if answer:
                 think, answer = split_think_answer(answer)
 
@@ -221,7 +221,7 @@ def generate_observation(message: dict, mcp_bridge: MCPBridgeClient):
             if result.metric_params:
                 metric_params.update(result.metric_params)
                 if "prompt" in result.metric_params:
-                    require_extra = metric_registry.get_require_from_prompt_tempalte(
+                    require_extra = metric_registry.get_require_from_prompt_template(
                         result.metric_params["prompt"]
                     )
 

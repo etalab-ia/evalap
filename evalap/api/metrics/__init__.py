@@ -1,5 +1,4 @@
 import importlib
-import inspect
 import os
 import re
 from dataclasses import dataclass
@@ -11,7 +10,7 @@ from deepeval.key_handler import KEY_FILE_HANDLER
 from deepeval.models.base_model import DeepEvalBaseLLM
 
 from evalap.clients import LlmClient, get_api_url, split_think_answer
-from evalap.utils import import_classes, is_valid_url
+from evalap.utils import func_inspect, import_classes, is_valid_url
 
 # FIX deepeval: OSError: [Errno 24] Too many open files: '.deepeval'
 KEY_FILE_HANDLER.fetch_data = lambda x: None
@@ -66,7 +65,7 @@ class CustomModel(DeepEvalBaseLLM):
         self._model = model
 
     def load_model(self):
-        # @DEBUG: is it depeval "compatibble" ?
+        # @DEBUG: is it depeval "compatible" ?
         return self._model
 
     def get_model_name(self) -> str:
@@ -111,41 +110,23 @@ class MetricRegistry:
 
     def register(self, name: str, description: str, metric_type: str, require: list[str]):
         def decorator(func):
-            # Get function signature
-            sig = inspect.signature(func)
-
-            # Extract parameters with default values (excluding **kwargs)
-            params_with_defaults = []
-            params_without_defaults = []  # required
-            for param_name, param in sig.parameters.items():
-                # Skip special signature argument
-                if param_name in ["output", "output_true"]:
-                    continue
-
-                # Skip if it's VAR_KEYWORD (**kwargs) or VAR_POSITIONAL (*args)
-                if param.kind in (inspect.Parameter.VAR_KEYWORD, inspect.Parameter.VAR_POSITIONAL):
-                    continue
-
-                # Check if parameter has a default value
-                if param.default != inspect.Parameter.empty:
-                    params_with_defaults.append(param_name)
-                else:
-                    params_without_defaults.append(param_name)
-
+            func_info = func_inspect(func, ignore=["output", "output_true"])
             self._metrics[name] = {
                 "name": name,
                 "description": description,
                 "type": metric_type,
                 "require": sorted(require),
-                "required_params": params_without_defaults,
-                "optional_params": params_with_defaults,
+                "required_params": sorted(func_info["required_params"]),
+                "optional_params": sorted(func_info["optional_params"]),
                 "func": func,
             }
             return func
 
         return decorator
 
-    def register_deepeval(self, metric_class, name, description, required_args):
+    def register_deepeval(
+        self, metric_class, name, description, required_args, required_params, optional_params
+    ):
         from deepeval.test_case import LLMTestCase
 
         require = [self.deepeval_require_map[k.value] for k in required_args or []]
@@ -154,7 +135,14 @@ class MetricRegistry:
         def wrapped_metric(output, output_true=None, **metric_params):
             # Metric computation
             model = CustomModel(metric_params["model"])
-            metric = metric_class(model=model)
+            metric = metric_class(
+                model=model,
+                **{
+                    k: v
+                    for k, v in metric_params.items()
+                    if k not in (list(reverse_require_map) + ["model", "metadata"]) # evalap's specific metric data
+                },
+            )  # fmt: off
             test_case = LLMTestCase(
                 **{
                     reverse_require_map[k]: v
@@ -176,6 +164,8 @@ class MetricRegistry:
             "description": description,
             "type": "deepeval",
             "require": sorted(require),
+            "required_params": sorted(required_params),
+            "optional_params": sorted(optional_params),
             "func": wrapped_metric,
         }
 
@@ -191,7 +181,7 @@ class MetricRegistry:
     def get_metric_names(self) -> list[str]:
         return list(self._metrics.keys())
 
-    def get_require_from_prompt_tempalte(self, prompt: str):
+    def get_require_from_prompt_template(self, prompt: str):
         required_args = re.findall(r"\{\{([^}]+)\}\}", prompt)
         required_args = list(set([var.strip() for var in required_args]))
         return required_args
@@ -220,7 +210,7 @@ classes = [
     "AnswerRelevancyMetric",
     "FaithfulnessMetric",
     "HallucinationMetric",
-    # "PromptAlignmentMetric",  # @FIX: require prompt_instructions metric parameter. See https://github.com/etalab-ia/evalap/issues/24
+    "PromptAlignmentMetric",
     "SummarizationMetric",
     # Safety
     "BiasMetric",
@@ -232,8 +222,8 @@ classes = [
     "ContextualRelevancyMetric",
     "RagasMetric",
 ]
-more = ["required_params"]  # @warning: required_params corresponds to the require field in evalap
-imported_objs = import_classes(package_name, classes, more=more)
+extra = ["required_params"]  # @warning: required_params corresponds to the require field in evalap
+imported_objs = import_classes(package_name, classes, extra=extra)
 for class_name, obj in zip(classes, imported_objs, strict=True):
     if not obj:
         continue
@@ -242,21 +232,21 @@ for class_name, obj in zip(classes, imported_objs, strict=True):
     name = inflection.underscore(class_name.replace("Metric", ""))
 
     # Extract metric URL/description
-    specific_url = f"https://docs.confident-ai.com/docs/metrics-{name}"
+    specific_url = f"https://docs.confident-ai.com/docs/metrics-{name.replace('_', '-')}"
     fallback_url = "https://docs.confident-ai.com/docs/metrics-introduction"
     description = f"see {specific_url if is_valid_url(specific_url) else fallback_url}"
 
     # Require (dataset)
-    required_args = obj.get("required_params") or getattr(obj["obj"], "_required_params", None)
+    required_args = obj["extra"].get("required_params") or getattr(obj["obj"], "_required_params", None)
     # @DEBUG: Deepeval:RagasMetric does not have the required_params attribute set.
     if class_name == "RagasMetric":
         required_args = Enum("_", {name: name for name in ["input", "expected_output", "retrieval_context"]})
-
-    # @TODO: add Require and optional parameters (metric parametrization) from class inspection.
 
     metric_registry.register_deepeval(
         metric_class=obj["obj"],
         name=name,
         description=description,
         required_args=required_args,
+        required_params=obj["required_params"],
+        optional_params=obj["optional_params"],
     )
