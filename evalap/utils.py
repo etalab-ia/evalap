@@ -2,6 +2,7 @@ import base64
 import concurrent.futures
 import functools
 import importlib
+import inspect
 import io
 import pkgutil
 import re
@@ -169,9 +170,52 @@ def log_and_raise_for_status(response: Response, msg_on_error: str = "API Error 
 #
 
 
-def import_classes(package_name: str, class_names: list[str], more: list[str] = None) -> list[dict]:
+def func_inspect(func, ignore:list[str]):
+    func_info = {}
+    # Inspect func method to extract parameters
+    try:
+        sig = inspect.signature(func)
+        # Extract parameters with default values (excluding **kwargs)
+        params_with_defaults = []
+        params_without_defaults = []
+        for param_name, param in sig.parameters.items():
+            # Skip 'self' parameter
+            if param_name in [
+                "self",
+                "model",
+                "evaluation_model",
+                "strict_mode",
+                "async_mode",
+                "verbose_mode",
+            ]:
+                continue
+
+            # Skip if it's VAR_KEYWORD (**kwargs) or VAR_POSITIONAL (*args)
+            if param.kind in (inspect.Parameter.VAR_KEYWORD, inspect.Parameter.VAR_POSITIONAL):
+                continue
+
+            # Check if parameter has a default value
+            if param.default != inspect.Parameter.empty:
+                params_with_defaults.append(param_name)
+            else:
+                params_without_defaults.append(param_name)
+
+        func_info["required_params"] = params_without_defaults
+        func_info["optional_params"] = params_with_defaults
+
+    except (ValueError, TypeError) as e:
+        # Handle cases where __init__ cannot be inspected
+        print(f"Warning: Could not inspect func for {str(func)}: {e}")
+        func_info["required_params"] = []
+        func_info["optional_params"] = []
+
+    return func_info
+
+def import_classes(package_name: str, class_names: list[str], extra: list[str] = None) -> list[dict]:
     """Get a list of class obj from given package name and class_names.
-    If `more` is given, it tries to extract the object with that names in the same module where a class is found.
+    If `extra` is given, it tries to extract the object with that names in the same module where a class is found.
+
+    Additionally extracts required and optional parameters from the class __init__ method.
     """
     # Import the package
     package = importlib.import_module(package_name)
@@ -191,9 +235,26 @@ def import_classes(package_name: str, class_names: list[str], more: list[str] = 
         found_classes = remaining_classes.intersection(dir(module))
         for class_name in found_classes:
             cls = getattr(module, class_name)
-            class_info = {"name": class_name, "obj": cls}
-            for extra in more or []:
-                class_info[extra] = getattr(module, extra, None)
+            class_info = {"name": class_name, "obj": cls, "extra": {}}
+
+            # Add extra attributes from the module
+            for x in extra or []:
+                class_info["extra"][x] = getattr(module, x, None)
+
+            func_info = func_inspect(
+                cls.__init__,
+                ignore=[
+                    "self",
+                    "model",
+                    "evaluation_model",
+                    "strict_mode",
+                    "async_mode",
+                    "verbose_mode",
+                ],
+            )
+            class_info["required_params"] = func_info["required_params"]
+            class_info["optional_params"] = func_info["optional_params"]
+
             classes.append(class_info)
             remaining_classes.remove(class_name)
 

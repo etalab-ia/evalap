@@ -14,6 +14,12 @@ The available notebooks are:
 
 - **[run_dataset_experiences_demo](/notebooks/run_dataset_experiences_demo.ipynb):** This notebook runs individual experiments on a given dataset with a specified set of metrics. It aggregates and presents the results in a consolidated table and offers graphical visualisations.
 
+- **[DECCP](/notebooks/deccp.ipynb)**: DECCP is a censorchip evaluation about China related questions inspired by the followinw article : https://huggingface.co/blog/leonardlin/chinese-llm-censorship-analysis
+
+- OCR evaluation: Two notebooks that show how how to use a parquet dataset with images (marker dataset) and run an OCR evaluation on it to test some VLMs (Visual Language Model).
+    - [notebooks/create_marker_dataset.ipynb](/notebooks/create_marker_dataset.ipynb)
+    - [notebooks/run_ocr.ipynb](/notebooks/run_ocr.ipynb)
+
 - **[albert-eval-brut](/notebooks/albert-raw.ipynb):** Simple evaluation of the raw Albert models.
 
 - **[albert-evals-rag](/notebooks/run_dataset_experiences_demo.ipynb):** RAG evaluation of the Albert models.

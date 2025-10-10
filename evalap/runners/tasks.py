@@ -109,7 +109,7 @@ def generate_answer(message: dict, mcp_bridge: MCPBridgeClient | None):
             if result.search_results:
                 retrieval_context = [c.chunk.content for c in result.search_results]
 
-            # Thinking token extraction (@DEBUG: start sometimes missing ?)
+            # Thinking token extraction
             if answer:
                 think, answer = split_think_answer(answer)
 
