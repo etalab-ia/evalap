@@ -10,7 +10,7 @@ repos:
             --fix,
             --exit-non-zero-on-fix,
             --config=pyproject.toml,
-            "--select=F,Q,I,"
+            "--select=F,Q,I"
           ]
       # Run the formatter
       - id: ruff-format

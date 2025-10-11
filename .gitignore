@@ -92,3 +92,5 @@ pdm.lock
 .envrc
 .direnv/
 !uv.lock
+supervisord.log
+supervisord.pid

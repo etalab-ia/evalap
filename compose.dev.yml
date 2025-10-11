@@ -16,7 +16,7 @@ services:
   evalap_dev:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     env_file:
       - .env
     environment:
@@ -25,7 +25,10 @@ services:
     ports:
       - "8000:8000"
       - "8501:8501"
-    command: ["supervisord", "-c", "/app/supervisord.conf"]
+    command: ["/bin/sh", "-c", "/app/.venv/bin/supervisord -c /app/supervisord.dev.conf"]
+    volumes:
+      - .:/app:cached
+      - venv:/app/.venv
     networks:
       - evalap-network
     depends_on:
@@ -34,6 +37,8 @@ services:
 volumes:
   postgres_db:
     name: evalap_postgres_db
+  venv:
+    name: evalap_venv
 
 networks:
   evalap-network:

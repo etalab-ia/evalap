@@ -98,9 +98,9 @@ select = [
 fixable = ["ALL"]
 unfixable = []
 ignore = [
-  "E711", # Disable E711 specifically to prevent issues with SQLAlchemy
-  #"F403", # import * 
-  #"F841", # never used variables
+    "E711", # Disable E711 specifically to prevent issues with SQLAlchemy
+    #"F403", # import *
+    #"F841", # never used variables
 ]
 
 [tool.ruff.lint.isort]
@@ -113,4 +113,5 @@ dev = [
     "ruff>=0.13.0",
     "pytest-cov>=7.0.0",
     "ipykernel>=6.30.1",
+    "watchdog>=6.0.0",
 ]
