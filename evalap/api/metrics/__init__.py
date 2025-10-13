@@ -232,8 +232,8 @@ for class_name, obj in zip(classes, imported_objs, strict=True):
     name = inflection.underscore(class_name.replace("Metric", ""))
 
     # Extract metric URL/description
-    specific_url = f"https://docs.confident-ai.com/docs/metrics-{name.replace('_', '-')}"
-    fallback_url = "https://docs.confident-ai.com/docs/metrics-introduction"
+    specific_url = f"https://deepeval.com/docs/metrics-{name.replace('_', '-')}"
+    fallback_url = "https://deepeval.com/docs/metrics-introduction"
     description = f"see {specific_url if is_valid_url(specific_url) else fallback_url}"
 
     # Require (dataset)
