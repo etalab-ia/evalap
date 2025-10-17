@@ -79,6 +79,36 @@ def create_toxic_chat_dataset(db: Session) -> None:
     print(f"Created dataset: {created.name} (ID: {created.id})")
 
 
+def create_deccp_dataset(db: Session) -> None:
+    """Create the DECCP dataset for Chinese censorship benchmarking."""
+    dataset_name = "DECCP"
+
+    # Check if dataset already exists before downloading
+    existing = crud.get_dataset_by_name(db, dataset_name)
+    if existing:
+        print(f"Dataset '{dataset_name}' already exists (ID: {existing.id}). Skipping.")
+        return
+
+    print("Loading DECCP dataset from Hugging Face...")
+
+    # Load the DECCP dataset from Hugging Face
+    ds = load_dataset("augmxnt/deccp")
+
+    # Convert to pandas DataFrame (using censored split)
+    df_censored = ds["censored"].to_pandas()
+
+    dataset = schemas.DatasetCreate(
+        name=dataset_name,
+        readme="Chineses Censorship Benchmark from https://huggingface.co/datasets/augmxnt/deccp",
+        df=df_censored.to_json(),
+        default_metric="answer_relevancy",
+        columns_map={"query": "text"},
+    )
+
+    created = crud.create_dataset(db, dataset)
+    print(f"Created dataset: {created.name} (ID: {created.id})")
+
+
 def seed_all_datasets(db: Session | None = None) -> None:
     """
     Seed all predefined datasets into the database.
@@ -103,6 +133,7 @@ def _seed_with_session(db: Session) -> None:
 
     create_civics_dataset(db)
     create_toxic_chat_dataset(db)
+    create_deccp_dataset(db)
 
     print("-" * 50)
     print("Database seeding completed!")
