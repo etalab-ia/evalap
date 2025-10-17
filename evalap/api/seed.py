@@ -46,6 +46,39 @@ def create_civics_dataset(db: Session) -> None:
     print(f"Created dataset: {created.name} (ID: {created.id})")
 
 
+def create_toxic_chat_dataset(db: Session) -> None:
+    """Create the lmsys-toxic-chat dataset for toxicity detection."""
+    dataset_name = "lmsys-toxic-chat"
+
+    # Check if dataset already exists before downloading
+    existing = crud.get_dataset_by_name(db, dataset_name)
+    if existing:
+        print(f"Dataset '{dataset_name}' already exists (ID: {existing.id}). Skipping.")
+        return
+
+    print("Loading lmsys-toxic-chat dataset from Hugging Face...")
+
+    # Load the toxic-chat dataset from Hugging Face
+    ds = load_dataset("lmsys/toxic-chat", "toxicchat0124")
+
+    # Convert to pandas DataFrame
+    df_toxic_chat = ds["test"].to_pandas()
+
+    dataset = schemas.DatasetCreate(
+        name=dataset_name,
+        readme=(
+            "This dataset contains toxicity annotations on 10K user prompts "
+            "collected from the Vicuna online demo."
+        ),
+        df=df_toxic_chat.to_json(),
+        default_metric="toxicity",
+        columns_map={"query": "user_input"},
+    )
+
+    created = crud.create_dataset(db, dataset)
+    print(f"Created dataset: {created.name} (ID: {created.id})")
+
+
 def seed_all_datasets(db: Session | None = None) -> None:
     """
     Seed all predefined datasets into the database.
@@ -69,6 +102,7 @@ def _seed_with_session(db: Session) -> None:
     print("-" * 50)
 
     create_civics_dataset(db)
+    create_toxic_chat_dataset(db)
 
     print("-" * 50)
     print("Database seeding completed!")
