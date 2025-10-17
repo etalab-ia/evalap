@@ -39,6 +39,7 @@ services:
       - "3000:3000"
     volumes:
       - evalap_data:/data
+      - huggingface_cache:/root/.cache/huggingface
     command: ["supervisord", "-c", "/app/supervisord.conf"]
     depends_on:
       postgres:
@@ -47,3 +48,4 @@ services:
 volumes:
   postgres_data:
   evalap_data:
+  huggingface_cache:
