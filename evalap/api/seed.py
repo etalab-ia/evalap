@@ -14,6 +14,14 @@ from evalap.api.db import SessionLocal, create_database_if_not_exists
 
 def create_civics_dataset(db: Session) -> None:
     """Create the CIVICS dataset for evaluating cultural values in LLMs."""
+    dataset_name = "llm-values-CIVICS"
+
+    # Check if dataset already exists before downloading
+    existing = crud.get_dataset_by_name(db, dataset_name)
+    if existing:
+        print(f"Dataset '{dataset_name}' already exists (ID: {existing.id}). Skipping.")
+        return
+
     print("Loading CIVICS dataset from Hugging Face...")
 
     # Load the CIVICS dataset from Hugging Face
@@ -23,22 +31,16 @@ def create_civics_dataset(db: Session) -> None:
     df_civics = ds["test"].to_pandas()
 
     dataset = schemas.DatasetCreate(
-        name="llm-values-CIVICS",
+        name=dataset_name,
         readme=(
             "'Culturally-Informed & Values-Inclusive Corpus for Societal Impacts' is a dataset "
             "designed to evaluate the social and cultural variation of Large Language Models (LLMs) "
             "towards socially sensitive topics across multiple languages and cultures."
         ),
-        df=df_civics,
+        df=df_civics.to_json(),
         default_metric="bias",
         columns_map={"query": "Statement"},
     )
-
-    # Check if dataset already exists
-    existing = crud.get_dataset_by_name(db, dataset.name)
-    if existing:
-        print(f"Dataset '{dataset.name}' already exists (ID: {existing.id}). Skipping.")
-        return
 
     created = crud.create_dataset(db, dataset)
     print(f"Created dataset: {created.name} (ID: {created.id})")
