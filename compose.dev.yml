@@ -29,6 +29,7 @@ services:
     volumes:
       - .:/app:cached
       - venv:/app/.venv
+      - huggingface_cache:/root/.cache/huggingface
     networks:
       - evalap-network
     depends_on:
@@ -39,6 +40,8 @@ volumes:
     name: evalap_postgres_db
   venv:
     name: evalap_venv
+  huggingface_cache:
+    name: evalap_huggingface_cache
 
 networks:
   evalap-network:
