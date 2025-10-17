@@ -21,6 +21,7 @@ services:
       - .env
     environment:
       POSTGRES_URL: postgresql+psycopg2://postgres:changeme@postgres:5432/evalap_dev
+      HF_TOKEN: ${HF_TOKEN}
     image: evalap:dev
     ports:
       - "8000:8000"

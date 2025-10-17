@@ -28,6 +28,7 @@ services:
       - DB_NAME=${DB_NAME:-evalap}
       - POSTGRES_URL=${POSTGRES_URL:-postgresql://postgres:postgres_password@postgres:5432/evalap}
       - ADMIN_TOKEN=${ADMIN_TOKEN}
+      - HF_TOKEN=${HF_TOKEN}
       - MFS_API_KEY_V2=${MFS_API_KEY_V2}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
