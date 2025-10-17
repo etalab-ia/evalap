@@ -156,7 +156,14 @@ just run
 # or explicitly: just run local
 ```
 
-This will start all three services in parallel with colored output and hot reloading.
+This will:
+1. **Seed the database** with initial datasets from Hugging Face (if not already present):
+   - **llm-values-CIVICS**: Cultural values evaluation dataset
+   - **lmsys-toxic-chat**: Toxicity detection dataset
+   - **DECCP**: Chinese censorship benchmark
+2. Start all three services in parallel with colored output and hot reloading
+
+Note: Having an `HF_TOKEN` set is recommended for better dataset download reliability.
 
 #### Run Services Separately
 
