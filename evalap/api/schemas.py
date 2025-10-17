@@ -83,6 +83,7 @@ class DatasetBase(EgBaseModel):
         None,
         description="A column names maping that indicates what names in dataset match the evalap stadandard (output, output_true etc)",
     )
+    compliance: bool = False
 
 
 class DatasetCreate(DatasetBase):

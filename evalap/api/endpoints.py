@@ -355,11 +355,12 @@ def read_experiments(
     backward: bool = True,
     set_id: int | None = None,
     orphan: bool = True,
+    compliance: bool | None = Query(None, description="Filter Experiment by compliance dataset (True/False)."),
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
     experiments = crud.get_experiments(
-        db, skip=skip, limit=limit, backward=backward, set_id=set_id, orphan=orphan
+        db, skip=skip, limit=limit, backward=backward, set_id=set_id, orphan=orphan, compliance=compliance
     )
 
     if not experiments:
@@ -466,10 +467,13 @@ def read_experimentsets(
     skip: int = 0,
     limit: int = 100,
     backward: bool = True,
+    compliance: bool | None = Query(None, description="Filter ExperimentSet by compliance dataset."),
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
-    experimentsets = crud.get_experimentsets(db, skip=skip, limit=limit, backward=backward)
+    experimentsets = crud.get_experimentsets(
+        db, skip=skip, limit=limit, backward=backward, compliance=compliance
+    )
     if experimentsets is None:
         raise HTTPException(status_code=410, detail="ExperimentSets not found")
     return experimentsets

@@ -32,6 +32,7 @@ def get_datasets(db: Session) -> list[models.Dataset]:
     return db.query(models.Dataset).all()
 
 
+# TODO: filter by compliance
 def get_dataset(db: Session, dataset_id: int) -> models.Dataset | None:
     return db.query(models.Dataset).filter(models.Dataset.id == dataset_id).first()
 
@@ -226,6 +227,7 @@ def get_experiments(
     backward: bool = False,
     set_id: int | None = None,
     orphan: bool = False,
+    compliance: bool | None = None,
 ) -> list[models.Experiment]:
     limit = min(limit, 100)
     query = db.query(models.Experiment).filter_by(is_archived=False)
@@ -238,6 +240,8 @@ def get_experiments(
         query = query.filter(models.Experiment.experiment_set_id == set_id)
     if orphan:
         query = query.filter(models.Experiment.experiment_set_id == None)
+    if compliance is not None:
+        query = query.join(models.Dataset).filter(models.Dataset.compliance == compliance)
     return query.offset(skip).limit(limit).options(joinedload(models.Experiment.results)).all()
 
 
@@ -298,13 +302,24 @@ def create_experimentset(db: Session, experimentset: schemas.ExperimentSetCreate
 
 
 def get_experimentsets(
-    db: Session, skip: int = 0, limit: int = 100, backward: bool = False
+    db: Session,
+    skip: int = 0,
+    limit: int = 100,
+    backward: bool = False,
+    compliance: bool | None = None,
 ) -> list[models.ExperimentSet]:
     query = db.query(models.ExperimentSet)
     if backward:
         query = query.order_by(models.ExperimentSet.id.desc())
     else:
         query = query.order_by(models.ExperimentSet.id.asc())
+    if compliance is not None:
+        query = (
+            query.join(models.ExperimentSet.experiments)
+            .join(models.Experiment.dataset)
+            .filter(models.Dataset.compliance == compliance)
+            .distinct()
+        )  # noqa: E501
     return query.offset(skip).limit(limit).all()
 
 
