@@ -1,3 +1,5 @@
+# Contributing to EvalAP
+
 ## Project Architecture
 
 The stack is based on Fastapi+pydantic+sqlachemy for the API in conjonction with ZeroMQ for the Runner.
@@ -16,7 +18,11 @@ evalap/
 └── notebooks/  --> Example and demo notebooks
 ```
 
-## Environment
+## System Requirements
+
+Install [just](https://just.systems) to run project-specific commands. You will also need to install [jq](https://stedolan.github.io/jq/download/) to parse JSON responses. You will need [uv](https://docs.astral.sh/uv/getting-started/installation/) to install python requirements
+
+## Environment Variables
 
 At a minimum, the project needs the following API key to be set perform LLM based metrics:
 
@@ -28,76 +34,166 @@ The environement variables can also be defined in a `.env` file at the root of t
 
 All the project global settings and environmant variables are handled in `evalap/api/config.py`.
 
-## System Requirements
-
-Install [just](https://just.systems) to run project-specific commands. You will also need to install [jq](https://stedolan.github.io/jq/download/) to parse JSON responses. You will need [uv](https://docs.astral.sh/uv/getting-started/installation/) to install python requirements
-
 ## Python Requirements
 
 Install python requirements with:
 
-```
-    just sync
+```bash
+just sync
 ```
 
 This will also install pre-commit hooks.
 
-## Database initialization
+## Development Setup
 
-1. Launch the development services:
+You can run EvalAP in two ways: using Docker Compose (recommended) or running services locally.
 
+### Option 1: Docker Compose (Recommended)
+
+This is the easiest way to get started with full hot reloading for all services.
+
+#### Quick Start
+
+```bash
+docker compose -f compose.dev.yml up --build
 ```
-    docker-compose -f compose.dev.yml up -d postgres
+
+This will:
+- Build the development Docker image (includes dev dependencies like `watchdog`)
+- Start PostgreSQL database
+- Run Alembic migrations automatically
+- Start all three services with hot reloading:
+  - **Uvicorn API** on port 8000
+  - **Runner** with file watching
+  - **Streamlit UI** on port 8501
+
+#### Access Your Services
+
+- **API**: http://localhost:8000
+- **API Docs**: http://localhost:8000/docs or http://localhost:8000/redoc
+- **Streamlit UI**: http://localhost:8501
+- **PostgreSQL**: localhost:5432 (credentials: postgres/changeme)
+
+#### Hot Reloading
+
+Your code is live-mounted into the container. Any changes you make will automatically trigger reloads:
+
+- **Edit API code** (e.g., `evalap/api/main.py`) → Uvicorn auto-reloads
+- **Edit runner code** (e.g., `evalap/runners/tasks.py`) → Runner auto-restarts (you'll see `[Reloader]` messages)
+- **Edit Streamlit code** (e.g., `evalap/ui/demo_streamlit/app.py`) → Streamlit prompts to rerun
+
+#### Managing Docker Services
+
+```bash
+# View logs (all services)
+docker compose -f compose.dev.yml logs -f
+
+# View logs (specific service)
+docker compose -f compose.dev.yml logs -f evalap_dev
+
+# Enter the container
+docker compose -f compose.dev.yml exec evalap_dev bash
+
+# Inside the container, check process status
+supervisorctl status
+
+# Restart a specific process
+supervisorctl restart uvicorn
+supervisorctl restart runner
+supervisorctl restart streamlit
+
+# Stop services
+docker compose -f compose.dev.yml down
+
+# Rebuild after dependency changes
+docker compose -f compose.dev.yml up --build
+```
+
+### Option 2: Local Development (Without Docker)
+
+If you prefer to run services directly on your machine:
+
+#### Database Setup
+
+1. Launch the PostgreSQL database:
+
+```bash
+docker compose -f compose.dev.yml up -d postgres
 ```
 
 2. Initialize/Update the database schema:
 
-```
-    alembic -c evalap/api/alembic.ini upgrade head
-```
-
-3. If you modify the schema :
-
-```
-    alembic -c evalap/api/alembic.ini revision --autogenerate -m "text explication"
-    alembic -c evalap/api/alembic.ini upgrade head
+```bash
+alembic -c evalap/api/alembic.ini upgrade head
 ```
 
-## Run all services
+3. If you modify the schema:
 
-1. Launch the API, runner and streamlit:
-
-```
-    just run
-```
-
-## Run the API and runner
-
-If needed you can run the API and runner separately:
-
-1. Launch the API:
-
-```
-    uvicorn evalap.api.main:app --reload
+```bash
+alembic -c evalap/api/alembic.ini revision --autogenerate -m "text explication"
+alembic -c evalap/api/alembic.ini upgrade head
 ```
 
-2. Launch the runner:
+#### Run All Services
 
+Launch the API, runner and streamlit together:
+
+```bash
+just run
+# or explicitly: just run local
 ```
-    PYTHONPATH="." python -m evalap.runners
-    # To change the default loggin level you can do:
-    #LOG_LEVEL="DEBUG" PYTHONPATH="." python -m evalap.runners
+
+This will start all three services in parallel with colored output and hot reloading.
+
+#### Run Services Separately
+
+If needed you can run each service individually:
+
+**Launch the API:**
+```bash
+uvicorn evalap.api.main:app --reload
 ```
 
-## Swagger
+**Launch the runner:**
+```bash
+PYTHONPATH="." python -m evalap.runners
+# To change the default logging level:
+LOG_LEVEL="DEBUG" PYTHONPATH="." python -m evalap.runners
+```
 
-Access the API documentation at: http://localhost:8000/redoc (or http://localhost:8000/docs if you prefer the legacy version).
+**Launch Streamlit:**
+```bash
+streamlit run evalap/ui/demo_streamlit/app.py --server.runOnSave true --server.headless=true
+```
 
-## Streamlit Application
+## Troubleshooting
 
-To run the streamlit frontend separately, run :
+### Hot Reload Not Working?
 
-    streamlit run evalap/ui/demo_streamlit/app.py --server.runOnSave true --server.headless=true
+1. **Check volume mounting**: Ensure the volume is mounted correctly in `compose.dev.yml`
+2. **Check logs**: Look for `[Reloader]` messages in runner logs
+3. **Verify file changes**: Make sure you're editing files in the mounted directory
+
+### Process Crashed?
+
+```bash
+# Check status
+docker compose -f compose.dev.yml exec evalap_dev supervisorctl status
+
+# View logs
+docker compose -f compose.dev.yml logs evalap_dev
+
+# Restart the service
+docker compose -f compose.dev.yml restart evalap_dev
+```
+
+### Database Issues?
+
+```bash
+# Reset the database
+docker compose -f compose.dev.yml down -v
+docker compose -f compose.dev.yml up --build
+```
 
 ## Jupyter Tutorial
 
