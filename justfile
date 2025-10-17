@@ -213,6 +213,15 @@ run log_level="INFO":
   NC='\033[0m' # No Color
 
   echo -e "${GREEN}Starting evalap services...${NC}"
+
+  # Run database migrations
+  echo -e "${PURPLE}Running database migrations...${NC}"
+  alembic -c evalap/api/alembic.ini upgrade head
+
+  # Seed the database
+  echo -e "${PURPLE}Seeding database with initial datasets...${NC}"
+  python -m evalap.api.seed
+
   echo -e "${BLUE}API: http://localhost:8000${NC}"
   echo -e "${CYAN}Streamlit: http://localhost:8501${NC}"
   echo -e "${YELLOW}Runner: starting with LOG_LEVEL={{log_level}}${NC}"
