@@ -27,8 +27,21 @@ Install [just](https://just.systems) to run project-specific commands. You will 
 At a minimum, the project needs the following API key to be set perform LLM based metrics:
 
 ```bash
-export OPENAI_API_KEY="You secret key"
+export OPENAI_API_KEY="Your secret key"
 ```
+
+### Recommended: Hugging Face Token
+
+For downloading datasets from Hugging Face (used during database seeding), it's recommended to set a Hugging Face token:
+
+```bash
+export HF_TOKEN="Your Hugging Face token"
+```
+
+You can create a token at [https://huggingface.co/settings/tokens](https://huggingface.co/settings/tokens). While not strictly required, having a token provides:
+- Higher rate limits for dataset downloads
+- Access to gated datasets (if needed)
+- Better reliability for API calls
 
 The environement variables can also be defined in a `.env` file at the root of the project. See the `.env.example` file for an example.
 
