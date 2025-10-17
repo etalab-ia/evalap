@@ -113,6 +113,9 @@ alembic-generate-revision name:
 alembic-upgrade:
   alembic -c evalap/api/alembic.ini upgrade head
 
+seed:
+  python -m evalap.api.seed
+
 alembic-downgrade hash:
   alembic -c evalap/api/alembic.ini downgrade {{hash}}
 
@@ -218,6 +221,11 @@ run mode="local" log_level="INFO":
     NC='\033[0m' # No Color
 
     echo -e "${GREEN}Starting evalap services...${NC}"
+
+    # Run database seeding
+    echo -e "${PURPLE}Seeding database with initial datasets...${NC}"
+    python -m evalap.api.seed
+
     echo -e "${BLUE}API: http://localhost:8000${NC}"
     echo -e "${CYAN}Streamlit: http://localhost:8501${NC}"
     echo -e "${YELLOW}Runner: starting with LOG_LEVEL={{log_level}}${NC}"
