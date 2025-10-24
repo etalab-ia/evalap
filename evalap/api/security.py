@@ -9,9 +9,7 @@ security = HTTPBearer(auto_error=False)
 
 async def admin_only(x_evalap_admin: str = Header(default=None)):
     if ADMIN_TOKENS and x_evalap_admin not in ADMIN_TOKENS:
-        raise HTTPException(
-            status_code=401, detail="Unauthorized: Please contact an admin to perform this request."
-        )
+        raise HTTPException(status_code=401, detail="Unauthorized: Please contact an admin to perform this request.")
 
 
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> str:
@@ -26,8 +24,8 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
     try:
         token = credentials.credentials
         return USER_TOKENS[token]
-    except:
+    except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid authentication credentials",
-        )
+        ) from e
