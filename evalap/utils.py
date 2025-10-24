@@ -379,7 +379,7 @@ def build_param_grid(common_params: dict[str, Any], grid_params: dict[str, list[
         params = common_params.copy()
 
         # Create dictionary for current combination
-        current_combo = dict(zip(keys, combo))
+        current_combo = dict(zip(keys, combo, strict=True))
 
         # For each parameter in the current combination
         for key, value in current_combo.items():

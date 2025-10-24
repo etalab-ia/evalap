@@ -39,11 +39,7 @@ def fetch(method, endpoint, data=None, token=None, show_error=True):
         return response.json()
 
     if show_error:
-        st.error(
-            f"Failed to fetch data from {endpoint}."
-            f" Status code: {response.status_code}"
-            f" Response content: {response.text}"
-        )
+        st.error(f"Failed to fetch data from {endpoint}. Status code: {response.status_code} Response content: {response.text}")
     return None
 
 
@@ -74,7 +70,7 @@ def _remove_commons_items(model_params: list[dict], first=True) -> list[dict]:
             # take all dict value (recurse)
             # reinsert dict value in same order
             x = [(i, d[k]) for i, d in enumerate(model_params) if isinstance(d[k], dict)]
-            idx, params = zip(*x)
+            idx, params = zip(*x, strict=True)
             params = _remove_commons_items(list(params), first=False)
             for i, _id in enumerate(idx):
                 if not params[i]:
@@ -136,9 +132,7 @@ def _rename_model_variants(experiments: list) -> list:
 
         # List of model params
         model_params = [
-            (experiments[id]["model"].get("sampling_params") or {})
-            | (experiments[id]["model"].get("extra_params") or {})
-            for id in ids
+            (experiments[id]["model"].get("sampling_params") or {}) | (experiments[id]["model"].get("extra_params") or {}) for id in ids
         ]
 
         # Manage system_prompt param by computing its hash

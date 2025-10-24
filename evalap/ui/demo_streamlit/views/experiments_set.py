@@ -414,9 +414,9 @@ def display_experiment_set_score(experimentset, experiments_df):
     _rename_model_variants(experiments)
     size = experiments[0]["dataset"]["size"]
 
-    available_judges = sorted(
-        list(set(expe["judge_model"]["name"] for expe in experiments if expe.get("judge_model")))
-    ) or ["No_judge_found"]
+    available_judges = sorted(list(set(expe["judge_model"]["name"] for expe in experiments if expe.get("judge_model")))) or [
+        "No_judge_found"
+    ]
 
     rows = []
     rows_support = []
@@ -510,9 +510,7 @@ def display_experiment_set_score(experimentset, experiments_df):
     columns_to_show = ["model"] + selected_metrics
     df_filtered = df[columns_to_show]
 
-    support_columns_to_show = ["model"] + [
-        f"{metric}_support" for metric in selected_metrics if f"{metric}_support" in df_support.columns
-    ]
+    support_columns_to_show = ["model"] + [f"{metric}_support" for metric in selected_metrics if f"{metric}_support" in df_support.columns]
     df_support_filtered = df_support[support_columns_to_show]
 
     # To highlight min/max values in each column
@@ -674,6 +672,7 @@ def report_ops_global(exp_set):
     for col, (label, value) in zip(
         cols,
         [("Models", n_models), ("Metrics", n_metrics), ("Energy", energy_str), ("GHG Emissions", carbon_str)],
+        strict=True,
     ):
         col.markdown(metric_display(label, value), unsafe_allow_html=True)
 
@@ -740,12 +739,10 @@ def compute_failure_rates(exp_set: dict[str, any]) -> tuple[dict[str, float], di
                 metric_stats[metric_name]["num_success"] += r_num_success
 
     model_failure_rate = {
-        name: 1 - (stats["num_success"] / stats["num_try"]) if stats["num_try"] > 0 else 0.0
-        for name, stats in model_stats.items()
+        name: 1 - (stats["num_success"] / stats["num_try"]) if stats["num_try"] > 0 else 0.0 for name, stats in model_stats.items()
     }
     metric_failure_rate = {
-        name: 1 - (stats["num_success"] / stats["num_try"]) if stats["num_try"] > 0 else 0.0
-        for name, stats in metric_stats.items()
+        name: 1 - (stats["num_success"] / stats["num_try"]) if stats["num_try"] > 0 else 0.0 for name, stats in metric_stats.items()
     }
 
     return model_failure_rate, metric_failure_rate
@@ -813,9 +810,7 @@ def show_header(experimentset):
                 col1, col2 = st.columns([0.7, 0.3])
                 with col1:
                     # Generate code based on format
-                    copy_format = st.radio(
-                        "Format:", ["Python", "cURL"], key=f"copy_format_{experimentset['id']}"
-                    )
+                    copy_format = st.radio("Format:", ["Python", "cURL"], key=f"copy_format_{experimentset['id']}")
                     if copy_format == "Python":
                         code = template_manager.render_python(**exp_create)
                         lang = "python"
@@ -878,9 +873,7 @@ def show_header(experimentset):
     if counts["observation_length"] > 0:
         finished_ratio = int(counts["total_observation_successes"] / counts["observation_length"] * 100)
         failure_ratio = int(
-            (counts["total_observation_tries"] - counts["total_observation_successes"])
-            / counts["observation_length"]
-            * 100
+            (counts["total_observation_tries"] - counts["total_observation_successes"]) / counts["observation_length"] * 100
         )
 
     run_status = f"**Finished**: {finished_ratio}%"
@@ -947,9 +940,7 @@ def main():
                     "Id": expe["id"],
                     "Name": expe["name"],
                     "Dataset": expe["dataset"]["name"],
-                    "Model": (expe["model"]["aliased_name"] or expe["model"]["name"])
-                    if expe.get("model")
-                    else "Undefined model",
+                    "Model": (expe["model"]["aliased_name"] or expe["model"]["name"]) if expe.get("model") else "Undefined model",
                     "Model params": _format_model_params(expe),
                     "Status": expe["experiment_status"],
                     "Created at": expe["created_at"],
