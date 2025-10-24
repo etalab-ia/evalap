@@ -21,6 +21,7 @@ This document provides guidance for AI agents (Claude, Windsurf, Cursor, etc.) w
 5. **Observability & Logging** - Structured logging mandatory using `evalap.logger`
 6. **Semantic Versioning** - MAJOR.MINOR.PATCH with documented breaking changes
 7. **Notebook Support** - Jupyter notebooks as first-class executable documentation
+8. **Test-Driven Development** - Tests MUST be written alongside or before implementation; testing is mandatory
 
 ## Development Workflow
 
@@ -116,26 +117,61 @@ def read_resource(
 3. Apply migration: `alembic -c evalap/api/alembic.ini upgrade head`
 4. Commit migration file with your changes
 
-### Writing Tests
+### Writing Tests (Principle VIII: Test-Driven Development)
 
 **Location**: `tests/` (mirroring source structure)
 
-**Requirements**:
-- Test fixtures in `tests/conftest.py`
-- Unit tests for individual functions
-- Integration tests for API contracts and inter-service communication
-- Run tests with `just test`
-- Aim for high coverage on critical paths
+**Test Organization**:
+- Mirror source structure: `tests/endpoints/` for `evalap/api/endpoints.py`, etc.
+- Use base test classes with setup/teardown: inherit from `TestApi` or similar
+- Define fixtures in `tests/conftest.py` with appropriate scoping (session, module, function)
+- Fixtures MUST handle lifecycle: setup, yield, teardown
 
-**Example**:
+**Requirements**:
+- Unit tests MUST cover individual functions and business logic
+- Integration tests MUST cover API contracts and inter-service communication
+- Parametrized tests MUST be used for multiple scenarios: `@pytest.mark.parametrize`
+- External dependencies MUST be mocked: `@patch` or pytest fixtures
+- New features MUST include tests before or alongside implementation
+- Run tests with `just test` and coverage with `just test-cov`
+- Aim for high coverage on critical paths (API endpoints, CRUD, metrics)
+
+**Mocking & Isolation**:
+- Mock external services (LLM APIs, external databases) using `unittest.mock`
+- Use pytest fixtures for test database and resource lifecycle
+- Avoid test pollution: properly scope mocks and fixtures
+- Integration tests MAY use real test database; unit tests MUST use mocks
+
+**Example with Parametrization**:
 ```python
-def test_create_resource(db: Session):
-    """Test creating a new resource."""
-    resource_data = {"name": "test", "description": "test resource"}
-    result = crud.create_resource(db, resource_data)
-    assert result.name == "test"
-    assert result.id is not None
+import pytest
+from unittest.mock import patch
+
+class TestResource(TestApi):
+    @pytest.mark.parametrize("resource_data", [
+        {"name": "test1", "description": "desc1"},
+        {"name": "test2", "description": "desc2"},
+    ])
+    def test_create_resource(self, db: Session, resource_data):
+        """Test creating resources with multiple scenarios."""
+        result = crud.create_resource(db, resource_data)
+        assert result.name == resource_data["name"]
+        assert result.id is not None
+
+    @patch("external_service.api_call")
+    def test_with_mocked_dependency(self, mock_api):
+        """Test with mocked external dependency."""
+        mock_api.return_value = {"status": "success"}
+        result = my_function()
+        assert result["status"] == "success"
+        mock_api.assert_called_once()
 ```
+
+**Assertion Patterns**:
+- Use clear, descriptive assertions
+- Helper functions (e.g., `log_and_assert`) for common patterns
+- Test names MUST describe what is tested: `test_read_dataset_not_found`
+- Make expected vs. actual explicit
 
 ### Creating a Notebook
 
@@ -339,6 +375,6 @@ When uncertain about implementation decisions:
 
 ---
 
-**Last Updated**: 2025-10-24 | **Constitution Version**: 2.0.0
+**Last Updated**: 2025-10-24 | **Constitution Version**: 2.1.0
 
 For questions or updates to this document, refer to the Constitution amendment process in `.specify/memory/constitution.md`.

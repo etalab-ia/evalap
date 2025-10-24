@@ -1,11 +1,9 @@
-<!-- Sync Impact Report: Constitution v2.0.0 (ai-kit Alignment)
-- Integrated French Government AI principles from ai-kit constitution
-- Version: 1.1.0 → 2.0.0 (MAJOR: Restructured to align with government standards)
-- Added mandatory principles: EU AI Act Compliance, RGAA Accessibility, Open Source, DSFR Design, ProConnect Auth, Security & Privacy
-- Reorganized: Core Principles now include both mandatory (NON-NEGOTIABLE) and EvalAP-specific principles
-- Added: Security & Privacy Standards, French Government Integration sections
-- Maintained: EvalAP-specific principles (API-First, Modular Architecture, Metric Registry, Async-Ready, Observability, Versioning, Notebook Support)
-- Templates requiring updates: ✅ plan-template.md, ✅ spec-template.md, ✅ tasks-template.md
+<!-- Sync Impact Report: Constitution v2.1.0 (TDD Principle Addition)
+- Version: 2.0.0 → 2.1.0 (MINOR: Added Principle VIII for Test-Driven Development)
+- Added: Principle VIII (Test-Driven Development) with comprehensive TDD guidance
+- Sections: Test Organization, Test Coverage Requirements, Mocking & Isolation, Test Execution, Assertion Patterns
+- Rationale: Formalize existing TDD practices observed in tests/ directory structure
+- Templates requiring updates: ✅ AGENTS.md (added TDD principle to quick reference and testing section)
 - Follow-up: None
 -->
 
@@ -150,6 +148,41 @@ Jupyter notebooks serve as executable documentation and tutorials for API usage.
 - Demo notebooks MUST be kept up-to-date with API changes
 - Notebooks are valuable for onboarding and feature discovery
 
+### VIII. Test-Driven Development (TDD)
+
+Tests are mandatory and MUST be written alongside or before implementation. Testing is not optional; it is a core development practice.
+
+**Test Organization**:
+- All tests live in `tests/` directory mirroring source structure (e.g., `tests/endpoints/` mirrors `evalap/api/endpoints.py`)
+- Base test classes (e.g., `TestApi`) MUST define setup/teardown methods for test isolation
+- Test fixtures MUST be defined in `tests/conftest.py` with appropriate scoping (session, module, function)
+- Fixtures MUST handle resource lifecycle: setup, yield, teardown
+
+**Test Coverage Requirements**:
+- Unit tests MUST cover individual functions and business logic
+- Integration tests MUST cover API contracts and inter-service communication
+- Parametrized tests MUST be used for testing multiple scenarios (use `@pytest.mark.parametrize`)
+- Critical paths MUST have high coverage (API endpoints, CRUD operations, metrics)
+- New features MUST include tests before or alongside implementation
+
+**Mocking & Isolation**:
+- External dependencies MUST be mocked using `unittest.mock` or `pytest` fixtures
+- Tests MUST NOT depend on external services (APIs, databases) except test database
+- Mocks MUST be scoped appropriately to avoid test pollution
+- Integration tests MAY use real database via fixtures; unit tests MUST use mocks
+
+**Test Execution**:
+- All tests MUST pass before merge: `just test`
+- Tests MUST be deterministic and not flaky
+- Test failures MUST be investigated and fixed immediately
+- Coverage reports SHOULD be generated: `just test-cov`
+
+**Assertion Patterns**:
+- Assertions MUST be clear and descriptive
+- Helper functions (e.g., `log_and_assert`) SHOULD be used for common assertion patterns
+- Test names MUST clearly describe what is being tested (e.g., `test_read_dataset_not_found`)
+- Expected vs. actual values MUST be explicit in assertions
+
 ## Security & Privacy Standards
 
 ### Data Protection & Privacy
@@ -289,5 +322,6 @@ This constitution supersedes all other development practices and guidelines. Whe
 - v1.0.0 (2025-10-24): Initial constitution from codebase analysis
 - v1.1.0 (2025-10-24): Added Principle VII for notebook support and documentation
 - v2.0.0 (2025-10-24): Integrated French Government AI principles from ai-kit constitution; added mandatory compliance sections (EU AI Act, RGAA, Open Source, DSFR, ProConnect); added Security & Privacy Standards
+- v2.1.0 (2025-10-24): Added Principle VIII for Test-Driven Development (TDD) with comprehensive testing guidance
 
-**Version**: 2.0.0 | **Ratified**: 2025-10-24 | **Last Amended**: 2025-10-24
+**Version**: 2.1.0 | **Ratified**: 2025-10-24 | **Last Amended**: 2025-10-24
