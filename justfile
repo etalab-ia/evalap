@@ -114,7 +114,7 @@ alembic-upgrade:
   alembic -c evalap/api/alembic.ini upgrade head
 
 seed:
-  python -m evalap.api.seed
+  python -m evalap.scripts.run_seed_data
 
 alembic-downgrade hash:
   alembic -c evalap/api/alembic.ini downgrade {{hash}}
@@ -224,7 +224,7 @@ run mode="local" log_level="INFO":
 
     # Run database seeding
     echo -e "${PURPLE}Seeding database with initial datasets...${NC}"
-    python -m evalap.api.seed
+    python -m evalap.scripts.run_seed_data
 
     echo -e "${BLUE}API: http://localhost:8000${NC}"
     echo -e "${CYAN}Streamlit: http://localhost:8501${NC}"
