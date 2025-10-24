@@ -23,31 +23,31 @@ repos:
       # Prevent giant files from being committed
       - id: check-added-large-files
         args: ["--maxkb=1000"]
-        exclude: ^(.specify/|.windsurf/|.cursor/)
+        exclude: ^(.specify/|.windsurf/|.cursor/|.claude/)
       # Check for files with names that would conflict on case-insensitive filesystems
       - id: check-case-conflict
-        exclude: ^(.specify/|.windsurf/|.cursor/)
+        exclude: ^(.specify/|.windsurf/|.cursor/|.claude/)
       # Check for files that contain merge conflict strings
       - id: check-merge-conflict
-        exclude: ^(.specify/|.windsurf/|.cursor/)
+        exclude: ^(.specify/|.windsurf/|.cursor/|.claude/)
       # Check for debugger imports and py37+ breakpoint() calls
       - id: debug-statements
-        exclude: ^(.specify/|.windsurf/|.cursor/)
+        exclude: ^(.specify/|.windsurf/|.cursor/|.claude/)
       # Check that executable files have shebangs
       - id: check-executables-have-shebangs
-        exclude: ^(.specify/|.windsurf/|.cursor/)
+        exclude: ^(.specify/|.windsurf/|.cursor/|.claude/)
       # Check for symlinks which do not point to anything
       - id: check-symlinks
-        exclude: ^(.specify/|.windsurf/|.cursor/)
+        exclude: ^(.specify/|.windsurf/|.cursor/|.claude/)
       # Check toml syntax
       - id: check-toml
-        exclude: ^(.specify/|.windsurf/|.cursor/)
+        exclude: ^(.specify/|.windsurf/|.cursor/|.claude/)
       # Check yaml syntax
       - id: check-yaml
-        exclude: ^(.specify/|.windsurf/|.cursor/)
+        exclude: ^(.specify/|.windsurf/|.cursor/|.claude/)
       # Make sure that text files end in a newline
       - id: end-of-file-fixer
-        exclude: ^(.specify/|.windsurf/|.cursor/)
+        exclude: ^(.specify/|.windsurf/|.cursor/|.claude/)
       # Remove trailing whitespace
       - id: trailing-whitespace
-        exclude: ^(.specify/|.windsurf/|.cursor/)
+        exclude: ^(.specify/|.windsurf/|.cursor/|.claude/)
