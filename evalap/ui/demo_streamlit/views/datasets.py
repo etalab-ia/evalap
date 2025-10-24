@@ -196,8 +196,8 @@ def add_dataset_section():
     st.info(
         """Your dataset must be loaded into EvalAP only once. It will then be accessible for all your experiments.
         You must give it a name and write a brief description that will be visible to everyone.
-        The file must contain at least the question (called query) and the ground truth (called output_true). 
-        You need to have an **EvalAP access key**, you can make the request in the [canal Tchap](https://www.tchap.gouv.fr/#/room/!gpLYRJyIwdkcHBGYeC:agent.dinum.tchap.gouv.fr) 
+        The file must contain at least the question (called query) and the ground truth (called output_true).
+        You need to have an **EvalAP access key**, you can make the request in the [canal Tchap](https://www.tchap.gouv.fr/#/room/!gpLYRJyIwdkcHBGYeC:agent.dinum.tchap.gouv.fr)
         """
     )
 
@@ -251,13 +251,13 @@ def main():
                 )
                 st.subheader(dataset["name"])
                 st.write(
-                    f"Columns: {', '.join(map(lambda x: '**' + x + '**', dataset['columns'] or dataset['parquet_columns']))}"
+                    f"Columns: {', '.join(map(lambda x: '**' + x + '**', dataset['columns'] or dataset['parquet_columns']))}"  # noqa: E501
                 )
                 if dataset["columns_map"]:
                     st.write(f"Columns map: {dataset['columns_map']}")
 
                 st.markdown(dataset.get("readme", "No description available"))
-                col1, col2, col3, col4 = st.columns([1 / 8, 2 / 8, 2 / 8, 3 / 8])
+                col1, col2, col3, col4, col5 = st.columns([1 / 10, 1 / 10, 3 / 10, 3 / 10, 2 / 10])
                 with col1:
                     st.caption(f"Id: {dataset['id']} ")
                 with col2:
@@ -266,6 +266,9 @@ def main():
                     st.caption(f"Default metric: {dataset['default_metric']}")
                 with col4:
                     st.caption(f"Created the {when}")
+                if dataset["compliance"]:
+                    with col5:
+                        st.markdown(":gray[:material/fact_check:] Compliance")
 
                 # Dataset preview toggle and render
                 if _toggle_preview_button(dataset["id"]):

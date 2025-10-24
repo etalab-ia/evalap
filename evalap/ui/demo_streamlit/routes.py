@@ -25,7 +25,7 @@ ROUTES = [
         "id": "prompt_analyze",
         "path": "views/prompt_analyze.py",
         "title": "Prompt analyze",
-        "description": "analyze differents prompts for your product",
+        "description": "Analyze differents prompts for your product",
         "icon": ":material/trophy:",
     },
     {
@@ -34,6 +34,13 @@ ROUTES = [
         "title": "Experiments",
         "description": "Navigate the experiments collections groups",
         "icon": ":material/experiment:",
+    },
+    {
+        "id": "compliance",
+        "path": "views/compliance.py",
+        "title": "Compliance",
+        "description": "AI system compliance",
+        "icon": ":material/fact_check:",
     },
     {
         "id": "datasets",
@@ -52,8 +59,8 @@ ROUTES = [
     {
         "id": "ops",
         "path": "views/ops.py",
-        "title": "Ops",
-        "description": "Ops analysis",
+        "title": "Usage statistics",
+        "description": "Statistical overview of usage",
         "icon": ":material/settings:",
     },
 ]
