@@ -214,16 +214,12 @@ class ChatCompletionRequest(OpenAIBaseModel):
     # doc: begin-chat-completion-extra-params
     echo: Optional[bool] = Field(
         default=False,
-        description=(
-            "If true, the new message will be prepended with the last message if they belong to the same role."
-        ),
+        description=("If true, the new message will be prepended with the last message if they belong to the same role."),
     )
     add_generation_prompt: Optional[bool] = Field(
         default=True,
         description=(
-            "If true, the generation prompt will be added to the chat template. "
-            "This is a parameter used by chat template in tokenizer config of the "
-            "model."
+            "If true, the generation prompt will be added to the chat template. This is a parameter used by chat template in tokenizer config of the model."
         ),
     )
     add_special_tokens: Optional[bool] = Field(
@@ -248,24 +244,15 @@ class ChatCompletionRequest(OpenAIBaseModel):
     )
     chat_template: Optional[str] = Field(
         default=None,
-        description=(
-            "A Jinja template to use for this conversion. "
-            "If this is not passed, the model's default chat template will be "
-            "used instead."
-        ),
+        description=("A Jinja template to use for this conversion. If this is not passed, the model's default chat template will be used instead."),
     )
     chat_template_kwargs: Optional[Dict[str, Any]] = Field(
         default=None,
-        description=(
-            "Additional kwargs to pass to the template renderer. Will be accessible by the chat template."
-        ),
+        description=("Additional kwargs to pass to the template renderer. Will be accessible by the chat template."),
     )
     include_stop_str_in_output: Optional[bool] = Field(
         default=False,
-        description=(
-            "Whether to include the stop string in the output. "
-            "This is only applied when the stop or stop_token_ids is set."
-        ),
+        description=("Whether to include the stop string in the output. This is only applied when the stop or stop_token_ids is set."),
     )
     guided_json: Optional[Union[str, dict, BaseModel]] = Field(
         default=None,
@@ -310,11 +297,7 @@ class ChatCompletionRequest(OpenAIBaseModel):
                     # Clamp the bias between -100 and 100 per OpenAI API spec
                     logit_bias[int(token_id)] = min(100, max(-100, bias))
             except ValueError as exc:
-                raise ValueError(
-                    f"Found token_id `{token_id}` in logit_bias "
-                    f"but token_id must be an integer or string "
-                    f"representing an integer"
-                ) from exc
+                raise ValueError(f"Found token_id `{token_id}` in logit_bias but token_id must be an integer or string representing an integer") from exc
 
             def logit_bias_logits_processor(token_ids: List[int], logits):
                 # logits: torch.Tensor) -> torch.Tensor:
@@ -370,10 +353,7 @@ class ChatCompletionRequest(OpenAIBaseModel):
         )
         # you can only use one kind of guided decoding
         if guide_count > 1:
-            raise ValueError(
-                "You can only use one kind of guided decoding "
-                "('guided_json', 'guided_regex' or 'guided_choice')."
-            )
+            raise ValueError("You can only use one kind of guided decoding ('guided_json', 'guided_regex' or 'guided_choice').")
         # you can only either use guided decoding or tools, not both
         if guide_count > 1 and "tool_choice" in data and data["tool_choice"] != "none":
             raise ValueError("You can only either use guided decoding or tools, not both.")
@@ -444,17 +424,12 @@ class CompletionRequest(OpenAIBaseModel):
     # doc: begin-completion-extra-params
     include_stop_str_in_output: Optional[bool] = Field(
         default=False,
-        description=(
-            "Whether to include the stop string in the output. "
-            "This is only applied when the stop or stop_token_ids is set."
-        ),
+        description=("Whether to include the stop string in the output. This is only applied when the stop or stop_token_ids is set."),
     )
     response_format: Optional[ResponseFormat] = Field(
         default=None,
         description=(
-            "Similar to chat completion, this parameter specifies the format of "
-            "output. Only {'type': 'json_object'} or {'type': 'text' } is "
-            "supported."
+            "Similar to chat completion, this parameter specifies the format of output. Only {'type': 'json_object'} or {'type': 'text' } is supported."
         ),
     )
     guided_json: Optional[Union[str, dict, BaseModel]] = Field(
@@ -500,11 +475,7 @@ class CompletionRequest(OpenAIBaseModel):
                     # Clamp the bias between -100 and 100 per OpenAI API spec
                     logit_bias[int(token_id)] = min(100, max(-100, bias))
             except ValueError as exc:
-                raise ValueError(
-                    f"Found token_id `{token_id}` in logit_bias "
-                    f"but token_id must be an integer or string "
-                    f"representing an integer"
-                ) from exc
+                raise ValueError(f"Found token_id `{token_id}` in logit_bias but token_id must be an integer or string representing an integer") from exc
 
             def logit_bias_logits_processor(token_ids: List[int], logits):
                 # logits: torch.Tensor) -> torch.Tensor:
@@ -553,10 +524,7 @@ class CompletionRequest(OpenAIBaseModel):
             ]
         )
         if guide_count > 1:
-            raise ValueError(
-                "You can only use one kind of guided decoding "
-                "('guided_json', 'guided_regex' or 'guided_choice')."
-            )
+            raise ValueError("You can only use one kind of guided decoding ('guided_json', 'guided_regex' or 'guided_choice').")
         return data
 
     @model_validator(mode="before")

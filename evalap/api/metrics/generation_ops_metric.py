@@ -1,9 +1,7 @@
 from . import metric_registry
 
 
-@metric_registry.register(
-    name="nb_tokens_prompt", description="Number of tokens in the prompt", metric_type="ops", require=["query"]
-)
+@metric_registry.register(name="nb_tokens_prompt", description="Number of tokens in the prompt", metric_type="ops", require=["query"])
 def nb_tokens_prompt_metric(output, *args, **kwargs):
     metadata = kwargs["metadata"]
     return metadata.get("nb_tokens_prompt")

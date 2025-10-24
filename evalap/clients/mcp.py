@@ -118,10 +118,7 @@ def multi_step_generate(
             if tool_call_result is None:
                 tool_content = []
             else:
-                tool_content = [
-                    {"type": "text", "text": part["text"]}
-                    for part in filter(lambda x: x["type"] == "text", tool_call_result["content"])
-                ]
+                tool_content = [{"type": "text", "text": part["text"]} for part in filter(lambda x: x["type"] == "text", tool_call_result["content"])]
 
             if len(tool_content) == 0:
                 tool_content = [{"type": "text", "text": "the tool call result is empty"}]
@@ -147,10 +144,7 @@ def multi_step_generate(
 
             tools_count[tool_call.function.name] += 1
             # Avoid deep search recursion
-            if (
-                tool_call.function.name.startswith("search")
-                and tools_count[tool_call.function.name] >= max_steps_search
-            ):
+            if tool_call.function.name.startswith("search") and tools_count[tool_call.function.name] >= max_steps_search:
                 cpt = max_steps
 
         steps.append(substeps)

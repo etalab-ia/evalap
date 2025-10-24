@@ -414,9 +414,7 @@ def display_experiment_set_score(experimentset, experiments_df):
     _rename_model_variants(experiments)
     size = experiments[0]["dataset"]["size"]
 
-    available_judges = sorted(list(set(expe["judge_model"]["name"] for expe in experiments if expe.get("judge_model")))) or [
-        "No_judge_found"
-    ]
+    available_judges = sorted(list(set(expe["judge_model"]["name"] for expe in experiments if expe.get("judge_model")))) or ["No_judge_found"]
 
     rows = []
     rows_support = []
@@ -738,12 +736,8 @@ def compute_failure_rates(exp_set: dict[str, any]) -> tuple[dict[str, float], di
                 metric_stats[metric_name]["num_try"] += r_num_try
                 metric_stats[metric_name]["num_success"] += r_num_success
 
-    model_failure_rate = {
-        name: 1 - (stats["num_success"] / stats["num_try"]) if stats["num_try"] > 0 else 0.0 for name, stats in model_stats.items()
-    }
-    metric_failure_rate = {
-        name: 1 - (stats["num_success"] / stats["num_try"]) if stats["num_try"] > 0 else 0.0 for name, stats in metric_stats.items()
-    }
+    model_failure_rate = {name: 1 - (stats["num_success"] / stats["num_try"]) if stats["num_try"] > 0 else 0.0 for name, stats in model_stats.items()}
+    metric_failure_rate = {name: 1 - (stats["num_success"] / stats["num_try"]) if stats["num_try"] > 0 else 0.0 for name, stats in metric_stats.items()}
 
     return model_failure_rate, metric_failure_rate
 
@@ -872,9 +866,7 @@ def show_header(experimentset):
     failure_ratio = 0
     if counts["observation_length"] > 0:
         finished_ratio = int(counts["total_observation_successes"] / counts["observation_length"] * 100)
-        failure_ratio = int(
-            (counts["total_observation_tries"] - counts["total_observation_successes"]) / counts["observation_length"] * 100
-        )
+        failure_ratio = int((counts["total_observation_tries"] - counts["total_observation_successes"]) / counts["observation_length"] * 100)
 
     run_status = f"**Finished**: {finished_ratio}%"
     if failure_ratio > 0:

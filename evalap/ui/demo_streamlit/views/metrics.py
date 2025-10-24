@@ -51,9 +51,7 @@ def main():
                         unsafe_allow_html=True,
                     )
                     st.subheader(metric["name"])
-                    st.write(
-                        f"Required fields: {', '.join(map(lambda x: '**' + x + '**', metric['require']))}"
-                    )
+                    st.write(f"Required fields: {', '.join(map(lambda x: '**' + x + '**', metric['require']))}")
                     st.write(metric["description"])
 
                     # pop up for definition

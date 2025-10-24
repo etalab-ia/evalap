@@ -33,10 +33,7 @@ def load_product_config() -> dict:
         return {"products": {}}
 
     if "products" not in config or not config.get("products"):
-        st.error(
-            f"⚠️ The configuration file at `{config_path}` does not contain any `products` key "
-            "or the key is empty. Add your products to get started."
-        )
+        st.error(f"⚠️ The configuration file at `{config_path}` does not contain any `products` key or the key is empty. Add your products to get started.")
         return {"products": {}}
 
     return config
@@ -271,9 +268,7 @@ def process_leaderboard_data(
                 std = grouped[(column, "std")].round(2)
                 result_repeat_true[f"{column}_mean"] = mean
                 result_repeat_true[column] = result_repeat_true.apply(
-                    lambda row: f"{row[f'{column}_mean']:.2f}"
-                    if row["count"] == 1
-                    else f"{row[f'{column}_mean']:.2f} ± {std[row.name]:.2f}",
+                    lambda row: f"{row[f'{column}_mean']:.2f}" if row["count"] == 1 else f"{row[f'{column}_mean']:.2f} ± {std[row.name]:.2f}",
                     axis=1,
                 )
 
@@ -398,9 +393,7 @@ def main() -> None:
                 # Get available judges from the leaderboard data
                 leaderboard_data = fetch_leaderboard(default_metric, product_dataset_name)
 
-                available_judges = sorted(
-                    list(set(entry.get("judge_model") for entry in leaderboard_data.get("entries", []) if entry.get("judge_model")))
-                )
+                available_judges = sorted(list(set(entry.get("judge_model") for entry in leaderboard_data.get("entries", []) if entry.get("judge_model"))))
 
                 judge_model = st.selectbox(
                     "Filter by judge model",

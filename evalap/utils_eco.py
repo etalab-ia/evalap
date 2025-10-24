@@ -76,9 +76,7 @@ def build_model_extra_info(model_name: str, models_info_params: dict) -> dict:
 
     # Map friendly sizes to parameter counts
     PARAMS_SIZE_MAP = {"XS": 3, "S": 7, "M": 35, "L": 70, "XL": 200}
-    model["params"] = model.get(
-        "total_params", PARAMS_SIZE_MAP.get(model.get("friendly_size"), DEFAULT_PARAMS["params"])
-    )
+    model["params"] = model.get("total_params", PARAMS_SIZE_MAP.get(model.get("friendly_size"), DEFAULT_PARAMS["params"]))
 
     # if quantization, divide by 2
     if model.get("quantization") == "q8":

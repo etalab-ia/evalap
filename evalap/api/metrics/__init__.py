@@ -124,9 +124,7 @@ class MetricRegistry:
 
         return decorator
 
-    def register_deepeval(
-        self, metric_class, name, description, required_args, required_params, optional_params
-    ):
+    def register_deepeval(self, metric_class, name, description, required_args, required_params, optional_params):
         from deepeval.test_case import LLMTestCase
 
         require = [self.deepeval_require_map[k.value] for k in required_args or []]
@@ -144,11 +142,7 @@ class MetricRegistry:
                 },
             )  # fmt: off
             test_case = LLMTestCase(
-                **{
-                    reverse_require_map[k]: v
-                    for k, v in ({"output": output, "output_true": output_true} | metric_params).items()
-                    if k in reverse_require_map
-                }
+                **{reverse_require_map[k]: v for k, v in ({"output": output, "output_true": output_true} | metric_params).items() if k in reverse_require_map}
             )
             try:
                 metric.measure(test_case, _show_indicator=False)

@@ -164,9 +164,7 @@ class ModelWithKeys(Model):
 
 class ModelRaw(EgBaseModel):
     # Answers
-    output: list[str] = Field(
-        description="The sequence of answers generated for this model, ordered as the 'rows' input of the dataset you are working on."
-    )
+    output: list[str] = Field(description="The sequence of answers generated for this model, ordered as the 'rows' input of the dataset you are working on.")
     # ModelBase
     aliased_name: str = Field(
         description="A name to identify this model. The difference with the `name` parameter is that the latter must be used to identify the model name in the Openai API-compatible endpoint."
@@ -384,9 +382,7 @@ class ExperimentCreate(ExperimentBase):
                 valid_params = set(metric_obj.required_params or []) | set(metric_obj.optional_params or [])
                 invalid_params = params - valid_params
                 if invalid_params:
-                    raise SchemaError(
-                        f"Invalid parameters for metric '{metric_name}': {invalid_params}. Valid parameters are: {valid_params}"
-                    )
+                    raise SchemaError(f"Invalid parameters for metric '{metric_name}': {invalid_params}. Valid parameters are: {valid_params}")
             elif metric_obj.required_params:
                 raise SchemaError(
                     f"Metric '{metric_name}' has required parameters {metric_obj.required_params} but none were provided. "

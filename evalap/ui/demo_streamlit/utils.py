@@ -131,9 +131,7 @@ def _rename_model_variants(experiments: list) -> list:
             continue
 
         # List of model params
-        model_params = [
-            (experiments[id]["model"].get("sampling_params") or {}) | (experiments[id]["model"].get("extra_params") or {}) for id in ids
-        ]
+        model_params = [(experiments[id]["model"].get("sampling_params") or {}) | (experiments[id]["model"].get("extra_params") or {}) for id in ids]
 
         # Manage system_prompt param by computing its hash
         for i, id in enumerate(ids):
