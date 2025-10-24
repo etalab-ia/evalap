@@ -31,10 +31,7 @@ def format_column_name(name: str) -> str:
 
 
 def group_datasets(datasets: list[str]) -> dict[str, list[str]]:
-    return {
-        k: sorted([v for v in datasets if v.startswith(k)])
-        for k in sorted(set(dataset.split("_")[0] for dataset in datasets))
-    }
+    return {k: sorted([v for v in datasets if v.startswith(k)]) for k in sorted(set(dataset.split("_")[0] for dataset in datasets))}
 
 
 def create_ui_elements(
@@ -57,9 +54,7 @@ def create_ui_elements(
         page_input = st.number_input("Page", min_value=1, value=current_page, key=f"page_input_{group}")
 
     with col4:
-        rows_per_page = st.selectbox(
-            "Rows per page", options=[10, 20, 30], index=0, key=f"rows_per_page_{group_index}"
-        )
+        rows_per_page = st.selectbox("Rows per page", options=[10, 20, 30], index=0, key=f"rows_per_page_{group_index}")
 
     dataset_filter = None if dataset_name == "All" else dataset_name
     leaderboard_data = fetch_leaderboard(metric_name, dataset_filter)
@@ -67,15 +62,9 @@ def create_ui_elements(
     return metric_name, dataset_name, page_input, rows_per_page, leaderboard_data
 
 
-def process_leaderboard_data(
-    leaderboard_data: dict, group: str, metric_name: str, grouped_metrics: dict[str, list[dict]]
-) -> pd.DataFrame | None:
+def process_leaderboard_data(leaderboard_data: dict, group: str, metric_name: str, grouped_metrics: dict[str, list[dict]]) -> pd.DataFrame | None:
     tokens_completion_group = next(
-        (
-            group
-            for group, metrics in grouped_metrics.items()
-            if any(metric["name"] == "nb_tokens_completion" for metric in metrics)
-        ),
+        (group for group, metrics in grouped_metrics.items() if any(metric["name"] == "nb_tokens_completion" for metric in metrics)),
         "Ops",
     )
 
@@ -95,9 +84,7 @@ def process_leaderboard_data(
             for metric_type, metrics in grouped_metrics.items():
                 for metric in metrics:
                     if metric["name"] in entry["other_metrics"]:
-                        processed_entry[
-                            f"{metric_type.capitalize()} - {format_column_name(metric['name'])}"
-                        ] = entry["other_metrics"][metric["name"]]
+                        processed_entry[f"{metric_type.capitalize()} - {format_column_name(metric['name'])}"] = entry["other_metrics"][metric["name"]]
 
             tokens_per_second = calculate_tokens_per_second(
                 entry["other_metrics"].get("nb_tokens_completion"),
@@ -111,9 +98,7 @@ def process_leaderboard_data(
         return None
 
     df = pd.DataFrame(entries)
-    df.sort_values(
-        f"{format_column_name(metric_name)} Score", ascending=False, na_position="last", inplace=True
-    )
+    df.sort_values(f"{format_column_name(metric_name)} Score", ascending=False, na_position="last", inplace=True)
     df.reset_index(drop=True, inplace=True)
     df["Rank"] = df.index + 1
 
@@ -129,9 +114,7 @@ def process_leaderboard_data(
     llm_columns = [col for col in df.columns if col.startswith("Llm - ")]
     ops_columns = [col for col in df.columns if col.startswith("Ops - ")]
     deepeval_columns = [col for col in df.columns if col.startswith("Deepeval - ")]
-    other_columns = [
-        col for col in df.columns if col not in fixed_columns + llm_columns + ops_columns + deepeval_columns
-    ]
+    other_columns = [col for col in df.columns if col not in fixed_columns + llm_columns + ops_columns + deepeval_columns]
 
     column_order = fixed_columns + llm_columns + ops_columns + deepeval_columns + other_columns
 
@@ -164,19 +147,15 @@ def main():
 
     for group_index, (group_label, datasets_in_group) in enumerate(grouped_datasets.items()):
         with tabs[group_index]:
-            metric_name, dataset_name, current_page_input, rows_per_page, leaderboard_data = (
-                create_ui_elements(
-                    group_label.split()[0], available_metrics, datasets_in_group, group_index, grouped_metrics
-                )
+            metric_name, dataset_name, current_page_input, rows_per_page, leaderboard_data = create_ui_elements(
+                group_label.split()[0], available_metrics, datasets_in_group, group_index, grouped_metrics
             )
 
             st.write(f"## 🏆 Top Performing LLMs - {metric_name.replace('_', ' ').title()}")
             if dataset_name != "All":
                 st.write(f"Dataset: {dataset_name}")
 
-            df = process_leaderboard_data(
-                leaderboard_data, group_label.split()[0], metric_name, grouped_metrics
-            )
+            df = process_leaderboard_data(leaderboard_data, group_label.split()[0], metric_name, grouped_metrics)
 
             if df is not None and not df.empty:
                 total_entries = len(df)

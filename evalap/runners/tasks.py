@@ -23,9 +23,7 @@ class MessageAnswer:
     model_id: str  # the model to generate with
     line_id: int  # the line number of the dataset
     query: str  # the name of the observation/metric to process
-    follow_observation: bool = field(
-        default=True
-    )  # launch the observation dispacher once anwsers have been generated.
+    follow_observation: bool = field(default=True)  # launch the observation dispacher once anwsers have been generated.
 
 
 def generate_answer(message: dict, mcp_bridge: MCPBridgeClient | None):
@@ -66,9 +64,7 @@ def generate_answer(message: dict, mcp_bridge: MCPBridgeClient | None):
                             {"type": "text", "text": query},
                             {
                                 "type": "image_url",
-                                "image_url": {
-                                    "url": "data:image/png;base64," + image_to_base64(pf_row["img"])
-                                },
+                                "image_url": {"url": "data:image/png;base64," + image_to_base64(pf_row["img"])},
                             },
                         ],
                     }
@@ -115,9 +111,7 @@ def generate_answer(message: dict, mcp_bridge: MCPBridgeClient | None):
 
             # Carbon emission
             try:
-                emission_carbon = impact_carbon(
-                    model.name, model.base_url, result.usage.completion_tokens, timer.execution_time
-                )
+                emission_carbon = impact_carbon(model.name, model.base_url, result.usage.completion_tokens, timer.execution_time)
 
             except Exception as e:
                 logger.error(f"Error during calcul carbon impact : {e}")
@@ -221,18 +215,14 @@ def generate_observation(message: dict, mcp_bridge: MCPBridgeClient):
             if result.metric_params:
                 metric_params.update(result.metric_params)
                 if "prompt" in result.metric_params:
-                    require_extra = metric_registry.get_require_from_prompt_template(
-                        result.metric_params["prompt"]
-                    )
+                    require_extra = metric_registry.get_require_from_prompt_template(result.metric_params["prompt"])
 
             # Add require in metric_params
             for require in metric.require + require_extra:
                 # Add extra inputs required by the metric
                 if require in ["output", "output_true"]:
                     if not getattr(msg, require):
-                        raise ValueError(
-                            f"The metric '{msg.metric_name}' require a non null `{require}` value."
-                        )
+                        raise ValueError(f"The metric '{msg.metric_name}' require a non null `{require}` value.")
                     continue
                 try:
                     metric_params[require] = dataset_row[require]

@@ -7,6 +7,4 @@ def log_and_assert(response, code):
         return
 
     if response.status_code != 200:
-        fail(
-            f"Expected status code 200, but got {response.status_code}.\nError details: {response.text if isinstance(response.text, str) else response}"
-        )
+        fail(f"Expected status code 200, but got {response.status_code}.\nError details: {response.text if isinstance(response.text, str) else response}")

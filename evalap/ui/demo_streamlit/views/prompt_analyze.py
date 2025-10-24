@@ -65,11 +65,7 @@ def get_public_collections(api_key):
     response = requests.get(url, headers=headers)
     if response.status_code == 200:
         data = response.json()
-        return [
-            {"id": collection["id"], "name": collection["name"]}
-            for collection in data["data"]
-            if collection.get("visibility") == "public"
-        ]
+        return [{"id": collection["id"], "name": collection["name"]} for collection in data["data"] if collection.get("visibility") == "public"]
     else:
         st.error(f"Erreur récupération collections publiques : {response.status_code}")
         return []
@@ -143,9 +139,7 @@ def prompt_section(session_key: str, prompt_label: str = "Prompt", height: int =
     if prompts:
         cols = st.columns([8, 1])
         with cols[0]:
-            prompts[0] = st.text_area(
-                f"{prompt_label} #1", value=prompts[0], key=f"{session_key}_0", height=height
-            )
+            prompts[0] = st.text_area(f"{prompt_label} #1", value=prompts[0], key=f"{session_key}_0", height=height)
         with cols[1]:
             if len(prompts) > 1 and st.button("❌", key=f"delete_{session_key}_0"):
                 delete_prompt(0)
@@ -156,9 +150,7 @@ def prompt_section(session_key: str, prompt_label: str = "Prompt", height: int =
     for i in range(1, len(prompts)):
         cols = st.columns([8, 1])
         with cols[0]:
-            prompts[i] = st.text_area(
-                f"{prompt_label} #{i + 1}", value=prompts[i], key=f"{session_key}_{i}", height=height
-            )
+            prompts[i] = st.text_area(f"{prompt_label} #{i + 1}", value=prompts[i], key=f"{session_key}_{i}", height=height)
         with cols[1]:
             if st.button("❌", key=f"delete_{session_key}_{i}"):
                 delete_prompt(i)
@@ -207,9 +199,7 @@ def experimental_section(
 
     if mode == "create":
         with cols[0]:
-            product_name = st.text_input(
-                "Nom du produit", placeholder="ex: Assistant IA", key="main_product_name"
-            )
+            product_name = st.text_input("Nom du produit", placeholder="ex: Assistant IA", key="main_product_name")
     else:
         with cols[0]:
             expset_id = st.text_input("ID de l'experiment set à enrichir", key="patch_expset_id")
@@ -233,19 +223,13 @@ def experimental_section(
             key="main_collection_select" if mode == "create" else "patch_collection_select",
         )
 
-    collections_selected_ids = [
-        col["id"] for col in public_collections if col["name"] in collections_selected_names
-    ]
+    collections_selected_ids = [col["id"] for col in public_collections if col["name"] in collections_selected_names]
 
     model_selection = model_config_section(session_key_models)
-    prompts = prompt_section(
-        session_key_prompts, "Prompt à tester" if mode == "create" else "Prompt à ajouter"
-    )
+    prompts = prompt_section(session_key_prompts, "Prompt à tester" if mode == "create" else "Prompt à ajouter")
 
     st.divider()
-    button_label = (
-        "Évaluer les prompts 🚀" if mode == "create" else "Ajouter ces prompts à l'experimentation 🚀"
-    )
+    button_label = "Évaluer les prompts 🚀" if mode == "create" else "Ajouter ces prompts à l'experimentation 🚀"
     button_clicked = st.button(button_label)
 
     if button_clicked:
@@ -342,9 +326,7 @@ def experimental_section(
             }
             result = patch_experiment_set(expset_id, patch_data, user_api_key)
             if result:
-                st.success(
-                    f"Ajout avec succès dans l'expérience ID {expset_id} de {len(model_configs)} nouveau(x) modèle(s)/prompt(s)"
-                )
+                st.success(f"Ajout avec succès dans l'expérience ID {expset_id} de {len(model_configs)} nouveau(x) modèle(s)/prompt(s)")
                 st.info(
                     "🚨 Note importante : L'application est en version bêta, il se peut que les prompts ajoutés n'apparaissent pas de suite dans le dashboard. Il faut alors attendre un peu et cliquer sur le bouton refresh"
                 )
@@ -400,9 +382,7 @@ def main():
         )
         st.stop()
 
-    tab1, tab2 = st.tabs(
-        ["Création d'une expérimentation", "Ajouter des prompts à une experimentation existante"]
-    )
+    tab1, tab2 = st.tabs(["Création d'une expérimentation", "Ajouter des prompts à une experimentation existante"])
 
     with tab1:
         experimental_section(

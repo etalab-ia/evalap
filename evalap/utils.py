@@ -217,7 +217,7 @@ def import_classes(package_name: str, class_names: list[str], extra: list[str] =
     # Iterate over all modules in the package
     classes = []
     remaining_classes = set(class_names)
-    for finder, name, ispkg in pkgutil.walk_packages(package.__path__, package.__name__ + "."):
+    for _finder, name, _ispkg in pkgutil.walk_packages(package.__path__, package.__name__ + "."):
         # Import the module
         try:
             module = importlib.import_module(name)
@@ -379,7 +379,7 @@ def build_param_grid(common_params: dict[str, Any], grid_params: dict[str, list[
         params = common_params.copy()
 
         # Create dictionary for current combination
-        current_combo = dict(zip(keys, combo))
+        current_combo = dict(zip(keys, combo, strict=True))
 
         # For each parameter in the current combination
         for key, value in current_combo.items():

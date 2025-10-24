@@ -208,9 +208,7 @@ class SamplingParams:
         if self.n < 1:
             raise ValueError(f"n must be at least 1, got {self.n}.")
         if self.best_of < self.n:
-            raise ValueError(
-                f"best_of must be greater than or equal to n, got n={self.n} and best_of={self.best_of}."
-            )
+            raise ValueError(f"best_of must be greater than or equal to n, got n={self.n} and best_of={self.best_of}.")
         if not -2.0 <= self.presence_penalty <= 2.0:
             raise ValueError(f"presence_penalty must be in [-2, 2], got {self.presence_penalty}.")
         if not -2.0 <= self.frequency_penalty <= 2.0:
@@ -230,10 +228,7 @@ class SamplingParams:
         if self.min_tokens < 0:
             raise ValueError(f"min_tokens must be greater than or equal to 0, got {self.min_tokens}.")
         if self.max_tokens is not None and self.min_tokens > self.max_tokens:
-            raise ValueError(
-                f"min_tokens must be less than or equal to "
-                f"max_tokens={self.max_tokens}, got {self.min_tokens}."
-            )
+            raise ValueError(f"min_tokens must be less than or equal to max_tokens={self.max_tokens}, got {self.min_tokens}.")
         if self.logprobs is not None and self.logprobs < 0:
             raise ValueError(f"logprobs must be non-negative, got {self.logprobs}.")
         if self.prompt_logprobs is not None and self.prompt_logprobs < 0:
@@ -243,9 +238,7 @@ class SamplingParams:
         if any(not stop_str for stop_str in self.stop):
             raise ValueError("stop cannot contain an empty string.")
         if self.stop and not self.detokenize:
-            raise ValueError(
-                "stop strings are only supported when detokenize is True. Set detokenize=True to use stop."
-            )
+            raise ValueError("stop strings are only supported when detokenize is True. Set detokenize=True to use stop.")
 
     def _verify_beam_search(self) -> None:
         if self.best_of == 1:
@@ -263,18 +256,13 @@ class SamplingParams:
         if self.early_stopping is not False:
             raise ValueError("early_stopping is not effective and must be False when not using beam search.")
         if self.length_penalty < 1.0 - _SAMPLING_EPS or self.length_penalty > 1.0 + _SAMPLING_EPS:
-            raise ValueError(
-                "length_penalty is not effective and must be the "
-                "default value of 1.0 when not using beam search."
-            )
+            raise ValueError("length_penalty is not effective and must be the default value of 1.0 when not using beam search.")
 
     def _verify_greedy_sampling(self) -> None:
         if self.best_of > 1:
             raise ValueError(f"best_of must be 1 when using greedy sampling.Got {self.best_of}.")
 
-    def update_from_generation_config(
-        self, generation_config: Dict[str, Any], model_eos_token_id: Optional[int] = None
-    ) -> None:
+    def update_from_generation_config(self, generation_config: Dict[str, Any], model_eos_token_id: Optional[int] = None) -> None:
         """Update if there are non-default values from generation_config"""
 
         if model_eos_token_id is not None:
@@ -315,9 +303,7 @@ class SamplingParams:
         See https://github.com/vllm-project/vllm/issues/3087
         """
 
-        logit_processor_refs = (
-            None if self.logits_processors is None else {id(lp): lp for lp in self.logits_processors}
-        )
+        logit_processor_refs = None if self.logits_processors is None else {id(lp): lp for lp in self.logits_processors}
         return copy.deepcopy(self, memo=logit_processor_refs)
 
     def __repr__(self) -> str:

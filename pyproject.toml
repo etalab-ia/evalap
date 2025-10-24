@@ -83,8 +83,8 @@ distribution = false
 # Linter
 
 [tool.ruff]
-line-length = 111
-exclude = ["evalap/api/alembic/versions/", "notebooks/"]
+line-length = 160
+exclude = ["evalap/api/alembic/versions/", "notebooks/", ".specify/", ".windsurf/", ".cursor/", ".claude/"]
 
 [tool.ruff.lint]
 select = [
@@ -99,9 +99,21 @@ fixable = ["ALL"]
 unfixable = []
 ignore = [
     "E711", # Disable E711 specifically to prevent issues with SQLAlchemy
+    "B008", # FastAPI Depends() in defaults is intentional, not a bug (false positive)
+    "B023", # Lambda/function in loop with loop variable is intentional in pandas.apply() patterns (false positive)
     #"F403", # import *
     #"F841", # never used variables
 ]
+
+[tool.ruff.lint.per-file-ignores]
+# Ignore E501 (line too long) for files with long docstrings, prompts, and documentation
+"evalap/api/metrics/*.py" = ["E501"]  # Metric docstrings and French language prompts
+"evalap/api/endpoints.py" = ["E501"]  # Long endpoint descriptions in decorators
+"evalap/api/schemas.py" = ["E501"]  # Schema docstrings
+"evalap/ui/demo_streamlit/schemas.py" = ["E501"]  # Schema docstrings
+"evalap/ui/demo_streamlit/views/metrics.py" = ["E501"]  # UI metric descriptions
+"evalap/ui/demo_streamlit/views/prompt_analyze.py" = ["E501"]  # Prompt analysis UI
+"evalap/scripts/run_answers/run_answers.py" = ["E501"]  # Script documentation
 
 [tool.ruff.lint.isort]
 known-third-party = ["alembic"]

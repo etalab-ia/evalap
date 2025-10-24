@@ -33,10 +33,7 @@ def load_product_config() -> dict:
         return {"products": {}}
 
     if "products" not in config or not config.get("products"):
-        st.error(
-            f"⚠️ The configuration file at `{config_path}` does not contain any `products` key "
-            "or the key is empty. Add your products to get started."
-        )
+        st.error(f"⚠️ The configuration file at `{config_path}` does not contain any `products` key or the key is empty. Add your products to get started.")
         return {"products": {}}
 
     return config
@@ -90,9 +87,7 @@ def display_model_production(model_info: dict, default_metric: str) -> None:
     model_version = current_model.get("version", "N/A")
     model_last_updated = current_model.get("last_updated", "N/A")
 
-    st.write(
-        f"Current Model: {model_name} (ID: {model_id}) - v{model_version} - Last updated: {model_last_updated}"
-    )
+    st.write(f"Current Model: {model_name} (ID: {model_id}) - v{model_version} - Last updated: {model_last_updated}")
 
     exp_id = current_model.get("id")
     if not exp_id:
@@ -122,15 +117,11 @@ def display_model_production(model_info: dict, default_metric: str) -> None:
             elif metric_name == "generation_time":
                 times = scores
             else:
-                column_name = (
-                    f"{format_column_name(metric_name)} Score"
-                    if metric_name == default_metric
-                    else metric_name
-                )
+                column_name = f"{format_column_name(metric_name)} Score" if metric_name == default_metric else metric_name
                 metrics_data[column_name] = round(mean_score, 2)
 
         if tokens and times:
-            tokens_per_second = [calculate_tokens_per_second(t, tm) for t, tm in zip(tokens, times)]
+            tokens_per_second = [calculate_tokens_per_second(t, tm) for t, tm in zip(tokens, times, strict=False)]
             tokens_per_second = [tps for tps in tokens_per_second if tps is not None]
 
             if tokens_per_second:
@@ -216,9 +207,7 @@ def process_leaderboard_data(
             f"{format_column_name(metric_name)} Score": entry["main_metric_score"],
         }
 
-        processed_entry.update(
-            {format_column_name(metric): score for metric, score in entry.get("other_metrics", {}).items()}
-        )
+        processed_entry.update({format_column_name(metric): score for metric, score in entry.get("other_metrics", {}).items()})
 
         tokens_per_second = calculate_tokens_per_second(
             entry["other_metrics"].get("nb_tokens_completion"),
@@ -279,9 +268,7 @@ def process_leaderboard_data(
                 std = grouped[(column, "std")].round(2)
                 result_repeat_true[f"{column}_mean"] = mean
                 result_repeat_true[column] = result_repeat_true.apply(
-                    lambda row: f"{row[f'{column}_mean']:.2f}"
-                    if row["count"] == 1
-                    else f"{row[f'{column}_mean']:.2f} ± {std[row.name]:.2f}",
+                    lambda row: f"{row[f'{column}_mean']:.2f}" if row["count"] == 1 else f"{row[f'{column}_mean']:.2f} ± {std[row.name]:.2f}",
                     axis=1,
                 )
 
@@ -334,11 +321,7 @@ def display_dataset_and_metrics(product_info: dict, datasets: list[dict]) -> str
 
         if product_dataset_name and datasets:
             default_metric = next(
-                (
-                    dataset.get("default_metric", DEFAULT_METRIC)
-                    for dataset in datasets
-                    if dataset["name"] == product_dataset_name
-                ),
+                (dataset.get("default_metric", DEFAULT_METRIC) for dataset in datasets if dataset["name"] == product_dataset_name),
                 DEFAULT_METRIC,
             )
 
@@ -383,7 +366,7 @@ def main() -> None:
 
     product_tabs = st.tabs([product_info["name"] for product_info in product_config["products"].values()])
 
-    for tab, product_info in zip(product_tabs, product_config["products"].values()):
+    for tab, product_info in zip(product_tabs, product_config["products"].values(), strict=True):
         with tab:
             st.header(f"{product_info['name'].replace('_', ' ')}")
 
@@ -410,15 +393,7 @@ def main() -> None:
                 # Get available judges from the leaderboard data
                 leaderboard_data = fetch_leaderboard(default_metric, product_dataset_name)
 
-                available_judges = sorted(
-                    list(
-                        set(
-                            entry.get("judge_model")
-                            for entry in leaderboard_data.get("entries", [])
-                            if entry.get("judge_model")
-                        )
-                    )
-                )
+                available_judges = sorted(list(set(entry.get("judge_model") for entry in leaderboard_data.get("entries", []) if entry.get("judge_model"))))
 
                 judge_model = st.selectbox(
                     "Filter by judge model",
@@ -429,18 +404,14 @@ def main() -> None:
 
             if judge_model != "All":
                 st.markdown(
-                    f"<span style='color: green; font-weight: bold; font-size: 1.1em'>"
-                    f"&#x2714; Active filter = {judge_model}"
-                    f"</span>",
+                    f"<span style='color: green; font-weight: bold; font-size: 1.1em'>&#x2714; Active filter = {judge_model}</span>",
                     unsafe_allow_html=True,
                 )
 
             # Fetch leaderboard data with judge_model filtering
             leaderboard_data = fetch_leaderboard(default_metric, product_dataset_name, judge_model)
 
-            df_leaderboard = process_leaderboard_data(
-                leaderboard_data, default_metric, metrics_list_for_decision, current_model_id
-            )
+            df_leaderboard = process_leaderboard_data(leaderboard_data, default_metric, metrics_list_for_decision, current_model_id)
 
             if df_leaderboard is not None:
                 base_url = get_base_url()

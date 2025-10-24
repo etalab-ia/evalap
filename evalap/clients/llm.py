@@ -83,9 +83,7 @@ class LlmApiModels:
         return self
 
     def _all_models(self) -> set:
-        provider_models = [
-            models for provider, models in self.__dict__.items() if not provider.startswith("_")
-        ]
+        provider_models = [models for provider, models in self.__dict__.items() if not provider.startswith("_")]
         return {model for models in provider_models for model in models}
 
 
@@ -201,9 +199,7 @@ class LlmClient:
 #
 
 
-def split_think_answer(
-    answer: str, think_token: tuple[str, ...] = ("</think>", "[/think]")
-) -> Tuple[Optional[str], str]:
+def split_think_answer(answer: str, think_token: tuple[str, ...] = ("</think>", "[/think]")) -> Tuple[Optional[str], str]:
     """Separate the reasoning token from the regular answer if any"""
     for token in think_token:
         pattern = re.escape(token)
