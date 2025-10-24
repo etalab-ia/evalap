@@ -217,7 +217,7 @@ def import_classes(package_name: str, class_names: list[str], extra: list[str] =
     # Iterate over all modules in the package
     classes = []
     remaining_classes = set(class_names)
-    for finder, name, ispkg in pkgutil.walk_packages(package.__path__, package.__name__ + "."):
+    for _finder, name, _ispkg in pkgutil.walk_packages(package.__path__, package.__name__ + "."):
         # Import the module
         try:
             module = importlib.import_module(name)

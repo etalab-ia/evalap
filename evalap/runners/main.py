@@ -86,10 +86,8 @@ def main(worker_url=ZMQ_WORKER_URL, sender_url=ZMQ_SENDER_URL):
 
     # Launch pool of worker threads
     worker_threads = []
-    for i in range(MAX_CONCURRENT_TASKS):
-        thread = threading.Thread(
-            target=worker_routine, args=(worker_url, context, mcp_bridge, shutdown_event)
-        )
+    for _i in range(MAX_CONCURRENT_TASKS):
+        thread = threading.Thread(target=worker_routine, args=(worker_url, context, mcp_bridge, shutdown_event))
         thread.daemon = True  # Allow threads to exit when main thread exits
         thread.start()
         worker_threads.append(thread)

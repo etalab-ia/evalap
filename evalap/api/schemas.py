@@ -31,7 +31,7 @@ class EgBaseModel(BaseModel):
 
     def recurse_table_init(self, db: Session) -> dict:
         obj = self.model_dump()
-        for k, v in obj.items():
+        for k, _v in obj.items():
             sub_schema = getattr(self, k)
             if hasattr(sub_schema, "to_table_init"):
                 obj[k] = sub_schema.to_table_init(db)
