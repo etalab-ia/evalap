@@ -36,6 +36,7 @@ FROM dependencies AS final
 # Copy application code
 COPY ./docs /app/docs
 COPY ./evalap /app/evalap
+COPY ./scripts /app/scripts
 COPY supervisord.conf /app/supervisord.conf
 
 # Install the project itself (fast, no dependencies to download)
