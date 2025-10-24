@@ -7,7 +7,7 @@ alembic -c evalap/api/alembic.ini upgrade head
 
 # Seed the database with initial datasets
 echo "Seeding database with initial datasets..."
-python -m evalap.api.seed
+python -m evalap.scripts.run_seed_data
 
 # Start uvicorn server
 echo "Starting uvicorn server..."
