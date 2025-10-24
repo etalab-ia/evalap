@@ -67,10 +67,7 @@ def _handle_file_upload(user_api_key: str):
 
     if uploaded_file is not None:
         # Do not reset dataset_loaded if same file uploaded
-        if (
-            "uploaded_file" not in st.session_state
-            or st.session_state["uploaded_file"].name != uploaded_file.name
-        ):
+        if "uploaded_file" not in st.session_state or st.session_state["uploaded_file"].name != uploaded_file.name:
             st.session_state["uploaded_file"] = uploaded_file
             st.session_state["dataset_loaded"] = False  # reset if new file
             if "dataset_name" not in st.session_state:
@@ -150,9 +147,7 @@ def _render_dataset_dataframe(df: pd.DataFrame, dataset_id: int):
     with col_display1:
         row_options = [10, 50, 100]
         available_options = [opt for opt in row_options if opt <= len(df)]
-        if len(df) > max(available_options, default=0) or (
-            len(df) not in available_options and len(df) <= 500
-        ):
+        if len(df) > max(available_options, default=0) or (len(df) not in available_options and len(df) <= 500):
             available_options.append(f"All ({len(df)})")
 
         choice = st.radio(
@@ -196,14 +191,12 @@ def add_dataset_section():
     st.info(
         """Your dataset must be loaded into EvalAP only once. It will then be accessible for all your experiments.
         You must give it a name and write a brief description that will be visible to everyone.
-        The file must contain at least the question (called query) and the ground truth (called output_true). 
-        You need to have an **EvalAP access key**, you can make the request in the [canal Tchap](https://www.tchap.gouv.fr/#/room/!gpLYRJyIwdkcHBGYeC:agent.dinum.tchap.gouv.fr) 
+        The file must contain at least the question (called query) and the ground truth (called output_true).
+        You need to have an **EvalAP access key**, you can make the request in the [canal Tchap](https://www.tchap.gouv.fr/#/room/!gpLYRJyIwdkcHBGYeC:agent.dinum.tchap.gouv.fr)
         """
     )
 
-    user_api_key = st.text_input(
-        "Enter your EvalAP access key", type="password", key="add_dataset_user_api_key"
-    )
+    user_api_key = st.text_input("Enter your EvalAP access key", type="password", key="add_dataset_user_api_key")
 
     if not user_api_key:
         st.warning("Please enter your EvalAP access key before adding a dataset.")
@@ -250,9 +243,7 @@ def main():
                     unsafe_allow_html=True,
                 )
                 st.subheader(dataset["name"])
-                st.write(
-                    f"Columns: {', '.join(map(lambda x: '**' + x + '**', dataset['columns'] or dataset['parquet_columns']))}"
-                )
+                st.write(f"Columns: {', '.join(map(lambda x: '**' + x + '**', dataset['columns'] or dataset['parquet_columns']))}")
                 if dataset["columns_map"]:
                     st.write(f"Columns map: {dataset['columns_map']}")
 

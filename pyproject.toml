@@ -83,7 +83,7 @@ distribution = false
 # Linter
 
 [tool.ruff]
-line-length = 140
+line-length = 160
 exclude = ["evalap/api/alembic/versions/", "notebooks/", ".specify/", ".windsurf/", ".cursor/", ".claude/"]
 
 [tool.ruff.lint]
