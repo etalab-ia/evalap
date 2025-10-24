@@ -51,7 +51,7 @@ def get_answer_emission_metrics(ops_eco, source):
 
 
 def main():
-    st.title("Ops Analysis Dashboard")
+    st.title("Usage statistics")
     st.write("")
 
     # Global OPS metrics

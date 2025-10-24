@@ -1,4 +1,4 @@
-from core_experiments import run_core_experiments
+from views.core_experiments import run_core_experiments
 
 
 def main():
