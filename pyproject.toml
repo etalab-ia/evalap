@@ -84,12 +84,9 @@ distribution = false
 
 [tool.ruff]
 line-length = 111
-
-[tool.ruff.format]
 exclude = ["evalap/api/alembic/versions/", "notebooks/", ".specify/", ".windsurf/", ".cursor/", ".claude/"]
 
 [tool.ruff.lint]
-exclude = ["evalap/api/alembic/versions/", "notebooks/", ".specify/", ".windsurf/", ".cursor/", ".claude/"]
 select = [
     "F",    # Pyflakes (includes undefined variables)
     "E",    # pycodestyle errors
