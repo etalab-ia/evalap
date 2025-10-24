@@ -99,6 +99,7 @@ fixable = ["ALL"]
 unfixable = []
 ignore = [
     "E711", # Disable E711 specifically to prevent issues with SQLAlchemy
+    "B008", # FastAPI Depends() in defaults is intentional, not a bug (false positive)
     #"F403", # import *
     #"F841", # never used variables
 ]
