@@ -1,0 +1,118 @@
+{
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  extends: [
+    "config:base",
+    ":semanticCommitTypeAll(chore)",
+    ":dependencyDashboard",
+    ":semanticPrefixChore",
+  ],
+  python: {
+    packageRules: [
+      {
+        matchManagers: ["uv"],
+        groupName: "Python dependencies",
+        groupSlug: "python-deps",
+        schedule: ["before 6am on monday"],
+        automerge: false,
+        prConcurrentLimit: 3,
+        prHourlyLimit: 2,
+        minimumReleaseAge: "3 days",
+        rangeStrategy: "bump",
+      },
+      {
+        matchManagers: ["uv"],
+        matchDepTypes: ["devDependencies"],
+        groupName: "Python dev dependencies",
+        groupSlug: "python-dev-deps",
+        schedule: ["before 6am on wednesday"],
+        automerge: false,
+      },
+    ],
+  },
+  docker: {
+    packageRules: [
+      {
+        matchManagers: ["dockerfile", "docker-compose"],
+        groupName: "Docker dependencies",
+        groupSlug: "docker-deps",
+        schedule: ["before 6am on tuesday"],
+        automerge: false,
+        prConcurrentLimit: 2,
+        prHourlyLimit: 1,
+        "minimumReleaseAge": "3 days"
+      }
+    ]
+  },
+  github-actions: {
+    packageRules: [
+      {
+        matchManagers: ["github-actions"],
+        groupName: "GitHub Actions",
+        groupSlug: "github-actions-deps",
+        schedule: ["before 6am on thursday"],
+        automerge: false,
+        prConcurrentLimit: 2,
+        prHourlyLimit: 1,
+        "minimumReleaseAge": "7 days"
+      }
+    ]
+  },
+  npm: {
+    packageRules: [
+      {
+        matchManagers: ["npm"],
+        matchPaths: ["docs/**"],
+        groupName: "Docs npm dependencies",
+        groupSlug: "docs-npm-deps",
+        schedule: ["before 6am on monday"],
+        automerge: false,
+        prConcurrentLimit: 2,
+        prHourlyLimit: 1,
+        minimumReleaseAge: "3 days",
+      },
+      {
+        matchManagers: ["npm"],
+        matchPaths: ["docs/**"],
+        matchDepTypes: ["devDependencies"],
+        groupName: "Docs npm dev dependencies",
+        groupSlug: "docs-npm-dev-deps",
+        schedule: ["before 6am on wednesday"],
+        automerge: false,
+      },
+    ],
+  },
+  managers: ["uv", "npm", "dockerfile", "docker-compose", "github-actions"],
+  enabledManagers: ["uv", "npm", "dockerfile", "docker-compose", "github-actions"],
+  rangeStrategy: "bump",
+  rebaseWhen: "conflicted",
+  labels: ["dependencies"],
+  prBodyNotes: [
+    "This PR was created by Renovate Bot to update dependencies.",
+    "Please review the changes and ensure they don't break functionality.",
+    "For Python dependencies, this updates the uv.lock file based on pyproject.toml constraints.",
+    "For npm dependencies, this updates the docs/package-lock.json file.",
+    "For Docker dependencies, this updates base images in Dockerfiles and docker-compose files.",
+    "For GitHub Actions, this updates action versions in workflow files.",
+  ],
+  lockFileMaintenance: {
+    enabled: true,
+    schedule: ["before 6am on the first day of the month"],
+    automerge: false,
+  },
+  vulnerabilityAlerts: {
+    enabled: true,
+    schedule: ["at any time"],
+    automerge: false,
+  },
+  ignoreDeps: [],
+  force: {
+    constraints: {
+      python: ">=3.12",
+      node: ">=18.0",
+    },
+  },
+  constraints: {
+    python: ">=3.12",
+    node: ">=18.0",
+  },
+}
