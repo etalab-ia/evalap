@@ -52,7 +52,7 @@ evalap_run_expe = "evalap.scripts.run_expe.run_expe:main"
 
 [project.optional-dependencies]
 test = [
-    "pytest==8.3.3",
+    "pytest==8.4.2",
     "pytest-asyncio==0.24.0",
 ]
 
