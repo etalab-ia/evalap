@@ -240,7 +240,7 @@ def process_leaderboard_data(
     df = df.dropna(subset=[score_column])
 
     # Separate repeat and non-repeat experiments
-    df_repeat_false = df[not df["repeat"]]
+    df_repeat_false = df[~df["repeat"]]
     df_repeat_false[f"{score_column}_mean"] = df_repeat_false[score_column]
     df_repeat_false["count"] = 1
 
