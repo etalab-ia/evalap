@@ -39,6 +39,7 @@ export HF_TOKEN="Your Hugging Face token"
 ```
 
 You can create a token at [https://huggingface.co/settings/tokens](https://huggingface.co/settings/tokens). While not strictly required, having a token provides:
+
 - Higher rate limits for dataset downloads
 - Access to gated datasets (if needed)
 - Better reliability for API calls
@@ -72,6 +73,7 @@ docker compose -f compose.dev.yml up --build
 ```
 
 This will:
+
 - Build the development Docker image (includes dev dependencies like `watchdog`)
 - Start PostgreSQL database
 - Run Alembic migrations automatically
@@ -157,6 +159,7 @@ just run
 ```
 
 This will:
+
 1. **Seed the database** with initial datasets from Hugging Face (if not already present):
    - **llm-values-CIVICS**: Cultural values evaluation dataset
    - **lmsys-toxic-chat**: Toxicity detection dataset
@@ -170,11 +173,13 @@ Note: Having an `HF_TOKEN` set is recommended for better dataset download reliab
 If needed you can run each service individually:
 
 **Launch the API:**
+
 ```bash
 uvicorn evalap.api.main:app --reload
 ```
 
 **Launch the runner:**
+
 ```bash
 PYTHONPATH="." python -m evalap.runners
 # To change the default logging level:
@@ -182,6 +187,7 @@ LOG_LEVEL="DEBUG" PYTHONPATH="." python -m evalap.runners
 ```
 
 **Launch Streamlit:**
+
 ```bash
 streamlit run evalap/ui/demo_streamlit/app.py --server.runOnSave true --server.headless=true
 ```
@@ -257,3 +263,33 @@ To run unit tests, use :
 ## use ruff
 
     just format
+
+## Dependency Management
+
+This project uses [Renovate](https://renovatebot.com/) for automated dependency management.
+
+### What Renovate Does
+
+- **Python dependencies**: Automatically updates the `uv.lock` file based on `pyproject.toml` constraints
+- **Documentation dependencies**: Updates npm packages in the `docs/` folder
+- **Security updates**: Creates immediate PRs for vulnerability alerts
+- **Lock file maintenance**: Monthly cleanup of lock files
+
+### Configuration
+
+The Renovate configuration is located in `.github/renovate.json5` and includes:
+
+- **Scheduled updates**: Regular dependency checks on Mondays and Wednesdays
+- **Grouped updates**: Dependencies are grouped to reduce PR noise
+- **Version constraints**: Respects Python >=3.12 and Node >=18.0 requirements
+
+### Managing Renovate PRs
+
+1. **Review the changes**: Ensure updates don't break functionality
+2. **Test locally**: Run `just test` after merging dependency updates
+3. **Monitor schedules**:
+   - Production deps: Monday 6am UTC
+   - Development deps: Wednesday 6am UTC
+   - Lock file maintenance: 1st of month 6am UTC
+
+For more configuration options, see the [Renovate documentation](https://docs.renovatebot.com/).
