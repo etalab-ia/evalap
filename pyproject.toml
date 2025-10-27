@@ -10,7 +10,7 @@ keywords = ["IA", "LLM", "evaluation"]
 
 dependencies = [
     # API
-    "fastapi~=0.115.2",
+    "fastapi~=0.120.0",
     "SQLAlchemy~=2.0.35",
     "sqlalchemy-utils~=0.41.2",
     "alembic~=1.13.3",
