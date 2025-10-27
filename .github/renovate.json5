@@ -29,6 +29,34 @@
       },
     ],
   },
+  docker: {
+    packageRules: [
+      {
+        matchManagers: ["dockerfile", "docker-compose"],
+        groupName: "Docker dependencies",
+        groupSlug: "docker-deps",
+        schedule: ["before 6am on tuesday"],
+        automerge: false,
+        prConcurrentLimit: 2,
+        prHourlyLimit: 1,
+        "minimumReleaseAge": "3 days"
+      }
+    ]
+  },
+  github-actions: {
+    packageRules: [
+      {
+        matchManagers: ["github-actions"],
+        groupName: "GitHub Actions",
+        groupSlug: "github-actions-deps",
+        schedule: ["before 6am on thursday"],
+        automerge: false,
+        prConcurrentLimit: 2,
+        prHourlyLimit: 1,
+        "minimumReleaseAge": "7 days"
+      }
+    ]
+  },
   npm: {
     packageRules: [
       {
@@ -53,8 +81,8 @@
       },
     ],
   },
-  managers: ["uv", "npm"],
-  enabledManagers: ["uv", "npm"],
+  managers: ["uv", "npm", "dockerfile", "docker-compose", "github-actions"],
+  enabledManagers: ["uv", "npm", "dockerfile", "docker-compose", "github-actions"],
   rangeStrategy: "bump",
   rebaseWhen: "conflicted",
   labels: ["dependencies"],
@@ -63,6 +91,8 @@
     "Please review the changes and ensure they don't break functionality.",
     "For Python dependencies, this updates the uv.lock file based on pyproject.toml constraints.",
     "For npm dependencies, this updates the docs/package-lock.json file.",
+    "For Docker dependencies, this updates base images in Dockerfiles and docker-compose files.",
+    "For GitHub Actions, this updates action versions in workflow files.",
   ],
   lockFileMaintenance: {
     enabled: true,
