@@ -272,6 +272,8 @@ This project uses [Renovate](https://renovatebot.com/) for automated dependency 
 
 - **Python dependencies**: Automatically updates the `uv.lock` file based on `pyproject.toml` constraints
 - **Documentation dependencies**: Updates npm packages in the `docs/` folder
+- **Docker dependencies**: Updates base images in Dockerfiles and docker-compose files
+- **GitHub Actions**: Updates action versions in workflow files
 - **Security updates**: Creates immediate PRs for vulnerability alerts
 - **Lock file maintenance**: Monthly cleanup of lock files
 
@@ -279,7 +281,12 @@ This project uses [Renovate](https://renovatebot.com/) for automated dependency 
 
 The Renovate configuration is located in `.github/renovate.json5` and includes:
 
-- **Scheduled updates**: Regular dependency checks on Mondays and Wednesdays
+- **Scheduled updates**: Regular dependency checks throughout the week
+  - Monday: Documentation npm dependencies
+  - Tuesday: Docker dependencies
+  - Wednesday: Python dev dependencies
+  - Thursday: GitHub Actions
+  - Monthly: Lock file maintenance (1st of month)
 - **Grouped updates**: Dependencies are grouped to reduce PR noise
 - **Version constraints**: Respects Python >=3.12 and Node >=18.0 requirements
 
@@ -288,8 +295,11 @@ The Renovate configuration is located in `.github/renovate.json5` and includes:
 1. **Review the changes**: Ensure updates don't break functionality
 2. **Test locally**: Run `just test` after merging dependency updates
 3. **Monitor schedules**:
-   - Production deps: Monday 6am UTC
-   - Development deps: Wednesday 6am UTC
+   - Documentation npm deps: Monday 6am UTC
+   - Docker deps: Tuesday 6am UTC
+   - Python dev deps: Wednesday 6am UTC
+   - GitHub Actions: Thursday 6am UTC
    - Lock file maintenance: 1st of month 6am UTC
+   - Security updates: Immediate when vulnerabilities detected
 
 For more configuration options, see the [Renovate documentation](https://docs.renovatebot.com/).
