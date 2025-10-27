@@ -32,7 +32,7 @@ dependencies = [
     "rapidfuzz~=3.13.0",
     "ecologits~=0.6.2",
     "toml~=0.10.2",
-    "supervisor~=4.2.5",
+    "supervisor~=4.3.0",
     # Front
     "streamlit~=1.40.1",
     "plotly~=5.22.0",
