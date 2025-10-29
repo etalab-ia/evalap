@@ -25,9 +25,7 @@ router = APIRouter()
 
 
 def _needs_output(db_exp):
-    return not db_exp.model.has_raw_output and any(
-        "output" in metric_registry.get_metric(r.metric_name).require for r in db_exp.results
-    )
+    return not db_exp.model.has_raw_output and any("output" in metric_registry.get_metric(r.metric_name).require for r in db_exp.results)
 
 
 #
@@ -36,14 +34,12 @@ def _needs_output(db_exp):
 
 
 @router.post("/dataset", response_model=schemas.Dataset, tags=["datasets"])
-def create_dataset(
-    dataset: schemas.DatasetCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)
-):
+def create_dataset(dataset: schemas.DatasetCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     try:
         db_dataset = crud.create_dataset(db, dataset)
         return db_dataset
     except (SchemaError, ValidationError) as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except IntegrityError as e:
         return CustomIntegrityError.from_integrity_error(e.orig).to_http_response()
     except Exception as e:
@@ -56,9 +52,7 @@ def read_datasets(db: Session = Depends(get_db), current_user=Depends(get_curren
 
 
 @router.get("/dataset/{id}", response_model=schemas.Dataset | schemas.DatasetFull, tags=["datasets"])
-def read_dataset(
-    id: int, with_df: bool = False, db: Session = Depends(get_db), current_user=Depends(get_current_user)
-):
+def read_dataset(id: int, with_df: bool = False, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     dataset = crud.get_dataset(db, id)
     if dataset is None:
         raise HTTPException(status_code=410, detail="Dataset not found")
@@ -125,7 +119,7 @@ def delete_dataset(
             raise HTTPException(status_code=410, detail="Dataset not found")
         return "ok"
     except (SchemaError, ValidationError) as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except IntegrityError as e:
         return CustomIntegrityError.from_integrity_error(e.orig).to_http_response()
     except Exception as e:
@@ -134,9 +128,7 @@ def delete_dataset(
 
 # @TODO write /dataset/{id}/download_parquet
 @router.post("/dataset/{id}/upload_parquet", response_model=schemas.Dataset, tags=["datasets"])
-async def upload_parquet_dataset(
-    id: int, request: Request, db: Session = Depends(get_db), current_user=Depends(get_current_user)
-):
+async def upload_parquet_dataset(id: int, request: Request, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     """
     Endpoint to handle streaming upload of Parquet data for a specific dataset.
 
@@ -173,7 +165,7 @@ async def upload_parquet_dataset(
         # Handle any other errors during the upload process
         if os.path.exists(temp_file_path):
             os.remove(temp_file_path)
-        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}") from e
 
     # Validate the uploaded file is a valid Parquet file
     try:
@@ -198,7 +190,7 @@ async def upload_parquet_dataset(
         # If validation fails, clean up and return an error
         if os.path.exists(temp_file_path):
             os.remove(temp_file_path)
-        raise HTTPException(status_code=400, detail=f"Invalid Parquet file: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Invalid Parquet file: {str(e)}") from e
 
 
 #
@@ -222,9 +214,7 @@ def read_metrics(db: Session = Depends(get_db), current_user=Depends(get_current
     description="Launch an experiment. If a model is given, it will be use to generate the model output (answer), otherwise it will use the `output` column of the given dataset.",
     tags=["experiments"],
 )
-def create_experiment(
-    experiment: schemas.ExperimentCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)
-):
+def create_experiment(experiment: schemas.ExperimentCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     try:
         db_exp = crud.create_experiment(db, experiment)
         if _needs_output(db_exp):
@@ -235,7 +225,7 @@ def create_experiment(
         return db_exp
 
     except (SchemaError, ValidationError) as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except IntegrityError as e:
         return CustomIntegrityError.from_integrity_error(e.orig).to_http_response()
     except Exception as e:
@@ -358,9 +348,7 @@ def read_experiments(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
-    experiments = crud.get_experiments(
-        db, skip=skip, limit=limit, backward=backward, set_id=set_id, orphan=orphan
-    )
+    experiments = crud.get_experiments(db, skip=skip, limit=limit, backward=backward, set_id=set_id, orphan=orphan)
 
     if not experiments:
         raise HTTPException(status_code=410, detail="No experiments found")
@@ -393,7 +381,7 @@ def create_experimentset(
 
         return db_expset
     except (SchemaError, ValidationError) as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except IntegrityError as e:
         return CustomIntegrityError.from_integrity_error(e.orig).to_http_response()
     except Exception as e:
@@ -421,9 +409,7 @@ def patch_experimentset(
         # Check the judge_model unicity
         # --
         judge = next((e.judge_model for e in db_expset.experiments if e.judge_model), None)
-        new_judge = next(
-            (e["judge_model"] for e in (expset.get("experiments") or []) if e.get("judge_model")), None
-        )
+        new_judge = next((e["judge_model"] for e in (expset.get("experiments") or []) if e.get("judge_model")), None)
         # Judge and new_judge must be defined as we can have some experiments that won't use llm-as-a-judge model.
         if new_judge and not is_equal(judge, new_judge):
             raise HTTPException(
@@ -450,7 +436,7 @@ def patch_experimentset(
         return db_expset
 
     except (SchemaError, ValidationError) as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except IntegrityError as e:
         return CustomIntegrityError.from_integrity_error(e.orig).to_http_response()
     except Exception as e:
@@ -522,9 +508,7 @@ def retry_runs(
     if experimentset is None:
         raise HTTPException(status_code=410, detail="ExperimentSet not found")
 
-    rr = schemas.RetryRuns(
-        experiment_ids=[], result_ids=[], unfinished_experiment_ids=[], unfinished_result_ids=[]
-    )
+    rr = schemas.RetryRuns(experiment_ids=[], result_ids=[], unfinished_experiment_ids=[], unfinished_result_ids=[])
 
     # Retry failed runs (answers and metrics)
     for exp in experimentset.experiments:
@@ -590,9 +574,7 @@ def read_leaderboard(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
-    return crud.get_leaderboard(
-        db, metric_name=metric_name, dataset_name=dataset_name, judge_model=judge_model, limit=limit
-    )
+    return crud.get_leaderboard(db, metric_name=metric_name, dataset_name=dataset_name, judge_model=judge_model, limit=limit)
 
 
 #
@@ -669,9 +651,7 @@ def _generate(input: GenerateInput):
 
 
 @router.post("/generate", response_model=schemas.Answer, tags=["generate"])
-async def generate(
-    input: GenerateInput, db: Session = Depends(get_db), current_user=Depends(get_current_user)
-):
+async def generate(input: GenerateInput, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     answer = None
     think = None
     error_msg = None
@@ -721,15 +701,13 @@ async def generate(
     """,
     tags=["locust"],
 )
-def create_locustrun(
-    run: schemas.LocustRunCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)
-):
+def create_locustrun(run: schemas.LocustRunCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     try:
         db_run = crud.create_locustrun(db, run)
         return db_run
 
     except (SchemaError, ValidationError) as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except IntegrityError as e:
         return CustomIntegrityError.from_integrity_error(e.orig).to_http_response()
     except Exception as e:
@@ -754,7 +732,7 @@ def get_locustruns(
         return db_runs
 
     except (SchemaError, ValidationError) as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except IntegrityError as e:
         return CustomIntegrityError.from_integrity_error(e.orig).to_http_response()
     except Exception as e:
@@ -773,7 +751,7 @@ def get_locustrun(run_id: int, db: Session = Depends(get_db), current_user=Depen
         return db_run
 
     except (SchemaError, ValidationError) as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except IntegrityError as e:
         return CustomIntegrityError.from_integrity_error(e.orig).to_http_response()
     except Exception as e:
@@ -801,15 +779,13 @@ def get_locustrun(run_id: int, db: Session = Depends(get_db), current_user=Depen
     """,
     tags=["loadtesting"],
 )
-def create_loadtesting(
-    run: schemas.LoadTestingCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)
-):
+def create_loadtesting(run: schemas.LoadTestingCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
     try:
         db_run = crud.create_loadtesting(db, run)
         return db_run
 
     except (SchemaError, ValidationError) as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except IntegrityError as e:
         return CustomIntegrityError.from_integrity_error(e.orig).to_http_response()
     except Exception as e:
@@ -834,7 +810,7 @@ def get_loadtestings(
         return db_runs
 
     except (SchemaError, ValidationError) as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except IntegrityError as e:
         return CustomIntegrityError.from_integrity_error(e.orig).to_http_response()
     except Exception as e:
@@ -853,7 +829,7 @@ def get_loadtesting(run_id: int, db: Session = Depends(get_db), current_user=Dep
         return db_run
 
     except (SchemaError, ValidationError) as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except IntegrityError as e:
         return CustomIntegrityError.from_integrity_error(e.orig).to_http_response()
     except Exception as e:

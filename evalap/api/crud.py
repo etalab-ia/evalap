@@ -44,9 +44,7 @@ def get_model(db: Session, model_id: int) -> models.Model | None:
     return db.query(models.Model).filter(models.Model.id == model_id).first()
 
 
-def update_dataset(
-    db: Session, dataset_id: int, dataset_update: schemas.DatasetUpdate | dict
-) -> models.Dataset | None:
+def update_dataset(db: Session, dataset_id: int, dataset_update: schemas.DatasetUpdate | dict) -> models.Dataset | None:
     if isinstance(dataset_update, dict):
         dataset_update = schemas.DatasetUpdate(**dataset_update)
 
@@ -62,9 +60,7 @@ def update_dataset(
 
 
 def remove_dataset(db: Session, dataset_id: int) -> bool:
-    linked_experiments = (
-        db.query(func.count(models.Experiment.id)).filter(models.Experiment.dataset_id == dataset_id).scalar()
-    )
+    linked_experiments = db.query(func.count(models.Experiment.id)).filter(models.Experiment.dataset_id == dataset_id).scalar()
     if linked_experiments > 0:
         raise SchemaError(
             f"This dataset is linked to {linked_experiments} experiments.\n"
@@ -103,9 +99,7 @@ def get_dataset_row(
     return row
 
 
-def get_dataset_iterator(
-    db_exp: models.Experiment, columns_map: dict | None = None
-) -> Generator[tuple[int, dict], None, None]:
+def get_dataset_iterator(db_exp: models.Experiment, columns_map: dict | None = None) -> Generator[tuple[int, dict], None, None]:
     if db_exp.with_vision:
         # Parquet based dataset
         pf = pq.ParquetFile(db_exp.dataset.parquet_path)
@@ -184,9 +178,7 @@ def create_result(db: Session, result: schemas.ResultCreate) -> models.Result:
     return db_result
 
 
-def update_result(
-    db: Session, result_id: int, result_update: schemas.ResultUpdate | dict
-) -> models.Result | None:
+def update_result(db: Session, result_id: int, result_update: schemas.ResultUpdate | dict) -> models.Result | None:
     if isinstance(result_update, dict):
         result_update = schemas.ResultUpdate(**result_update)
 
@@ -241,9 +233,7 @@ def get_experiments(
     return query.offset(skip).limit(limit).options(joinedload(models.Experiment.results)).all()
 
 
-def update_experiment(
-    db: Session, experiment_id: int, experiment_update: schemas.ExperimentUpdate | dict
-) -> models.Experiment | None:
+def update_experiment(db: Session, experiment_id: int, experiment_update: schemas.ExperimentUpdate | dict) -> models.Experiment | None:
     if isinstance(experiment_update, dict):
         experiment_update = schemas.ExperimentUpdate(**experiment_update)
 
@@ -287,9 +277,7 @@ def remove_experiment(db: Session, experiment_id: int) -> bool:
 
 
 def create_experimentset(db: Session, experimentset: schemas.ExperimentSetCreate) -> models.ExperimentSet:
-    experimentset = (
-        experimentset.to_table_init(db) if isinstance(experimentset, schemas.EgBaseModel) else experimentset
-    )
+    experimentset = experimentset.to_table_init(db) if isinstance(experimentset, schemas.EgBaseModel) else experimentset
     db_expset = create_object_from_dict(db, models.ExperimentSet, experimentset)
     db.add(db_expset)
     db.commit()
@@ -297,9 +285,7 @@ def create_experimentset(db: Session, experimentset: schemas.ExperimentSetCreate
     return db_expset
 
 
-def get_experimentsets(
-    db: Session, skip: int = 0, limit: int = 100, backward: bool = False
-) -> list[models.ExperimentSet]:
+def get_experimentsets(db: Session, skip: int = 0, limit: int = 100, backward: bool = False) -> list[models.ExperimentSet]:
     query = db.query(models.ExperimentSet)
     if backward:
         query = query.order_by(models.ExperimentSet.id.desc())
@@ -312,9 +298,7 @@ def get_experimentset(db: Session, experimentset_id: int) -> models.ExperimentSe
     return db.query(models.ExperimentSet).get(experimentset_id)
 
 
-def update_experimentset(
-    db: Session, experimentset_id: int, experimentset_update: schemas.ExperimentSetUpdate | dict
-) -> models.ExperimentSet | None:
+def update_experimentset(db: Session, experimentset_id: int, experimentset_update: schemas.ExperimentSetUpdate | dict) -> models.ExperimentSet | None:
     if isinstance(experimentset_update, dict):
         experimentset_update = schemas.ExperimentSetUpdate(**experimentset_update)
 
@@ -323,9 +307,7 @@ def update_experimentset(
         return None
     # Update fields
     for key, value in vars(experimentset_update).items():
-        if key in [
-            "experiments"
-        ]:  # Solve an sa_instance error  when patching an experiment_set with given experiments...
+        if key in ["experiments"]:  # Solve an sa_instance error  when patching an experiment_set with given experiments...
             continue
         setattr(db_expset, key, value) if value is not None else None
     db.commit()
@@ -370,9 +352,7 @@ def upsert_answer(db: Session, experiment_id: int, num_line: int, answer: dict) 
 
 def upsert_observation(db: Session, result_id: int, num_line: int, observation: dict) -> models.Answer:
     # Check if the record already exists
-    db_observation = (
-        db.query(models.ObservationTable).filter_by(num_line=num_line, result_id=result_id).first()
-    )
+    db_observation = db.query(models.ObservationTable).filter_by(num_line=num_line, result_id=result_id).first()
 
     if db_observation:
         # Update the existing record
@@ -459,18 +439,14 @@ def get_leaderboard(
         )
         other_metrics = db.execute(other_metrics_query).fetchall()
 
-        other_metrics_dict = {
-            metric: float(score) if score is not None else None for metric, score in other_metrics
-        }
+        other_metrics_dict = {metric: float(score) if score is not None else None for metric, score in other_metrics}
 
         entry = schemas.LeaderboardEntry(
             experiment_id=result.experiment_id,
             experiment_name=result.experiment_name,
             model_name=result.model_name,
             dataset_name=result.dataset_name,
-            main_metric_score=float(result.main_metric_score)
-            if result.main_metric_score is not None
-            else None,
+            main_metric_score=float(result.main_metric_score) if result.main_metric_score is not None else None,
             other_metrics=other_metrics_dict,
             system_prompt=result.system_prompt,
             sampling_param={k: str(v) for k, v in (result.sampling_params or {}).items()},
@@ -498,9 +474,7 @@ def get_ops_metrics(db: Session):
     unique_observations_count = db.query(func.count(models.ObservationTable.id)).scalar()
 
     distinct_models = db.query(models.Model.name, models.Model.aliased_name).distinct().all()
-    distinct_models_list = [
-        {"name": name, "aliased_name": aliased_name} for name, aliased_name in distinct_models
-    ]
+    distinct_models_list = [{"name": name, "aliased_name": aliased_name} for name, aliased_name in distinct_models]
 
     return {
         "experiment_sets": experiment_sets_count,
@@ -547,12 +521,7 @@ def _aggregate_emissions(entries):
             "first_emission_date": None,
         }
 
-    filtered_entries = [
-        e
-        for e in entries
-        if e.emission_carbon
-        and not (isinstance(e.emission_carbon, str) and e.emission_carbon.lower() == "null")
-    ]
+    filtered_entries = [e for e in entries if e.emission_carbon and not (isinstance(e.emission_carbon, str) and e.emission_carbon.lower() == "null")]
 
     if not filtered_entries:
         return {
@@ -605,9 +574,7 @@ def get_ops_eco_answers(db: Session):
 
 
 def get_ops_eco_observation_table(db: Session):
-    observations = (
-        db.query(models.ObservationTable).filter(models.ObservationTable.emission_carbon.isnot(None)).all()
-    )
+    observations = db.query(models.ObservationTable).filter(models.ObservationTable.emission_carbon.isnot(None)).all()
     result = _aggregate_emissions(observations)
     return result
 
@@ -630,9 +597,7 @@ def get_locustrun(db: Session, run_id: int) -> models.LocustRun | None:
     return db.query(models.LocustRun).filter(models.LocustRun.id == run_id).first()
 
 
-def get_locustruns(
-    db: Session, skip: int = 0, limit: int = 100, backward: bool = False
-) -> list[models.LocustRun]:
+def get_locustruns(db: Session, skip: int = 0, limit: int = 100, backward: bool = False) -> list[models.LocustRun]:
     query = db.query(models.LocustRun)
     if backward:
         query = query.order_by(models.LocustRun.id.desc())
@@ -669,9 +634,7 @@ def remove_loadtesting(db: Session, run_id: int) -> bool:
     return True
 
 
-def get_loadtestings(
-    db: Session, skip: int = 0, limit: int = 100, backward: bool = False
-) -> list[models.LoadTesting]:
+def get_loadtestings(db: Session, skip: int = 0, limit: int = 100, backward: bool = False) -> list[models.LoadTesting]:
     query = db.query(models.LoadTesting)
     if backward:
         query = query.order_by(models.LoadTesting.id.desc())

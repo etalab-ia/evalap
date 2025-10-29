@@ -33,7 +33,7 @@ class EgBaseModel(BaseModel):
 
     def recurse_table_init(self, db: Session) -> dict:
         obj = self.model_dump()
-        for k, v in obj.items():
+        for k, _v in obj.items():
             sub_schema = getattr(self, k)
             if hasattr(sub_schema, "to_table_init"):
                 obj[k] = sub_schema.to_table_init(db)
@@ -96,8 +96,8 @@ class DatasetCreate(DatasetBase):
         # Handle dataframe
         try:
             df = pd.read_json(StringIO(self.df))
-        except ValueError:
-            raise SchemaError("'df' should be a readable dataframe. Use df.to_json()...")
+        except ValueError as e:
+            raise SchemaError("'df' should be a readable dataframe. Use df.to_json()...") from e
 
         return {
             "size": len(df),
@@ -166,9 +166,7 @@ class ModelWithKeys(Model):
 
 class ModelRaw(EgBaseModel):
     # Answers
-    output: list[str] = Field(
-        description="The sequence of answers generated for this model, ordered as the 'rows' input of the dataset you are working on."
-    )
+    output: list[str] = Field(description="The sequence of answers generated for this model, ordered as the 'rows' input of the dataset you are working on.")
     # ModelBase
     aliased_name: str = Field(
         description="A name to identify this model. The difference with the `name` parameter is that the latter must be used to identify the model name in the Openai API-compatible endpoint."
@@ -345,9 +343,7 @@ class ExperimentCreate(ExperimentBase):
                 metric_name = metric.name
                 metric_params = metric.params
 
-            results.append(
-                ResultCreate(metric_name=metric_name, metric_params=metric_params).to_table_init(db)
-            )
+            results.append(ResultCreate(metric_name=metric_name, metric_params=metric_params).to_table_init(db))
 
             # Validate Model and metric compatibility
             # --
@@ -366,9 +362,7 @@ class ExperimentCreate(ExperimentBase):
                 if require in DEBUG_EXCEPTION_REQUIRE:
                     continue
                 if require not in (dataset.columns + dataset.parquet_columns):
-                    if dataset.columns_map and dataset.columns_map.get(require) in (
-                        dataset.columns + dataset.parquet_columns
-                    ):
+                    if dataset.columns_map and dataset.columns_map.get(require) in (dataset.columns + dataset.parquet_columns):
                         # Handle columns_maps
                         continue
                     raise SchemaError(
@@ -382,10 +376,7 @@ class ExperimentCreate(ExperimentBase):
                 valid_params = set(metric_obj.required_params or []) | set(metric_obj.optional_params or [])
                 invalid_params = params - valid_params
                 if invalid_params:
-                    raise SchemaError(
-                        f"Invalid parameters for metric '{metric_name}': {invalid_params}. "
-                        f"Valid parameters are: {valid_params}"
-                    )
+                    raise SchemaError(f"Invalid parameters for metric '{metric_name}': {invalid_params}. Valid parameters are: {valid_params}")
             elif metric_obj.required_params:
                 raise SchemaError(
                     f"Metric '{metric_name}' has required parameters {metric_obj.required_params} but none were provided. "
@@ -405,12 +396,8 @@ class Experiment(ExperimentBase):
     experiment_status: ExperimentStatus
     num_try: int = Field(description="How many output/answers were attempted to be generated.")
     num_success: int = Field(description="How many output/answers were successfully generated.")
-    num_observation_try: int = Field(
-        description="How many metric observations were attempted to be generated."
-    )
-    num_observation_success: int = Field(
-        description="How many metric observations were successfully generated."
-    )
+    num_observation_try: int = Field(description="How many metric observations were attempted to be generated.")
+    num_observation_success: int = Field(description="How many metric observations were successfully generated.")
     num_metrics: int = Field(
         description="How many metrics are associated to this experiment. See the query parameter `with_results` to get the results per metrics."
     )
@@ -448,10 +435,7 @@ class ExperimentExtra(Experiment, ExperimentCreate):
 
 ExperimentUpdate = create_model(
     "ExperimentUpdate",
-    **{
-        field_name: (Optional[field.annotation], None)
-        for field_name, field in ExperimentExtra.model_fields.items()
-    },
+    **{field_name: (Optional[field.annotation], None) for field_name, field in ExperimentExtra.model_fields.items()},
     __base__=ExperimentExtra,
 )
 
@@ -520,10 +504,7 @@ class ExperimentSetExtra(ExperimentSet, ExperimentSetCreate):
 
 ExperimentSetUpdate = create_model(
     "ExperimentSetUpdate",
-    **{
-        field_name: (Optional[field.annotation], None)
-        for field_name, field in ExperimentSet.model_fields.items()
-    },
+    **{field_name: (Optional[field.annotation], None) for field_name, field in ExperimentSet.model_fields.items()},
     __base__=ExperimentSetExtra,
 )
 

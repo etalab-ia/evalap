@@ -24,9 +24,7 @@ def _fix_answer_num_count(db, db_exp, commit=True):
     counts = (
         db.query(
             func.count(models.Answer.id).label("num_try"),
-            func.count(case(((models.Answer.answer != None) & (models.Answer.error_msg == None), 1))).label(
-                "num_success"
-            ),
+            func.count(case(((models.Answer.answer != None) & (models.Answer.error_msg == None), 1))).label("num_success"),
         )
         .filter(models.Answer.experiment_id == db_exp.id)
         .one()
@@ -106,9 +104,7 @@ def dispatch_tasks(db, db_exp, message_type: MessageType):
         # --
         # iterate metrics and dataset
         if len(db_exp.answers) == 0:
-            raise NotImplementedError(
-                "No answers available to generate observations for this experiment: %s" % db_exp.id
-            )
+            raise NotImplementedError("No answers available to generate observations for this experiment: %s" % db_exp.id)
         db_exp.experiment_status = "running_metrics"
         db.commit()
 
@@ -128,11 +124,7 @@ def dispatch_tasks(db, db_exp, message_type: MessageType):
         # Iterate dataset and metrics
         for num_line, row in crud.get_dataset_iterator(db_exp):
             # Retrieve the answer
-            a = (
-                db.query(models.Answer)
-                .filter(models.Answer.experiment_id == db_exp.id, models.Answer.num_line == num_line)
-                .first()
-            )
+            a = db.query(models.Answer).filter(models.Answer.experiment_id == db_exp.id, models.Answer.num_line == num_line).first()
 
             for result in db_exp.results:
                 if result.id in blocked_metrics:
@@ -272,11 +264,7 @@ def dispatch_retries(db, retry_runs: schemas.RetryRuns):
             dataset_size = db_exp.dataset.size
 
         # Unfinished
-        num_lines = (
-            db.query(models.ObservationTable.num_line)
-            .filter(models.ObservationTable.result_id == resultid)
-            .all()
-        )
+        num_lines = db.query(models.ObservationTable.num_line).filter(models.ObservationTable.result_id == resultid).all()
         num_lines = [num_line[0] for num_line in num_lines]
         num_lines_missing = [i for i in range(dataset_size) if i not in num_line_added and i not in num_lines]
         for num_line in num_lines_missing:

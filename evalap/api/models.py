@@ -200,9 +200,7 @@ class Answer(Base):
     experiment_id = Column(Integer, ForeignKey("experiments.id"))
     experiment = relationship("Experiment", back_populates="answers")
 
-    __table_args__ = (
-        UniqueConstraint("num_line", "experiment_id", name="_answer_num_line_unique_constraint"),
-    )
+    __table_args__ = (UniqueConstraint("num_line", "experiment_id", name="_answer_num_line_unique_constraint"),)
 
 
 class Experiment(Base):
