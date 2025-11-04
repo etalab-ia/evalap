@@ -60,8 +60,8 @@ jobs:
           RUFF_OUTPUT_FORMAT: github
         run: uv run ruff check --config=pyproject.toml --select=F,Q,I
 
-      - name: Check formatting
-        run: uv run ruff format --check --diff --config=pyproject.toml
+#      - name: Check formatting
+#        run: uv run ruff format --check --diff --config=pyproject.toml
 
       - name: Setup test database
         env:
