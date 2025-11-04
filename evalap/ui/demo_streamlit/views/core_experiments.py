@@ -33,7 +33,7 @@ def _fetch_experimentset(expid, partial_expset, refresh=False):
     if refresh:
         __fetch_experimentset.clear(expid, partial_expset)
         if not partial_expset:
-            partial_expset = fetch("get", f"/experiment_sets/{expid}")
+            partial_expset = fetch("get", f"/experiment_set/{expid}")
     return __fetch_experimentset(expid, partial_expset)
 
 
@@ -949,11 +949,27 @@ def run_core_experiments(compliance=False):
         if expid.isdigit():
             experimentset = next((x for x in experiment_sets if x["id"] == int(expid)), None)
             force_refresh = experimentset is None
-            experimentset = _fetch_experimentset(
-                expid,
-                experimentset,
-                refresh=force_refresh or st.session_state.get("refresh_experimentset"),
-            )
+            if force_refresh:
+                if not compliance:
+                    # In non-compliance view, do not allow opening a filtered-out (likely compliance) set
+                    st.error("This experiment set is not available in this view.")
+                else:
+                    # In compliance view, do not allow opening a non-compliance set selected elsewhere
+                    st.error("This experiment set is not available.")
+                # Clean the persisted selection in both cases
+                st.session_state["expset_id"] = None
+                st.query_params.pop("expset")
+                st.rerun()
+            try:
+                experimentset = _fetch_experimentset(
+                    expid,
+                    experimentset,
+                    refresh=force_refresh or st.session_state.get("refresh_experimentset"),
+                )
+            except ValueError as ve:
+                st.error(f"Failed to fetch experiment set: {ve}")
+                return
+
         elif expid == "orphan" and not compliance:
             experimentset = {
                 "id": None,
@@ -1061,7 +1077,7 @@ def run_core_experiments(compliance=False):
     else:
         col1, col2 = st.columns([3, 1])
         with col1:
-            st.title("Experiments")
+            st.title("Compliance" if compliance else "Experiments")
         with col2:
             if st.button("🔄 Refresh", key="refresh_main"):
                 st.rerun()
