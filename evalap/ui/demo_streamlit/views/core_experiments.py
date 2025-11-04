@@ -410,169 +410,191 @@ def update_metrics_in_url(selected_metrics, available_metrics):
 
 
 def display_experiment_set_score(experimentset, experiments_df):
-    """Displays the scores for the set of experiments."""
+    """Displays the scores for the set of experiments, grouped by dataset."""
     experiments = experimentset.get("experiments", [])
     _rename_model_variants(experiments)
-    size = experiments[0]["dataset"]["size"]
 
-    available_judges = sorted(
-        list(set(expe["judge_model"]["name"] for expe in experiments if expe.get("judge_model")))
-    ) or ["No_judge_found"]
-
-    rows = []
-    rows_support = []
+    # Group experiments by dataset name
+    experiments_by_dataset = {}
     for expe in experiments:
-        row = {}
-        row_support = {}
+        dataset_name = expe.get("dataset", {}).get("name", "Unknown Dataset")
+        if dataset_name not in experiments_by_dataset:
+            experiments_by_dataset[dataset_name] = []
+        experiments_by_dataset[dataset_name].append(expe)
 
-        # Determine model name
-        if expe.get("_model") or expe.get("model"):
-            model_name = expe.get("_model") or expe["model"]["aliased_name"] or expe["model"]["name"]
-        else:
-            model_name = f"Undefined model ({expe['name']})"
-        row["model"] = model_name
-        row_support["model"] = model_name
+    # Loop through each dataset group
+    for i, (dataset_name, dataset_experiments) in enumerate(experiments_by_dataset.items()):
+        # Get dataset size from first experiment in the group
+        size = dataset_experiments[0]["dataset"].get("size", "Unknown")
 
-        # Aggregate results/scores
-        for result in expe.get("results", []):
-            metric_name = result.get("metric_aliased_name") or result["metric_name"]
-            scores = [x["score"] for x in result["observation_table"] if pd.notna(x.get("score"))]
-            if scores:
-                row[f"{metric_name}"] = np.mean(scores)
-                row_support[f"{metric_name}_support"] = len(scores)
+        # Display dataset header
+        st.markdown(f"###### Dataset: **{dataset_name}** (Size: {size})")
 
-        rows.append(row)
-        rows_support.append(row_support)
+        available_judges = sorted(
+            list(set(expe["judge_model"]["name"] for expe in dataset_experiments if expe.get("judge_model")))
+        ) or ["No_judge_found"]
 
-    if not rows:
-        st.error("No valid experiment results found")
-        return
+        rows = []
+        rows_support = []
+        for expe in dataset_experiments:
+            row = {}
+            row_support = {}
 
-    df = pd.DataFrame(rows)
-    df = _sort_columns(df, [])
+            # Determine model name
+            if expe.get("_model") or expe.get("model"):
+                model_name = expe.get("_model") or expe["model"]["aliased_name"] or expe["model"]["name"]
+            else:
+                model_name = f"Undefined model ({expe['name']})"
+            row["model"] = model_name
+            row_support["model"] = model_name
 
-    if "model" not in df.columns:
-        df["model"] = [expe.get("name", "Unknown Model") for expe in experiments]
+            # Aggregate results/scores
+            for result in expe.get("results", []):
+                metric_name = result.get("metric_aliased_name") or result["metric_name"]
+                scores = [x["score"] for x in result["observation_table"] if pd.notna(x.get("score"))]
+                if scores:
+                    row[f"{metric_name}"] = np.mean(scores)
+                    row_support[f"{metric_name}_support"] = len(scores)
 
-    try:
-        has_repeat, df = _format_experiments_score_df(experiments, df)
-    except (ValueError, TypeError):
-        st.error("No valid result found, try again later...")
-        return
+            rows.append(row)
+            rows_support.append(row_support)
 
-    df_support = pd.DataFrame(rows_support)
-    has_failed = _check_support_variation(df_support)
-    df_support = _sort_columns(df_support, [])
-    _, df_support = _format_experiments_score_df(experiments, df_support)
+        if not rows:
+            st.warning(f"No valid experiment results found for dataset: {dataset_name}")
+            continue
 
-    _sort_score_df(df, df_support)
+        df = pd.DataFrame(rows)
+        df = _sort_columns(df, [])
 
-    # Metric filter
-    available_metrics = [col for col in df.columns if col not in ["model", "Id"]]
+        if "model" not in df.columns:
+            df["model"] = [expe.get("name", "Unknown Model") for expe in dataset_experiments]
 
-    # Initialisation from URL
-    default_selected_metrics = init_metrics_filter_from_url(available_metrics)
+        try:
+            has_repeat, df = _format_experiments_score_df(dataset_experiments, df)
+        except (ValueError, TypeError):
+            st.error(f"No valid result found for dataset: {dataset_name}, try again later...")
+            continue
 
-    selected_metrics = st.multiselect(
-        "Select metrics to display",
-        options=available_metrics,
-        default=default_selected_metrics,
-        key="metrics_filter",
-    )
+        df_support = pd.DataFrame(rows_support)
+        has_failed = _check_support_variation(df_support)
+        df_support = _sort_columns(df_support, [])
+        _, df_support = _format_experiments_score_df(dataset_experiments, df_support)
 
-    # Update URL
-    current_url_metrics = init_metrics_filter_from_url(available_metrics)
-    if set(selected_metrics) != set(current_url_metrics):
-        update_metrics_in_url(selected_metrics, available_metrics)
+        _sort_score_df(df, df_support)
 
-    # Style for the multiselect input
-    st.markdown(
-        """
-                <style>
-                /* Light mode */
-                @media (prefers-color-scheme: light) {
-                    .stMultiSelect div[data-baseweb="select"] span[data-baseweb="tag"] {
-                        background-color: azure !important;
-                        color: black !important;
+        # Metric filter
+        available_metrics = [col for col in df.columns if col not in ["model", "Id"]]
+
+        # Initialisation from URL (with dataset-specific key)
+        default_selected_metrics = init_metrics_filter_from_url(available_metrics)
+
+        selected_metrics = st.multiselect(
+            "Select metrics to display",
+            options=available_metrics,
+            default=default_selected_metrics,
+            key=f"metrics_filter_{dataset_name}",  # Unique key per dataset
+        )
+
+        # Update URL
+        current_url_metrics = init_metrics_filter_from_url(available_metrics)
+        if set(selected_metrics) != set(current_url_metrics):
+            update_metrics_in_url(selected_metrics, available_metrics)
+
+        # Style for the multiselect input
+        st.markdown(
+            """
+                    <style>
+                    /* Light mode */
+                    @media (prefers-color-scheme: light) {
+                        .stMultiSelect div[data-baseweb="select"] span[data-baseweb="tag"] {
+                            background-color: azure !important;
+                            color: black !important;
+                        }
                     }
-                }
-                /* Dark mode */
-                @media (prefers-color-scheme: dark) {
-                    .stMultiSelect div[data-baseweb="select"] span[data-baseweb="tag"] {
-                        background-color: midnightblue;
-                        color: white !important;
+                    /* Dark mode */
+                    @media (prefers-color-scheme: dark) {
+                        .stMultiSelect div[data-baseweb="select"] span[data-baseweb="tag"] {
+                            background-color: midnightblue;
+                            color: white !important;
+                        }
                     }
-                }
-                </style>
-                """,
-        unsafe_allow_html=True,
-    )
+                    </style>
+                    """,
+            unsafe_allow_html=True,
+        )
 
-    columns_to_show = ["model"] + selected_metrics
-    df_filtered = df[columns_to_show]
+        columns_to_show = ["model"] + selected_metrics
+        df_filtered = df[columns_to_show]
 
-    support_columns_to_show = ["model"] + [
-        f"{metric}_support" for metric in selected_metrics if f"{metric}_support" in df_support.columns
-    ]
-    df_support_filtered = df_support[support_columns_to_show]
+        support_columns_to_show = ["model"] + [
+            f"{metric}_support" for metric in selected_metrics if f"{metric}_support" in df_support.columns
+        ]
+        df_support_filtered = df_support[support_columns_to_show]
 
-    # To highlight min/max values in each column
-    def highlight_min_max(df):
-        # Create an empty DataFrame with the same shape as our original
-        highlight_df = pd.DataFrame("", index=df.index, columns=df.columns)
+        # To highlight min/max values in each column
+        def highlight_min_max(df):
+            # Create an empty DataFrame with the same shape as our original
+            highlight_df = pd.DataFrame("", index=df.index, columns=df.columns)
 
-        inverse_highlight = ["generation_time", "judge_rambling"]
+            inverse_highlight = ["generation_time", "judge_rambling"]
 
-        # For each column, find the min and max values and style them
-        for col in df.columns:
-            if col in ["id", "Id", "model"]:
-                continue
+            # For each column, find the min and max values and style them
+            for col in df.columns:
+                if col in ["id", "Id", "model"]:
+                    continue
 
-            col_means = df[col].apply(_extract_mean)
-            if col_means.dtype in [np.float64, np.int64]:
-                max_idx = col_means.idxmax()
-                min_idx = col_means.idxmin()
+                col_means = df[col].apply(_extract_mean)
+                if col_means.dtype in [np.float64, np.int64]:
+                    max_idx = col_means.idxmax()
+                    min_idx = col_means.idxmin()
 
-                if col in inverse_highlight:
-                    highlight_df.loc[max_idx, col] = "font-weight: bold; color: red"
-                    highlight_df.loc[min_idx, col] = "font-weight: bold; color: green"
-                else:
-                    highlight_df.loc[max_idx, col] = "font-weight: bold; color: green"
-                    highlight_df.loc[min_idx, col] = "font-weight: bold; color: red"
+                    if col in inverse_highlight:
+                        highlight_df.loc[max_idx, col] = "font-weight: bold; color: red"
+                        highlight_df.loc[min_idx, col] = "font-weight: bold; color: green"
+                    else:
+                        highlight_df.loc[max_idx, col] = "font-weight: bold; color: green"
+                        highlight_df.loc[min_idx, col] = "font-weight: bold; color: red"
 
-        return highlight_df
+            return highlight_df
 
-    # Show
-    # --
-    col1, col2 = st.columns([6, 2])
-    with col1:
-        text = "**Score:** Averaged score on experiments metrics"
-        if has_repeat:
-            text += ' <em style="font-size:0.85rem;">(aggregated on model repetition)</em>'
-        st.markdown(text, unsafe_allow_html=True)
-    with col2:
-        st.write(f"**Judge model:** {available_judges[0] if available_judges else 'No judge found'}")
+        # Show
+        # --
+        col1, col2 = st.columns([6, 2])
+        with col1:
+            text = "**Score:** Averaged score on experiments metrics"
+            if has_repeat:
+                text += ' <em style="font-size:0.85rem;">(aggregated on model repetition)</em>'
+            st.markdown(text, unsafe_allow_html=True)
+        with col2:
+            st.write(f"**Judge model:** {available_judges[0] if available_judges else 'No judge found'}")
 
-    if len(available_judges) > 1:
-        st.warning(f"Multiple judge models found: {', '.join(available_judges)}")
+        if len(available_judges) > 1:
+            st.warning(f"Multiple judge models found: {', '.join(available_judges)}")
 
-    float_columns = df_filtered.select_dtypes(include=["float"]).columns
-    st.dataframe(
-        df_filtered.style.apply(highlight_min_max, axis=None).format("{:.2f}", subset=float_columns),
-        use_container_width=True,
-        hide_index=True,
-        column_config={"Id": st.column_config.TextColumn(width="small")},
-    )
-
-    if has_failed:
-        st.write("---")
-        st.write(f"**Support:** the numbers of item on which the metrics is computed (total items = {size})")
+        float_columns = df_filtered.select_dtypes(include=["float"]).columns
         st.dataframe(
-            df_support_filtered,
+            df_filtered.style.apply(highlight_min_max, axis=None).format("{:.2f}", subset=float_columns),
             use_container_width=True,
             hide_index=True,
             column_config={"Id": st.column_config.TextColumn(width="small")},
         )
+
+        if has_failed:
+            st.write("---")
+            st.write(
+                f"**Support:** the numbers of item on which the metrics is computed (total items = {size})"
+            )
+            st.dataframe(
+                df_support_filtered,
+                use_container_width=True,
+                hide_index=True,
+                column_config={"Id": st.column_config.TextColumn(width="small")},
+            )
+
+        # Add some spacing between datasets
+        st.markdown("<br>", unsafe_allow_html=True)
+        if i > 0 and i < len(dataset_experiments) - 1:
+            st.markdown("---")
 
 
 def count_unique_models_and_metrics(exp_set: dict[str, any]) -> tuple[int, int]:

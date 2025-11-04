@@ -27,8 +27,22 @@ Install [just](https://just.systems) to run project-specific commands. You will 
 At a minimum, the project needs the following API key to be set perform LLM based metrics:
 
 ```bash
-export OPENAI_API_KEY="You secret key"
+export OPENAI_API_KEY="Your secret key"
 ```
+
+### Recommended: Hugging Face Token
+
+For downloading datasets from Hugging Face (used during database seeding), it's recommended to set a Hugging Face token:
+
+```bash
+export HF_TOKEN="Your Hugging Face token"
+```
+
+You can create a token at [https://huggingface.co/settings/tokens](https://huggingface.co/settings/tokens). While not strictly required, having a token provides:
+
+- Higher rate limits for dataset downloads
+- Access to gated datasets (if needed)
+- Better reliability for API calls
 
 The environement variables can also be defined in a `.env` file at the root of the project. See the `.env.example` file for an example.
 
@@ -59,6 +73,7 @@ docker compose -f compose.dev.yml up --build
 ```
 
 This will:
+
 - Build the development Docker image (includes dev dependencies like `watchdog`)
 - Start PostgreSQL database
 - Run Alembic migrations automatically
@@ -143,18 +158,28 @@ just run
 # or explicitly: just run local
 ```
 
-This will start all three services in parallel with colored output and hot reloading.
+This will:
+
+1. **Seed the database** with initial datasets from Hugging Face (if not already present):
+   - **llm-values-CIVICS**: Cultural values evaluation dataset
+   - **lmsys-toxic-chat**: Toxicity detection dataset
+   - **DECCP**: Chinese censorship benchmark
+2. Start all three services in parallel with colored output and hot reloading
+
+Note: Having an `HF_TOKEN` set is recommended for better dataset download reliability.
 
 #### Run Services Separately
 
 If needed you can run each service individually:
 
 **Launch the API:**
+
 ```bash
 uvicorn evalap.api.main:app --reload
 ```
 
 **Launch the runner:**
+
 ```bash
 PYTHONPATH="." python -m evalap.runners
 # To change the default logging level:
@@ -162,6 +187,7 @@ LOG_LEVEL="DEBUG" PYTHONPATH="." python -m evalap.runners
 ```
 
 **Launch Streamlit:**
+
 ```bash
 streamlit run evalap/ui/demo_streamlit/app.py --server.runOnSave true --server.headless=true
 ```
@@ -237,3 +263,43 @@ To run unit tests, use :
 ## use ruff
 
     just format
+
+## Dependency Management
+
+This project uses [Renovate](https://renovatebot.com/) for automated dependency management.
+
+### What Renovate Does
+
+- **Python dependencies**: Automatically updates the `uv.lock` file based on `pyproject.toml` constraints
+- **Documentation dependencies**: Updates npm packages in the `docs/` folder
+- **Docker dependencies**: Updates base images in Dockerfiles and docker-compose files
+- **GitHub Actions**: Updates action versions in workflow files
+- **Security updates**: Creates immediate PRs for vulnerability alerts
+- **Lock file maintenance**: Monthly cleanup of lock files
+
+### Configuration
+
+The Renovate configuration is located in `.github/renovate.json5` and includes:
+
+- **Scheduled updates**: Regular dependency checks throughout the week
+  - Monday: Documentation npm dependencies
+  - Tuesday: Docker dependencies
+  - Wednesday: Python dev dependencies
+  - Thursday: GitHub Actions
+  - Monthly: Lock file maintenance (1st of month)
+- **Grouped updates**: Dependencies are grouped to reduce PR noise
+- **Version constraints**: Respects Python >=3.12 and Node >=18.0 requirements
+
+### Managing Renovate PRs
+
+1. **Review the changes**: Ensure updates don't break functionality
+2. **Test locally**: Run `just test` after merging dependency updates
+3. **Monitor schedules**:
+   - Documentation npm deps: Monday 6am UTC
+   - Docker deps: Tuesday 6am UTC
+   - Python dev deps: Wednesday 6am UTC
+   - GitHub Actions: Thursday 6am UTC
+   - Lock file maintenance: 1st of month 6am UTC
+   - Security updates: Immediate when vulnerabilities detected
+
+For more configuration options, see the [Renovate documentation](https://docs.renovatebot.com/).
