@@ -276,10 +276,10 @@ publish:
   uv publish
 
 format:
-  ruff format --config=pyproject.toml --exclude '.cursor,.specify,.windsurf' .
+  ruff format --config=pyproject.toml --exclude 'evalap/api/alembic/versions/,notebooks/,.cursor/,.specify/,.windsurf/' .
 
 lint:
-  ruff check --config=pyproject.toml --fix --exclude '.cursor,.specify,.windsurf' .
+  ruff check --config=pyproject.toml --fix --exclude 'evalap/api/alembic/versions/,notebooks/,.cursor/,.specify/,.windsurf/' .
 
 sync:
   uv sync --all-extras

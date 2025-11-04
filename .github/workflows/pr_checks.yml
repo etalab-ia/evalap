@@ -59,10 +59,10 @@ jobs:
       #  run: uv run pre-commit run --all-files
 
       - name: Lint with ruff
-        run: uv run ruff check --output-format=github --config=pyproject.toml --select=F,Q,I --exclude=.cursor/,.specify/,.windsurf/
+        run: uv run ruff check --output-format=github --config=pyproject.toml --select=F,Q,I --exclude=evalap/api/alembic/versions/,notebooks/,.cursor/,.specify/,.windsurf/
 
       - name: Check formatting
-        run: uv run ruff format --check --diff --config=pyproject.toml --exclude=.cursor/,.specify/,.windsurf/
+        run: uv run ruff format --check --diff --config=pyproject.toml --exclude=evalap/api/alembic/versions/,notebooks/,.cursor/,.specify/,.windsurf/
 
       - name: Setup test database
         env:
