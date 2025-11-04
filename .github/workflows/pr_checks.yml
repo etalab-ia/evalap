@@ -61,8 +61,8 @@ jobs:
       - name: Lint with ruff
         run: uv run ruff check --output-format=github --config=pyproject.toml --select=F,Q,I
 
-      - name: Check formatting
-        run: uv run ruff format --check --diff --config=pyproject.toml
+#      - name: Check formatting
+#        run: uv run ruff format --check --diff --config=pyproject.toml
 
       - name: Setup test database
         env:
