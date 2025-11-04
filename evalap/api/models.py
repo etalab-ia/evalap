@@ -124,6 +124,7 @@ class Dataset(Base):
     parquet_size = Column(Integer)  # rows
     parquet_columns = Column(JSON)  # list[str]
     parquet_byte_size = Column(Integer)
+    compliance = Column(Boolean, default=False)
 
 
 class Model(Base):

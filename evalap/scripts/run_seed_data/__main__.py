@@ -40,6 +40,7 @@ def create_civics_dataset(db: Session) -> None:
         df=df_civics.to_json(),
         default_metric="bias",
         columns_map={"query": "Statement"},
+        compliance=True,
     )
 
     created = crud.create_dataset(db, dataset)
@@ -73,6 +74,7 @@ def create_toxic_chat_dataset(db: Session) -> None:
         df=df_toxic_chat.to_json(),
         default_metric="toxicity",
         columns_map={"query": "user_input"},
+        compliance=True,
     )
 
     created = crud.create_dataset(db, dataset)
@@ -103,6 +105,7 @@ def create_deccp_dataset(db: Session) -> None:
         df=df_censored.to_json(),
         default_metric="answer_relevancy",
         columns_map={"query": "text"},
+        compliance=True,
     )
 
     created = crud.create_dataset(db, dataset)
