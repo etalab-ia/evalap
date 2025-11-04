@@ -10,13 +10,12 @@ repos:
             --fix,
             --exit-non-zero-on-fix,
             --config=pyproject.toml,
-            --exclude=evalap/api/alembic/versions/,notebooks/,.cursor/,.specify/,.windsurf/,
             "--select=F,Q,I"
           ]
       # Run the formatter
       - id: ruff-format
         types_or: [python, pyi]
-        args: [--config=pyproject.toml, --exclude=evalap/api/alembic/versions/,notebooks/,.cursor/,.specify/,.windsurf/]
+        args: [--config=pyproject.toml]
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
