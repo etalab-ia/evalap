@@ -10,12 +10,13 @@ repos:
             --fix,
             --exit-non-zero-on-fix,
             --config=pyproject.toml,
+            --exclude=.cursor/,.specify/,.windsurf/,
             "--select=F,Q,I"
           ]
       # Run the formatter
       - id: ruff-format
         types_or: [python, pyi]
-        args: [--config=pyproject.toml]
+        args: [--config=pyproject.toml, --exclude=.cursor/,.specify/,.windsurf/]
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0
@@ -39,5 +40,7 @@ repos:
       - id: check-yaml
       # Make sure that text files end in a newline
       - id: end-of-file-fixer
+        exclude: '^(\.cursor/|\.specify/|\.windsurf/)'
       # Remove trailing whitespace
       - id: trailing-whitespace
+        exclude: '^(\.cursor/|\.specify/|\.windsurf/)'
