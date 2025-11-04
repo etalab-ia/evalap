@@ -1,9 +1,10 @@
-<!-- Sync Impact Report: Constitution v2.1.0 (TDD Principle Addition)
-- Version: 2.0.0 → 2.1.0 (MINOR: Added Principle VIII for Test-Driven Development)
-- Added: Principle VIII (Test-Driven Development) with comprehensive TDD guidance
-- Sections: Test Organization, Test Coverage Requirements, Mocking & Isolation, Test Execution, Assertion Patterns
-- Rationale: Formalize existing TDD practices observed in tests/ directory structure
-- Templates requiring updates: ✅ AGENTS.md (added TDD principle to quick reference and testing section)
+<!-- Sync Impact Report: Constitution v2.2.0 (Spec-Kit IDE Integration)
+- Version: 2.1.0 → 2.2.0 (MINOR: Added Spec-Kit IDE Integration support)
+- Added: IDE integration for Cursor, Windsurf, and Claude with spec-kit workflows
+- Directories: .claude/, .cursor/, .specify/, .windsurf/ (all excluded from formatting/linting)
+- Rationale: Formalize spec-kit integration as core development infrastructure
+- Configuration: Single source of truth in pyproject.toml for all exclusions
+- Templates requiring updates: ✅ AGENTS.md (add IDE integration section)
 - Follow-up: None
 -->
 
