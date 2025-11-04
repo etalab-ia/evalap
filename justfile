@@ -276,10 +276,10 @@ publish:
   uv publish
 
 format:
-  ruff format --config=pyproject.toml .
+  ruff format --config=pyproject.toml --exclude '.cursor,.specify,.windsurf' .
 
 lint:
-  ruff check --config=pyproject.toml --fix .
+  ruff check --config=pyproject.toml --fix --exclude '.cursor,.specify,.windsurf' .
 
 sync:
   uv sync --all-extras
