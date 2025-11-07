@@ -385,10 +385,6 @@ test-pr:
   done
 
   echo ""
-  echo "🔄 Running database migrations..."
-  alembic -c evalap/api/alembic.ini upgrade head
-
-  echo ""
   echo "🚀 Starting EvalAP services..."
   echo ""
   echo "📍 Access the application at:"
