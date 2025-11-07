@@ -92,9 +92,9 @@ All tasks updated to use pure OpenTofu approach:
 
 ### Infrastructure Validation for User Story 1
 
-- [ ] T013 [P] [US1] Create staging environment validation test in tests/infra/test_staging_deployment.py
-- [ ] T014 [P] [US1] Create service isolation test in tests/infra/test_environment_isolation.py
-- [ ] T015 [P] [US1] Create deployment rollback test in tests/infra/test_staging_rollback.py
+- [x] T013 [P] [US1] Create staging environment validation test in tests/infra/test_staging_deployment.py
+- [x] T014 [P] [US1] Create service isolation test in tests/infra/test_environment_isolation.py
+- [x] T015 [P] [US1] Create deployment rollback test in tests/infra/test_staging_rollback.py
 
 ### Implementation for User Story 1
 
