@@ -340,18 +340,46 @@ test-branch:
   fi
 
   echo ""
-  echo "🗄️  Running database migrations..."
+  echo "🗄️  Starting PostgreSQL..."
+  docker compose -f compose.dev.yml up -d postgres
+
+  echo "⏳ Waiting for PostgreSQL to be ready..."
+  for i in {1..30}; do
+    if docker compose -f compose.dev.yml exec -T postgres pg_isready -U postgres > /dev/null 2>&1; then
+      echo "✅ PostgreSQL is ready"
+      break
+    fi
+    if [ $i -eq 30 ]; then
+      echo "❌ PostgreSQL failed to start"
+      exit 1
+    fi
+    sleep 1
+  done
+
+  echo ""
+  echo "🔄 Running database migrations..."
   alembic -c evalap/api/alembic.ini upgrade head
 
   echo ""
-  echo "🚀 Starting EvalAP..."
+  echo "🚀 Starting EvalAP services..."
   echo ""
   echo "📍 Access the application at:"
   echo "   🎨 UI: http://localhost:8501"
   echo "   📚 API Docs: http://localhost:8000/docs"
   echo ""
-  echo "⏹️  Press Ctrl+C to stop"
+  echo "⏹️  Press Ctrl+C to stop all services"
   echo ""
 
-  # Run the application
+  # Function to cleanup all services
+  cleanup() {
+    echo ""
+    echo "🛑 Stopping all services..."
+    docker compose -f compose.dev.yml down
+    exit 0
+  }
+
+  # Set trap for Ctrl+C
+  trap cleanup SIGINT SIGTERM
+
+  # Run the full application stack
   docker compose -f compose.dev.yml up --build
