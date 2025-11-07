@@ -1,7 +1,7 @@
 # Implementation Plan: Scaleway Infrastructure Setup with Pure Terraform
 
-**Branch**: `001-scaleway-infra` | **Date**: 2025-11-07 | **Spec**: [spec.md](spec.md)
-**Input**: Feature specification from `/specs/001-scaleway-infra/spec.md`
+**Branch**: `001-scaleway-infra-tf` | **Date**: 2025-11-07 | **Spec**: [spec.md](spec.md)
+**Input**: Feature specification from `/specs/001-scaleway-infra-tf/spec.md`
 
 **Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/commands/plan.md` for the execution workflow.
 
@@ -29,14 +29,14 @@ Replace CDKTF infrastructure setup with **Pure Terraform** for simpler, more rel
 
 **M1. EU AI Act Compliance**: ✅ PASSED - Infrastructure enables evaluation of high-risk AI systems without being high-risk itself
 **M2. RGAA Accessibility Compliance**: ✅ PASSED - Infrastructure supports UI accessibility requirements (Streamlit will handle RGAA compliance)
-**M3. Open Source & Digital Commons**: ✅ PASSED - Using open source OpenTofu/Terragrunt, avoiding vendor lock-in
+**M3. Open Source & Digital Commons**: ✅ PASSED - Using open source Terraform, avoiding vendor lock-in
 **M4. DSFR Design System Compliance**: ✅ PASSED - Infrastructure supports DSFR-compliant UI deployment
 **M5. ProConnect Authentication Standard**: ✅ PASSED - Infrastructure enables ProConnect integration for government deployments
 
 ### ✅ Core Principles
 
 **I. API-First Design**: ✅ PASSED - Infrastructure supports FastAPI backend deployment
-**II. Modular Architecture**: ✅ PASSED - Terragrunt modules align with modular approach
+**II. Modular Architecture**: ✅ PASSED - Terraform modules align with modular approach
 **III. Metric Registry Pattern**: ✅ PASSED - Infrastructure supports existing metric plugin system
 **IV. Async-Ready Execution**: ✅ PASSED - Infrastructure enables ZeroMQ runner deployment
 **V. Observability & Logging**: ✅ PASSED - Scaleway Cockpit integration for monitoring
@@ -69,8 +69,8 @@ Replace CDKTF infrastructure setup with **Pure Terraform** for simpler, more rel
 
 **Phase 1 Design Validation**: All design decisions continue to align with constitution requirements:
 
-- **Open Source Compliance**: ✅ OpenTofu, Terragrunt, and Scaleway provider are all open source
-- **Modular Architecture**: ✅ Terragrunt modules and hierarchical configuration support modularity
+- **Open Source Compliance**: ✅ Terraform and Scaleway provider are all open source
+- **Modular Architecture**: ✅ Terraform modules and hierarchical configuration support modularity
 - **Security Standards**: ✅ IAM Secret Manager, least privilege access, and encryption implemented
 - **API-First Support**: ✅ Infrastructure enables FastAPI deployment and scaling
 - **Observability**: ✅ Scaleway Cockpit integration provides comprehensive monitoring
@@ -83,7 +83,7 @@ Replace CDKTF infrastructure setup with **Pure Terraform** for simpler, more rel
 ### Documentation (this feature)
 
 ```text
-specs/001-scaleway-infra/
+specs/001-scaleway-infra-tf/
 ├── plan.md              # This file (/speckit.plan command output)
 ├── research.md          # Phase 0 output (/speckit.plan command)
 ├── data-model.md        # Phase 1 output (/speckit.plan command)
@@ -144,10 +144,11 @@ infra/
 │   ├── security.md             # Security practices
 │   ├── deployment.md           # Deployment guide
 │   └── troubleshooting.md      # Troubleshooting guide
-└── tests/                      # Test suites
-    ├── test_staging_deployment.py
-    ├── test_production_deployment.py
-    ├── test_environment_isolation.py
+└── tests/                      # Test suites (following Constitution Principle VIII - TDD)
+    ├── infra/                  # Infrastructure tests mirroring infra/ structure
+    │   ├── test_staging_deployment.py
+    │   ├── test_production_deployment.py
+    │   ├── test_environment_isolation.py
     └── conftest.py
 ```
 

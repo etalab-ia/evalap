@@ -5,7 +5,7 @@
 
 ## Technology Decisions
 
-### Terraform vs Terragrunt vs OpenTofu
+### Terraform vs Pure Terraform Approach
 
 **Decision**: Use Pure Terraform (after extensive testing revealed Terragrunt is completely unusable)
 
@@ -30,7 +30,7 @@
 
 #### Recommendation
 
-**Use Pure Terraform** - The theoretical benefits of Terragrunt (DRY configuration, hierarchical includes) are completely outweighed by its practical unreliability. Terraform provides a robust, maintainable solution that works perfectly.
+**Use Pure Terraform** - The theoretical benefits of complex include systems (DRY configuration, hierarchical includes) are completely outweighed by their practical unreliability. Pure Terraform provides a robust, maintainable solution that works perfectly.
 
 ### Pure Terraform Configuration Management
 
@@ -118,7 +118,7 @@
 **Implementation Approach**:
 - Separate Terraform state per environment
 - Shared container registry with image promotion
-- Environment-specific configurations via Terragrunt
+- Environment-specific configurations via Terraform
 - Independent IAM policies per environment
 
 ### Database Migration Integration

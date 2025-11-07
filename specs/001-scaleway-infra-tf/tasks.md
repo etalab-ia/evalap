@@ -24,7 +24,7 @@ description: "Task list for Scaleway Infrastructure Setup with Pure Terraform"
 - **Terraform**: Pure Terraform approach with separate environment directories
 - **Modules**: Reusable Terraform modules in `infra/modules/`
 
-## Critical Decision: Terragrunt vs Terraform
+### Critical Decision: Pure Terraform Approach
 
 **Date**: 2025-11-07  
 **Status**: DECIDED - Use Pure Terraform
@@ -73,10 +73,10 @@ All tasks updated to use pure Terraform approach:
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
 - [x] T006 Setup Scaleway Object Storage backend for Terraform state
-- [x] T007 [P] Configure remote state locking and encryption
-- [x] T008 [P] Implement common provider configuration in _common/
+- [x] T007 Configure remote state locking and encryption
+- [x] T008 Implement common provider configuration in _common/
 - [x] T009 Create base Terraform configuration and module structure
-- [x] T010 [P] Setup environment variable management and secret injection framework
+- [x] T010 Setup environment variable management and secret injection framework
 - [x] T011 Configure GitHub Actions workflow infrastructure
 - [x] T012 Create validation scripts for infrastructure compliance
 
@@ -92,13 +92,13 @@ All tasks updated to use pure Terraform approach:
 
 ### Infrastructure Validation for User Story 1
 
-- [x] T013 [P] [US1] Create staging environment validation test in infra/tests/test_staging_deployment.py
-- [x] T014 [P] [US1] Create service isolation test in infra/tests/test_environment_isolation.py
-- [x] T015 [P] [US1] Create deployment rollback test in infra/tests/test_staging_rollback.py
+- [x] T013 [P] [US1] Create staging environment validation test in tests/infra/test_staging_deployment.py
+- [x] T014 [P] [US1] Create service isolation test in tests/infra/test_environment_isolation.py
+- [x] T015 [P] [US1] Create deployment rollback test in tests/infra/test_staging_rollback.py
 
 ### Implementation for User Story 1
 
-- [x] T016 [US1] Create staging Terragrunt configuration in infra/staging/terragrunt.hcl
+- [x] T016 [US1] Create staging Terraform configuration in infra/staging/main.tf
 - [x] T017 [P] [US1] Implement staging container module in infra/staging/container/main.tf
 - [x] T018 [P] [US1] Create staging database module in infra/staging/database/main.tf
 - [x] T019 [P] [US1] Implement staging secrets module in infra/staging/secrets/main.tf
@@ -124,13 +124,13 @@ All tasks updated to use pure Terraform approach:
 
 ### Infrastructure Validation for User Story 2
 
-- [ ] T029 [P] [US2] Create production redundancy test in infra/tests/test_production_redundancy.py
-- [ ] T030 [P] [US2] Create failover simulation test in infra/tests/test_production_failover.py
-- [ ] T031 [P] [US2] Create load balancing test in infra/tests/test_production_scaling.py
+- [ ] T029 [P] [US2] Create production redundancy test in tests/infra/test_production_redundancy.py
+- [ ] T030 [P] [US2] Create failover simulation test in tests/infra/test_production_failover.py
+- [ ] T031 [P] [US2] Create load balancing test in tests/infra/test_production_scaling.py
 
 ### Implementation for User Story 2
 
-- [ ] T032 [US2] Create production Terragrunt configuration in infra/production/terragrunt.hcl
+- [ ] T032 [US2] Create production Terraform configuration in infra/production/main.tf
 - [ ] T033 [P] [US2] Implement production container module with redundancy in infra/production/container/main.tf
 - [ ] T034 [P] [US2] Create production database with HA in infra/production/database/main.tf
 - [ ] T035 [P] [US2] Implement production secrets with enhanced security in infra/production/secrets/main.tf
@@ -156,9 +156,9 @@ All tasks updated to use pure Terraform approach:
 
 ### Infrastructure Validation for User Story 3
 
-- [ ] T045 [P] [US3] Create secret management validation test in infra/tests/test_secret_management.py
-- [ ] T046 [P] [US3] Create security audit test in infra/tests/test_security_compliance.py
-- [ ] T047 [P] [US3] Create secret rotation test in infra/tests/test_secret_rotation.py
+- [ ] T045 [P] [US3] Create secret management validation test in tests/infra/test_secret_management.py
+- [ ] T046 [P] [US3] Create security audit test in tests/infra/test_security_compliance.py
+- [ ] T047 [P] [US3] Create secret rotation test in tests/infra/test_secret_rotation.py
 
 ### Implementation for User Story 3
 
@@ -184,9 +184,9 @@ All tasks updated to use pure Terraform approach:
 
 ### Infrastructure Validation for User Story 4
 
-- [ ] T057 [P] [US4] Create database connectivity test in infra/tests/test_database_connectivity.py
-- [ ] T058 [P] [US4] Create backup and restore test in infra/tests/test_database_backup.py
-- [ ] T059 [P] [US4] Create database HA failover test in infra/tests/test_database_ha.py
+- [ ] T057 [P] [US4] Create database connectivity test in tests/infra/test_database_connectivity.py
+- [ ] T058 [P] [US4] Create backup and restore test in tests/infra/test_database_backup.py
+- [ ] T059 [P] [US4] Create database HA failover test in tests/infra/test_database_ha.py
 
 ### Implementation for User Story 4
 
@@ -216,9 +216,9 @@ All tasks updated to use pure Terraform approach:
 
 ### Infrastructure Validation for User Story 5
 
-- [ ] T073 [P] [US5] Create zero-downtime deployment test in infra/tests/test_zero_downtime_deployment.py
-- [ ] T074 [P] [US5] Create rollback capability test in infra/tests/test_deployment_rollback.py
-- [ ] T075 [P] [US5] Create deployment performance test in infra/tests/test_deployment_performance.py
+- [ ] T073 [P] [US5] Create zero-downtime deployment test in tests/infra/test_zero_downtime_deployment.py
+- [ ] T074 [P] [US5] Create rollback capability test in tests/infra/test_deployment_rollback.py
+- [ ] T075 [P] [US5] Create deployment performance test in tests/infra/test_deployment_performance.py
 
 ### Implementation for User Story 5
 
@@ -242,9 +242,9 @@ All tasks updated to use pure Terraform approach:
 
 ### Infrastructure Validation for User Story 6
 
-- [ ] T082 [P] [US6] Create container deployment test in infra/tests/test_container_deployment.py
-- [ ] T083 [P] [US6] Create container scaling test in infra/tests/test_container_scaling.py
-- [ ] T084 [P] [US6] Create container health check test in infra/tests/test_container_health.py
+- [ ] T082 [P] [US6] Create container deployment test in tests/infra/test_container_deployment.py
+- [ ] T083 [P] [US6] Create container scaling test in tests/infra/test_container_scaling.py
+- [ ] T084 [P] [US6] Create container health check test in tests/infra/test_container_health.py
 
 ### Implementation for User Story 6
 
@@ -269,9 +269,9 @@ All tasks updated to use pure Terraform approach:
 
 ### Infrastructure Validation for User Story 7
 
-- [ ] T095 [P] [US7] Create monitoring configuration test in infra/tests/test_monitoring_setup.py
-- [ ] T096 [P] [US7] Create alerting functionality test in infra/tests/test_alerting_system.py
-- [ ] T097 [P] [US7] Create log aggregation test in infra/tests/test_log_aggregation.py
+- [ ] T095 [P] [US7] Create monitoring configuration test in tests/infra/test_monitoring_setup.py
+- [ ] T096 [P] [US7] Create alerting functionality test in tests/infra/test_alerting_system.py
+- [ ] T097 [P] [US7] Create log aggregation test in tests/infra/test_log_aggregation.py
 
 ### Implementation for User Story 7
 
@@ -295,9 +295,9 @@ All tasks updated to use pure Terraform approach:
 
 ### Infrastructure Validation for User Story 8
 
-- [ ] T107 [P] [US8] Create GitHub Actions validation test in infra/tests/test_github_workflows.py
-- [ ] T108 [P] [US8] Create deployment workflow test in infra/tests/test_deployment_workflow.py
-- [ ] T109 [P] [US8] Create rollback workflow test in infra/tests/test_rollback_workflow.py
+- [ ] T107 [P] [US8] Create GitHub Actions validation test in tests/infra/test_github_workflows.py
+- [ ] T108 [P] [US8] Create deployment workflow test in tests/infra/test_deployment_workflow.py
+- [ ] T109 [P] [US8] Create rollback workflow test in tests/infra/test_rollback_workflow.py
 
 ### Implementation for User Story 8
 
@@ -324,6 +324,7 @@ All tasks updated to use pure Terraform approach:
 - [ ] T131 [P] Add secret rotation handling during active deployments in infra/modules/secret-manager/main.tf
 - [ ] T132 [P] Implement database backup failure recovery and storage constraint handling in infra/modules/managed-postgresql/main.tf
 - [ ] T133 [P] Add region-wide outage detection and manual intervention procedures in infra/docs/disaster-recovery.md
+- [ ] T134 [FR-012] Audit all dependencies and infrastructure code to verify no third-party cloud services are used (except CI/CD platforms) in infra/scripts/audit_third_party_services.py
 
 ---
 
@@ -331,14 +332,14 @@ All tasks updated to use pure Terraform approach:
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] T126 [P] Create comprehensive infrastructure documentation in infra/docs/
-- [ ] T127 [P] Implement infrastructure cost monitoring and optimization
-- [ ] T128 [P] Add comprehensive security scanning and compliance checks
-- [ ] T129 [P] Create disaster recovery and backup verification procedures
-- [ ] T130 [P] Implement infrastructure performance optimization
-- [ ] T131 [P] Create troubleshooting and debugging guides
-- [ ] T132 [P] Add infrastructure metrics collection and analysis
-- [ ] T133 Run complete quickstart.md validation and documentation updates
+- [ ] T135 [P] Create comprehensive infrastructure documentation in infra/docs/
+- [ ] T136 [P] Implement infrastructure cost monitoring and optimization
+- [ ] T137 [P] Add comprehensive security scanning and compliance checks
+- [ ] T138 [P] Create disaster recovery and backup verification procedures
+- [ ] T139 [P] Implement infrastructure performance optimization
+- [ ] T140 [P] Create troubleshooting and debugging guides
+- [ ] T141 [P] Add infrastructure metrics collection and analysis
+- [ ] T142 Run complete quickstart.md validation and documentation updates
 
 ---
 

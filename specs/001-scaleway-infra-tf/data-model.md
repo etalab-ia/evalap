@@ -1,7 +1,7 @@
 # Data Model: Scaleway Infrastructure Setup
 
 **Date**: 2025-11-07  
-**Purpose**: Infrastructure data entities and their relationships for Terragrunt + OpenTofu setup
+**Purpose**: Infrastructure data entities and their relationships for Pure Terraform setup
 
 ## Infrastructure Entities
 
@@ -136,7 +136,7 @@
   - `serial_number`: integer (State serial for consistency)
 - **Relationships**:
   - Stored in: Object Storage
-  - Managed by: Terragrunt
+  - Managed by: Terraform
   - Represents: Infrastructure Environment state
 - **Validation Rules**:
   - State files must be encrypted
@@ -192,7 +192,7 @@
 
 ### Deployment Lifecycle
 
-1. **Planning**: Terragrunt validate and plan generation
+1. **Planning**: Terraform validate and plan generation
 2. **Approval**: Manual or automated approval of changes
 3. **Deployment**: OpenTofu apply with state locking
 4. **Verification**: Health checks and monitoring validation
@@ -269,4 +269,4 @@
 - Alert routing to notification channels
 - Log aggregation and search capabilities
 
-This data model provides the foundation for implementing the Terragrunt + OpenTofu infrastructure with proper separation of concerns, security controls, and operational requirements.
+This data model provides the foundation for implementing the Pure Terraform infrastructure with proper separation of concerns, security controls, and operational requirements.

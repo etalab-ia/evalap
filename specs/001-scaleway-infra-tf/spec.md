@@ -176,16 +176,47 @@ As a developer, I want to trigger infrastructure deployments through GitHub Acti
 
 ---
 
-### Edge Cases
+### Edge Cases & Success Criteria
 
-- What happens when Scaleway API rate limits are exceeded during deployment?
-- How does system handle network connectivity issues between GitHub Actions and Scaleway?
-- What happens when container image fails to pull during deployment?
-- How does system handle concurrent deployments to the same environment?
-- What happens when Object Storage state backend becomes unavailable?
-- How does system handle secret rotation during active deployments?
-- What happens when database backup fails due to storage constraints?
-- How does system handle region-wide Scaleway outages?
+#### Network and API Issues
+
+- **Edge Case**: Scaleway API rate limits exceeded during deployment
+  - **Success Criteria**: Implement exponential backoff with 5 retry attempts; deployments succeed within 10 minutes of rate limit encounter
+  - **Measurement**: Monitor API response codes and retry delays; log rate limit events
+
+- **Edge Case**: Network connectivity issues between GitHub Actions and Scaleway
+  - **Success Criteria**: Detect connection failures within 30 seconds; retry with 60-second timeout; fail gracefully after 3 attempts
+  - **Measurement**: Track connection success rate and average retry time
+
+- **Edge Case**: Container image pull failure during deployment
+  - **Success Criteria**: Fall back to previous working image within 2 minutes; alert on pull failures; maintain service availability
+  - **Measurement**: Monitor image pull success rate and fallback trigger time
+
+#### Concurrency and State Management
+
+- **Edge Case**: Concurrent deployments to the same environment
+  - **Success Criteria**: Prevent concurrent deployments with state locking; queue subsequent deployments; notify users of queue position
+  - **Measurement**: Track concurrent deployment attempts and average queue wait time
+
+- **Edge Case**: Object Storage state backend becomes unavailable
+  - **Success Criteria**: Detect unavailability within 15 seconds; switch to backup state location; complete deployment within 5 minutes of recovery
+  - **Measurement**: Monitor state backend availability and failover success rate
+
+#### Security and Secrets
+
+- **Edge Case**: Secret rotation during active deployments
+  - **Success Criteria**: Complete in-progress deployment with old secrets; apply new secrets on next deployment; zero service interruption
+  - **Measurement**: Track secret rotation events and deployment continuity
+
+#### Database and Storage
+
+- **Edge Case**: Database backup fails due to storage constraints
+  - **Success Criteria**: Detect backup failure within 1 minute; trigger cleanup of old backups; retry backup within 5 minutes
+  - **Measurement**: Monitor backup success rate and storage utilization
+
+- **Edge Case**: Region-wide Scaleway outages
+  - **Success Criteria**: Detect outage within 30 seconds; switch to read-only mode; provide clear status communication; auto-recover on service restoration
+  - **Measurement**: Track outage detection time and recovery automation success rate
 
 ## Requirements *(mandatory)*
 
@@ -215,6 +246,55 @@ As a developer, I want to trigger infrastructure deployments through GitHub Acti
 - **FR-018**: System MUST support both manual and automated deployment triggers
 - **FR-019**: System MUST provide comprehensive logging for all infrastructure operations
 - **FR-020**: System MUST validate all configurations before applying changes
+
+### Non-Functional Requirements
+
+#### Performance Requirements
+
+- **NFR-001**: Infrastructure provisioning MUST complete within 15 minutes for complete setup from scratch
+- **NFR-002**: Zero-downtime deployments MUST complete within 5 minutes with no dropped requests
+- **NFR-003**: Rollback operations MUST complete within 2 minutes with no service interruption
+- **NFR-004**: Service response times MUST remain under 2 seconds during normal operations and deployments
+- **NFR-005**: Failed container instances MUST restart automatically within 30 seconds
+- **NFR-006**: Traffic MUST be rerouted within 10 seconds of container failure detection
+
+#### Availability & Reliability Requirements
+
+- **NFR-007**: Production environment MUST maintain 99.5% uptime excluding scheduled maintenance
+- **NFR-008**: Database backups MUST achieve 99.9% success rate with automated retry logic
+- **NFR-009**: System MUST support automatic failover for database and container instances
+- **NFR-010**: Infrastructure MUST support graceful degradation during partial outages
+
+#### Security Requirements
+
+- **NFR-011**: All secrets MUST be stored in Scaleway IAM Secret Manager with encryption at rest
+- **NFR-012**: Infrastructure MUST implement least privilege access for all components
+- **NFR-013**: Security audits MUST find zero hardcoded secrets in configuration files
+- **NFR-014**: Network traffic between components MUST be encrypted using TLS 1.2+
+- **NFR-015**: Infrastructure MUST support automated security scanning and compliance checks
+
+#### Scalability Requirements
+
+- **NFR-016**: System MUST support automatic scaling based on configured min/max limits
+- **NFR-017**: Container scaling MUST handle traffic spikes without manual intervention
+- **NFR-018**: Infrastructure MUST support scale-to-zero capability for cost optimization
+- **NFR-019**: System MUST maintain performance under 10x normal load conditions
+
+#### Maintainability Requirements
+
+- **NFR-020**: Infrastructure code MUST be version-controlled and auditable
+- **NFR-021**: All infrastructure changes MUST be validated before deployment
+- **NFR-022**: System MUST support comprehensive monitoring and alerting
+- **NFR-023**: Documentation MUST be kept current with infrastructure changes
+- **NFR-024**: System MUST support automated testing of infrastructure components
+
+#### Compliance Requirements
+
+- **NFR-025**: Infrastructure MUST comply with EU AI Act requirements for AI evaluation platforms
+- **NFR-026**: System MUST support RGAA accessibility compliance for deployed services
+- **NFR-027**: Infrastructure MUST use only open source solutions and avoid vendor lock-in
+- **NFR-028**: System MUST support audit trail generation for all infrastructure operations
+- **NFR-029**: Infrastructure MUST enable ProConnect integration for government deployments
 
 ### Key Entities *(include if feature involves data)*
 
