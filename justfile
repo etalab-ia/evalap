@@ -285,116 +285,6 @@ sync:
   uv sync --all-extras
   uv run pre-commit install
 
-# Test a branch: select from available branches, checkout, migrate, and run
-test-branch:
-  #!/usr/bin/env bash
-  set -e
-
-  # Fetch latest branches
-  echo "📦 Fetching latest branches..."
-  git fetch origin
-
-  # Get list of remote branches (excluding HEAD)
-  branches=$(git branch -r | grep -v HEAD | sed 's|origin/||' | sort)
-
-  # Display branches and let user choose
-  echo ""
-  echo "🌿 Available branches:"
-  echo ""
-
-  # Create array of branches
-  branch_array=()
-  counter=1
-  while IFS= read -r branch; do
-    # Trim leading/trailing whitespace
-    branch=$(echo "$branch" | xargs)
-    echo "  $counter) $branch"
-    branch_array+=("$branch")
-    ((counter++))
-  done <<< "$branches"
-
-  echo ""
-  read -p "📍 Enter branch number (1-$((counter-1))): " choice
-
-  # Validate choice
-  if ! [[ "$choice" =~ ^[0-9]+$ ]] || [ "$choice" -lt 1 ] || [ "$choice" -gt $((counter-1)) ]; then
-    echo "❌ Invalid choice"
-    exit 1
-  fi
-
-  selected_branch="${branch_array[$((choice-1))]}"
-
-  echo ""
-  echo "✅ Selected: $selected_branch"
-  echo ""
-
-  # Ask if user wants to clear postgres volume
-  echo "❓ Clear PostgreSQL volume? (useful if migrations fail)"
-  read -p "   Enter 'yes' to clear, or press Enter to skip: " clear_volume
-  if [ "$clear_volume" = "yes" ]; then
-    echo "🗑️  Clearing PostgreSQL volume..."
-    docker compose -f compose.dev.yml down -v
-    echo "✅ Volume cleared"
-  fi
-
-  echo ""
-
-  # Checkout or update branch
-  current_branch=$(git rev-parse --abbrev-ref HEAD)
-  if [ "$current_branch" = "$selected_branch" ]; then
-    echo "🔄 Updating current branch..."
-    git pull origin "$selected_branch"
-  else
-    echo "🔄 Checking out $selected_branch..."
-    git checkout "$selected_branch"
-    git pull origin "$selected_branch"
-  fi
-
-  echo ""
-  echo "🗄️  Starting PostgreSQL..."
-  docker compose -f compose.dev.yml up -d postgres
-
-  echo "⏳ Waiting for PostgreSQL to be ready..."
-  for i in {1..30}; do
-    if docker compose -f compose.dev.yml exec -T postgres pg_isready -U postgres > /dev/null 2>&1; then
-      echo "✅ PostgreSQL is ready"
-      break
-    fi
-    if [ $i -eq 30 ]; then
-      echo "❌ PostgreSQL failed to start"
-      exit 1
-    fi
-    sleep 1
-  done
-
-  echo ""
-  echo "🔄 Running database migrations..."
-  alembic -c evalap/api/alembic.ini upgrade head
-
-  echo ""
-  echo "🚀 Starting EvalAP services..."
-  echo ""
-  echo "📍 Access the application at:"
-  echo "   🎨 UI: http://localhost:8501"
-  echo "   📚 API Docs: http://localhost:8000/docs"
-  echo ""
-  echo "⏹️  Press Ctrl+C to stop all services"
-  echo ""
-
-  # Function to cleanup all services
-  cleanup() {
-    echo ""
-    echo "🛑 Stopping all services..."
-    docker compose -f compose.dev.yml down
-    exit 0
-  }
-
-  # Set trap for Ctrl+C
-  trap cleanup SIGINT SIGTERM
-
-  # Run the full application stack
-  docker compose -f compose.dev.yml up --build
-
 # Test a PR: list open PRs, select one, checkout its branch, migrate, and run
 test-pr:
   #!/usr/bin/env bash
@@ -468,11 +358,10 @@ test-pr:
 
   echo ""
 
-  # Fetch and checkout branch
+  # Fetch and checkout branch (fresh copy)
   echo "🔄 Fetching and checking out branch: $selected_branch..."
   git fetch origin "$selected_branch"
-  git checkout "$selected_branch"
-  git pull origin "$selected_branch"
+  git checkout -B "$selected_branch" "origin/$selected_branch"
 
   echo ""
   echo "🗄️  Starting PostgreSQL..."

@@ -1,8 +1,8 @@
-# Testing Branches Locally - Quick Start
+# Acceptance Testing - Quick Start
+
+Test pull requests locally before they're merged. This guide is for non-technical users who want to validate features in a real environment.
 
 ## One-Command Setup
-
-### Option A: Test a Pull Request (Recommended)
 
 ```bash
 just test-pr
@@ -15,19 +15,7 @@ This command will:
 4. **Run database migrations**
 5. **Start EvalAP** with all services running
 
-### Option B: Test a Branch
-
-```bash
-just test-branch
-```
-
-This command will:
-1. **Show available branches** and let you choose one
-2. **Check out the branch** (or update it if already checked out)
-3. **Run database migrations** automatically
-4. **Start EvalAP** with all services running
-
-Both commands are interactive and handle all setup automatically.
+That's it! No other steps needed.
 
 ## What You Need
 
@@ -51,25 +39,14 @@ Both commands are interactive and handle all setup automatically.
 
 ## How to Use
 
-### Option 1: Using GitHub Desktop (Easiest)
-
-1. **Install** [GitHub Desktop](https://desktop.github.com/)
-2. **Open GitHub Desktop** and clone/open the EvalAP repository
-3. **Switch to your desired branch** using the branch dropdown in GitHub Desktop
-4. **Open Terminal** in the project folder (GitHub Desktop → Repository → Open in Terminal)
-5. **Run the command**:
-   ```bash
-   just test-branch
-   ```
-
-### Option 2: Using Command Line
-
 1. **Open Terminal/Command Prompt** in the project folder
 2. **Run**:
    ```bash
-   just test-branch
+   just test-pr
    ```
-3. **Select a branch** from the interactive menu
+3. **Select a PR** from the interactive menu by entering its number
+4. **Optionally clear the PostgreSQL volume** if you want a fresh database
+5. Done! The application will start automatically
 
 ## Access the Application
 
@@ -120,11 +97,11 @@ Another app is using port 8000 or 8501. Stop that app or wait a moment and try a
 
 ### "No open pull requests found"
 
-There are no open PRs at the moment. Use `just test-branch` instead to test any branch.
+There are no open PRs at the moment. Check back later or contact the development team.
 
 ### Need help?
 
 Contact the development team with:
-- The branch or PR number you were testing
+- The PR number you were testing
 - The error message from the terminal
 - Your operating system
