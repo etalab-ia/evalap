@@ -35,12 +35,18 @@ Both commands are interactive and handle all setup automatically.
    - [Download GitHub CLI](https://cli.github.com/)
    - Verify: Open Terminal and type `gh --version`
 
-2. **Git UI** (optional but recommended for easier branch switching)
+2. **jq** (required for `just test-pr` - JSON processor)
+   - **Mac**: `brew install jq`
+   - **Windows**: Download from [stedolan.github.io/jq](https://stedolan.github.io/jq/download/)
+   - **Linux**: `sudo apt install jq` (Debian/Ubuntu)
+   - Verify: Open Terminal and type `jq --version`
+
+3. **Git UI** (optional but recommended for easier branch switching)
    - [GitHub Desktop](https://desktop.github.com/) - Easiest for beginners
    - [GitKraken](https://www.gitkraken.com/) - More features
    - Or use the command line (see below)
 
-3. **Docker Desktop** - For running the application
+4. **Docker Desktop** - For running the application
    - [Download Docker Desktop](https://www.docker.com/products/docker-desktop)
 
 ## How to Use
@@ -89,6 +95,13 @@ Then authenticate:
 ```bash
 gh auth login
 ```
+
+### "Command not found: jq" (for `just test-pr`)
+
+Install jq:
+- **Mac**: `brew install jq`
+- **Windows**: Download from [stedolan.github.io/jq](https://stedolan.github.io/jq/download/)
+- **Linux**: `sudo apt install jq` (Debian/Ubuntu)
 
 ### "Command not found: just"
 
