@@ -394,3 +394,126 @@ test-branch:
 
   # Run the full application stack
   docker compose -f compose.dev.yml up --build
+
+# Test a PR: list open PRs, select one, checkout its branch, migrate, and run
+test-pr:
+  #!/usr/bin/env bash
+  set -e
+
+  # Check if GitHub CLI is installed
+  if ! command -v gh &> /dev/null; then
+    echo "❌ GitHub CLI is not installed"
+    echo "📥 Install it from: https://cli.github.com/"
+    exit 1
+  fi
+
+  echo "📦 Fetching open pull requests..."
+  echo ""
+
+  # Get open PRs (not draft, not closed)
+  prs=$(gh pr list --state open --json number,title,headRefName --template '{{range .}}{{.number}}|{{.title}}|{{.headRefName}}{{"\n"}}{{end}}')
+
+  if [ -z "$prs" ]; then
+    echo "❌ No open pull requests found"
+    exit 1
+  fi
+
+  # Display PRs and let user choose
+  echo "📋 Open Pull Requests:"
+  echo ""
+
+  # Create arrays for PR data
+  pr_numbers=()
+  pr_titles=()
+  pr_branches=()
+  counter=1
+
+  while IFS='|' read -r number title branch; do
+    # Truncate long titles to 60 chars
+    if [ ${#title} -gt 60 ]; then
+      title="${title:0:57}..."
+    fi
+    echo "  $counter) #$number - $title"
+    pr_numbers+=("$number")
+    pr_titles+=("$title")
+    pr_branches+=("$branch")
+    ((counter++))
+  done <<< "$prs"
+
+  echo ""
+  read -p "📍 Enter PR number (1-$((counter-1))): " choice
+
+  # Validate choice
+  if ! [[ "$choice" =~ ^[0-9]+$ ]] || [ "$choice" -lt 1 ] || [ "$choice" -gt $((counter-1)) ]; then
+    echo "❌ Invalid choice"
+    exit 1
+  fi
+
+  selected_pr=${pr_numbers[$((choice-1))]}
+  selected_branch=${pr_branches[$((choice-1))]}
+
+  echo ""
+  echo "✅ Selected: PR #$selected_pr - ${pr_titles[$((choice-1))]}"
+  echo ""
+
+  # Ask if user wants to clear postgres volume
+  echo "❓ Clear PostgreSQL volume? (useful if migrations fail)"
+  read -p "   Enter 'yes' to clear, or press Enter to skip: " clear_volume
+  if [ "$clear_volume" = "yes" ]; then
+    echo "🗑️  Clearing PostgreSQL volume..."
+    docker compose -f compose.dev.yml down -v
+    echo "✅ Volume cleared"
+  fi
+
+  echo ""
+
+  # Fetch and checkout branch
+  echo "🔄 Fetching and checking out branch: $selected_branch..."
+  git fetch origin "$selected_branch"
+  git checkout "$selected_branch"
+  git pull origin "$selected_branch"
+
+  echo ""
+  echo "🗄️  Starting PostgreSQL..."
+  docker compose -f compose.dev.yml up -d postgres
+
+  echo "⏳ Waiting for PostgreSQL to be ready..."
+  for i in {1..30}; do
+    if docker compose -f compose.dev.yml exec -T postgres pg_isready -U postgres > /dev/null 2>&1; then
+      echo "✅ PostgreSQL is ready"
+      break
+    fi
+    if [ $i -eq 30 ]; then
+      echo "❌ PostgreSQL failed to start"
+      exit 1
+    fi
+    sleep 1
+  done
+
+  echo ""
+  echo "🔄 Running database migrations..."
+  alembic -c evalap/api/alembic.ini upgrade head
+
+  echo ""
+  echo "🚀 Starting EvalAP services..."
+  echo ""
+  echo "📍 Access the application at:"
+  echo "   🎨 UI: http://localhost:8501"
+  echo "   📚 API Docs: http://localhost:8000/docs"
+  echo ""
+  echo "⏹️  Press Ctrl+C to stop all services"
+  echo ""
+
+  # Function to cleanup all services
+  cleanup() {
+    echo ""
+    echo "🛑 Stopping all services..."
+    docker compose -f compose.dev.yml down
+    exit 0
+  }
+
+  # Set trap for Ctrl+C
+  trap cleanup SIGINT SIGTERM
+
+  # Run the full application stack
+  docker compose -f compose.dev.yml up --build

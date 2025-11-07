@@ -2,7 +2,20 @@
 
 ## One-Command Setup
 
-Non-technical users can test any branch with a single command:
+### Option A: Test a Pull Request (Recommended)
+
+```bash
+just test-pr
+```
+
+This command will:
+1. **List all open pull requests** (excluding drafts and closed)
+2. **Let you select one** by number
+3. **Check out the PR's branch** automatically
+4. **Run database migrations**
+5. **Start EvalAP** with all services running
+
+### Option B: Test a Branch
 
 ```bash
 just test-branch
@@ -14,16 +27,20 @@ This command will:
 3. **Run database migrations** automatically
 4. **Start EvalAP** with all services running
 
-That's it! No other steps needed.
+Both commands are interactive and handle all setup automatically.
 
 ## What You Need
 
-1. **Git UI** (optional but recommended for easier branch switching)
+1. **GitHub CLI** (required for `just test-pr`)
+   - [Download GitHub CLI](https://cli.github.com/)
+   - Verify: Open Terminal and type `gh --version`
+
+2. **Git UI** (optional but recommended for easier branch switching)
    - [GitHub Desktop](https://desktop.github.com/) - Easiest for beginners
    - [GitKraken](https://www.gitkraken.com/) - More features
    - Or use the command line (see below)
 
-2. **Docker Desktop** - For running the application
+3. **Docker Desktop** - For running the application
    - [Download Docker Desktop](https://www.docker.com/products/docker-desktop)
 
 ## How to Use
@@ -61,6 +78,18 @@ Press `Ctrl + C` in the terminal.
 
 ## Troubleshooting
 
+### "Command not found: gh" (for `just test-pr`)
+
+Install GitHub CLI:
+- **Mac**: `brew install gh`
+- **Windows**: Download from [cli.github.com](https://cli.github.com/)
+- **Linux**: Follow [installation guide](https://github.com/cli/cli/blob/trunk/docs/install_linux.md)
+
+Then authenticate:
+```bash
+gh auth login
+```
+
 ### "Command not found: just"
 
 Install `just`:
@@ -76,9 +105,13 @@ Install [Docker Desktop](https://www.docker.com/products/docker-desktop) and res
 
 Another app is using port 8000 or 8501. Stop that app or wait a moment and try again.
 
+### "No open pull requests found"
+
+There are no open PRs at the moment. Use `just test-branch` instead to test any branch.
+
 ### Need help?
 
 Contact the development team with:
-- The branch name you were testing
+- The branch or PR number you were testing
 - The error message from the terminal
 - Your operating system
