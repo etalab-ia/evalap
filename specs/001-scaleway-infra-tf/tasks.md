@@ -1,5 +1,4 @@
 ---
-
 description: "Task list for Scaleway Infrastructure Setup with Pure Terraform"
 ---
 
@@ -26,7 +25,7 @@ description: "Task list for Scaleway Infrastructure Setup with Pure Terraform"
 
 ### Critical Decision: Pure OpenTofu Approach
 
-**Date**: 2025-11-07  
+**Date**: 2025-11-07
 **Status**: DECIDED - Use Pure OpenTofu
 
 ### Testing Results
@@ -47,6 +46,7 @@ After extensive testing of Terragrunt v0.93.3:
 ### Implementation Impact
 
 All tasks updated to use pure OpenTofu approach:
+
 - Removed Terragrunt configuration files
 - Updated deployment scripts to use `tofu` commands
 - Simplified project structure without complex include hierarchies
@@ -58,11 +58,11 @@ All tasks updated to use pure OpenTofu approach:
 
 **Purpose**: Project initialization and basic structure
 
-- [x] T001 Create infrastructure directory structure per implementation plan
-- [x] T002 Initialize OpenTofu configuration files and modules
-- [x] T003 [P] Configure HCL validation and formatting in pre-commit hooks
-- [x] T004 [P] Set up Scaleway provider configuration and authentication
-- [x] T005 Create documentation structure for infrastructure setup
+- [ ] T001 Create infrastructure directory structure per implementation plan
+- [ ] T002 Initialize OpenTofu configuration files and modules
+- [ ] T003 [P] Configure HCL validation and formatting in pre-commit hooks
+- [ ] T004 [P] Set up Scaleway provider configuration and authentication
+- [ ] T005 Create documentation structure for infrastructure setup
 
 ---
 
@@ -72,13 +72,13 @@ All tasks updated to use pure OpenTofu approach:
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [x] T006 Setup Scaleway Object Storage backend for Terraform state
-- [x] T007 Configure remote state locking and encryption
-- [x] T008 Implement common provider configuration in _common/
-- [x] T009 Create base Terraform configuration and module structure
-- [x] T010 Setup environment variable management and secret injection framework
-- [x] T011 Configure GitHub Actions workflow infrastructure
-- [x] T012 Create validation scripts for infrastructure compliance
+- [ ] T006 Setup Scaleway Object Storage backend for Terraform state
+- [ ] T007 Configure remote state locking and encryption
+- [ ] T008 Implement common provider configuration in \_common/
+- [ ] T009 Create base Terraform configuration and module structure
+- [ ] T010 Setup environment variable management and secret injection framework
+- [ ] T011 Configure GitHub Actions workflow infrastructure
+- [ ] T012 Create validation scripts for infrastructure compliance
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -92,25 +92,25 @@ All tasks updated to use pure OpenTofu approach:
 
 ### Infrastructure Validation for User Story 1
 
-- [x] T013 [P] [US1] Create staging environment validation test in tests/infra/test_staging_deployment.py
-- [x] T014 [P] [US1] Create service isolation test in tests/infra/test_environment_isolation.py
-- [x] T015 [P] [US1] Create deployment rollback test in tests/infra/test_staging_rollback.py
+- [ ] T013 [P] [US1] Create staging environment validation test in tests/infra/test_staging_deployment.py
+- [ ] T014 [P] [US1] Create service isolation test in tests/infra/test_environment_isolation.py
+- [ ] T015 [P] [US1] Create deployment rollback test in tests/infra/test_staging_rollback.py
 
 ### Implementation for User Story 1
 
-- [x] T016 [US1] Create staging Terraform configuration in infra/staging/main.tf
-- [x] T017 [P] [US1] Implement staging container module in infra/staging/container/main.tf
-- [x] T018 [P] [US1] Create staging database module in infra/staging/database/main.tf
-- [x] T019 [P] [US1] Implement staging secrets module in infra/staging/secrets/main.tf
-- [x] T020 [P] [US1] Create staging monitoring module in infra/staging/monitoring/main.tf
-- [x] T021 [US1] Configure staging-specific variables in infra/staging/container/variables.tf
-- [x] T022 [US1] Set up staging database configuration in infra/staging/database/variables.tf
-- [x] T023 [US1] Implement staging secrets configuration in infra/staging/secrets/variables.tf
-- [x] T024 [US1] Configure staging monitoring in infra/staging/monitoring/variables.tf
-- [x] T025 [US1] Create staging outputs for service endpoints in infra/staging/container/outputs.tf
-- [x] T026 [US1] Add staging database connection outputs in infra/staging/database/outputs.tf
-- [x] T027 [US1] Implement staging deployment script in infra/scripts/deploy_staging.sh
-- [x] T028 [US1] Add staging validation and health checks in infra/scripts/validate_staging.sh
+- [ ] T016 [US1] Create staging Terraform configuration in infra/staging/main.tf
+- [ ] T017 [P] [US1] Implement staging container module in infra/staging/container/main.tf
+- [ ] T018 [P] [US1] Create staging database module in infra/staging/database/main.tf
+- [ ] T019 [P] [US1] Implement staging secrets module in infra/staging/secrets/main.tf
+- [ ] T020 [P] [US1] Create staging monitoring module in infra/staging/monitoring/main.tf
+- [ ] T021 [US1] Configure staging-specific variables in infra/staging/container/variables.tf
+- [ ] T022 [US1] Set up staging database configuration in infra/staging/database/variables.tf
+- [ ] T023 [US1] Implement staging secrets configuration in infra/staging/secrets/variables.tf
+- [ ] T024 [US1] Configure staging monitoring in infra/staging/monitoring/variables.tf
+- [ ] T025 [US1] Create staging outputs for service endpoints in infra/staging/container/outputs.tf
+- [ ] T026 [US1] Add staging database connection outputs in infra/staging/database/outputs.tf
+- [ ] T027 [US1] Implement staging deployment script in infra/scripts/deploy_staging.sh
+- [ ] T028 [US1] Add staging validation and health checks in infra/scripts/validate_staging.sh
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and testable independently
 
