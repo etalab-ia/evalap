@@ -1,13 +1,13 @@
-# Research: Scaleway Infrastructure Setup with Pure Terraform
+# Research: Scaleway Infrastructure Setup with Pure OpenTofu
 
 **Date**: 2025-11-07  
 **Purpose**: Research and decision documentation for Phase 0 of the planning process
 
 ## Technology Decisions
 
-### Terraform vs Pure Terraform Approach
+### OpenTofu vs Pure OpenTofu Approach
 
-**Decision**: Use Pure Terraform (after extensive testing revealed Terragrunt is completely unusable)
+**Decision**: Use Pure OpenTofu (after extensive testing revealed Terragrunt is completely unusable)
 
 #### Testing Results Summary
 
@@ -16,12 +16,13 @@
 - ❌ **Critical Error**: `panic: runtime error: invalid memory address or nil pointer dereference`
 - ❌ **Production Risk**: Completely unreliable for infrastructure deployment
 
-**OpenTofu Consideration**:
-- ✅ Open source alternative to Terraform
-- ❌ **No Clear Benefit**: Terraform is already working perfectly
-- ❌ **Added Complexity**: No compelling reason to switch from working Terraform
+**OpenTofu Choice**:
+- ✅ Open source alternative to Terraform (recommended by Scaleway)
+- ✅ **Same Syntax**: 100% compatible with Terraform HCL
+- ✅ **Community Driven**: No licensing concerns
+- ✅ **Scaleway Support**: Fully supported by Scaleway provider
 
-**Pure Terraform Results**:
+**Pure OpenTofu Results**:
 - ✅ **100% Success Rate**: All commands work perfectly
 - ✅ **Proven Reliability**: Battle-tested and stable
 - ✅ **Simpler Debugging**: Direct error messages, no complex include chains
@@ -30,11 +31,11 @@
 
 #### Recommendation
 
-**Use Pure Terraform** - The theoretical benefits of complex include systems (DRY configuration, hierarchical includes) are completely outweighed by their practical unreliability. Pure Terraform provides a robust, maintainable solution that works perfectly.
+**Use Pure OpenTofu** - The theoretical benefits of complex include systems (DRY configuration, hierarchical includes) are completely outweighed by their practical unreliability. Pure OpenTofu provides a robust, maintainable solution that works perfectly.
 
-### Pure Terraform Configuration Management
+### Pure OpenTofu Configuration Management
 
-**Decision**: Use Pure Terraform for configuration and environment management
+**Decision**: Use Pure OpenTofu for configuration and environment management
 
 **Rationale**:
 - **Proven Reliability**: 100% success rate in testing vs 0% for Terragrunt
@@ -116,9 +117,9 @@
 - Aligns with FR-006 requirement
 
 **Implementation Approach**:
-- Separate Terraform state per environment
+- Separate OpenTofu state per environment
 - Shared container registry with image promotion
-- Environment-specific configurations via Terraform
+- Environment-specific configurations via OpenTofu
 - Independent IAM policies per environment
 
 ### Database Migration Integration

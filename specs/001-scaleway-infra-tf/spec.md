@@ -18,7 +18,7 @@
 ### Critical Decision: Terragrunt vs Pure Terraform
 
 **Date**: 2025-11-07  
-**Decision**: Adopt **Pure Terraform** approach instead of Terragrunt + OpenTofu
+**Decision**: Adopt **Pure OpenTofu** approach instead of Terragrunt + Terraform
 
 #### Why This Decision Was Made
 
@@ -44,7 +44,7 @@ After extensive testing and real-world validation, we discovered that **Terragru
 - ✅ **Documentation**: Comprehensive guides and troubleshooting
 - ✅ **Validation**: Real-world testing with actual Scaleway project
 
-**Conclusion**: The theoretical benefits of Terragrunt (DRY configuration, hierarchical includes) are outweighed by its practical unreliability. Pure Terraform provides a robust, maintainable solution.
+**Conclusion**: The theoretical benefits of Terragrunt (DRY configuration, hierarchical includes) are outweighed by its practical unreliability. Pure OpenTofu provides a robust, maintainable solution.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -236,8 +236,8 @@ As a developer, I want to trigger infrastructure deployments through GitHub Acti
 - **FR-008**: System MUST support zero-downtime deployments with rolling updates strategy
 - **FR-009**: System MUST provide automated rollback capability within 2 minutes
 - **FR-010**: System MUST implement health checks for all services with automatic failover
-- **FR-011**: System MUST use Terraform for infrastructure provisioning (Terragrunt was tested and found to be completely unreliable with 100% segfault rate)
-- **FR-012**: System MUST use pure Terraform approach without complex include systems for reliability and maintainability
+- **FR-011**: System MUST use OpenTofu for infrastructure provisioning (Terragrunt was tested and found to be completely unreliable with 100% segfault rate)
+- **FR-012**: System MUST use pure OpenTofu approach without complex include systems for reliability and maintainability
 - **FR-013**: System MUST not use any third-party cloud services beyond Scaleway, except for CI/CD platforms which may be external to enable automated deployment workflows
 - **FR-014**: System MUST support GitHub Actions workflows for validation and deployment
 - **FR-015**: System MUST maintain 99.5% uptime for production environment

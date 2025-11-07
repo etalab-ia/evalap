@@ -1,4 +1,4 @@
-# Implementation Plan: Scaleway Infrastructure Setup with Pure Terraform
+# Implementation Plan: Scaleway Infrastructure Setup with Pure OpenTofu
 
 **Branch**: `001-scaleway-infra-tf` | **Date**: 2025-11-07 | **Spec**: [spec.md](spec.md)
 **Input**: Feature specification from `/specs/001-scaleway-infra-tf/spec.md`
@@ -7,14 +7,14 @@
 
 ## Summary
 
-Replace CDKTF infrastructure setup with **Pure Terraform** for simpler, more reliable IaC. Deploy EvalAP application services (documentation, runners, streamlit) to Scaleway Serverless Containers with managed PostgreSQL, secret management, and monitoring. Support staging and production environments with complete isolation, zero-downtime deployments, and 99.5% uptime SLA.
+Replace CDKTF infrastructure setup with **Pure OpenTofu** for simpler, more reliable IaC. Deploy EvalAP application services (documentation, runners, streamlit) to Scaleway Serverless Containers with managed PostgreSQL, secret management, and monitoring. Support staging and production environments with complete isolation, zero-downtime deployments, and 99.5% uptime SLA.
 
 ## Technical Context
 
-**Language/Version**: HCL (Terraform Configuration Language) + Shell scripts  
-**Primary Dependencies**: Terraform >= 1.0, Scaleway Terraform Provider >= 2.0  
-**Storage**: Scaleway Object Storage (S3-compatible) for Terraform state  
-**Testing**: Terraform validate, integration tests via GitHub Actions  
+**Language/Version**: HCL (OpenTofu Configuration Language) + Shell scripts  
+**Primary Dependencies**: OpenTofu >= 1.0, Scaleway Terraform Provider >= 2.0  
+**Storage**: Scaleway Object Storage (S3-compatible) for OpenTofu state  
+**Testing**: OpenTofu validate, integration tests via GitHub Actions  
 **Target Platform**: Scaleway cloud infrastructure (fr-par region)  
 **Project Type**: Infrastructure as Code (declarative configuration)  
 **Performance Goals**: <5min deployments, <2sec response times, 99.5% uptime  
@@ -69,8 +69,8 @@ Replace CDKTF infrastructure setup with **Pure Terraform** for simpler, more rel
 
 **Phase 1 Design Validation**: All design decisions continue to align with constitution requirements:
 
-- **Open Source Compliance**: ✅ Terraform and Scaleway provider are all open source
-- **Modular Architecture**: ✅ Terraform modules and hierarchical configuration support modularity
+- **Open Source Compliance**: ✅ OpenTofu and Scaleway provider are all open source
+- **Modular Architecture**: ✅ OpenTofu modules and hierarchical configuration support modularity
 - **Security Standards**: ✅ IAM Secret Manager, least privilege access, and encryption implemented
 - **API-First Support**: ✅ Infrastructure enables FastAPI deployment and scaling
 - **Observability**: ✅ Scaleway Cockpit integration provides comprehensive monitoring
@@ -152,7 +152,7 @@ infra/
     └── conftest.py
 ```
 
-**Structure Decision**: Terraform-only approach with flat directory structure and separate environment directories. This structure was chosen after discovering that Terragrunt v0.93.3 has 100% failure rate with segmentation faults, making it completely unusable for production infrastructure. Pure Terraform provides proven reliability with simpler debugging and maintenance.
+**Structure Decision**: OpenTofu-only approach with flat directory structure and separate environment directories. This structure was chosen after discovering that Terragrunt v0.93.3 has 100% failure rate with segmentation faults, making it completely unusable for production infrastructure. Pure OpenTofu provides proven reliability with simpler debugging and maintenance.
 
 ## Complexity Tracking
 

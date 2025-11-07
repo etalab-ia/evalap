@@ -21,13 +21,13 @@ description: "Task list for Scaleway Infrastructure Setup with Pure Terraform"
 ## Path Conventions
 
 - **Infrastructure**: `infra/` at repository root
-- **Terraform**: Pure Terraform approach with separate environment directories
-- **Modules**: Reusable Terraform modules in `infra/modules/`
+- **OpenTofu**: Pure OpenTofu approach with separate environment directories
+- **Modules**: Reusable OpenTofu modules in `infra/modules/`
 
-### Critical Decision: Pure Terraform Approach
+### Critical Decision: Pure OpenTofu Approach
 
 **Date**: 2025-11-07  
-**Status**: DECIDED - Use Pure Terraform
+**Status**: DECIDED - Use Pure OpenTofu
 
 ### Testing Results
 
@@ -37,7 +37,7 @@ After extensive testing of Terragrunt v0.93.3:
 - ❌ **Critical Error**: `panic: runtime error: invalid memory address or nil pointer dereference`
 - ❌ **Production Risk**: Completely unreliable for infrastructure deployment
 
-### Terraform Results
+### OpenTofu Results
 
 - ✅ **100% Success Rate**: All commands work perfectly
 - ✅ **Proven Reliability**: Battle-tested and stable
@@ -46,20 +46,20 @@ After extensive testing of Terragrunt v0.93.3:
 
 ### Implementation Impact
 
-All tasks updated to use pure Terraform approach:
+All tasks updated to use pure OpenTofu approach:
 - Removed Terragrunt configuration files
-- Updated deployment scripts to use `terraform` commands
+- Updated deployment scripts to use `tofu` commands
 - Simplified project structure without complex include hierarchies
 - Enhanced reliability and maintainability
 
-**Conclusion**: Pure Terraform is the superior solution based on real-world testing results.
+**Conclusion**: Pure OpenTofu is the superior solution based on real-world testing results.
 
 ## Phase 1: Setup (Shared Infrastructure)
 
 **Purpose**: Project initialization and basic structure
 
 - [x] T001 Create infrastructure directory structure per implementation plan
-- [x] T002 Initialize Terraform configuration files and modules
+- [x] T002 Initialize OpenTofu configuration files and modules
 - [x] T003 [P] Configure HCL validation and formatting in pre-commit hooks
 - [x] T004 [P] Set up Scaleway provider configuration and authentication
 - [x] T005 Create documentation structure for infrastructure setup
