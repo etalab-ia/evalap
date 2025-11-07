@@ -284,3 +284,72 @@ lint:
 sync:
   uv sync --all-extras
   uv run pre-commit install
+
+# Test a branch: select from available branches, checkout, migrate, and run
+test-branch:
+  #!/usr/bin/env bash
+  set -e
+
+  # Fetch latest branches
+  echo "📦 Fetching latest branches..."
+  git fetch origin
+
+  # Get list of remote branches (excluding HEAD)
+  branches=$(git branch -r | grep -v HEAD | sed 's|origin/||' | sort)
+
+  # Display branches and let user choose
+  echo ""
+  echo "🌿 Available branches:"
+  echo ""
+
+  # Create array of branches
+  branch_array=()
+  counter=1
+  while IFS= read -r branch; do
+    echo "  $counter) $branch"
+    branch_array+=("$branch")
+    ((counter++))
+  done <<< "$branches"
+
+  echo ""
+  read -p "📍 Enter branch number (1-$((counter-1))): " choice
+
+  # Validate choice
+  if ! [[ "$choice" =~ ^[0-9]+$ ]] || [ "$choice" -lt 1 ] || [ "$choice" -gt $((counter-1)) ]; then
+    echo "❌ Invalid choice"
+    exit 1
+  fi
+
+  selected_branch="${branch_array[$((choice-1))]}"
+
+  echo ""
+  echo "✅ Selected: $selected_branch"
+  echo ""
+
+  # Checkout or update branch
+  current_branch=$(git rev-parse --abbrev-ref HEAD)
+  if [ "$current_branch" = "$selected_branch" ]; then
+    echo "🔄 Updating current branch..."
+    git pull origin "$selected_branch"
+  else
+    echo "🔄 Checking out $selected_branch..."
+    git checkout "$selected_branch"
+    git pull origin "$selected_branch"
+  fi
+
+  echo ""
+  echo "🗄️  Running database migrations..."
+  alembic -c evalap/api/alembic.ini upgrade head
+
+  echo ""
+  echo "🚀 Starting EvalAP..."
+  echo ""
+  echo "📍 Access the application at:"
+  echo "   🎨 UI: http://localhost:8501"
+  echo "   📚 API Docs: http://localhost:8000/docs"
+  echo ""
+  echo "⏹️  Press Ctrl+C to stop"
+  echo ""
+
+  # Run the application
+  docker compose -f compose.dev.yml up --build
