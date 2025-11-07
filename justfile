@@ -411,7 +411,7 @@ test-pr:
   echo ""
 
   # Get open PRs (not draft, not closed)
-  prs=$(gh pr list --state open --json number,title,headRefName --template '{{range .}}{{.number}}|{{.title}}|{{.headRefName}}{{"\n"}}{{end}}')
+  prs=$(gh pr list --state open --json number,title,headRefName --template '{{range .}}{{.number}}|{{.title}}|{{.headRefName}}\n{{end}}')
 
   if [ -z "$prs" ]; then
     echo "❌ No open pull requests found"
