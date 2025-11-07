@@ -328,6 +328,17 @@ test-branch:
   echo "✅ Selected: $selected_branch"
   echo ""
 
+  # Ask if user wants to clear postgres volume
+  echo "❓ Clear PostgreSQL volume? (useful if migrations fail)"
+  read -p "   Enter 'yes' to clear, or press Enter to skip: " clear_volume
+  if [ "$clear_volume" = "yes" ]; then
+    echo "🗑️  Clearing PostgreSQL volume..."
+    docker compose -f compose.dev.yml down -v
+    echo "✅ Volume cleared"
+  fi
+
+  echo ""
+
   # Checkout or update branch
   current_branch=$(git rev-parse --abbrev-ref HEAD)
   if [ "$current_branch" = "$selected_branch" ]; then
