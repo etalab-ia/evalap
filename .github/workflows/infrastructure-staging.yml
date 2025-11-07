@@ -1,0 +1,92 @@
+name: Deploy Staging Infrastructure
+
+on:
+  workflow_dispatch:
+    inputs:
+      destroy:
+        description: 'Destroy existing infrastructure'
+        required: false
+        default: 'false'
+        type: boolean
+  push:
+    branches: [ "001-scaleway-infra-tf" ]
+    paths:
+      - 'infra/**'
+      - '.github/workflows/infrastructure-staging.yml'
+
+env:
+  TOFU_VERSION: "1.8.0"
+  ENVIRONMENT: "staging"
+
+jobs:
+  deploy:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    environment: staging
+
+    defaults:
+      run:
+        working-directory: infra/staging
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup OpenTofu
+      uses: opentofu/setup-opentofu@v1
+      with:
+        tofu-version: ${{ env.TOFU_VERSION }}
+        tofu_wrapper: false
+
+    - name: Configure Scaleway Credentials
+      run: |
+        echo "credentials_path=$HOME/.config/scw" >> $GITHUB_ENV
+        mkdir -p $HOME/.config/scw
+        cat << EOF > $HOME/.config/scw/config.yaml
+        access_key: ${{ secrets.SCW_ACCESS_KEY }}
+        secret_key: ${{ secrets.SCW_SECRET_KEY }}
+        default_project_id: ${{ secrets.SCW_DEFAULT_PROJECT_ID }}
+        default_region: fr-par
+        default_zone: fr-par-2
+        EOF
+
+    - name: Initialize OpenTofu
+      run: tofu init
+
+    - name: Plan deployment
+      run: tofu plan -out=tfplan -input=false
+
+    - name: Apply deployment
+      if: github.event.inputs.destroy != 'true'
+      run: tofu apply -input=false tfplan
+
+    - name: Destroy infrastructure
+      if: github.event.inputs.destroy == 'true'
+      run: tofu destroy -auto-approve
+
+    - name: Extract outputs
+      if: github.event.inputs.destroy != 'true'
+      id: outputs
+      run: |
+        tofu output -json > outputs.json
+        echo "outputs<<EOF" >> $GITHUB_OUTPUT
+        cat outputs.json >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+
+    - name: Display outputs
+      if: github.event.inputs.destroy != 'true'
+      run: |
+        echo "## 🚀 Staging Deployment Complete" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Service Endpoints" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "The following services are now available:" >> $GITHUB_STEP_SUMMARY
+        echo "- Documentation: Available via container endpoint" >> $GITHUB_STEP_SUMMARY
+        echo "- Runners: Available via container endpoint" >> $GITHUB_STEP_SUMMARY
+        echo "- Streamlit: Available via container endpoint" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Infrastructure Details" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "- Environment: ${{ env.ENVIRONMENT }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Region: fr-par" >> $GITHUB_STEP_SUMMARY
+        echo "- Zone: fr-par-2" >> $GITHUB_STEP_SUMMARY

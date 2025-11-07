@@ -1,0 +1,119 @@
+name: Deploy Production Infrastructure
+
+on:
+  workflow_dispatch:
+    inputs:
+      destroy:
+        description: 'Destroy existing infrastructure'
+        required: false
+        default: 'false'
+        type: boolean
+      confirm:
+        description: 'Type "PRODUCTION" to confirm deployment'
+        required: true
+        type: string
+  push:
+    branches: [ "main" ]
+    paths:
+      - 'infra/**'
+      - '.github/workflows/infrastructure-production.yml'
+
+env:
+  TOFU_VERSION: "1.8.0"
+  ENVIRONMENT: "production"
+
+jobs:
+  confirm-deployment:
+    name: Confirm Production Deployment
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+
+    steps:
+    - name: Check confirmation
+      run: |
+        if [[ "${{ github.event.inputs.confirm }}" != "PRODUCTION" ]]; then
+          echo "❌ Deployment not confirmed. Please type 'PRODUCTION' to proceed."
+          exit 1
+        fi
+        echo "✅ Production deployment confirmed"
+
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    environment: production
+    needs: confirm-deployment
+    if: success()
+
+    defaults:
+      run:
+        working-directory: infra/production
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup OpenTofu
+      uses: opentofu/setup-opentofu@v1
+      with:
+        tofu-version: ${{ env.TOFU_VERSION }}
+        tofu_wrapper: false
+
+    - name: Configure Scaleway Credentials
+      run: |
+        echo "credentials_path=$HOME/.config/scw" >> $GITHUB_ENV
+        mkdir -p $HOME/.config/scw
+        cat << EOF > $HOME/.config/scw/config.yaml
+        access_key: ${{ secrets.SCW_ACCESS_KEY }}
+        secret_key: ${{ secrets.SCW_SECRET_KEY }}
+        default_project_id: ${{ secrets.SCW_DEFAULT_PROJECT_ID }}
+        default_region: fr-par
+        default_zone: fr-par-2
+        EOF
+
+    - name: Initialize OpenTofu
+      run: tofu init
+
+    - name: Plan deployment
+      run: tofu plan -out=tfplan -input=false
+
+    - name: Apply deployment
+      if: github.event.inputs.destroy != 'true'
+      run: tofu apply -input=false tfplan
+
+    - name: Destroy infrastructure
+      if: github.event.inputs.destroy == 'true'
+      run: tofu destroy -auto-approve
+
+    - name: Extract outputs
+      if: github.event.inputs.destroy != 'true'
+      id: outputs
+      run: |
+        tofu output -json > outputs.json
+        echo "outputs<<EOF" >> $GITHUB_OUTPUT
+        cat outputs.json >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+
+    - name: Display outputs
+      if: github.event.inputs.destroy != 'true'
+      run: |
+        echo "## 🚀 Production Deployment Complete" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Service Endpoints" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "The following services are now available in production:" >> $GITHUB_STEP_SUMMARY
+        echo "- Documentation: Available via load-balanced endpoint" >> $GITHUB_STEP_SUMMARY
+        echo "- Runners: Available via load-balanced endpoint" >> $GITHUB_STEP_SUMMARY
+        echo "- Streamlit: Available via load-balanced endpoint" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### High Availability Features" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Minimum 2 instances per service" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Load balancing enabled" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Auto-restart on failures" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Database with HA replicas" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Infrastructure Details" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "- Environment: ${{ env.ENVIRONMENT }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Region: fr-par" >> $GITHUB_STEP_SUMMARY
+        echo "- Zone: fr-par-2" >> $GITHUB_STEP_SUMMARY

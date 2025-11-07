@@ -1,0 +1,59 @@
+name: Infrastructure Validation
+
+on:
+  push:
+    branches: [ main, "001-scaleway-infra-tf" ]
+  pull_request:
+    branches: [ main, "001-scaleway-infra-tf" ]
+
+env:
+  TOFU_VERSION: "1.8.0"
+
+jobs:
+  validate:
+    name: Validate OpenTofu Configuration
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup OpenTofu
+      uses: opentofu/setup-opentofu@v1
+      with:
+        tofu-version: ${{ env.TOFU_VERSION }}
+
+    - name: OpenTofu Format
+      run: tofu fmt -check -recursive infra/
+
+    - name: OpenTofu Init
+      run: |
+        cd infra
+        tofu init -backend=false
+
+    - name: OpenTofu Validate
+      run: |
+        cd infra
+        tofu validate -no-color
+
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'config'
+        scan-ref: 'infra/'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'

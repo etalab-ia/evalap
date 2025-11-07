@@ -72,13 +72,13 @@ All tasks updated to use pure OpenTofu approach:
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T006 Setup Scaleway Object Storage backend for Terraform state
-- [ ] T007 Configure remote state locking and encryption
-- [ ] T008 Implement common provider configuration in \_common/
-- [ ] T009 Create base Terraform configuration and module structure
-- [ ] T010 Setup environment variable management and secret injection framework
-- [ ] T011 Configure GitHub Actions workflow infrastructure
-- [ ] T012 Create validation scripts for infrastructure compliance
+- [x] T006 Setup Scaleway Object Storage backend for Terraform state
+- [x] T007 Configure remote state locking and encryption
+- [x] T008 Implement common provider configuration in \_common/
+- [x] T009 Create base Terraform configuration and module structure
+- [x] T010 Setup environment variable management and secret injection framework
+- [x] T011 Configure GitHub Actions workflow infrastructure
+- [x] T012 Create validation scripts for infrastructure compliance
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
