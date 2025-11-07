@@ -352,7 +352,7 @@ test-pr:
   read -p "   Enter 'yes' to clear, or press Enter to skip: " clear_volume
   if [ "$clear_volume" = "yes" ]; then
     echo "🗑️  Clearing PostgreSQL volume..."
-    docker compose -f compose.dev.yml down -v
+    docker volume rm evalap_postgres_db 2>/dev/null || true
     echo "✅ Volume cleared"
   fi
 
@@ -383,6 +383,13 @@ test-pr:
     fi
     sleep 1
   done
+
+  # Run migrations if volume was cleared
+  if [ "$clear_volume" = "yes" ]; then
+    echo ""
+    echo "🔄 Running database migrations..."
+    alembic -c evalap/api/alembic.ini upgrade head
+  fi
 
   echo ""
   echo "🚀 Starting EvalAP services..."
