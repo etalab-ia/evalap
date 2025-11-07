@@ -217,13 +217,13 @@ class TestEnvironmentIsolation:
         production_resources = set()
 
         # Extract resource identifiers from outputs
-        for key, value in staging_outputs.items():
+        for _, value in staging_outputs.items():
             if isinstance(value, dict) and "value" in value:
                 resource_id = value["value"]
                 if resource_id and isinstance(resource_id, str):
                     staging_resources.add(resource_id)
 
-        for key, value in production_outputs.items():
+        for _, value in production_outputs.items():
             if isinstance(value, dict) and "value" in value:
                 resource_id = value["value"]
                 if resource_id and isinstance(resource_id, str):
