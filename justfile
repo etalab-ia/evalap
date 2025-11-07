@@ -409,9 +409,20 @@ test-pr:
   docker compose -f compose.dev.yml up --build &
   COMPOSE_PID=$!
 
-  # Wait for Streamlit to be ready and open browser
+  # Wait for Uvicorn API to be ready
   echo "⏳ Waiting for services to start..."
-  sleep 5
+  for i in {1..60}; do
+    if curl -s http://localhost:8000/docs > /dev/null 2>&1; then
+      echo "✅ API is ready"
+      break
+    fi
+    if [ $i -eq 60 ]; then
+      echo "⚠️  API startup timeout, opening browser anyway..."
+      break
+    fi
+    sleep 1
+  done
+
   echo "🌐 Opening Streamlit UI in browser..."
   if command -v open &> /dev/null; then
     # macOS
