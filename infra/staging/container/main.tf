@@ -56,9 +56,7 @@ resource "scaleway_container" "documentation" {
   # Privacy settings (public for staging)
   privacy = "public"
 
-  tags = merge(var.tags, {
-    "Service" = "documentation"
-  })
+  tags = concat(values(var.tags), ["documentation"])
 
   depends_on = [scaleway_container_namespace.staging]
 }
@@ -100,9 +98,7 @@ resource "scaleway_container" "runners" {
   # Privacy settings (public for staging)
   privacy = "public"
 
-  tags = merge(var.tags, {
-    "Service" = "runners"
-  })
+  tags = concat(values(var.tags), ["runners"])
 
   depends_on = [scaleway_container_namespace.staging]
 }
@@ -144,9 +140,7 @@ resource "scaleway_container" "streamlit" {
   # Privacy settings (public for staging)
   privacy = "public"
 
-  tags = merge(var.tags, {
-    "Service" = "streamlit"
-  })
+  tags = concat(values(var.tags), ["streamlit"])
 
   depends_on = [scaleway_container_namespace.staging]
 }

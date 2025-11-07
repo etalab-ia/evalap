@@ -5,7 +5,7 @@
 resource "scaleway_vpc" "main" {
   name = "${local.resource_name}vpc"
 
-  tags = local.standard_tags
+  tags = values(local.standard_tags)
 }
 
 # Private networks for each environment
@@ -13,7 +13,7 @@ resource "scaleway_vpc_private_network" "main" {
   name   = "${local.resource_name}private-network"
   vpc_id = scaleway_vpc.main.id
 
-  tags = local.standard_tags
+  tags = values(local.standard_tags)
 }
 
 # Base security group
@@ -44,7 +44,7 @@ resource "scaleway_instance_security_group" "main" {
   inbound_rule {
     action   = "accept"
     port     = 5432
-    ip_range = scaleway_vpc_private_network.main.ipv4_subnet
+    ip_range = "10.0.0.0/8" # Private network range
   }
 
   outbound_rule {
@@ -53,7 +53,7 @@ resource "scaleway_instance_security_group" "main" {
     ip_range = "0.0.0.0/0"
   }
 
-  tags = local.standard_tags
+  tags = values(local.standard_tags)
 }
 
 # Common outputs

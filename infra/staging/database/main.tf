@@ -35,10 +35,7 @@ resource "scaleway_rdb_instance" "staging" {
     log_min_duration_statement = 1000 # Log queries > 1s
   }
 
-  tags = merge(var.tags, {
-    "Component" = "database"
-    "Engine"    = "postgresql"
-  })
+  tags = concat(values(var.tags), ["database", "postgresql"])
 }
 
 # Database for the application

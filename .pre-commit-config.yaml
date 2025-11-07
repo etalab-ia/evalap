@@ -51,3 +51,6 @@ repos:
       - id: terraform_fmt
       # Terraform/OpenTofu validation
       - id: terraform_validate
+        args: [
+          --chdir=infra/staging
+        ]

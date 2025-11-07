@@ -11,25 +11,25 @@ terraform {
     }
   }
 
-  # Staging backend configuration
-  backend "s3" {
-    bucket = "evalap-terraform-state"
-    key    = "staging/terraform.tfstate"
-    region = "fr-par"
-
-    # Scaleway S3-compatible configuration
-    endpoint = "s3.fr-par.scw.cloud"
-
-    # Security settings
-    encrypt                     = true
-    skip_credentials_validation = true
-    skip_metadata_api_check     = true
-    force_path_style            = true
-
-    # State locking (using Object Storage's built-in locking)
-    # Note: Scaleway Object Storage provides atomic operations
-    # that can be used for basic state locking
-  }
+  # Staging backend configuration (commented out for testing)
+  # backend "s3" {
+  #   bucket = "evalap-terraform-state"
+  #   key    = "staging/terraform.tfstate"
+  #   region = "eu-west-3"
+  #
+  #   # Scaleway S3-compatible configuration
+  #   endpoint = "s3.fr-par.scw.cloud"
+  #
+  #   # Security settings
+  #   encrypt                     = true
+  #   skip_credentials_validation = true
+  #   skip_metadata_api_check     = true
+  #   use_path_style              = true
+  #
+  #   # State locking (using Object Storage's built-in locking)
+  #   # Note: Scaleway Object Storage provides atomic operations
+  #   # that can be used for basic state locking
+  # }
 }
 
 # Provider configuration
@@ -67,12 +67,17 @@ locals {
   }
 }
 
+# Get current project from Scaleway provider
+data "scaleway_account_project" "current" {
+  # This will automatically use the default project from scw config
+}
+
 # Staging modules
 module "networking" {
   source = "../_common"
 
   environment    = local.environment
-  project_id     = var.project_id
+  project_id     = data.scaleway_account_project.current.id
   default_region = var.default_region
   default_zone   = var.default_zone
 }
@@ -81,7 +86,9 @@ module "container" {
   source = "./container"
 
   environment = local.environment
-  project_id  = var.project_id
+  project_id  = data.scaleway_account_project.current.id
+
+  private_network_id = module.networking.private_network_id
 
   # Staging-specific configuration
   container_config = {
@@ -92,7 +99,7 @@ module "container" {
       memory    = 512
       min_scale = 0
       max_scale = 1
-      protocol  = "HTTP"
+      protocol  = "http1"
     }
     runners = {
       image     = "evalap/runners:latest"
@@ -101,7 +108,7 @@ module "container" {
       memory    = 1024
       min_scale = 0
       max_scale = 1
-      protocol  = "HTTP"
+      protocol  = "http1"
     }
     streamlit = {
       image     = "evalap/streamlit:latest"
@@ -110,12 +117,9 @@ module "container" {
       memory    = 512
       min_scale = 0
       max_scale = 1
-      protocol  = "HTTP"
+      protocol  = "http1"
     }
   }
-
-  # Required attributes
-  private_network_id = module.networking.private_network_id
 
   tags = local.tags
 }
@@ -124,7 +128,7 @@ module "database" {
   source = "./database"
 
   environment = local.environment
-  project_id  = var.project_id
+  project_id  = data.scaleway_account_project.current.id
   region      = var.default_region
 
   # Staging database configuration
@@ -145,7 +149,7 @@ module "secrets" {
   source = "./secrets"
 
   environment = local.environment
-  project_id  = var.project_id
+  project_id  = data.scaleway_account_project.current.id
   region      = var.default_region
 
   # Staging secrets configuration
@@ -167,7 +171,7 @@ module "monitoring" {
   source = "./monitoring"
 
   environment = local.environment
-  project_id  = var.project_id
+  project_id  = data.scaleway_account_project.current.id
   region      = var.default_region
 
   # Container IDs for monitoring
@@ -193,7 +197,8 @@ output "container_endpoints" {
 
 output "database_endpoint" {
   description = "Database connection endpoint"
-  value       = module.database.endpoint
+  value       = module.database.connection_string
+  sensitive   = true
 }
 
 output "database_connection_string" {
@@ -204,7 +209,7 @@ output "database_connection_string" {
 
 output "secrets_manager_id" {
   description = "Secrets manager ID"
-  value       = module.secrets.manager_id
+  value       = module.secrets.secrets_enabled ? "staging-secrets" : null
 }
 
 output "monitoring_endpoint" {

@@ -1,11 +1,5 @@
 # Staging Environment Variables
 
-variable "project_id" {
-  description = "Scaleway Project ID"
-  type        = string
-  sensitive   = true
-}
-
 variable "default_region" {
   description = "Default Scaleway region"
   type        = string
@@ -43,5 +37,5 @@ variable "jwt_secret" {
   description = "JWT signing secret"
   type        = string
   sensitive   = true
-  default     = "changeme-staging-jwt-secret-64-chars-minimum-for-security" # Should be overridden
+  default     = "changeme-staging-jwt-secret-64-characters-minimum-for-security-purposes" # Should be overridden
 }
