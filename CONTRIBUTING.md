@@ -69,7 +69,7 @@ This is the easiest way to get started with full hot reloading for all services.
 #### Quick Start
 
 ```bash
-docker compose -f compose.dev.yml up --build
+just run docker
 ```
 
 This will:
