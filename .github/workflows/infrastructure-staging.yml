@@ -6,7 +6,7 @@ on:
       destroy:
         description: 'Destroy existing infrastructure'
         required: false
-        default: 'false'
+        default: false
         type: boolean
   push:
     branches: [ "001-scaleway-infra-tf" ]
@@ -57,15 +57,15 @@ jobs:
       run: tofu plan -out=tfplan -input=false
 
     - name: Apply deployment
-      if: github.event.inputs.destroy != 'true'
+      if: github.event.inputs.destroy != true
       run: tofu apply -input=false tfplan
 
     - name: Destroy infrastructure
-      if: github.event.inputs.destroy == 'true'
+      if: github.event.inputs.destroy == true
       run: tofu destroy -auto-approve
 
     - name: Extract outputs
-      if: github.event.inputs.destroy != 'true'
+      if: github.event.inputs.destroy != true
       id: outputs
       run: |
         tofu output -json > outputs.json
@@ -74,7 +74,7 @@ jobs:
         echo "EOF" >> $GITHUB_OUTPUT
 
     - name: Display outputs
-      if: github.event.inputs.destroy != 'true'
+      if: github.event.inputs.destroy != true
       run: |
         echo "## 🚀 Staging Deployment Complete" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
