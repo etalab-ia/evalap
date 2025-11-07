@@ -387,30 +387,53 @@ test-pr:
   echo ""
   echo "🚀 Starting EvalAP services..."
   echo ""
-  echo "📍 Access the application at:"
-  echo "   🎨 UI: http://localhost:8501"
-  echo "   📚 API Docs: http://localhost:8000/docs"
-  echo ""
-  echo "⏹️  Press Ctrl+C to stop all services"
+
+  # Color codes
+  RED='\033[0;31m'
+  GREEN='\033[0;32m'
+  BLUE='\033[0;34m'
+  YELLOW='\033[1;33m'
+  CYAN='\033[0;36m'
+  NC='\033[0m' # No Color
+
+  echo -e "${BLUE}API: http://localhost:8000${NC}"
+  echo -e "${CYAN}Streamlit: http://localhost:8501${NC}"
+  echo -e "${GREEN}Press Ctrl-C to stop all services${NC}"
   echo ""
 
-  # Function to cleanup all services
+  # Function to cleanup background processes
   cleanup() {
-    echo ""
-    echo "🛑 Stopping all services..."
-    docker compose -f compose.dev.yml down
+    echo -e "\n${RED}Shutting down services...${NC}"
+    kill $API_PID $RUNNER_PID $STREAMLIT_PID 2>/dev/null || true
+    docker compose -f compose.dev.yml down 2>/dev/null || true
+    wait
+    echo -e "${GREEN}All services stopped${NC}"
     exit 0
   }
 
   # Set trap for Ctrl+C
   trap cleanup SIGINT SIGTERM
 
-  # Start services in background
-  docker compose -f compose.dev.yml up --build &
-  COMPOSE_PID=$!
+  # Start API in background with blue prefix
+  {
+    uvicorn evalap.api.main:app --reload 2>&1 | sed $'s/^/\033[0;34m[API]\033[0m /'
+  } &
+  API_PID=$!
 
-  # Wait for Uvicorn API to be ready
-  echo "⏳ Waiting for services to start..."
+  # Start runner in background with yellow prefix
+  {
+    PYTHONPATH="." python -m evalap.runners 2>&1 | sed $'s/^/\033[1;33m[RUNNER]\033[0m /'
+  } &
+  RUNNER_PID=$!
+
+  # Start streamlit in background with cyan prefix
+  {
+    streamlit run evalap/ui/demo_streamlit/app.py --server.runOnSave true --server.headless=true 2>&1 | sed $'s/^/\033[0;36m[STREAMLIT]\033[0m /'
+  } &
+  STREAMLIT_PID=$!
+
+  # Wait for Uvicorn API to be ready before opening browser
+  echo "⏳ Waiting for API to be ready..."
   for i in {1..60}; do
     if curl -s http://localhost:8000/docs > /dev/null 2>&1; then
       echo "✅ API is ready"
@@ -435,5 +458,5 @@ test-pr:
     start http://localhost:8501
   fi
 
-  # Wait for background process
-  wait $COMPOSE_PID
+  # Wait for all processes
+  wait $API_PID $RUNNER_PID $STREAMLIT_PID
