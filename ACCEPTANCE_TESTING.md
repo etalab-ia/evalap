@@ -12,32 +12,52 @@ This command will:
 1. **List all open pull requests** (excluding drafts and closed)
 2. **Let you select one** by number
 3. **Check out the PR's branch** automatically
-4. **Run database migrations**
-5. **Start EvalAP** with all services running
+4. **Start EvalAP** with all services running
 
 That's it! No other steps needed.
 
 ## What You Need
 
-1. **GitHub CLI** (required for `just test-pr`)
+### Essential
+
+1. **just** - Command runner for the project
+   - **Mac**: `brew install just`
+   - **Windows**: Download from [just releases](https://github.com/casey/just/releases)
+   - **Linux**: `sudo apt install just`
+   - Verify: Open Terminal and type `just --version`
+
+2. **GitHub CLI** - To authenticate and list pull requests
    - [Download GitHub CLI](https://cli.github.com/)
    - Verify: Open Terminal and type `gh --version`
+   - **Authenticate**: Run `gh auth login` and follow the browser-based login
 
-2. **jq** (required for `just test-pr` - JSON processor)
+3. **jq** - JSON processor for parsing PR data
    - **Mac**: `brew install jq`
    - **Windows**: Download from [stedolan.github.io/jq](https://stedolan.github.io/jq/download/)
    - **Linux**: `sudo apt install jq` (Debian/Ubuntu)
    - Verify: Open Terminal and type `jq --version`
 
-3. **Git UI** (optional but recommended for easier branch switching)
+### Optional
+
+4. **Git UI** (optional but recommended for easier branch switching)
    - [GitHub Desktop](https://desktop.github.com/) - Easiest for beginners
    - [GitKraken](https://www.gitkraken.com/) - More features
-   - Or use the command line (see below)
-
-4. **Docker Desktop** - For running the application
-   - [Download Docker Desktop](https://www.docker.com/products/docker-desktop)
+   - Or use the command line
 
 ## How to Use
+
+### First Time Setup
+
+1. **Authenticate with GitHub**:
+   ```bash
+   gh auth login
+   ```
+   - Choose "GitHub.com" when prompted
+   - Choose "HTTPS" for the protocol
+   - Choose "Y" to authenticate with your GitHub credentials
+   - A browser window will open - follow the prompts to authorize
+
+### Running the Tests
 
 1. **Open Terminal/Command Prompt** in the project folder
 2. **Run**:
@@ -87,9 +107,18 @@ Install `just`:
 - **Windows**: Download from [just releases](https://github.com/casey/just/releases)
 - **Linux**: `sudo apt install just`
 
-### "Command not found: docker"
+Then restart your terminal.
 
-Install [Docker Desktop](https://www.docker.com/products/docker-desktop) and restart your terminal.
+### "Authentication required" or "No pull requests found"
+
+You need to authenticate with GitHub:
+```bash
+gh auth login
+```
+- Choose "GitHub.com" when prompted
+- Choose "HTTPS" for the protocol
+- Choose "Y" to authenticate with your GitHub credentials
+- A browser window will open - follow the prompts to authorize
 
 ### Port already in use
 
