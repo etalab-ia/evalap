@@ -306,6 +306,8 @@ test-branch:
   branch_array=()
   counter=1
   while IFS= read -r branch; do
+    # Trim leading/trailing whitespace
+    branch=$(echo "$branch" | xargs)
     echo "  $counter) $branch"
     branch_array+=("$branch")
     ((counter++))
