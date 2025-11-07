@@ -364,6 +364,10 @@ test-pr:
   git checkout -B "$selected_branch" "origin/$selected_branch"
 
   echo ""
+  echo "📚 Installing Python dependencies..."
+  uv sync --all-extras
+
+  echo ""
   echo "🗄️  Starting PostgreSQL..."
   docker compose -f compose.dev.yml up -d postgres
 
