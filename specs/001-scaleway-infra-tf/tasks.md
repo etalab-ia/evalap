@@ -124,9 +124,9 @@ All tasks updated to use pure OpenTofu approach:
 
 ### Infrastructure Validation for User Story 2
 
-- [ ] T029 [P] [US2] Create production redundancy test in tests/infra/test_production_redundancy.py
-- [ ] T030 [P] [US2] Create failover simulation test in tests/infra/test_production_failover.py
-- [ ] T031 [P] [US2] Create load balancing test in tests/infra/test_production_scaling.py
+- [x] T029 [P] [US2] Create production redundancy test in tests/infra/test_production_redundancy.py
+- [x] T030 [P] [US2] Create failover simulation test in tests/infra/test_production_failover.py
+- [x] T031 [P] [US2] Create load balancing test in tests/infra/test_production_scaling.py
 
 ### Implementation for User Story 2
 

@@ -130,7 +130,9 @@ def display_model_production(model_info: dict, default_metric: str) -> None:
                 metrics_data[column_name] = round(mean_score, 2)
 
         if tokens and times:
-            tokens_per_second = [calculate_tokens_per_second(t, tm) for t, tm in zip(tokens, times)]
+            tokens_per_second = [
+                calculate_tokens_per_second(t, tm) for t, tm in zip(tokens, times, strict=False)
+            ]
             tokens_per_second = [tps for tps in tokens_per_second if tps is not None]
 
             if tokens_per_second:
@@ -383,7 +385,7 @@ def main() -> None:
 
     product_tabs = st.tabs([product_info["name"] for product_info in product_config["products"].values()])
 
-    for tab, product_info in zip(product_tabs, product_config["products"].values()):
+    for tab, product_info in zip(product_tabs, product_config["products"].values(), strict=False):
         with tab:
             st.header(f"{product_info['name'].replace('_', ' ')}")
 
