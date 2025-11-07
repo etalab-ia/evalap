@@ -58,11 +58,11 @@ All tasks updated to use pure OpenTofu approach:
 
 **Purpose**: Project initialization and basic structure
 
-- [ ] T001 Create infrastructure directory structure per implementation plan
-- [ ] T002 Initialize OpenTofu configuration files and modules
-- [ ] T003 [P] Configure HCL validation and formatting in pre-commit hooks
-- [ ] T004 [P] Set up Scaleway provider configuration and authentication
-- [ ] T005 Create documentation structure for infrastructure setup
+- [x] T001 Create infrastructure directory structure per implementation plan
+- [x] T002 Initialize OpenTofu configuration files and modules
+- [x] T003 [P] Configure HCL validation and formatting in pre-commit hooks
+- [x] T004 [P] Set up Scaleway provider configuration and authentication
+- [x] T005 Create documentation structure for infrastructure setup
 
 ---
 

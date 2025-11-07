@@ -11,6 +11,16 @@ config/products/\[BACKUP\]*
 *.csv
 .deepeval
 
+#
+# Terraform/OpenTofu
+#
+
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+*.tfvars
+*.tfvars.json
 
 #
 # Default

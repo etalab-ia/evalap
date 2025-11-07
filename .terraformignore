@@ -1,0 +1,49 @@
+# OpenTofu ignore file
+# Prevents sensitive files from being included in state uploads
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# IDE files
+.vscode/
+.idea/
+*.iml
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Cache
+.cache/
+.terraform/
+
+# State files (should never be in version control)
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+
+# Variable files with sensitive data
+*.tfvars
+*.tfvars.json
+
+# Credentials
+.env
+.env.*
+.credentials
+
+# Backup files
+*.bak
+*.backup
+
+# Test files
+*_test.tf
+test_*.tf

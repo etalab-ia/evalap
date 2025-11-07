@@ -43,3 +43,11 @@ repos:
       # Remove trailing whitespace
       - id: trailing-whitespace
         exclude: '^(\.claude/|\.cursor/|\.specify/|\.windsurf/|specs/)'
+
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: v1.96.2
+    hooks:
+      # Terraform/OpenTofu formatting
+      - id: terraform_fmt
+      # Terraform/OpenTofu validation
+      - id: terraform_validate
