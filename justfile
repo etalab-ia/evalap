@@ -409,5 +409,24 @@ test-pr:
   # Set trap for Ctrl+C
   trap cleanup SIGINT SIGTERM
 
-  # Run the full application stack
-  docker compose -f compose.dev.yml up --build
+  # Start services in background
+  docker compose -f compose.dev.yml up --build &
+  COMPOSE_PID=$!
+
+  # Wait for Streamlit to be ready and open browser
+  echo "⏳ Waiting for services to start..."
+  sleep 5
+  echo "🌐 Opening Streamlit UI in browser..."
+  if command -v open &> /dev/null; then
+    # macOS
+    open http://localhost:8501
+  elif command -v xdg-open &> /dev/null; then
+    # Linux
+    xdg-open http://localhost:8501
+  elif command -v start &> /dev/null; then
+    # Windows
+    start http://localhost:8501
+  fi
+
+  # Wait for background process
+  wait $COMPOSE_PID
