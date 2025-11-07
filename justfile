@@ -421,6 +421,14 @@ test-pr:
   # Set trap for Ctrl+C
   trap cleanup SIGINT SIGTERM
 
+  # Kill any hanging processes on service ports
+  echo "🧹 Cleaning up any hanging processes..."
+  lsof -ti:8000 | xargs kill -9 2>/dev/null || true
+  lsof -ti:8501 | xargs kill -9 2>/dev/null || true
+  lsof -ti:5555 | xargs kill -9 2>/dev/null || true
+  lsof -ti:5556 | xargs kill -9 2>/dev/null || true
+  sleep 1
+
   # Start API in background with blue prefix
   {
     uvicorn evalap.api.main:app --reload 2>&1 | sed $'s/^/\033[0;34m[API]\033[0m /'
