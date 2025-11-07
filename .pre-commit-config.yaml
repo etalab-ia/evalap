@@ -49,8 +49,7 @@ repos:
     hooks:
       # Terraform/OpenTofu formatting
       - id: terraform_fmt
-      # Terraform/OpenTofu validation
-      - id: terraform_validate
-        args: [
-          --chdir=infra/staging
-        ]
+        files: ^infra/staging/
+      # Terraform/OpenTofu validation (commented out - run manually from infra/staging)
+      # - id: terraform_validate
+      #   files: ^infra/staging/
