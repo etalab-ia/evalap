@@ -36,6 +36,7 @@ const sidebars = {
                 'user-guides/create-experiment-set',
                 'user-guides/use-custom-llm-judge-prompt',
                 'user-guides/run-answers-locally',
+                'user-guides/create-compliance-experiment',
             ],
         },
         {
