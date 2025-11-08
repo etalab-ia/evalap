@@ -170,3 +170,50 @@ Operations teams need comprehensive monitoring and alerting to ensure infrastruc
 - **SC-006**: Infrastructure provisioning costs are reduced by 40% compared to manual setup
 - **SC-007**: Mean time to detect infrastructure issues is under 5 minutes through automated monitoring
 - **SC-008**: 95% of infrastructure components can be reused across different environments through modular design
+
+## Clarifications
+
+### Session 2025-11-08
+
+- Q: Performance and scalability targets → A: Specific performance targets with clear SLA definitions, but supporting only a couple of concurrent deployments at a time rather than 50+
+- Q: Data volume and scale assumptions → A: Small-scale (single team, <10 deployments/month, <1GB state)
+- Q: Failure handling and recovery strategies → A: Basic error handling (retry mechanisms, simple logging)
+- Q: Technical constraints and tradeoffs → A: Scaleway-only constraint with cost optimization focus (no multi-cloud, prioritize managed services)
+- Q: Integration failure modes → A: Basic failure handling (timeouts, simple retries)
+
+## Non-Functional Requirements
+
+### Performance Targets
+
+- **NFR-001**: System must support 2-3 concurrent infrastructure deployments with state locking
+- **NFR-002**: Infrastructure deployment completion time under 10 minutes for standard stacks
+- **NFR-003**: API response times for infrastructure operations under 5 seconds
+- **NFR-004**: 99% uptime for infrastructure management services
+
+### Scale and Capacity
+
+- **NFR-005**: System designed for single team usage (<10 deployments per month)
+- **NFR-006**: Infrastructure state storage under 1GB with compression
+- **NFR-007**: Monitoring data retention for 30 days with automatic cleanup
+- **NFR-008**: Support for up to 5 concurrent users in infrastructure management interface
+
+### Failure Handling
+
+- **NFR-009**: Implement retry mechanisms with exponential backoff for API failures
+- **NFR-010**: Basic error logging for all infrastructure operations
+- **NFR-011**: Timeout configurations for all external service calls
+- **NFR-012**: Manual intervention procedures for critical failures
+
+### Technical Constraints
+
+- **NFR-013**: Scaleway-only infrastructure (no multi-cloud or hybrid deployments)
+- **NFR-014**: Prioritize managed services over self-hosted alternatives
+- **NFR-015**: Cost optimization as primary decision factor for service selection
+- **NFR-016**: Python SDK required for all Pulumi infrastructure code
+
+### Integration Resilience
+
+- **NFR-017**: Timeout configurations for all Scaleway API calls
+- **NFR-018**: Simple retry mechanisms for transient failures
+- **NFR-019**: Error propagation to user interface for debugging
+- **NFR-020**: Graceful handling of API rate limits
