@@ -45,9 +45,11 @@
    - [Serverless Containers](https://www.scaleway.com/en/docs/containers/serverless-containers/)
    - [Serverless Databases](https://www.scaleway.com/en/docs/serverless-sql-databases/)
    - [Object Storage](https://www.scaleway.com/en/docs/object-storage/)
-   - [ecret Manager](https://www.scaleway.com/en/docs/secret-manager/)
+   - [IAM](https://www.scaleway.com/en/docs/iam/)
+   - [Secret Manager](https://www.scaleway.com/en/docs/secret-manager/)
    - [Cockpit](https://www.scaleway.com/en/docs/cockpit/)
-   - [Private Networks](hhttps://www.scaleway.com/en/docs/vpc/)
+   - [Private Networks](https://www.scaleway.com/en/docs/vpc/)
+   - [Scaleway CLI](https://www.scaleway.com/en/docs/scaleway-cli/quickstart/)
 
 ## User Scenarios & Testing *(mandatory)*
 
