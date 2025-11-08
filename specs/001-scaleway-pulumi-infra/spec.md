@@ -42,12 +42,12 @@
    - [Pulumi Scaleway Provider Documentation](https://www.pulumi.com/registry/packages/scaleway/)
 
 2. **Scaleway Services**:
-   - [Serverless Containers](https://www.scaleway.com/en/docs/serverless/containers/)
-   - [Managed Databases](https://www.scaleway.com/en/databases/)
-   - [Object Storage](https://www.scaleway.com/en/object-storage/)
-   - [IAM & Secret Manager](https://www.scaleway.com/en/iam/)
-   - [Cockpit](https://www.scaleway.com/en/cockpit/)
-   - [Private Networks](https://www.scaleway.com/en/private-network/)"
+   - [Serverless Containers](https://www.scaleway.com/en/docs/containers/serverless-containers/)
+   - [Serverless Databases](https://www.scaleway.com/en/docs/serverless-sql-databases/)
+   - [Object Storage](https://www.scaleway.com/en/docs/object-storage/)
+   - [ecret Manager](https://www.scaleway.com/en/docs/secret-manager/)
+   - [Cockpit](https://www.scaleway.com/en/docs/cockpit/)
+   - [Private Networks](hhttps://www.scaleway.com/en/docs/vpc/)
 
 ## User Scenarios & Testing *(mandatory)*
 
