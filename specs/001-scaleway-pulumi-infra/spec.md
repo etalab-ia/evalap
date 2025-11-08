@@ -5,10 +5,10 @@
 **Status**: Draft
 **Input**: User description: "# Feature Specification: Scaleway Infrastructure with Pulumi
 
-
 ## Core Principles
 
 1. **Fully Managed Scaleway Services**:
+
    - Maximize use of Scaleway's managed services for all infrastructure needs
    - Serverless Containers for application deployment and scaling
    - Managed PostgreSQL with high availability and backups
@@ -17,12 +17,14 @@
    - Cockpit for comprehensive monitoring and observability
 
 2. **Sovereign State Management**:
+
    - All Pulumi state stored in Scaleway Object Storage
    - State locking using Scaleway's database services
    - Regular state backups with versioning
    - Access control through Scaleway IAM
 
 3. **Security by Design**:
+
    - All credentials managed through Scaleway Secret Manager
    - Infrastructure as code with principle of least privilege
    - Network isolation using Scaleway Private Networks
@@ -37,11 +39,17 @@
 ## Key Technologies
 
 1. **Pulumi**:
+
    - Python SDK for infrastructure as code
    - Self-managed state in Scaleway Object Storage
    - [Pulumi Scaleway Provider Documentation](https://www.pulumi.com/registry/packages/scaleway/)
+   - [Pulumi Python SDK Documentation](https://www.pulumi.com/docs/iac/languages-sdks/python/)
+   - [Pulumi CLI Documentation](https://www.pulumi.com/docs/iac/cli/)
+   - [Pulumi Testing Documentation](https://www.pulumi.com/docs/iac/guides/testing/)
 
-2. **Scaleway Services**:
+2. **Scaleway**:
+
+   - [Scaleway CLI](https://www.scaleway.com/en/docs/scaleway-cli/quickstart/)
    - [Serverless Containers](https://www.scaleway.com/en/docs/containers/serverless-containers/)
    - [Serverless Databases](https://www.scaleway.com/en/docs/serverless-sql-databases/)
    - [Object Storage](https://www.scaleway.com/en/docs/object-storage/)
@@ -49,9 +57,8 @@
    - [Secret Manager](https://www.scaleway.com/en/docs/secret-manager/)
    - [Cockpit](https://www.scaleway.com/en/docs/cockpit/)
    - [Private Networks](https://www.scaleway.com/en/docs/vpc/)
-   - [Scaleway CLI](https://www.scaleway.com/en/docs/scaleway-cli/quickstart/)
 
-## User Scenarios & Testing *(mandatory)*
+## User Scenarios & Testing _(mandatory)_
 
 ### User Story 1 - Deploy Managed Infrastructure (Priority: P1)
 
@@ -125,7 +132,7 @@ Operations teams need comprehensive monitoring and alerting to ensure infrastruc
 - How does system handle credential rotation for services and IAM users?
 - What happens when managed service quotas are exceeded?
 
-## Requirements *(mandatory)*
+## Requirements _(mandatory)_
 
 ### Functional Requirements
 
@@ -144,14 +151,14 @@ Operations teams need comprehensive monitoring and alerting to ensure infrastruc
 - **FR-013**: System MUST validate infrastructure configurations before deployment
 - **FR-014**: System MUST provide comprehensive test coverage for infrastructure code
 
-### Key Entities *(include if feature involves data)*
+### Key Entities _(include if feature involves data)_
 
 - **Infrastructure State**: Pulumi state files containing resource definitions and metadata, stored in Scaleway Object Storage with versioning and access controls
 - **Service Configuration**: Modular infrastructure component definitions including containers, databases, storage, and networking settings
 - **Security Policies**: IAM roles, permissions, and network rules governing access to infrastructure resources
 - **Monitoring Data**: Metrics, logs, and alerts collected from all infrastructure components for observability
 
-## Success Criteria *(mandatory)*
+## Success Criteria _(mandatory)_
 
 ### Measurable Outcomes
 
