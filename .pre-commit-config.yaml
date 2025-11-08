@@ -39,7 +39,7 @@ repos:
       - id: check-yaml
       # Make sure that text files end in a newline
       - id: end-of-file-fixer
-        exclude: '^(\.claude/|\.cursor/|\.specify/|\.windsurf/)'
+        exclude: '^(\.claude/|\.cursor/|\.specify/|\.windsurf/|\.kilocode/|specs/)'
       # Remove trailing whitespace
       - id: trailing-whitespace
-        exclude: '^(\.claude/|\.cursor/|\.specify/|\.windsurf/)'
+        exclude: '^(\.claude/|\.cursor/|\.specify/|\.windsurf/|\.kilocode/|specs/)'
