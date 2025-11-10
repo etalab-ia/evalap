@@ -104,23 +104,23 @@ chat-completion-cortex:
 #
 
 alembic-init:
-  alembic -c evalap/api/alembic.ini revision --autogenerate -m "Table Initialization"
+  uv run alembic -c evalap/api/alembic.ini revision --autogenerate -m "Table Initialization"
 
 alembic-generate-revision name:
-  alembic -c evalap/api/alembic.ini upgrade head
-  alembic -c evalap/api/alembic.ini revision --autogenerate -m "{{name}}"
+  uv run alembic -c evalap/api/alembic.ini upgrade head
+  uv run alembic -c evalap/api/alembic.ini revision --autogenerate -m "{{name}}"
 
 alembic-upgrade:
-  alembic -c evalap/api/alembic.ini upgrade head
+  uv run alembic -c evalap/api/alembic.ini upgrade head
 
 seed:
-  python -m evalap.scripts.run_seed_data
+  uv run python -m evalap.scripts.run_seed_data
 
 alembic-downgrade hash:
-  alembic -c evalap/api/alembic.ini downgrade {{hash}}
+  uv run alembic -c evalap/api/alembic.ini downgrade {{hash}}
 
 alembic-history:
-  alembic -c evalap/api/alembic.ini history
+  uv run alembic -c evalap/api/alembic.ini history
 
 #
 # Search engine
@@ -224,7 +224,7 @@ run mode="local" log_level="INFO":
 
     # Run database seeding
     echo -e "${PURPLE}Seeding database with initial datasets...${NC}"
-    python -m evalap.scripts.run_seed_data
+    uv run python -m evalap.scripts.run_seed_data
 
     echo -e "${BLUE}API: http://localhost:8000${NC}"
     echo -e "${CYAN}Streamlit: http://localhost:8501${NC}"
@@ -245,19 +245,19 @@ run mode="local" log_level="INFO":
 
     # Start API in background with blue prefix
     {
-      uvicorn evalap.api.main:app --reload 2>&1 | sed $'s/^/\033[0;34m[API]\033[0m /'
+      uv run uvicorn evalap.api.main:app --reload 2>&1 | sed $'s/^/\033[0;34m[API]\033[0m /'
     } &
     API_PID=$!
 
     # Start runner in background with yellow prefix
     {
-      LOG_LEVEL="{{log_level}}" PYTHONPATH="." python -m evalap.runners 2>&1 | sed $'s/^/\033[1;33m[RUNNER]\033[0m /'
+      LOG_LEVEL="{{log_level}}" PYTHONPATH="." uv run python -m evalap.runners 2>&1 | sed $'s/^/\033[1;33m[RUNNER]\033[0m /'
     } &
     RUNNER_PID=$!
 
     # Start streamlit in background with cyan prefix
     {
-      streamlit run evalap/ui/demo_streamlit/app.py --server.runOnSave true --server.headless=true 2>&1 | sed $'s/^/\033[0;36m[STREAMLIT]\033[0m /'
+      uv run streamlit run evalap/ui/demo_streamlit/app.py --server.runOnSave true --server.headless=true 2>&1 | sed $'s/^/\033[0;36m[STREAMLIT]\033[0m /'
     } &
     STREAMLIT_PID=$!
 
@@ -384,15 +384,11 @@ test-pr:
     sleep 1
   done
 
-  echo ""
-  echo "📦 Installing/updating Python dependencies for EvalAP..."
-  uv sync --all-extras
-
   # Run migrations if volume was cleared
   if [ "$clear_volume" = "yes" ]; then
     echo ""
     echo "🔄 Running database migrations..."
-    alembic -c evalap/api/alembic.ini upgrade head
+    uv run alembic -c evalap/api/alembic.ini upgrade head
   fi
 
   echo ""
@@ -435,19 +431,19 @@ test-pr:
 
   # Start API in background with blue prefix
   {
-    uvicorn evalap.api.main:app --reload 2>&1 | sed $'s/^/\033[0;34m[API]\033[0m /'
+    uv run uvicorn evalap.api.main:app --reload 2>&1 | sed $'s/^/\033[0;34m[API]\033[0m /'
   } &
   API_PID=$!
 
   # Start runner in background with yellow prefix
   {
-    PYTHONPATH="." python -m evalap.runners 2>&1 | sed $'s/^/\033[1;33m[RUNNER]\033[0m /'
+    PYTHONPATH="." uv run python -m evalap.runners 2>&1 | sed $'s/^/\033[1;33m[RUNNER]\033[0m /'
   } &
   RUNNER_PID=$!
 
   # Start streamlit in background with cyan prefix
   {
-    streamlit run evalap/ui/demo_streamlit/app.py --server.runOnSave true --server.headless=true 2>&1 | sed $'s/^/\033[0;36m[STREAMLIT]\033[0m /'
+    uv run streamlit run evalap/ui/demo_streamlit/app.py --server.runOnSave true --server.headless=true 2>&1 | sed $'s/^/\033[0;36m[STREAMLIT]\033[0m /'
   } &
   STREAMLIT_PID=$!
 
