@@ -37,9 +37,13 @@ That's it! No other steps needed.
    - **Linux**: `sudo apt install jq` (Debian/Ubuntu)
    - Verify: Open Terminal and type `jq --version`
 
-### Optional
+4. **uv** - Fast Python package installer and resolver (required for dependency management)
+   - **Mac**: `brew install uv`
+   - **Windows**: `powershell -c "irm https://astral.sh/uv/install.ps1 | iex"`
+   - **Linux**: `curl -LsSf https://astral.sh/uv/install.sh | sh`
+   - Verify: Open Terminal and type `uv --version`
 
-4. **Git UI** (optional but recommended for easier branch switching)
+5. **Git UI** (optional but recommended for easier branch switching)
    - [GitHub Desktop](https://desktop.github.com/) - Easiest for beginners
    - [GitKraken](https://www.gitkraken.com/) - More features
    - Or use the command line
