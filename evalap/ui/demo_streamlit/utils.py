@@ -74,7 +74,7 @@ def _remove_commons_items(model_params: list[dict], first=True) -> list[dict]:
             # take all dict value (recurse)
             # reinsert dict value in same order
             x = [(i, d[k]) for i, d in enumerate(model_params) if isinstance(d[k], dict)]
-            idx, params = zip(*x)
+            idx, params = zip(*x, strict=False)
             params = _remove_commons_items(list(params), first=False)
             for i, _id in enumerate(idx):
                 if not params[i]:

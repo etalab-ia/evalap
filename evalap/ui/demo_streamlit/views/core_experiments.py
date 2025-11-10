@@ -697,6 +697,7 @@ def report_ops_global(exp_set):
     for col, (label, value) in zip(
         cols,
         [("Models", n_models), ("Metrics", n_metrics), ("Energy", energy_str), ("GHG Emissions", carbon_str)],
+        strict=False,
     ):
         col.markdown(metric_display(label, value), unsafe_allow_html=True)
 

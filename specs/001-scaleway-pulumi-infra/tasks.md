@@ -25,7 +25,7 @@
 
 - [x] T001 Create infrastructure project structure per plan.md in `infra/` directory
 - [x] T002 [P] Initialize Pulumi project configuration in `infra/Pulumi.yaml`
-- [x] T003 [P] Create Python package structure with `__init__.py` files in `infra/components/`, `infra/stacks/`, `infra/config/`, `infra/lib/`, `infra/tests/`
+- [x] T003 [P] Create Python package structure with `__init__.py` files in `infra/components/`, `infra/stacks/`, `infra/config/`, `infra/utils/`, `infra/tests/`
 - [x] T004 [P] Add infrastructure dependencies to root `pyproject.toml` in `[project.optional-dependencies]` section: pulumi>=3.206.0, pulumi-scaleway>=0.3.0 (pydantic and pytest already present)
 - [x] T005 [P] Create environment configuration template in `.env.example` with Scaleway credentials placeholders
 - [x] T006 [P] Create `.gitignore` for infrastructure directory with Pulumi state and Python artifacts
@@ -39,15 +39,15 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T008 Implement Scaleway provider configuration in `infra/project.py` with credential handling and region setup
-- [ ] T009 [P] Create Pydantic configuration models in `infra/config/models.py` for StackConfiguration, ContainerConfig, DatabaseConfig, StorageConfig, NetworkConfig, MonitoringConfig
-- [ ] T010 [P] Create Scaleway provider configuration in `infra/config/provider.py` with environment variable and config-based credential loading
-- [ ] T011 [P] Implement Pulumi helper utilities in `infra/lib/pulumi_helpers.py` for common resource patterns and output handling
-- [ ] T012 [P] Implement Scaleway-specific helpers in `infra/lib/scaleway_helpers.py` for naming conventions, tagging, and resource validation
-- [ ] T013 [P] Create validation utilities in `infra/lib/validation.py` for infrastructure configuration validation
-- [ ] T014 Create base component structure with abstract component class in `infra/components/__init__.py`
-- [ ] T015 [P] Create test fixtures and mocks in `infra/tests/fixtures/scaleway_mocks.py` for unit testing
-- [ ] T016 [P] Create test `__init__.py` files in `infra/tests/unit/` and `infra/tests/integration/`
+- [x] T008 Implement Scaleway provider configuration in `infra/project.py` with credential handling and region setup
+- [x] T009 [P] Create Pydantic configuration models in `infra/config/models.py` for StackConfiguration, ContainerConfig, DatabaseConfig, StorageConfig, NetworkConfig, MonitoringConfig
+- [x] T010 [P] Create Scaleway provider configuration in `infra/config/provider.py` with environment variable and config-based credential loading
+- [x] T011 [P] Implement Pulumi helper utilities in `infra/utils/pulumi_helpers.py` for common resource patterns and output handling
+- [x] T012 [P] Implement Scaleway-specific helpers in `infra/utils/scaleway_helpers.py` for naming conventions, tagging, and resource validation
+- [x] T013 [P] Create validation utilities in `infra/utils/validation.py` for infrastructure configuration validation
+- [x] T014 Create base component structure with abstract component class in `infra/components/__init__.py`
+- [x] T015 [P] Create test fixtures and mocks in `infra/tests/fixtures/scaleway_mocks.py` for unit testing
+- [x] T016 [P] Create test `__init__.py` files in `infra/tests/unit/` and `infra/tests/integration/`
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -78,7 +78,7 @@
 - [ ] T028 [US1] Add validation for container resource limits (CPU 100-4000 millicores, memory 128-8192 MB) in ServerlessContainer component
 - [ ] T029 [US1] Add validation for database configuration (volume size 5-500 GB, backup retention 1-365 days) in DatabaseInstance component
 - [ ] T030 [US1] Add validation for object storage bucket naming (globally unique, DNS-compliant) in ObjectStorageBucket component
-- [ ] T031 [US1] Implement error handling and logging for infrastructure deployment failures in `infra/lib/pulumi_helpers.py`
+- [ ] T031 [US1] Implement error handling and logging for infrastructure deployment failures in `infra/utils/pulumi_helpers.py`
 
 ### Validation Tests for User Story 1
 
@@ -108,9 +108,9 @@
 - [ ] T042 [P] [US2] Implement state locking mechanism in `infra/components/state_backend.py` using Scaleway Managed PostgreSQL
 - [ ] T043 [US2] Create state management documentation in `infra/docs/state_management.md` with backend setup instructions
 - [ ] T044 [US2] Implement state backup configuration in `infra/components/state_backend.py` with versioning and retention policies
-- [ ] T045 [US2] Add state validation utilities in `infra/lib/validation.py` to verify state integrity and consistency
+- [ ] T045 [US2] Add state validation utilities in `infra/utils/validation.py` to verify state integrity and consistency
 - [ ] T046 [US2] Create state recovery procedures documentation in `infra/docs/state_management.md` for rollback scenarios
-- [ ] T047 [US2] Implement concurrent deployment handling with state locking in `infra/lib/pulumi_helpers.py`
+- [ ] T047 [US2] Implement concurrent deployment handling with state locking in `infra/utils/pulumi_helpers.py`
 - [ ] T048 [US2] Add state monitoring and alerting configuration in `infra/components/monitoring.py` for state backend health
 
 ### Validation Tests for User Story 2
@@ -143,10 +143,10 @@
 - [ ] T061 [US3] Integrate Secret Manager with DatabaseInstance component for credential management
 - [ ] T062 [US3] Integrate PrivateNetwork with ServerlessContainer for network isolation
 - [ ] T063 [US3] Integrate PrivateNetwork with DatabaseInstance for database access restriction
-- [ ] T064 [US3] Implement IAM policy validation in `infra/lib/validation.py` to enforce least privilege principle
+- [ ] T064 [US3] Implement IAM policy validation in `infra/utils/validation.py` to enforce least privilege principle
 - [ ] T065 [US3] Create security configuration documentation in `infra/docs/security.md` with IAM, secret, and network setup
 - [ ] T066 [US3] Add encryption configuration for data at rest and in transit in infrastructure components
-- [ ] T067 [US3] Implement audit logging for all infrastructure changes in `infra/lib/pulumi_helpers.py`
+- [ ] T067 [US3] Implement audit logging for all infrastructure changes in `infra/utils/pulumi_helpers.py`
 
 ### Validation Tests for User Story 3
 
@@ -181,7 +181,7 @@
 - [ ] T050 [US4] Integrate Cockpit monitoring with DatabaseInstance for database performance metrics
 - [ ] T051 [US4] Integrate Cockpit monitoring with ObjectStorageBucket for storage metrics
 - [ ] T052 [US4] Create dashboard configuration in `infra/components/monitoring.py` for operational views
-- [ ] T053 [US4] Implement log aggregation and structured logging in `infra/lib/pulumi_helpers.py`
+- [ ] T053 [US4] Implement log aggregation and structured logging in `infra/utils/pulumi_helpers.py`
 - [ ] T054 [US4] Create monitoring documentation in `infra/docs/monitoring.md` with dashboard and alert setup
 - [ ] T055 [US4] Add health check configuration for all infrastructure components in monitoring component
 
@@ -213,8 +213,8 @@
 - [ ] T070 [P] Create unit tests for Scaleway helpers in `infra/tests/unit/test_scaleway_helpers.py`
 - [ ] T071 Create integration test for full stack deployment in `infra/tests/integration/test_full_stack.py` (use `uv sync` to install dependencies)
 - [ ] T072 Create integration test for state management in `infra/tests/integration/test_state_management.py` (use `uv sync` to install dependencies)
-- [ ] T073 [P] Add comprehensive error handling and retry logic for API failures in `infra/lib/pulumi_helpers.py`
-- [ ] T074 [P] Implement exponential backoff for rate limit handling in `infra/lib/scaleway_helpers.py`
+- [ ] T073 [P] Add comprehensive error handling and retry logic for API failures in `infra/utils/pulumi_helpers.py`
+- [ ] T074 [P] Implement exponential backoff for rate limit handling in `infra/utils/scaleway_helpers.py`
 - [ ] T075 [P] Add timeout configurations for all Scaleway API calls in `infra/config/provider.py`
 - [ ] T076 [P] Create staging stack configuration in `infra/stacks/staging.py` with production-like settings
 - [ ] T077 [P] Create production stack configuration in `infra/stacks/production.py` with high availability and monitoring
