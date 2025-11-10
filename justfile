@@ -384,6 +384,10 @@ test-pr:
     sleep 1
   done
 
+  echo ""
+  echo "📦 Installing/updating Python dependencies for EvalAP..."
+  uv sync --all-extras
+
   # Run migrations if volume was cleared
   if [ "$clear_volume" = "yes" ]; then
     echo ""
