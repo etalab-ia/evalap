@@ -23,13 +23,13 @@
 
 **Purpose**: Project initialization and basic structure
 
-- [ ] T001 Create infrastructure project structure per plan.md in `infra/` directory
-- [ ] T002 [P] Initialize Pulumi project configuration in `infra/Pulumi.yaml`
-- [ ] T003 [P] Create Python package structure with `__init__.py` files in `infra/components/`, `infra/stacks/`, `infra/config/`, `infra/lib/`, `infra/tests/`
-- [ ] T004 [P] Add infrastructure dependencies to root `pyproject.toml` in `[project.optional-dependencies]` section: pulumi>=3.206.0, pulumi-scaleway>=0.3.0 (pydantic and pytest already present)
-- [ ] T005 [P] Create environment configuration template in `.env.example` with Scaleway credentials placeholders
-- [ ] T006 [P] Create `.gitignore` for infrastructure directory with Pulumi state and Python artifacts
-- [ ] T007 Create stack configuration files: `Pulumi.dev.yaml`, `Pulumi.staging.yaml`, `Pulumi.production.yaml` in `infra/`
+- [x] T001 Create infrastructure project structure per plan.md in `infra/` directory
+- [x] T002 [P] Initialize Pulumi project configuration in `infra/Pulumi.yaml`
+- [x] T003 [P] Create Python package structure with `__init__.py` files in `infra/components/`, `infra/stacks/`, `infra/config/`, `infra/lib/`, `infra/tests/`
+- [x] T004 [P] Add infrastructure dependencies to root `pyproject.toml` in `[project.optional-dependencies]` section: pulumi>=3.206.0, pulumi-scaleway>=0.3.0 (pydantic and pytest already present)
+- [x] T005 [P] Create environment configuration template in `.env.example` with Scaleway credentials placeholders
+- [x] T006 [P] Create `.gitignore` for infrastructure directory with Pulumi state and Python artifacts
+- [x] T007 Create stack configuration files: `Pulumi.dev.yaml`, `Pulumi.staging.yaml`, `Pulumi.production.yaml` in `infra/`
 
 ---
 
