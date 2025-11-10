@@ -1,0 +1,5 @@
+config:
+  scaleway:region: fr-par
+  scaleway:project_id: ${env:SCALEWAY_PROJECT_ID}
+  scaleway:access_key: ${env:SCALEWAY_ACCESS_KEY}
+  scaleway:secret_key: ${env:SCALEWAY_SECRET_KEY}
