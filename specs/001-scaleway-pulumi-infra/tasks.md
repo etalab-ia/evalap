@@ -53,11 +53,11 @@
 
 ### Validation Tests for Foundational Phase
 
-- [ ] T017 [P] Run unit tests for all configuration models in `infra/tests/unit/` to verify Pydantic validation
-- [ ] T018 [P] Run unit tests for Pulumi helpers in `infra/tests/unit/test_pulumi_helpers.py` to verify utility functions
-- [ ] T019 [P] Run unit tests for Scaleway helpers in `infra/tests/unit/test_scaleway_helpers.py` to verify naming and tagging
-- [ ] T020 Verify provider configuration loads correctly with environment variables and config files
-- [ ] T021 Verify all imports work correctly by running `python -c "from infra import *"` in infra directory
+- [X] T017 [P] Run unit tests for all configuration models in `infra/tests/unit/` to verify Pydantic validation
+- [X] T018 [P] Run unit tests for Pulumi helpers in `infra/tests/unit/test_pulumi_helpers.py` to verify utility functions
+- [X] T019 [P] Run unit tests for Scaleway helpers in `infra/tests/unit/test_scaleway_helpers.py` to verify naming and tagging
+- [X] T020 Verify provider configuration loads correctly with environment variables and config files
+- [X] T021 Verify all imports work correctly by running `python -c "from infra import *"` in infra directory
 
 ---
 
