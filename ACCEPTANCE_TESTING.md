@@ -43,7 +43,21 @@ That's it! No other steps needed.
    - **Linux**: `curl -LsSf https://astral.sh/uv/install.sh | sh`
    - Verify: Open Terminal and type `uv --version`
 
-5. **Git UI** (optional but recommended for easier branch switching)
+5. **Docker** - Container platform for running services
+   - **Mac**: `brew install --cask docker` or download from [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+   - **Mac (docker-compose only)**: `brew install docker-compose` (if using Colima instead of Docker Desktop)
+   - **Windows**: Download from [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+   - **Linux**: `sudo apt install docker.io docker-compose` (Debian/Ubuntu) or follow official Docker installation guide
+   - Verify: Open Terminal and type `docker --version` and `docker-compose --version`
+
+6. **Colima** (alternative to Docker Desktop on Mac) - Lightweight container runtime
+   - **Mac**: `brew install colima`
+   - **Start**: `colima start` (run once after installation)
+   - **Stop**: `colima stop`
+   - Verify: Open Terminal and type `colima version`
+   - Note: Use instead of Docker Desktop if you prefer a lighter solution
+
+7. **Git UI** (optional but recommended for easier branch switching)
    - [GitHub Desktop](https://desktop.github.com/) - Easiest for beginners
    - [GitKraken](https://www.gitkraken.com/) - More features
    - Or use the command line
@@ -60,6 +74,23 @@ That's it! No other steps needed.
    - Choose "HTTPS" for the protocol
    - Choose "Y" to authenticate with your GitHub credentials
    - A browser window will open - follow the prompts to authorize
+
+2. **Configure Docker Context (macOS with Colima)**:
+   If you're using Colima instead of Docker Desktop on macOS, you may need to set the Docker context:
+   ```bash
+   cat > ~/.docker/config.json << 'EOF'
+   {
+           "auths": {},
+           "credsStore": "osxkeychain",
+           "currentContext": "colima",
+           "cliPluginsExtraDirs": [
+                   "/opt/homebrew/lib/docker/cli-plugins"
+           ]
+   }
+   EOF
+   ```
+   - This ensures Docker commands use the Colima context by default
+   - Skip this step if using Docker Desktop
 
 ### Running the Tests
 
