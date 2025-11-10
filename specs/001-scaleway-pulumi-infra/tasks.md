@@ -69,28 +69,28 @@
 
 ### Implementation for User Story 1
 
-- [ ] T017 [P] [US1] Create ServerlessContainer component in `infra/components/serverless_container.py` with container namespace, container definition, health checks, and endpoint exposure
-- [ ] T018 [P] [US1] Create DatabaseInstance component in `infra/components/database.py` with PostgreSQL provisioning, backup configuration, and connection details
-- [ ] T019 [P] [US1] Create ObjectStorageBucket component in `infra/components/object_storage.py` with bucket creation, versioning, and lifecycle rules
-- [ ] T020 [US1] Implement development stack in `infra/stacks/dev.py` combining ServerlessContainer, DatabaseInstance, and ObjectStorageBucket with dev-appropriate resource limits
-- [ ] T021 [US1] Export stack outputs in `infra/stacks/dev.py` for API endpoint, database host, and storage bucket name
-- [ ] T022 [US1] Create `infra/__main__.py` entry point that instantiates the appropriate stack based on Pulumi stack selection
-- [ ] T023 [US1] Add validation for container resource limits (CPU 100-4000 millicores, memory 128-8192 MB) in ServerlessContainer component
-- [ ] T024 [US1] Add validation for database configuration (volume size 5-500 GB, backup retention 1-365 days) in DatabaseInstance component
-- [ ] T025 [US1] Add validation for object storage bucket naming (globally unique, DNS-compliant) in ObjectStorageBucket component
-- [ ] T026 [US1] Implement error handling and logging for infrastructure deployment failures in `infra/lib/pulumi_helpers.py`
+- [ ] T022 [P] [US1] Create ServerlessContainer component in `infra/components/serverless_container.py` with container namespace, container definition, health checks, and endpoint exposure
+- [ ] T023 [P] [US1] Create DatabaseInstance component in `infra/components/database.py` with PostgreSQL provisioning, backup configuration, and connection details
+- [ ] T024 [P] [US1] Create ObjectStorageBucket component in `infra/components/object_storage.py` with bucket creation, versioning, and lifecycle rules
+- [ ] T025 [US1] Implement development stack in `infra/stacks/dev.py` combining ServerlessContainer, DatabaseInstance, and ObjectStorageBucket with dev-appropriate resource limits
+- [ ] T026 [US1] Export stack outputs in `infra/stacks/dev.py` for API endpoint, database host, and storage bucket name
+- [ ] T027 [US1] Create `infra/__main__.py` entry point that instantiates the appropriate stack based on Pulumi stack selection
+- [ ] T028 [US1] Add validation for container resource limits (CPU 100-4000 millicores, memory 128-8192 MB) in ServerlessContainer component
+- [ ] T029 [US1] Add validation for database configuration (volume size 5-500 GB, backup retention 1-365 days) in DatabaseInstance component
+- [ ] T030 [US1] Add validation for object storage bucket naming (globally unique, DNS-compliant) in ObjectStorageBucket component
+- [ ] T031 [US1] Implement error handling and logging for infrastructure deployment failures in `infra/lib/pulumi_helpers.py`
 
 ### Validation Tests for User Story 1
 
-- [ ] T027 [P] Run unit tests for ServerlessContainer component in `infra/tests/unit/test_serverless_container.py`
-- [ ] T028 [P] Run unit tests for DatabaseInstance component in `infra/tests/unit/test_database.py`
-- [ ] T029 [P] Run unit tests for ObjectStorageBucket component in `infra/tests/unit/test_object_storage.py`
-- [ ] T030 Run `pulumi preview --stack dev` to verify infrastructure plan without errors
-- [ ] T031 Run `pulumi up --stack dev --yes` to deploy development infrastructure
-- [ ] T032 Verify API container endpoint is accessible: `curl $(pulumi stack output api_endpoint --stack dev)/health`
-- [ ] T033 Verify database connection by connecting with psql or application test
-- [ ] T034 Verify object storage bucket exists and is accessible via Scaleway console
-- [ ] T035 Run `pulumi destroy --stack dev --yes` to clean up test deployment
+- [ ] T032 [P] Run unit tests for ServerlessContainer component in `infra/tests/unit/test_serverless_container.py`
+- [ ] T033 [P] Run unit tests for DatabaseInstance component in `infra/tests/unit/test_database.py`
+- [ ] T034 [P] Run unit tests for ObjectStorageBucket component in `infra/tests/unit/test_object_storage.py`
+- [ ] T035 Run `pulumi preview --stack dev` to verify infrastructure plan without errors
+- [ ] T036 Run `pulumi up --stack dev --yes` to deploy development infrastructure
+- [ ] T037 Verify API container endpoint is accessible: `curl $(pulumi stack output api_endpoint --stack dev)/health`
+- [ ] T038 Verify database connection by connecting with psql or application test
+- [ ] T039 Verify object storage bucket exists and is accessible via Scaleway console
+- [ ] T040 Run `pulumi destroy --stack dev --yes` to clean up test deployment
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and validated - developers can deploy a complete application stack with containers, database, and storage.
 
@@ -104,25 +104,25 @@
 
 ### Implementation for User Story 2
 
-- [ ] T027 [P] [US2] Create state backend component in `infra/components/state_backend.py` for Scaleway Object Storage configuration
-- [ ] T028 [P] [US2] Implement state locking mechanism in `infra/components/state_backend.py` using Scaleway Managed PostgreSQL
-- [ ] T029 [US2] Create state management documentation in `infra/docs/state_management.md` with backend setup instructions
-- [ ] T030 [US2] Implement state backup configuration in `infra/components/state_backend.py` with versioning and retention policies
-- [ ] T031 [US2] Add state validation utilities in `infra/lib/validation.py` to verify state integrity and consistency
-- [ ] T032 [US2] Create state recovery procedures documentation in `infra/docs/state_management.md` for rollback scenarios
-- [ ] T033 [US2] Implement concurrent deployment handling with state locking in `infra/lib/pulumi_helpers.py`
-- [ ] T034 [US2] Add state monitoring and alerting configuration in `infra/components/monitoring.py` for state backend health
+- [ ] T041 [P] [US2] Create state backend component in `infra/components/state_backend.py` for Scaleway Object Storage configuration
+- [ ] T042 [P] [US2] Implement state locking mechanism in `infra/components/state_backend.py` using Scaleway Managed PostgreSQL
+- [ ] T043 [US2] Create state management documentation in `infra/docs/state_management.md` with backend setup instructions
+- [ ] T044 [US2] Implement state backup configuration in `infra/components/state_backend.py` with versioning and retention policies
+- [ ] T045 [US2] Add state validation utilities in `infra/lib/validation.py` to verify state integrity and consistency
+- [ ] T046 [US2] Create state recovery procedures documentation in `infra/docs/state_management.md` for rollback scenarios
+- [ ] T047 [US2] Implement concurrent deployment handling with state locking in `infra/lib/pulumi_helpers.py`
+- [ ] T048 [US2] Add state monitoring and alerting configuration in `infra/components/monitoring.py` for state backend health
 
 ### Validation Tests for User Story 2
 
-- [ ] T035 [P] Run unit tests for state backend component in `infra/tests/unit/test_state_backend.py`
-- [ ] T036 Configure Scaleway Object Storage bucket for Pulumi state backend
-- [ ] T037 Configure state locking with Scaleway Managed PostgreSQL
-- [ ] T038 Deploy infrastructure to staging stack: `pulumi up --stack staging --yes`
-- [ ] T039 Verify state file exists in Object Storage bucket with correct versioning
-- [ ] T040 Verify state lock mechanism works by attempting concurrent deployments
-- [ ] T041 Test state rollback by reverting to previous state version
-- [ ] T042 Run `pulumi destroy --stack staging --yes` to clean up test deployment
+- [ ] T049 [P] Run unit tests for state backend component in `infra/tests/unit/test_state_backend.py`
+- [ ] T050 Configure Scaleway Object Storage bucket for Pulumi state backend
+- [ ] T051 Configure state locking with Scaleway Managed PostgreSQL
+- [ ] T052 Deploy infrastructure to staging stack: `pulumi up --stack staging --yes`
+- [ ] T053 Verify state file exists in Object Storage bucket with correct versioning
+- [ ] T054 Verify state lock mechanism works by attempting concurrent deployments
+- [ ] T055 Test state rollback by reverting to previous state version
+- [ ] T056 Run `pulumi destroy --stack staging --yes` to clean up test deployment
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently and be validated - infrastructure can be deployed with sovereign state management in Scaleway Object Storage.
 
@@ -136,31 +136,31 @@
 
 ### Implementation for User Story 3
 
-- [ ] T035 [P] [US3] Create Secret Manager component in `infra/components/secret_manager.py` for credential storage and rotation
-- [ ] T036 [P] [US3] Create IAM policy component in `infra/components/iam_policy.py` for service-specific role definitions with least privilege
-- [ ] T037 [P] [US3] Create PrivateNetwork component in `infra/components/private_network.py` for service isolation with subnet configuration
-- [ ] T038 [US3] Integrate Secret Manager with ServerlessContainer component for environment variable injection
-- [ ] T039 [US3] Integrate Secret Manager with DatabaseInstance component for credential management
-- [ ] T040 [US3] Integrate PrivateNetwork with ServerlessContainer for network isolation
-- [ ] T041 [US3] Integrate PrivateNetwork with DatabaseInstance for database access restriction
-- [ ] T042 [US3] Implement IAM policy validation in `infra/lib/validation.py` to enforce least privilege principle
-- [ ] T043 [US3] Create security configuration documentation in `infra/docs/security.md` with IAM, secret, and network setup
-- [ ] T044 [US3] Add encryption configuration for data at rest and in transit in infrastructure components
-- [ ] T045 [US3] Implement audit logging for all infrastructure changes in `infra/lib/pulumi_helpers.py`
+- [ ] T057 [P] [US3] Create Secret Manager component in `infra/components/secret_manager.py` for credential storage and rotation
+- [ ] T058 [P] [US3] Create IAM policy component in `infra/components/iam_policy.py` for service-specific role definitions with least privilege
+- [ ] T059 [P] [US3] Create PrivateNetwork component in `infra/components/private_network.py` for service isolation with subnet configuration
+- [ ] T060 [US3] Integrate Secret Manager with ServerlessContainer component for environment variable injection
+- [ ] T061 [US3] Integrate Secret Manager with DatabaseInstance component for credential management
+- [ ] T062 [US3] Integrate PrivateNetwork with ServerlessContainer for network isolation
+- [ ] T063 [US3] Integrate PrivateNetwork with DatabaseInstance for database access restriction
+- [ ] T064 [US3] Implement IAM policy validation in `infra/lib/validation.py` to enforce least privilege principle
+- [ ] T065 [US3] Create security configuration documentation in `infra/docs/security.md` with IAM, secret, and network setup
+- [ ] T066 [US3] Add encryption configuration for data at rest and in transit in infrastructure components
+- [ ] T067 [US3] Implement audit logging for all infrastructure changes in `infra/lib/pulumi_helpers.py`
 
 ### Validation Tests for User Story 3
 
-- [ ] T046 [P] Run unit tests for Secret Manager component in `infra/tests/unit/test_secret_manager.py`
-- [ ] T047 [P] Run unit tests for IAM policy component in `infra/tests/unit/test_iam_policy.py`
-- [ ] T048 [P] Run unit tests for PrivateNetwork component in `infra/tests/unit/test_private_network.py`
-- [ ] T049 Deploy infrastructure with security configurations: `pulumi up --stack staging --yes`
-- [ ] T050 Verify secrets are stored in Scaleway Secret Manager and not in code
-- [ ] T051 Verify IAM policies follow least privilege principle by checking Scaleway console
-- [ ] T052 Verify private network is created and services are attached to it
-- [ ] T053 Verify database is NOT accessible from public internet (only from private network)
-- [ ] T054 Verify container can access database through private network connection
-- [ ] T055 Test credential rotation by updating secrets and verifying services still work
-- [ ] T056 Run `pulumi destroy --stack staging --yes` to clean up test deployment
+- [ ] T068 [P] Run unit tests for Secret Manager component in `infra/tests/unit/test_secret_manager.py`
+- [ ] T069 [P] Run unit tests for IAM policy component in `infra/tests/unit/test_iam_policy.py`
+- [ ] T070 [P] Run unit tests for PrivateNetwork component in `infra/tests/unit/test_private_network.py`
+- [ ] T071 Deploy infrastructure with security configurations: `pulumi up --stack staging --yes`
+- [ ] T072 Verify secrets are stored in Scaleway Secret Manager and not in code
+- [ ] T073 Verify IAM policies follow least privilege principle by checking Scaleway console
+- [ ] T074 Verify private network is created and services are attached to it
+- [ ] T075 Verify database is NOT accessible from public internet (only from private network)
+- [ ] T076 Verify container can access database through private network connection
+- [ ] T077 Test credential rotation by updating secrets and verifying services still work
+- [ ] T078 Run `pulumi destroy --stack staging --yes` to clean up test deployment
 
 **Checkpoint**: All user stories 1, 2, and 3 should now be independently functional and validated - infrastructure is deployed with complete security controls.
 
