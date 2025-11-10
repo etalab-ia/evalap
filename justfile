@@ -286,7 +286,7 @@ sync:
   uv run pre-commit install
 
 # Test a PR: list open PRs, select one, checkout its branch, migrate, and run
-test-pr:
+pra:
   #!/usr/bin/env bash
   set -e
 
@@ -384,12 +384,14 @@ test-pr:
     sleep 1
   done
 
-  # Run migrations if volume was cleared
-  if [ "$clear_volume" = "yes" ]; then
-    echo ""
-    echo "🔄 Running database migrations..."
-    uv run alembic -c evalap/api/alembic.ini upgrade head
-  fi
+  # Run migrations and seed data
+  echo ""
+  echo "🔄 Running database migrations..."
+  uv run alembic -c evalap/api/alembic.ini upgrade head
+
+  echo ""
+  echo "🌱 Seeding database with initial datasets..."
+  uv run python -m evalap.scripts.run_seed_data || true
 
   echo ""
   echo "🚀 Starting EvalAP services..."
