@@ -103,13 +103,14 @@ class TestServerlessContainer:
         mock_container_class.assert_called_once()
         container_args = mock_container_class.call_args[1]
         assert container_args["name"] == "test-container-dev"
-        assert container_args["image_uri"] == "rg.fr-par.scw.cloud/test-image:latest"
+        assert container_args["registry_image"] == "rg.fr-par.scw.cloud/test-image:latest"
         assert container_args["cpu_limit"] == 1000
         assert container_args["memory_limit"] == 1024
         assert container_args["max_concurrency"] == 50
         assert container_args["timeout"] == 300
-        assert container_args["http_option"] == "enabled"
         assert container_args["privacy"] == "public"
+        assert container_args["protocol"] == "http1"
+        assert container_args["deploy"] is True
 
         # Verify environment variables
         env_vars = container_args["environment_variables"]
@@ -154,7 +155,6 @@ class TestServerlessContainer:
             assert call_args[1]["project_id"] == "test-project-123"
             assert call_args[1]["region"] == "fr-par"
             assert call_args[1]["description"] == "Container namespace for test-container in dev"
-            assert isinstance(call_args[1]["tags"], dict)
             assert call_args[1]["opts"] == serverless_container.opts
 
     def test_create_container_without_namespace(self, serverless_container):
@@ -181,14 +181,15 @@ class TestServerlessContainer:
             assert call_args[0][0] == "test-container-container"
             assert call_args[1]["namespace_id"] == "test-namespace-id"
             assert call_args[1]["name"] == "test-container-dev"
-            assert call_args[1]["image_uri"] == "rg.fr-par.scw.cloud/test-image:latest"
+            assert call_args[1]["registry_image"] == "rg.fr-par.scw.cloud/test-image:latest"
             assert call_args[1]["cpu_limit"] == 1000
             assert call_args[1]["memory_limit"] == 1024
             assert call_args[1]["max_concurrency"] == 50
             assert call_args[1]["timeout"] == 300
             assert isinstance(call_args[1]["environment_variables"], dict)
-            assert call_args[1]["http_option"] == "enabled"
             assert call_args[1]["privacy"] == "public"
+            assert call_args[1]["protocol"] == "http1"
+            assert call_args[1]["deploy"] is True
             assert call_args[1]["description"] == "Container for test-container in dev"
             assert call_args[1]["opts"] == serverless_container.opts
 

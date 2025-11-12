@@ -216,7 +216,7 @@ class TestObjectStorageBucket:
         """Test successful versioning configuration."""
         # Mock bucket
         mock_bucket = MagicMock()
-        mock_bucket.bucket = "test-bucket-dev"
+        mock_bucket.name = "test-bucket-dev"
         object_storage_bucket.bucket = mock_bucket
 
         # Versioning configuration is currently not implemented
@@ -233,7 +233,7 @@ class TestObjectStorageBucket:
         """Test lifecycle configuration when no expiration is set."""
         # Mock bucket
         mock_bucket = MagicMock()
-        mock_bucket.bucket = "test-bucket-dev"
+        mock_bucket.name = "test-bucket-dev"
         object_storage_bucket.bucket = mock_bucket
 
         # Set no expiration
@@ -247,7 +247,7 @@ class TestObjectStorageBucket:
         """Test successful lifecycle configuration."""
         # Mock bucket
         mock_bucket = MagicMock()
-        mock_bucket.bucket = "test-bucket-dev"
+        mock_bucket.name = "test-bucket-dev"
         object_storage_bucket.bucket = mock_bucket
 
         # Lifecycle configuration is currently not implemented
@@ -263,7 +263,7 @@ class TestObjectStorageBucket:
         """Test get_outputs returns correct data when bucket created."""
         # Mock bucket
         mock_bucket = MagicMock()
-        mock_bucket.bucket = "test-bucket-dev"
+        mock_bucket.name = "test-bucket-dev"
         object_storage_bucket.bucket = mock_bucket
 
         outputs = object_storage_bucket.get_outputs()
@@ -285,7 +285,7 @@ class TestObjectStorageBucket:
     def test_get_bucket_name_success(self, object_storage_bucket):
         """Test get_bucket_name returns bucket name."""
         mock_bucket = MagicMock()
-        mock_bucket.bucket = "test-bucket-dev"
+        mock_bucket.name = "test-bucket-dev"
         object_storage_bucket.bucket = mock_bucket
 
         bucket_name = object_storage_bucket.get_bucket_name()
@@ -299,7 +299,7 @@ class TestObjectStorageBucket:
     def test_get_bucket_endpoint_success(self, object_storage_bucket):
         """Test get_bucket_endpoint returns bucket endpoint URL."""
         mock_bucket = MagicMock()
-        mock_bucket.bucket = "test-bucket-dev"
+        mock_bucket.name = "test-bucket-dev"
         object_storage_bucket.bucket = mock_bucket
 
         endpoint = object_storage_bucket.get_bucket_endpoint()
@@ -351,7 +351,7 @@ class TestObjectStorageBucket:
 
         # Mock bucket
         mock_bucket = MagicMock()
-        mock_bucket.bucket = "no-versioning-bucket-dev"
+        mock_bucket.name = "no-versioning-bucket-dev"
         bucket.bucket = mock_bucket
 
         # Versioning configuration is currently not implemented
@@ -391,7 +391,7 @@ class TestObjectStorageBucket:
 
             # Mock bucket
             mock_bucket = MagicMock()
-            mock_bucket.bucket = f"test-{days}-days-bucket-dev"
+            mock_bucket.name = f"test-{days}-days-bucket-dev"
             bucket.bucket = mock_bucket
 
             # Lifecycle configuration is currently not implemented

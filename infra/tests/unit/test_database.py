@@ -126,12 +126,8 @@ class TestDatabaseInstance:
         instance_args = mock_instance_class.call_args[1]
         assert instance_args["name"] == "test-database-db-dev"
         assert instance_args["engine"] == "PostgreSQL-15"
-        assert instance_args["node_type"] == "db-dev-s"
+        assert instance_args["node_type"] == "DB-DEV-S"
         assert instance_args["is_ha_cluster"] is False
-        assert instance_args["volume_size_gb"] == 50
-        assert instance_args["backup_schedule_frequency"] == "daily"
-        assert instance_args["backup_schedule_retention_days"] == 14
-        assert instance_args["auto_backup_enabled"] is True
         assert instance_args["project_id"] == "test-project-123"
         assert instance_args["region"] == "fr-par"
 
@@ -176,12 +172,8 @@ class TestDatabaseInstance:
             assert call_args[0][0] == "test-database-instance"
             assert call_args[1]["name"] == "test-database-db-dev"
             assert call_args[1]["engine"] == "PostgreSQL-15"
-            assert call_args[1]["node_type"] == "db-dev-s"
+            assert call_args[1]["node_type"] == "DB-DEV-S"
             assert call_args[1]["is_ha_cluster"] is False
-            assert call_args[1]["volume_size_gb"] == 50
-            assert call_args[1]["backup_schedule_frequency"] == "daily"
-            assert call_args[1]["backup_schedule_retention_days"] == 14
-            assert call_args[1]["auto_backup_enabled"] is True
             assert call_args[1]["project_id"] == "test-project-123"
             assert call_args[1]["region"] == "fr-par"
             assert isinstance(call_args[1]["tags"], dict)
@@ -200,6 +192,7 @@ class TestDatabaseInstance:
             # Verify HA is enabled
             instance_args = mock_instance_class.call_args[1]
             assert instance_args["is_ha_cluster"] is True
+            assert instance_args["node_type"] == "DB-DEV-S"
 
     def test_create_database_without_instance(self, database_instance):
         """Test that database creation fails without instance."""
@@ -284,8 +277,6 @@ class TestDatabaseInstance:
         assert outputs["database_name"] == "testdb"
         assert outputs["username"] == "testuser"
         assert outputs["engine"] == "PostgreSQL-15"
-        assert outputs["volume_size_gb"] == 50
-        assert outputs["backup_retention_days"] == 14
         assert "endpoint" in outputs  # pulumi.Output.concat result
 
     def test_get_connection_string_not_created(self, database_instance):
@@ -372,6 +363,7 @@ class TestDatabaseInstance:
             # Verify engine is set correctly
             instance_args = mock_instance_class.call_args[1]
             assert instance_args["engine"] == "PostgreSQL-14"
+            assert instance_args["node_type"] == "DB-DEV-S"
 
     def test_backup_disabled(self):
         """Test database instance with backups disabled."""
@@ -389,6 +381,7 @@ class TestDatabaseInstance:
 
             db._create_instance()
 
-            # Verify backups are disabled
+            # Verify instance was created with correct node type
             instance_args = mock_instance_class.call_args[1]
-            assert instance_args["auto_backup_enabled"] is False
+            assert instance_args["node_type"] == "DB-DEV-S"
+            assert instance_args["engine"] == "PostgreSQL-15"

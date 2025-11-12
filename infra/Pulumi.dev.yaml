@@ -3,3 +3,7 @@ config:
   scaleway:project_id: ${env:SCALEWAY_PROJECT_ID}
   scaleway:access_key: ${env:SCALEWAY_ACCESS_KEY}
   scaleway:secret_key: ${env:SCALEWAY_SECRET_KEY}
+  evalap:project_id: test-project-id
+  evalap:db_password:
+    secure: v1:0XTNIBiMDsURQ+a2:KxH9anJU5WRc7LlSDZ14eskxD/ufFd0=
+encryptionsalt: v1:oiMU/VR5I6M=:v1:8z9M6TAiQrNJIcH0:78OiOGvVOl1G8vHAed7uFlO4q6obbw==

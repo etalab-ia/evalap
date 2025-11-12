@@ -86,7 +86,7 @@
 - [x] T032 [P] Run unit tests for ServerlessContainer component in `infra/tests/unit/test_serverless_container.py`
 - [x] T033 [P] Run unit tests for DatabaseInstance component in `infra/tests/unit/test_database.py`
 - [x] T034 [P] Run unit tests for ObjectStorageBucket component in `infra/tests/unit/test_object_storage.py`
-- [ ] T035 Run `pulumi preview --stack dev` to verify infrastructure plan without errors
+- [x] T035 Run `pulumi preview --stack dev` to verify infrastructure plan without errors
 - [ ] T036 Run `pulumi up --stack dev --yes` to deploy development infrastructure
 - [ ] T037 Verify API container endpoint is accessible: `curl $(pulumi stack output api_endpoint --stack dev)/health`
 - [ ] T038 Verify database connection by connecting with psql or application test

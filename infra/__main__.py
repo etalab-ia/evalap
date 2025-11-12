@@ -1,9 +1,13 @@
 """Pulumi infrastructure entry point that instantiates the appropriate stack."""
 
 import logging
+import os
 import sys
 
 import pulumi
+
+# Add parent directory to Python path to resolve infra module imports
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from infra.config.models import (
     ContainerConfig,
