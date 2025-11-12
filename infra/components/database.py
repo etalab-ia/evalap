@@ -91,12 +91,8 @@ class DatabaseInstance(BaseComponent):
             f"{self.name}-instance",
             name=instance_name,
             engine=self.config.engine,
-            node_type="db-dev-s",  # Development instance type
+            node_type="DB-DEV-S",  # Development instance type
             is_ha_cluster=self.config.enable_high_availability,
-            volume_size_gb=self.config.volume_size,
-            backup_schedule_frequency="daily",
-            backup_schedule_retention_days=self.config.backup_retention_days,
-            auto_backup_enabled=self.config.enable_backups,
             project_id=self.project_id,
             region=self.region,
             tags=scaleway_helpers.create_resource_tags(

@@ -148,10 +148,10 @@ class ObjectStorageBucket(BaseComponent):
             return {}
 
         return {
-            "bucket_name": self.bucket.bucket,
+            "bucket_name": self.bucket.name,
             "bucket_region": self.region,
             "bucket_endpoint": pulumi.Output.concat(
-                "https://", self.bucket.bucket, ".s3.", self.region, ".scw.cloud"
+                "https://", self.bucket.name, ".s3.", self.region, ".scw.cloud"
             ),
             "versioning_enabled": self.config.versioning_enabled,
             "acl": self.config.acl,
@@ -168,7 +168,7 @@ class ObjectStorageBucket(BaseComponent):
         """
         if not self.bucket:
             raise ValueError("Bucket not created yet")
-        return self.bucket.bucket
+        return self.bucket.name
 
     def get_bucket_endpoint(self) -> pulumi.Output:
         """
@@ -180,7 +180,7 @@ class ObjectStorageBucket(BaseComponent):
         if not self.bucket:
             raise ValueError("Bucket not created yet")
 
-        return pulumi.Output.concat("https://", self.bucket.bucket, ".s3.", self.region, ".scw.cloud")
+        return pulumi.Output.concat("https://", self.bucket.name, ".s3.", self.region, ".scw.cloud")
 
     def get_bucket_region(self) -> str:
         """

@@ -90,9 +90,6 @@ class ServerlessContainer(BaseComponent):
             project_id=self.project_id,
             region=self.region,
             description=f"Container namespace for {self.name} in {self.environment}",
-            tags=scaleway_helpers.create_resource_tags(
-                self.environment, "container-namespace", additional_tags=self.tags
-            ),
             opts=self.opts,
         )
 
@@ -113,16 +110,15 @@ class ServerlessContainer(BaseComponent):
             f"{self.name}-container",
             namespace_id=self.namespace.id,
             name=container_name,
-            image_uri=self.image_uri,
+            registry_image=self.image_uri,
             cpu_limit=self.config.cpu,
             memory_limit=self.config.memory,
             max_concurrency=self.config.max_concurrency,
             timeout=self.config.timeout,
             environment_variables=env_vars,
-            # Health check configuration
-            http_option="enabled",
-            # Endpoint exposure
             privacy="public",
+            protocol="http1",
+            deploy=True,
             description=f"Container for {self.name} in {self.environment}",
             opts=self.opts,
         )
