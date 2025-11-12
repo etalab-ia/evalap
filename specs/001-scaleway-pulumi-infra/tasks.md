@@ -69,16 +69,16 @@
 
 ### Implementation for User Story 1
 
-- [ ] T022 [P] [US1] Create ServerlessContainer component in `infra/components/serverless_container.py` with container namespace, container definition, health checks, and endpoint exposure
-- [ ] T023 [P] [US1] Create DatabaseInstance component in `infra/components/database.py` with PostgreSQL provisioning, backup configuration, and connection details
-- [ ] T024 [P] [US1] Create ObjectStorageBucket component in `infra/components/object_storage.py` with bucket creation, versioning, and lifecycle rules
-- [ ] T025 [US1] Implement development stack in `infra/stacks/dev.py` combining ServerlessContainer, DatabaseInstance, and ObjectStorageBucket with dev-appropriate resource limits
-- [ ] T026 [US1] Export stack outputs in `infra/stacks/dev.py` for API endpoint, database host, and storage bucket name
-- [ ] T027 [US1] Create `infra/__main__.py` entry point that instantiates the appropriate stack based on Pulumi stack selection
-- [ ] T028 [US1] Add validation for container resource limits (CPU 100-4000 millicores, memory 128-8192 MB) in ServerlessContainer component
-- [ ] T029 [US1] Add validation for database configuration (volume size 5-500 GB, backup retention 1-365 days) in DatabaseInstance component
-- [ ] T030 [US1] Add validation for object storage bucket naming (globally unique, DNS-compliant) in ObjectStorageBucket component
-- [ ] T031 [US1] Implement error handling and logging for infrastructure deployment failures in `infra/utils/pulumi_helpers.py`
+- [x] T022 [P] [US1] Create ServerlessContainer component in `infra/components/serverless_container.py` with container namespace, container definition, health checks, and endpoint exposure
+- [x] T023 [P] [US1] Create DatabaseInstance component in `infra/components/database.py` with PostgreSQL provisioning, backup configuration, and connection details
+- [x] T024 [P] [US1] Create ObjectStorageBucket component in `infra/components/object_storage.py` with bucket creation, versioning, and lifecycle rules
+- [x] T025 [US1] Implement development stack in `infra/stacks/dev.py` combining ServerlessContainer, DatabaseInstance, and ObjectStorageBucket with dev-appropriate resource limits
+- [x] T026 [US1] Export stack outputs in `infra/stacks/dev.py` for API endpoint, database host, and storage bucket name
+- [x] T027 [US1] Create `infra/__main__.py` entry point that instantiates the appropriate stack based on Pulumi stack selection
+- [x] T028 [US1] Add validation for container resource limits (CPU 100-4000 millicores, memory 128-8192 MB) in ServerlessContainer component
+- [x] T029 [US1] Add validation for database configuration (volume size 5-500 GB, backup retention 1-365 days) in DatabaseInstance component
+- [x] T030 [US1] Add validation for object storage bucket naming (globally unique, DNS-compliant) in ObjectStorageBucket component
+- [x] T031 [US1] Implement error handling and logging for infrastructure deployment failures in `infra/utils/pulumi_helpers.py`
 
 ### Validation Tests for User Story 1
 
