@@ -52,9 +52,9 @@ class DatabaseInstance(BaseComponent):
         validation.validate_database_name(config.database_name)
 
         # Initialize resource references
-        self.instance: Optional[scaleway.RdbInstance] = None
-        self.database: Optional[scaleway.RdbDatabase] = None
-        self.user: Optional[scaleway.RdbUser] = None
+        self.instance: Optional[scaleway.DatabaseInstance] = None
+        self.database: Optional[scaleway.Database] = None
+        self.user: Optional[scaleway.DatabaseUser] = None
 
     def create(self) -> None:
         """Create the managed database infrastructure."""
@@ -87,7 +87,7 @@ class DatabaseInstance(BaseComponent):
 
         logger.debug(f"Creating RDB instance: {instance_name}")
 
-        self.instance = scaleway.RdbInstance(
+        self.instance = scaleway.DatabaseInstance(
             f"{self.name}-instance",
             name=instance_name,
             engine=self.config.engine,
@@ -112,7 +112,7 @@ class DatabaseInstance(BaseComponent):
 
         logger.debug(f"Creating database: {self.config.database_name}")
 
-        self.database = scaleway.RdbDatabase(
+        self.database = scaleway.Database(
             f"{self.name}-database",
             instance_id=self.instance.id,
             name=self.config.database_name,
@@ -126,7 +126,7 @@ class DatabaseInstance(BaseComponent):
 
         logger.debug(f"Creating database user: {self.config.user_name}")
 
-        self.user = scaleway.RdbUser(
+        self.user = scaleway.DatabaseUser(
             f"{self.name}-user",
             instance_id=self.instance.id,
             name=self.config.user_name,

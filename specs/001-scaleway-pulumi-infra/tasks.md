@@ -4,6 +4,7 @@
 **Prerequisites**: plan.md (required), spec.md (required for user stories), research.md, data-model.md, quickstart.md
 
 **Tests**: Tests are REQUIRED per spec.md (line 61: "User Scenarios & Testing _(mandatory)_") and plan.md (line 54: "✅ VIII. Test-Driven Development"). Tests are INCLUDED as explicit validation checkpoints after each major phase:
+
 - Unit tests validate individual components (pytest with Pulumi testing framework)
 - Integration tests validate full stack deployments
 - Manual verification tests ensure infrastructure is accessible and functional
@@ -53,11 +54,11 @@
 
 ### Validation Tests for Foundational Phase
 
-- [X] T017 [P] Run unit tests for all configuration models in `infra/tests/unit/` to verify Pydantic validation
-- [X] T018 [P] Run unit tests for Pulumi helpers in `infra/tests/unit/test_pulumi_helpers.py` to verify utility functions
-- [X] T019 [P] Run unit tests for Scaleway helpers in `infra/tests/unit/test_scaleway_helpers.py` to verify naming and tagging
-- [X] T020 Verify provider configuration loads correctly with environment variables and config files
-- [X] T021 Verify all imports work correctly by running `python -c "from infra import *"` in infra directory
+- [x] T017 [P] Run unit tests for all configuration models in `infra/tests/unit/` to verify Pydantic validation
+- [x] T018 [P] Run unit tests for Pulumi helpers in `infra/tests/unit/test_pulumi_helpers.py` to verify utility functions
+- [x] T019 [P] Run unit tests for Scaleway helpers in `infra/tests/unit/test_scaleway_helpers.py` to verify naming and tagging
+- [x] T020 Verify provider configuration loads correctly with environment variables and config files
+- [x] T021 Verify all imports work correctly by running `python -c "from infra import *"` in infra directory
 
 ---
 
@@ -82,9 +83,9 @@
 
 ### Validation Tests for User Story 1
 
-- [ ] T032 [P] Run unit tests for ServerlessContainer component in `infra/tests/unit/test_serverless_container.py`
-- [ ] T033 [P] Run unit tests for DatabaseInstance component in `infra/tests/unit/test_database.py`
-- [ ] T034 [P] Run unit tests for ObjectStorageBucket component in `infra/tests/unit/test_object_storage.py`
+- [x] T032 [P] Run unit tests for ServerlessContainer component in `infra/tests/unit/test_serverless_container.py`
+- [x] T033 [P] Run unit tests for DatabaseInstance component in `infra/tests/unit/test_database.py`
+- [x] T034 [P] Run unit tests for ObjectStorageBucket component in `infra/tests/unit/test_object_storage.py`
 - [ ] T035 Run `pulumi preview --stack dev` to verify infrastructure plan without errors
 - [ ] T036 Run `pulumi up --stack dev --yes` to deploy development infrastructure
 - [ ] T037 Verify API container endpoint is accessible: `curl $(pulumi stack output api_endpoint --stack dev)/health`
@@ -332,16 +333,16 @@ With multiple developers:
 
 ## Task Summary
 
-| Phase | Count | Purpose |
-|-------|-------|---------|
-| Phase 1: Setup | 7 | Project initialization |
-| Phase 2: Foundational | 9 + 5 validation | Core infrastructure (BLOCKING) |
-| Phase 3: User Story 1 (P1) | 10 + 9 validation | Deploy Managed Infrastructure |
-| Phase 4: User Story 2 (P1) | 8 + 8 validation | Sovereign State Management |
-| Phase 5: User Story 3 (P2) | 11 + 11 validation | Security and Access Control |
-| Phase 6: User Story 4 (P3) | 10 + 10 validation | Monitoring and Observability |
-| Phase 7: Polish | 18 | Documentation, tests, refinement |
-| **TOTAL** | **116** | **Complete feature implementation with validation** |
+| Phase                      | Count              | Purpose                                             |
+| -------------------------- | ------------------ | --------------------------------------------------- |
+| Phase 1: Setup             | 7                  | Project initialization                              |
+| Phase 2: Foundational      | 9 + 5 validation   | Core infrastructure (BLOCKING)                      |
+| Phase 3: User Story 1 (P1) | 10 + 9 validation  | Deploy Managed Infrastructure                       |
+| Phase 4: User Story 2 (P1) | 8 + 8 validation   | Sovereign State Management                          |
+| Phase 5: User Story 3 (P2) | 11 + 11 validation | Security and Access Control                         |
+| Phase 6: User Story 4 (P3) | 10 + 10 validation | Monitoring and Observability                        |
+| Phase 7: Polish            | 18                 | Documentation, tests, refinement                    |
+| **TOTAL**                  | **116**            | **Complete feature implementation with validation** |
 
 ### Task Distribution by User Story (Implementation + Validation)
 

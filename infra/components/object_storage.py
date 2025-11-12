@@ -51,7 +51,7 @@ class ObjectStorageBucket(BaseComponent):
         validation.validate_storage_config(config)
 
         # Initialize resource references
-        self.bucket: Optional[scaleway.ObjectStorageBucket] = None
+        self.bucket: Optional[scaleway.ObjectBucket] = None
 
     def create(self) -> None:
         """Create the object storage bucket infrastructure."""
@@ -88,62 +88,49 @@ class ObjectStorageBucket(BaseComponent):
 
         logger.debug(f"Creating object storage bucket: {bucket_name}")
 
-        self.bucket = scaleway.ObjectStorageBucket(
-            f"{self.name}-bucket",
-            bucket=bucket_name,
+        # Prepare bucket arguments
+        bucket_args = scaleway.ObjectBucketArgs(
+            name=bucket_name,
             region=self.region,
             acl=self.config.acl,
             tags=scaleway_helpers.create_resource_tags(
                 self.environment, "object-storage", additional_tags=self.tags
             ),
+        )
+
+        # Add versioning if enabled
+        if self.config.versioning_enabled:
+            bucket_args.versioning = scaleway.ObjectBucketVersioningArgs(enabled=True)
+
+        # Add lifecycle rules if expiration is set
+        if self.config.lifecycle_expiration_days:
+            bucket_args.lifecycle_rules = [
+                scaleway.ObjectBucketLifecycleRuleArgs(
+                    id="expire-old-objects",
+                    enabled=True,
+                    expiration=scaleway.ObjectBucketLifecycleRuleExpirationArgs(
+                        days=self.config.lifecycle_expiration_days
+                    ),
+                )
+            ]
+
+        self.bucket = scaleway.ObjectBucket(
+            f"{self.name}-bucket",
+            args=bucket_args,
             opts=self.opts,
         )
 
     def _configure_versioning(self) -> None:
         """Configure object versioning."""
-        if not self.bucket:
-            raise ValueError("Bucket must be created before configuring versioning")
-
-        logger.debug(f"Enabling versioning for bucket: {self.bucket.bucket}")
-
-        scaleway.ObjectStorageBucketVersioning(
-            f"{self.name}-versioning",
-            bucket=self.bucket.bucket,
-            region=self.region,
-            versioning_configuration={
-                "status": "Enabled",
-            },
-            opts=self.opts,
-        )
+        # Versioning is now configured during bucket creation
+        # This method is kept for compatibility but does nothing
+        logger.debug("Versioning is configured during bucket creation")
 
     def _configure_lifecycle(self) -> None:
         """Configure lifecycle rules for object expiration."""
-        if not self.bucket:
-            raise ValueError("Bucket must be created before configuring lifecycle")
-
-        if not self.config.lifecycle_expiration_days:
-            return
-
-        logger.debug(
-            f"Configuring lifecycle for bucket {self.bucket.bucket} "
-            f"with {self.config.lifecycle_expiration_days} day expiration"
-        )
-
-        scaleway.ObjectStorageBucketLifecycleConfiguration(
-            f"{self.name}-lifecycle",
-            bucket=self.bucket.bucket,
-            region=self.region,
-            rules=[
-                {
-                    "id": "expire-old-objects",
-                    "status": "Enabled",
-                    "expiration": {
-                        "days": self.config.lifecycle_expiration_days,
-                    },
-                }
-            ],
-            opts=self.opts,
-        )
+        # Lifecycle rules are now configured during bucket creation
+        # This method is kept for compatibility but does nothing
+        logger.debug("Lifecycle rules are configured during bucket creation")
 
     def get_outputs(self) -> dict[str, Any]:
         """
