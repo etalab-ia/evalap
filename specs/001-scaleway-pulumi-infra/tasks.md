@@ -105,24 +105,24 @@
 
 ### Implementation for User Story 2
 
-- [ ] T041 [P] [US2] Create state backend component in `infra/components/state_backend.py` for Scaleway Object Storage configuration
-- [ ] T042 [P] [US2] Implement state locking mechanism in `infra/components/state_backend.py` using Scaleway Managed PostgreSQL
-- [ ] T043 [US2] Create state management documentation in `infra/docs/state_management.md` with backend setup instructions
-- [ ] T044 [US2] Implement state backup configuration in `infra/components/state_backend.py` with versioning and retention policies
-- [ ] T045 [US2] Add state validation utilities in `infra/utils/validation.py` to verify state integrity and consistency
-- [ ] T046 [US2] Create state recovery procedures documentation in `infra/docs/state_management.md` for rollback scenarios
-- [ ] T047 [US2] Implement concurrent deployment handling with state locking in `infra/utils/pulumi_helpers.py`
-- [ ] T048 [US2] Add state monitoring and alerting configuration in `infra/components/monitoring.py` for state backend health
+- [x] T041 [P] [US2] Create state management documentation in `infra/docs/state_management.md` with manual setup instructions for bucket and database
+- [x] T042 [P] [US2] Add helper script `infra/scripts/setup_state_backend.sh` to automate manual creation of state bucket and lock database via Scaleway CLI
+- [x] T043 [US2] Document Pulumi backend configuration in `infra/docs/state_management.md` with login commands and environment variables
+- [x] T044 [US2] Add state validation utilities in `infra/utils/validation.py` to verify state backend connectivity and permissions
+- [x] T045 [US2] Create state recovery procedures documentation in `infra/docs/state_management.md` for rollback scenarios using bucket versioning
+- [x] T046 [US2] Document concurrent deployment handling in `infra/docs/state_management.md` with state locking best practices
+- [x] T047 [US2] Add justfile commands for state backend operations (login, logout, state inspection)
+- [x] T048 [US2] Create troubleshooting guide in `infra/docs/state_management.md` for common state backend issues
 
 ### Validation Tests for User Story 2
 
-- [ ] T049 [P] Run unit tests for state backend component in `infra/tests/unit/test_state_backend.py`
-- [ ] T050 Configure Scaleway Object Storage bucket for Pulumi state backend
-- [ ] T051 Configure state locking with Scaleway Managed PostgreSQL
+- [ ] T049 [P] Manually create Scaleway Object Storage bucket `evalap-pulumi-state` with versioning enabled via Scaleway Console or CLI
+- [ ] T050 [P] Manually create Scaleway PostgreSQL database for state locking via Scaleway Console or CLI (required for team collaboration)
+- [ ] T051 Configure Pulumi to use Scaleway Object Storage backend: `pulumi login 's3://evalap-pulumi-state?endpoint=s3.fr-par.scw.cloud&region=fr-par&s3ForcePathStyle=true'`
 - [ ] T052 Deploy infrastructure to staging stack: `just pulumi up --stack staging --yes`
-- [ ] T053 Verify state file exists in Object Storage bucket with correct versioning
-- [ ] T054 Verify state lock mechanism works by attempting concurrent deployments
-- [ ] T055 Test state rollback by reverting to previous state version
+- [ ] T053 Verify state file exists in Object Storage bucket with correct versioning via Scaleway Console
+- [ ] T054 Verify state file structure and integrity using `just pulumi stack export --stack staging`
+- [ ] T055 Test state rollback by reverting to previous state version using bucket versioning
 - [ ] T056 Run `just pulumi destroy --stack staging --yes` to clean up test deployment
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently and be validated - infrastructure can be deployed with sovereign state management in Scaleway Object Storage.

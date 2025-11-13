@@ -241,3 +241,82 @@ def validate_iam_policy(policy: dict) -> bool:
             raise ValueError(f"Invalid Effect: {statement['Effect']}")
 
     return True
+
+
+def validate_state_backend_config(
+    bucket_name: str,
+    region: str,
+    endpoint: str,
+) -> bool:
+    """
+    Validate Pulumi state backend configuration.
+
+    Args:
+        bucket_name: S3 bucket name
+        region: Scaleway region
+        endpoint: S3 endpoint URL
+
+    Returns:
+        bool: True if valid
+
+    Raises:
+        ValueError: If configuration is invalid
+    """
+    # Validate bucket name
+    validate_bucket_name(bucket_name)
+
+    # Validate region
+    valid_regions = ["fr-par", "nl-ams", "pl-waw"]
+    if region not in valid_regions:
+        raise ValueError(f"Invalid region: {region}. Must be one of {valid_regions}")
+
+    # Validate endpoint URL
+    if not endpoint.startswith("https://") and not endpoint.startswith("http://"):
+        raise ValueError(f"Invalid endpoint URL: {endpoint}. Must start with https:// or http://")
+
+    if "s3" not in endpoint.lower():
+        raise ValueError(f"Invalid endpoint URL: {endpoint}. Must contain 's3'")
+
+    return True
+
+
+def validate_state_lock_config(
+    database_host: str,
+    database_port: int,
+    database_name: str,
+    table_name: str,
+) -> bool:
+    """
+    Validate Pulumi state locking configuration.
+
+    Args:
+        database_host: PostgreSQL host
+        database_port: PostgreSQL port
+        database_name: Database name
+        table_name: Lock table name
+
+    Returns:
+        bool: True if valid
+
+    Raises:
+        ValueError: If configuration is invalid
+    """
+    # Validate host
+    if not database_host or len(database_host) == 0:
+        raise ValueError("Database host cannot be empty")
+
+    # Validate port
+    if not isinstance(database_port, int) or database_port < 1 or database_port > 65535:
+        raise ValueError(f"Invalid database port: {database_port}. Must be between 1 and 65535")
+
+    # Validate database name
+    validate_database_name(database_name)
+
+    # Validate table name
+    if not re.match(r"^[a-zA-Z_][a-zA-Z0-9_]*$", table_name):
+        raise ValueError(
+            f"Invalid table name: {table_name}. Must start with letter or underscore, "
+            "contain only alphanumeric characters and underscores"
+        )
+
+    return True

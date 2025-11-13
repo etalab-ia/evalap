@@ -292,4 +292,80 @@ sync:
 pulumi *args:
   #!/usr/bin/env bash
   cd infra
-  uv run --env-file ../.env pulumi {{args}}
+  uv run pulumi {{args}}
+
+#
+# Pulumi State Backend Management
+#
+
+state-backend-setup:
+  #!/usr/bin/env bash
+  echo "Setting up Pulumi state backend with state locking on Scaleway..."
+  ./infra/scripts/setup_state_backend.sh
+
+state-login stack="dev":
+  #!/usr/bin/env bash
+  cd infra
+  echo "Logging into Pulumi backend for stack: {{stack}}"
+  uv run pulumi stack select {{stack}}
+  uv run pulumi login 's3://evalap-pulumi-state?endpoint=s3.fr-par.scw.cloud&region=fr-par&s3ForcePathStyle=true'
+
+state-logout:
+  #!/usr/bin/env bash
+  cd infra
+  echo "Logging out of Pulumi backend..."
+  uv run pulumi logout
+
+state-export stack="dev":
+  #!/usr/bin/env bash
+  cd infra
+  echo "Exporting state for stack: {{stack}}"
+  uv run pulumi stack export --stack {{stack}}
+
+state-import stack="dev" file:
+  #!/usr/bin/env bash
+  cd infra
+  echo "Importing state for stack: {{stack}} from {{file}}"
+  uv run pulumi stack import --stack {{stack}} < {{file}}
+
+state-list:
+  #!/usr/bin/env bash
+  cd infra
+  echo "Listing all Pulumi stacks..."
+  uv run pulumi stack ls
+
+state-info stack="dev":
+  #!/usr/bin/env bash
+  cd infra
+  echo "Getting state info for stack: {{stack}}"
+  uv run pulumi stack select {{stack}}
+  uv run pulumi stack output
+
+state-refresh stack="dev":
+  #!/usr/bin/env bash
+  cd infra
+  echo "Refreshing state for stack: {{stack}}"
+  uv run pulumi refresh --stack {{stack}} --yes
+
+state-validate:
+  #!/usr/bin/env bash
+  echo "Validating state backend configuration..."
+  python3 << 'PYTHON'
+import os
+import sys
+sys.path.insert(0, 'infra')
+
+from infra.utils import validation
+
+try:
+    # Validate backend config
+    validation.validate_state_backend_config(
+        bucket_name="evalap-pulumi-state",
+        region="fr-par",
+        endpoint="https://s3.fr-par.scw.cloud"
+    )
+    print("✓ State backend configuration is valid")
+except ValueError as e:
+    print(f"✗ Configuration error: {e}")
+    sys.exit(1)
+PYTHON
