@@ -658,7 +658,8 @@ dependencies = [
 [package.optional-dependencies]
 infra = [
     { name = "pulumi" },
-    { name = "pulumi-scaleway" },
+    { name = "pulumiverse-scaleway" },
+    { name = "pydantic" },
 ]
 test = [
     { name = "pytest" },
@@ -689,9 +690,10 @@ requires-dist = [
     { name = "plotly", specifier = "~=5.22.0" },
     { name = "psycopg2-binary", specifier = "~=2.9.10" },
     { name = "pulumi", marker = "extra == 'infra'", specifier = ">=3.206.0,<4.0.0" },
-    { name = "pulumi-scaleway", marker = "extra == 'infra'", specifier = ">=0.3.0,<1.0.0" },
+    { name = "pulumiverse-scaleway", marker = "extra == 'infra'", specifier = ">=1.11.1,<2.0.0" },
     { name = "pyarrow", specifier = "~=19.0.1" },
     { name = "pydantic", specifier = "~=2.11.9" },
+    { name = "pydantic", marker = "extra == 'infra'", specifier = ">=2.0.0" },
     { name = "pytest", marker = "extra == 'test'", specifier = "==8.3.3" },
     { name = "pytest-asyncio", marker = "extra == 'test'", specifier = "==0.24.0" },
     { name = "python-dotenv", specifier = "~=1.1.1" },
@@ -2212,15 +2214,18 @@ wheels = [
 ]
 
 [[package]]
-name = "pulumi-scaleway"
-version = "0.3.0"
+name = "pulumiverse-scaleway"
+version = "1.37.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "parver" },
     { name = "pulumi" },
     { name = "semver" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/11/d9/3b812aa06c786cd0158a9160c05513937970ec5273664cb2577243211a15/pulumi_scaleway-0.3.0.tar.gz", hash = "sha256:b8f93643074abf7025737c70a3b3f5747e4a08fabd43a8b410c4463486caa053", size = 112864, upload-time = "2022-06-07T19:17:19.836Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ae/e7/cf8b6e5de92d92c394528685c19a106c53bf690667e078f9b3a39afb4ced/pulumiverse_scaleway-1.37.0.tar.gz", hash = "sha256:dbde74ca2279f0f1034dba441b0c3df7df04375cc701227893841a7543577a01", size = 969778, upload-time = "2025-11-07T09:16:44.769Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/05/b7/e3f5bcb7d66fcdabbd44a0e9e20878573759c2b08afc28f20631feaaff4d/pulumiverse_scaleway-1.37.0-py3-none-any.whl", hash = "sha256:979d59687bad82ad74ab6b04d11fb6b95715ebe9ab48b2fd42d444fb7a427e74", size = 1535536, upload-time = "2025-11-07T09:16:43.394Z" },
+]
 
 [[package]]
 name = "pure-eval"

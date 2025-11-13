@@ -52,7 +52,7 @@ def load_stack_configuration() -> StackConfiguration:
     container_config = ContainerConfig(
         cpu=config.get_int("container_cpu") or 1000,
         memory=config.get_int("container_memory") or 1024,
-        max_concurrency=config.get_int("container_max_concurrency") or 100,
+        max_concurrency=config.get_int("container_max_concurrency") or 80,
         timeout=config.get_int("container_timeout") or 300,
         environment_variables=config.get_object("container_env_vars") or {},
     )

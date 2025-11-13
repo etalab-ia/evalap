@@ -74,8 +74,9 @@ class DevelopmentStack:
         """Create serverless container."""
         logger.debug("Creating container component")
 
-        # Use a placeholder image URI - should be provided via config or environment
-        image_uri = pulumi.Config().get("container_image_uri") or "rg.fr-par.scw.cloud/evalap:latest"
+        # Use a public hello-world HTTP server image - should be provided via config or environment
+        # Using strm/helloworld-http which responds to HTTP requests
+        image_uri = pulumi.Config().get("container_image_uri") or "docker.io/strm/helloworld-http:latest"
 
         self.container = ServerlessContainer(
             name="evalap-api",
@@ -131,16 +132,6 @@ class DevelopmentStack:
         if self.database:
             database_outputs = self.database.get_outputs()
             pulumi_helpers.export_output(
-                "database_host",
-                self.database.get_host(),
-                "Database host",
-            )
-            pulumi_helpers.export_output(
-                "database_port",
-                self.database.get_port(),
-                "Database port",
-            )
-            pulumi_helpers.export_output(
                 "database_name",
                 database_outputs.get("database_name"),
                 "Database name",
@@ -153,7 +144,7 @@ class DevelopmentStack:
             pulumi_helpers.export_output(
                 "database_connection_string",
                 self.database.get_connection_string(),
-                "PostgreSQL connection string (without password)",
+                "PostgreSQL connection string template (requires endpoint from Scaleway console)",
             )
             pulumi_helpers.export_output(
                 "database_instance_id",

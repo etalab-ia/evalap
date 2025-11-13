@@ -57,7 +57,8 @@ test = [
 ]
 infra = [
     "pulumi>=3.206.0,<4.0.0",
-    "pulumi-scaleway>=0.3.0,<1.0.0",
+    "pulumiverse-scaleway>=1.11.1,<2.0.0",
+    "pydantic>=2.0.0",
 ]
 
 [tool.pytest.ini_options]

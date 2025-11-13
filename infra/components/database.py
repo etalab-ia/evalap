@@ -4,7 +4,7 @@ import logging
 from typing import Any, Optional
 
 import pulumi
-import pulumi_scaleway as scaleway
+import pulumiverse_scaleway as scaleway
 
 from infra.components import BaseComponent
 from infra.config.models import DatabaseConfig
@@ -52,9 +52,9 @@ class DatabaseInstance(BaseComponent):
         validation.validate_database_name(config.database_name)
 
         # Initialize resource references
-        self.instance: Optional[scaleway.DatabaseInstance] = None
-        self.database: Optional[scaleway.Database] = None
-        self.user: Optional[scaleway.DatabaseUser] = None
+        self.instance: Optional[scaleway.databases.Instance] = None
+        self.database: Optional[scaleway.databases.Database] = None
+        self.user: Optional[scaleway.databases.User] = None
 
     def create(self) -> None:
         """Create the managed database infrastructure."""
@@ -87,7 +87,7 @@ class DatabaseInstance(BaseComponent):
 
         logger.debug(f"Creating RDB instance: {instance_name}")
 
-        self.instance = scaleway.DatabaseInstance(
+        self.instance = scaleway.databases.Instance(
             f"{self.name}-instance",
             name=instance_name,
             engine=self.config.engine,
@@ -95,9 +95,6 @@ class DatabaseInstance(BaseComponent):
             is_ha_cluster=self.config.enable_high_availability,
             project_id=self.project_id,
             region=self.region,
-            tags=scaleway_helpers.create_resource_tags(
-                self.environment, "database", additional_tags=self.tags
-            ),
             opts=self.opts,
         )
 
@@ -108,7 +105,7 @@ class DatabaseInstance(BaseComponent):
 
         logger.debug(f"Creating database: {self.config.database_name}")
 
-        self.database = scaleway.Database(
+        self.database = scaleway.databases.Database(
             f"{self.name}-database",
             instance_id=self.instance.id,
             name=self.config.database_name,
@@ -122,7 +119,7 @@ class DatabaseInstance(BaseComponent):
 
         logger.debug(f"Creating database user: {self.config.user_name}")
 
-        self.user = scaleway.DatabaseUser(
+        self.user = scaleway.databases.User(
             f"{self.name}-user",
             instance_id=self.instance.id,
             name=self.config.user_name,
@@ -150,9 +147,6 @@ class DatabaseInstance(BaseComponent):
 
         return {
             "instance_id": self.instance.id,
-            "endpoint": pulumi.Output.concat(self.instance.endpoint_ip, ":", self.instance.endpoint_port),
-            "host": self.instance.endpoint_ip,
-            "port": self.instance.endpoint_port,
             "database_name": self.config.database_name,
             "username": self.config.user_name,
             "engine": self.config.engine,
@@ -160,26 +154,17 @@ class DatabaseInstance(BaseComponent):
             "backup_retention_days": self.config.backup_retention_days,
         }
 
-    def get_connection_string(self) -> pulumi.Output:
+    def get_connection_string(self) -> str:
         """
-        Get PostgreSQL connection string.
+        Get PostgreSQL connection string template.
 
         Returns:
-            pulumi.Output: Connection string (without password)
+            str: Connection string template (without password, requires endpoint details from Scaleway console)
         """
         if not self.instance:
             raise ValueError("Instance not created yet")
 
-        return pulumi.Output.concat(
-            "postgresql://",
-            self.config.user_name,
-            "@",
-            self.instance.endpoint_ip,
-            ":",
-            self.instance.endpoint_port,
-            "/",
-            self.config.database_name,
-        )
+        return f"postgresql://{self.config.user_name}@<endpoint>:<port>/{self.config.database_name}"
 
     def get_instance_id(self) -> pulumi.Output:
         """
@@ -191,25 +176,3 @@ class DatabaseInstance(BaseComponent):
         if not self.instance:
             raise ValueError("Instance not created yet")
         return self.instance.id
-
-    def get_host(self) -> pulumi.Output:
-        """
-        Get database host.
-
-        Returns:
-            pulumi.Output: Database host
-        """
-        if not self.instance:
-            raise ValueError("Instance not created yet")
-        return self.instance.endpoint_ip
-
-    def get_port(self) -> pulumi.Output:
-        """
-        Get database port.
-
-        Returns:
-            pulumi.Output: Database port
-        """
-        if not self.instance:
-            raise ValueError("Instance not created yet")
-        return self.instance.endpoint_port

@@ -3,7 +3,7 @@
 import os
 
 import pulumi
-import pulumi_scaleway as scaleway
+import pulumiverse_scaleway as scaleway
 
 
 def get_scaleway_provider() -> scaleway.Provider:

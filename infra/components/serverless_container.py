@@ -4,7 +4,7 @@ import logging
 from typing import Any, Optional
 
 import pulumi
-import pulumi_scaleway as scaleway
+import pulumiverse_scaleway as scaleway
 
 from infra.components import BaseComponent
 from infra.config.models import ContainerConfig
@@ -84,7 +84,7 @@ class ServerlessContainer(BaseComponent):
 
         logger.debug(f"Creating container namespace: {namespace_name}")
 
-        self.namespace = scaleway.ContainerNamespace(
+        self.namespace = scaleway.containers.Namespace(
             f"{self.name}-namespace",
             name=namespace_name,
             project_id=self.project_id,
@@ -106,7 +106,7 @@ class ServerlessContainer(BaseComponent):
         env_vars = self.config.environment_variables.copy()
         env_vars.setdefault("LOG_LEVEL", "info")
 
-        self.container = scaleway.Container(
+        self.container = scaleway.containers.Container(
             f"{self.name}-container",
             namespace_id=self.namespace.id,
             name=container_name,

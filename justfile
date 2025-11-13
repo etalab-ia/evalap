@@ -284,3 +284,12 @@ lint:
 sync:
   uv sync --all-extras
   uv run pre-commit install
+
+#
+# Pulumi Infrastructure Commands
+#
+
+pulumi *args:
+  #!/usr/bin/env bash
+  cd infra
+  uv run --env-file ../.env pulumi {{args}}

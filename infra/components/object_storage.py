@@ -4,7 +4,7 @@ import logging
 from typing import Any, Optional
 
 import pulumi
-import pulumi_scaleway as scaleway
+import pulumiverse_scaleway as scaleway
 
 from infra.components import BaseComponent
 from infra.config.models import StorageConfig
@@ -51,7 +51,7 @@ class ObjectStorageBucket(BaseComponent):
         validation.validate_storage_config(config)
 
         # Initialize resource references
-        self.bucket: Optional[scaleway.ObjectBucket] = None
+        self.bucket: Optional[scaleway.object.Bucket] = None
 
     def create(self) -> None:
         """Create the object storage bucket infrastructure."""
@@ -89,32 +89,28 @@ class ObjectStorageBucket(BaseComponent):
         logger.debug(f"Creating object storage bucket: {bucket_name}")
 
         # Prepare bucket arguments
-        bucket_args = scaleway.ObjectBucketArgs(
+        bucket_args = scaleway.object.BucketArgs(
             name=bucket_name,
             region=self.region,
-            acl=self.config.acl,
-            tags=scaleway_helpers.create_resource_tags(
-                self.environment, "object-storage", additional_tags=self.tags
-            ),
         )
 
         # Add versioning if enabled
         if self.config.versioning_enabled:
-            bucket_args.versioning = scaleway.ObjectBucketVersioningArgs(enabled=True)
+            bucket_args.versioning = scaleway.object.BucketVersioningArgs(enabled=True)
 
         # Add lifecycle rules if expiration is set
         if self.config.lifecycle_expiration_days:
             bucket_args.lifecycle_rules = [
-                scaleway.ObjectBucketLifecycleRuleArgs(
+                scaleway.object.BucketLifecycleRuleArgs(
                     id="expire-old-objects",
                     enabled=True,
-                    expiration=scaleway.ObjectBucketLifecycleRuleExpirationArgs(
+                    expiration=scaleway.object.BucketLifecycleRuleExpirationArgs(
                         days=self.config.lifecycle_expiration_days
                     ),
                 )
             ]
 
-        self.bucket = scaleway.ObjectBucket(
+        self.bucket = scaleway.object.Bucket(
             f"{self.name}-bucket",
             args=bucket_args,
             opts=self.opts,

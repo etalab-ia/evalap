@@ -1,9 +1,9 @@
+encryptionsalt: v1:oaKNBO/4qxk=:v1:3oUs1G5h6Cvz1m+F:staeVj6s7KAnf7eSOKhv2/u6Q1hweQ==
 config:
-  scaleway:region: fr-par
-  scaleway:project_id: ${env:SCALEWAY_PROJECT_ID}
-  scaleway:access_key: ${env:SCALEWAY_ACCESS_KEY}
-  scaleway:secret_key: ${env:SCALEWAY_SECRET_KEY}
-  evalap:project_id: test-project-id
+  evalap:project_id: 863286b3-ec9c-4990-949e-153706b069a8
+  evalap:access_key:
+    secure: v1:NDWccVE4ZZTU+IFq:3HXmjBeMKjfa7ligbtXVNE4cXCfVLF3piA9+Kptw/QkObjZr
+  evalap:secret_key:
+    secure: v1:oS4A1fob6Dn3X7M/:Vh5S5+WiHeCUBEXz+A/7TiOOexurwYYYxk2smMzh2GM0szCzWpc9dQb2UkLfyGj3KjS3jg==
   evalap:db_password:
-    secure: v1:0XTNIBiMDsURQ+a2:KxH9anJU5WRc7LlSDZ14eskxD/ufFd0=
-encryptionsalt: v1:oiMU/VR5I6M=:v1:8z9M6TAiQrNJIcH0:78OiOGvVOl1G8vHAed7uFlO4q6obbw==
+    secure: v1:FolAhIxjHQ4gFKsw:fiMxi+yLDqmrqirVDdwNdwroat/wwbiJsLWnpdt/CavqOmVP2VUrg72V
