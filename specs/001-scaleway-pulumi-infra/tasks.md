@@ -86,12 +86,12 @@
 - [x] T032 [P] Run unit tests for ServerlessContainer component in `infra/tests/unit/test_serverless_container.py`
 - [x] T033 [P] Run unit tests for DatabaseInstance component in `infra/tests/unit/test_database.py`
 - [x] T034 [P] Run unit tests for ObjectStorageBucket component in `infra/tests/unit/test_object_storage.py`
-- [x] T035 Run `pulumi preview --stack dev` to verify infrastructure plan without errors
-- [x] T036 Run `pulumi up --stack dev --yes` to deploy development infrastructure
-- [ ] T037 Verify API container endpoint is accessible: `curl $(pulumi stack output api_endpoint --stack dev)/health`
+- [x] T035 Run `just pulumi preview --stack dev` to verify infrastructure plan without errors
+- [x] T036 Run `just pulumi up --stack dev --yes` to deploy development infrastructure
+- [ ] T037 Verify API container endpoint is accessible: `curl $(just pulumi stack output api_endpoint --stack dev)/health`
 - [ ] T038 Verify database connection by connecting with psql or application test
 - [ ] T039 Verify object storage bucket exists and is accessible via Scaleway console
-- [ ] T040 Run `pulumi destroy --stack dev --yes` to clean up test deployment
+- [ ] T040 Run `just pulumi destroy --stack dev --yes` to clean up test deployment
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and validated - developers can deploy a complete application stack with containers, database, and storage.
 
@@ -119,11 +119,11 @@
 - [ ] T049 [P] Run unit tests for state backend component in `infra/tests/unit/test_state_backend.py`
 - [ ] T050 Configure Scaleway Object Storage bucket for Pulumi state backend
 - [ ] T051 Configure state locking with Scaleway Managed PostgreSQL
-- [ ] T052 Deploy infrastructure to staging stack: `pulumi up --stack staging --yes`
+- [ ] T052 Deploy infrastructure to staging stack: `just pulumi up --stack staging --yes`
 - [ ] T053 Verify state file exists in Object Storage bucket with correct versioning
 - [ ] T054 Verify state lock mechanism works by attempting concurrent deployments
 - [ ] T055 Test state rollback by reverting to previous state version
-- [ ] T056 Run `pulumi destroy --stack staging --yes` to clean up test deployment
+- [ ] T056 Run `just pulumi destroy --stack staging --yes` to clean up test deployment
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently and be validated - infrastructure can be deployed with sovereign state management in Scaleway Object Storage.
 
@@ -154,14 +154,14 @@
 - [ ] T068 [P] Run unit tests for Secret Manager component in `infra/tests/unit/test_secret_manager.py`
 - [ ] T069 [P] Run unit tests for IAM policy component in `infra/tests/unit/test_iam_policy.py`
 - [ ] T070 [P] Run unit tests for PrivateNetwork component in `infra/tests/unit/test_private_network.py`
-- [ ] T071 Deploy infrastructure with security configurations: `pulumi up --stack staging --yes`
+- [ ] T071 Deploy infrastructure with security configurations: `just pulumi up --stack staging --yes`
 - [ ] T072 Verify secrets are stored in Scaleway Secret Manager and not in code
 - [ ] T073 Verify IAM policies follow least privilege principle by checking Scaleway console
 - [ ] T074 Verify private network is created and services are attached to it
 - [ ] T075 Verify database is NOT accessible from public internet (only from private network)
 - [ ] T076 Verify container can access database through private network connection
 - [ ] T077 Test credential rotation by updating secrets and verifying services still work
-- [ ] T078 Run `pulumi destroy --stack staging --yes` to clean up test deployment
+- [ ] T078 Run `just pulumi destroy --stack staging --yes` to clean up test deployment
 
 **Checkpoint**: All user stories 1, 2, and 3 should now be independently functional and validated - infrastructure is deployed with complete security controls.
 
@@ -189,7 +189,7 @@
 ### Validation Tests for User Story 4
 
 - [ ] T056 [P] Run unit tests for Cockpit monitoring component in `infra/tests/unit/test_monitoring.py`
-- [ ] T057 Deploy infrastructure with monitoring enabled: `pulumi up --stack staging --yes`
+- [ ] T057 Deploy infrastructure with monitoring enabled: `just pulumi up --stack staging --yes`
 - [ ] T058 Verify Cockpit dashboard displays metrics for all infrastructure components
 - [ ] T059 Verify logs are being collected and aggregated in Cockpit
 - [ ] T060 Simulate container load and verify CPU/memory metrics are tracked
@@ -197,7 +197,7 @@
 - [ ] T062 Verify alert rules trigger when thresholds are exceeded
 - [ ] T063 Verify alert notifications are sent to configured channels
 - [ ] T064 Test dashboard displays all configured widgets and metrics
-- [ ] T065 Run `pulumi destroy --stack staging --yes` to clean up test deployment
+- [ ] T065 Run `just pulumi destroy --stack staging --yes` to clean up test deployment
 
 **Checkpoint**: All user stories 1-4 should now be complete and validated - infrastructure is fully deployed with comprehensive monitoring and observability.
 
@@ -224,7 +224,7 @@
 - [ ] T080 Update project README with infrastructure setup instructions and links to documentation
 - [ ] T081 Run full integration test suite: `pytest infra/tests/integration/ -v`
 - [ ] T082 Run full unit test suite with coverage: `pytest infra/tests/unit/ --cov=infra --cov-report=html`
-- [ ] T083 Final production deployment validation: `pulumi up --stack production --yes`
+- [ ] T083 Final production deployment validation: `just pulumi up --stack production --yes`
 
 ---
 
