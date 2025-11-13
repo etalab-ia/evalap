@@ -60,7 +60,7 @@ class DatabaseConfig(BaseModel):
     )
     enable_backups: bool = Field(default=True, description="Enable automated backups")
     enable_high_availability: bool = Field(default=False, description="Enable high availability mode")
-    user_name: str = Field(default="admin", description="Database admin username")
+    user_name: str = Field(default="postgres", description="Database admin username")
     database_name: str = Field(default="evalap", description="Default database name")
 
 

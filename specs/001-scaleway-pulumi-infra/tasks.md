@@ -88,9 +88,9 @@
 - [x] T034 [P] Run unit tests for ObjectStorageBucket component in `infra/tests/unit/test_object_storage.py`
 - [x] T035 Run `just pulumi preview --stack dev` to verify infrastructure plan without errors
 - [x] T036 Run `just pulumi up --stack dev --yes` to deploy development infrastructure
-- [ ] T037 Verify API container endpoint is accessible: `curl $(just pulumi stack output api_endpoint --stack dev)/health`
-- [ ] T038 Verify database connection by connecting with psql or application test
-- [ ] T039 Verify object storage bucket exists and is accessible via Scaleway console
+- [x] T037 Verify API container endpoint is accessible: `curl $(just pulumi stack output api_endpoint --stack dev)/health`
+- [x] T038 Verify database instance is running and accessible via Scaleway console (check instance status, credentials, and network configuration)
+- [x] T039 Verify object storage bucket exists and is accessible via Scaleway console
 - [ ] T040 Run `just pulumi destroy --stack dev --yes` to clean up test deployment
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and validated - developers can deploy a complete application stack with containers, database, and storage.

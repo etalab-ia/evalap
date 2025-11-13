@@ -74,9 +74,6 @@ class DatabaseInstance(BaseComponent):
             # Create database
             self._create_database()
 
-            # Create user
-            self._create_user()
-
             logger.info(f"DatabaseInstance '{self.name}' created successfully")
         except Exception as e:
             pulumi_helpers.handle_error(e, f"DatabaseInstance.create({self.name})")
@@ -93,6 +90,8 @@ class DatabaseInstance(BaseComponent):
             engine=self.config.engine,
             node_type="DB-DEV-S",  # Development instance type
             is_ha_cluster=self.config.enable_high_availability,
+            user_name=self.config.user_name,
+            password=pulumi.Config().require_secret("db_password"),
             project_id=self.project_id,
             region=self.region,
             opts=self.opts,
@@ -109,22 +108,6 @@ class DatabaseInstance(BaseComponent):
             f"{self.name}-database",
             instance_id=self.instance.id,
             name=self.config.database_name,
-            opts=self.opts,
-        )
-
-    def _create_user(self) -> None:
-        """Create database user."""
-        if not self.instance:
-            raise ValueError("Instance must be created before user")
-
-        logger.debug(f"Creating database user: {self.config.user_name}")
-
-        self.user = scaleway.databases.User(
-            f"{self.name}-user",
-            instance_id=self.instance.id,
-            name=self.config.user_name,
-            password=pulumi.Config().require_secret("db_password"),
-            is_admin=True,
             opts=self.opts,
         )
 
