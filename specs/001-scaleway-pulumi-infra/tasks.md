@@ -91,7 +91,7 @@
 - [x] T037 Verify API container endpoint is accessible: `curl $(just pulumi stack output api_endpoint --stack dev)/health`
 - [x] T038 Verify database instance is running and accessible via Scaleway console (check instance status, credentials, and network configuration)
 - [x] T039 Verify object storage bucket exists and is accessible via Scaleway console
-- [ ] T040 Run `just pulumi destroy --stack dev --yes` to clean up test deployment
+- [x] T040 Run `just pulumi destroy --stack dev --yes` to clean up test deployment
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and validated - developers can deploy a complete application stack with containers, database, and storage.
 
