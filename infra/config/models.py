@@ -22,6 +22,7 @@ class ContainerConfig(BaseModel):
     )
     max_concurrency: int = Field(default=80, ge=1, le=80, description="Maximum concurrent requests (max 80)")
     timeout: int = Field(default=300, ge=10, le=3600, description="Request timeout in seconds")
+    port: int = Field(default=8080, ge=1, le=65535, description="Container listening port (1-65535)")
     environment_variables: dict[str, str] = Field(
         default_factory=dict, description="Environment variables for container"
     )

@@ -111,6 +111,7 @@ class ServerlessContainer(BaseComponent):
             namespace_id=self.namespace.id,
             name=container_name,
             registry_image=self.image_uri,
+            port=self.config.port,
             cpu_limit=self.config.cpu,
             memory_limit=self.config.memory,
             max_concurrency=self.config.max_concurrency,

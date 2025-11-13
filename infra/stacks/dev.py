@@ -75,8 +75,8 @@ class DevelopmentStack:
         logger.debug("Creating container component")
 
         # Use a public hello-world HTTP server image - should be provided via config or environment
-        # Using strm/helloworld-http which responds to HTTP requests
-        image_uri = pulumi.Config().get("container_image_uri") or "docker.io/strm/helloworld-http:latest"
+        # Using testcontainers/helloworld which listens on port 8080
+        image_uri = pulumi.Config().get("container_image_uri") or "docker.io/testcontainers/helloworld:latest"
 
         self.container = ServerlessContainer(
             name="evalap-api",

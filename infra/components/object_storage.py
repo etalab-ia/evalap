@@ -92,6 +92,7 @@ class ObjectStorageBucket(BaseComponent):
         bucket_args = scaleway.object.BucketArgs(
             name=bucket_name,
             region=self.region,
+            project_id=self.project_id,
         )
 
         # Add versioning if enabled
