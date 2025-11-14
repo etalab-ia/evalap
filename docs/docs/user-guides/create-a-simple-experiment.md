@@ -158,7 +158,7 @@ experiment = {
     "dataset": "my_dataset",
     "model": {"name": "gpt-4o", "base_url": "https://api.openai.com/v1", "api_key": os.getenv("OPENAI_API_KEY")},
     "metrics": ["judge_precision", "generation_time"],
-    "judge_model": "gpt-4.1"  # Specify which model to use as judge
+    "judge_model": "gpt-4-turbo"  # Specify which model to use as judge
 }
 
 # Or using a complete model configuration
