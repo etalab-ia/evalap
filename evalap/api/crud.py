@@ -105,10 +105,18 @@ def get_dataset_row(
     return row
 
 
+def get_effective_dataset_size(db_exp: models.Experiment) -> int:
+    """Return dataset size capped by DATASET_SAMPLE_LIMIT when set."""
+    raw_size = db_exp.dataset.parquet_size if db_exp.with_vision else db_exp.dataset.size
+    if DATASET_SAMPLE_LIMIT > 0:
+        return min(raw_size, DATASET_SAMPLE_LIMIT)
+    return raw_size
+
+
 def get_dataset_iterator(
     db_exp: models.Experiment, columns_map: dict | None = None
 ) -> Generator[tuple[int, dict], None, None]:
-    limit = DATASET_SAMPLE_LIMIT if DATASET_SAMPLE_LIMIT > 0 else None
+    limit = get_effective_dataset_size(db_exp) if DATASET_SAMPLE_LIMIT > 0 else None
     emitted = 0
 
     if db_exp.with_vision:

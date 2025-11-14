@@ -44,7 +44,7 @@ def generate_answer(message: dict, mcp_bridge: MCPBridgeClient | None):
         exp_meta = {
             "id": exp.id,
             "with_vision": exp.with_vision,
-            "dataset_size": exp.dataset.parquet_size if exp.with_vision else exp.dataset.size,
+            "dataset_size": crud.get_effective_dataset_size(exp),
             "parquet_path": exp.dataset.parquet_path if exp.with_vision else None,
         }
 
