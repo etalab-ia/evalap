@@ -7,7 +7,7 @@ from sqlalchemy import update
 import evalap.api.crud as crud
 import evalap.api.models as models
 from evalap.api.config import DEFAULT_JUDGE_MODEL
-from evalap.api.db import SessionLocal
+from evalap.api.db import SessionLocal, get_db_context
 from evalap.api.metrics import get_judge_model, metric_registry
 from evalap.clients import MCPBridgeClient, multi_step_generate, split_think_answer
 from evalap.logger import logger
@@ -31,102 +31,140 @@ class MessageAnswer:
 def generate_answer(message: dict, mcp_bridge: MCPBridgeClient | None):
     """Message is a MessageAnswer dict containing the necessary information to process data"""
     msg = MessageAnswer(**message)
-    with SessionLocal() as db:
-        print("+", end="", flush=True)
+    print("+", end="", flush=True)
+
+    # Phase A: load DB metadata in a short-lived transaction
+    with get_db_context() as db:
         exp = crud.get_experiment(db, msg.exp_id)
         model = crud.get_model(db, msg.model_id)
-        sampling_params = model.sampling_params or {}
-        extra_params = model.extra_params or {}
-        sampling_params_plus = sampling_params | extra_params
+        if exp is None or model is None:
+            logger.error("Experiment %s or model %s not found", msg.exp_id, msg.model_id)
+            return
 
-        # Build tools input
-        _tools = sampling_params_plus.pop("_tools_", None)
-        if _tools and mcp_bridge:
-            tools = mcp_bridge.tools2openai(_tools)
-            sampling_params_plus["tools"] = tools
+        exp_meta = {
+            "id": exp.id,
+            "with_vision": exp.with_vision,
+            "dataset_size": exp.dataset.parquet_size if exp.with_vision else exp.dataset.size,
+            "parquet_path": exp.dataset.parquet_path if exp.with_vision else None,
+        }
 
-        query = msg.query or ""
-        query = "\n\n".join([model.prelude_prompt, query]) if model.prelude_prompt else query
-        answer = None
-        error_msg = None
+        model_meta = {
+            "name": model.name,
+            "base_url": model.base_url,
+            "api_key": model.api_key,
+            "system_prompt": model.system_prompt,
+            "prelude_prompt": model.prelude_prompt,
+            "sampling_params": model.sampling_params or {},
+            "extra_params": model.extra_params or {},
+        }
+
+    dataset_size = exp_meta["dataset_size"]
+    with_vision = exp_meta["with_vision"]
+    parquet_path = exp_meta["parquet_path"]
+    model_name = model_meta["name"]
+    model_base_url = model_meta["base_url"]
+    model_api_key = model_meta["api_key"]
+    system_prompt = model_meta["system_prompt"]
+    prelude_prompt = model_meta["prelude_prompt"]
+    sampling_params = model_meta["sampling_params"]
+    extra_params = model_meta["extra_params"]
+    sampling_params_plus = sampling_params | extra_params
+
+    # Phase B: LLM generation and processing (no DB session)
+    _tools = sampling_params_plus.pop("_tools_", None)
+    if _tools and mcp_bridge:
+        tools = mcp_bridge.tools2openai(_tools)
+        sampling_params_plus["tools"] = tools
+
+    query = msg.query or ""
+    query = "\n\n".join([prelude_prompt, query]) if prelude_prompt else query
+    answer = None
+    error_msg = None
+
+    try:
+        if with_vision:
+            if msg.line_id >= 100:
+                # @DEBUG/@PERF
+                raise ValueError("limit to 100 input for vision")
+
+            pf_row = get_parquet_row_by_index(parquet_path, msg.line_id)
+            messages = [
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": query},
+                        {
+                            "type": "image_url",
+                            "image_url": {"url": "data:image/png;base64," + image_to_base64(pf_row["img"])},
+                        },
+                    ],
+                }
+            ]
+        else:
+            messages = [{"role": "user", "content": query}]
+
+        if system_prompt:
+            messages = [{"role": "system", "content": system_prompt}] + messages
+
+        with Timer() as timer:
+            result, steps = multi_step_generate(
+                model_base_url=model_base_url,
+                model_api_key=model_api_key,
+                model_name=model_name,
+                messages=messages,
+                sampling_params=sampling_params_plus,
+                mcp_bridge=mcp_bridge,
+            )
+
+        answer = result.choices[0].message.content
+        think = None
+        steps = steps or None
+        context = None
+        retrieval_context = None
+
+        # Extract Retrieval Context
+        # --
+        # RAG and context decoding from tools steps result
+        if steps:
+            context = [x["tool_result"] for step in steps for x in step]
+            retrieval_context = [x for c in context for x in c.split("\n---\n")]
+            if len(context) == len(retrieval_context):
+                # @improve: better differentiate context from retrieval_contexdt from tool calls
+                retrieval_context = None
+        # RAG and context from chat response
+        if result.search_results:
+            retrieval_context = [c.chunk.content for c in result.search_results]
+
+        # Thinking token extraction
+        if answer:
+            think, answer = split_think_answer(answer)
+
+        # Carbon emission
         try:
-            # Generate answer
-            # --
-            if exp.with_vision:
-                dataset_size = exp.dataset.parquet_size
-                if msg.line_id >= 100:
-                    # @DEBUG/@PERF
-                    raise ValueError("limit to 100 input for vision")
+            emission_carbon = impact_carbon(
+                model_name, model_base_url, result.usage.completion_tokens, timer.execution_time
+            )
 
-                pf_row = get_parquet_row_by_index(exp.dataset.parquet_path, msg.line_id)
-                messages = [
-                    {
-                        "role": "user",
-                        "content": [
-                            {"type": "text", "text": query},
-                            {
-                                "type": "image_url",
-                                "image_url": {
-                                    "url": "data:image/png;base64," + image_to_base64(pf_row["img"])
-                                },
-                            },
-                        ],
-                    }
-                ]
-            else:
-                dataset_size = exp.dataset.size
-                messages = [{"role": "user", "content": query}]
+        except Exception as e:  # noqa: PERF203
+            logger.error("Error during calcul carbon impact : %s", e)
+            emission_carbon = None
 
-            if model.system_prompt:
-                messages = [{"role": "system", "content": model.system_prompt}] + messages
+    except Exception as e:  # noqa: PERF203
+        error_msg = "Generation failed with error: %s" % e
+        logging.debug(traceback.print_exc())
+        logging.error(error_msg)
+        emission_carbon = None
+        think = None
+        context = None
+        retrieval_context = None
+        result = None
 
-            with Timer() as timer:
-                result, steps = multi_step_generate(
-                    model_base_url=model.base_url,
-                    model_api_key=model.api_key,
-                    model_name=model.name,
-                    messages=messages,
-                    sampling_params=sampling_params_plus,
-                    mcp_bridge=mcp_bridge,
-                )
-
-            answer = result.choices[0].message.content
-            think = None
-            steps = steps or None
-            context = None
-            retrieval_context = None
-
-            # Extract Retrieval Context
-            # --
-            # RAG and context decoding from tools steps result
-            if steps:
-                context = [x["tool_result"] for step in steps for x in step]
-                retrieval_context = [x for c in context for x in c.split("\n---\n")]
-                if len(context) == len(retrieval_context):
-                    # @improve: better differentiate context from retrieval_contexdt from tool calls
-                    retrieval_context = None
-            # RAG and context from chat response
-            if result.search_results:
-                retrieval_context = [c.chunk.content for c in result.search_results]
-
-            # Thinking token extraction
-            if answer:
-                think, answer = split_think_answer(answer)
-
-            # Carbon emission
-            try:
-                emission_carbon = impact_carbon(
-                    model.name, model.base_url, result.usage.completion_tokens, timer.execution_time
-                )
-
-            except Exception as e:
-                logger.error(f"Error during calcul carbon impact : {e}")
-                emission_carbon = None
-
-            # Upsert answer
+    # Phase C: persist answer and update experiment counters
+    with get_db_context() as db:
+        if result is not None:
             crud.upsert_answer(
                 db,
-                exp.id,
+                msg.exp_id,
                 msg.line_id,
                 dict(
                     answer=answer,
@@ -142,34 +180,28 @@ def generate_answer(message: dict, mcp_bridge: MCPBridgeClient | None):
                 ),
             )
 
-        except Exception as e:
-            error_msg = "Generation failed with error: %s" % e
-            logging.debug(traceback.print_exc())
-            logging.error(error_msg)
-
-        finally:
-            # Ensure atomic transaction
-            stmt = (
-                update(models.Experiment)
-                .where(models.Experiment.id == exp.id)
-                .values(
-                    num_try=models.Experiment.num_try + 1,
-                    num_success=models.Experiment.num_success + (1 if answer else 0),
-                )
-                .returning(models.Experiment)
+        stmt = (
+            update(models.Experiment)
+            .where(models.Experiment.id == msg.exp_id)
+            .values(
+                num_try=models.Experiment.num_try + 1,
+                num_success=models.Experiment.num_success + (1 if answer else 0),
             )
-            exp = db.execute(stmt).scalars().one()
-            db.commit()
+            .returning(models.Experiment)
+        )
+        db_exp = db.execute(stmt).scalars().one()
 
-            if error_msg:
-                crud.upsert_answer(db, exp.id, msg.line_id, dict(error_msg=error_msg))
+        if error_msg:
+            crud.upsert_answer(db, msg.exp_id, msg.line_id, dict(error_msg=error_msg))
 
-        # Check if all the answer have been generated.
-        db.expire(exp, ["num_try"])
-        if exp.num_try >= dataset_size and msg.follow_observation:
-            # @warning: we enter here several time after db.expire, needed to ensure concurent increment are not missed
-            # this should be idempotent
-            dispatch_tasks(db, exp, MessageType.observation)
+        current_num_try = db_exp.num_try
+
+    # Phase D: maybe trigger observations in a separate short-lived transaction
+    if current_num_try >= dataset_size and msg.follow_observation:
+        with SessionLocal() as db:
+            db_exp = crud.get_experiment(db, msg.exp_id)
+            if db_exp is not None:
+                dispatch_tasks(db, db_exp, MessageType.observation)
 
 
 @dataclass

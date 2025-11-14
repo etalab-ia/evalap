@@ -378,7 +378,7 @@ def upsert_answer(db: Session, experiment_id: int, num_line: int, answer: dict) 
         db_answer = models.Answer(experiment_id=experiment_id, num_line=num_line, **answer)
         db.add(db_answer)
 
-    db.commit()
+    db.flush()
     db.refresh(db_answer)
     return db_answer
 
@@ -398,7 +398,7 @@ def upsert_observation(db: Session, result_id: int, num_line: int, observation: 
         db_observation = models.ObservationTable(result_id=result_id, num_line=num_line, **observation)
         db.add(db_observation)
 
-    db.commit()
+    db.flush()
     db.refresh(db_observation)
     return db_observation
 
