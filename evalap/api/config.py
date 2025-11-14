@@ -38,12 +38,13 @@ assert ENV in ["unittest", "dev", "prod"], "wrong ENV value"
 BACKEND_CORS_ORIGINS = ["*"]
 API_PREFIX = ""
 
-# Runners
+# Runners / data sampling
 MAX_CONCURRENT_TASKS = 8  # 8 ok, 16 hard !
 DEFAULT_JUDGE_MODEL = "gpt-4o-mini"
 MCP_BRIDGE_URL = os.getenv("MCP_BRIDGE_URL", "http://172.18.0.1:9092")
 ZMQ_WORKER_URL = "tcp://localhost:5556"
 ZMQ_SENDER_URL = "tcp://localhost:5555"
+DATASET_SAMPLE_LIMIT = int(os.getenv("DATASET_SAMPLE_LIMIT", "10" if ENV == "dev" else "0"))
 
 # Soon obsolete
 MFS_API_KEY_V2 = os.getenv("MFS_API_KEY_V2")

@@ -6,11 +6,11 @@ from typing import Any, Literal, Optional
 import numpy as np
 import pandas as pd
 from pydantic import BaseModel, ConfigDict, Field, create_model
-from sqlalchemy.orm import Session
 
 import evalap.api.models as models
 from evalap.api.errors import SchemaError
 from evalap.api.metrics import metric_registry
+from evalap.api.types import AutoCloseSession, AutoCommitSession
 from evalap.clients.llm import LlmApiModels, get_api_url
 from evalap.utils import build_param_grid
 
@@ -29,7 +29,7 @@ class EgBaseModel(BaseModel):
         extra="forbid",  # Do not allow unknow field
     )
 
-    def recurse_table_init(self, db: Session) -> dict:
+    def recurse_table_init(self, db: AutoCloseSession) -> dict:
         obj = self.model_dump()
         for k, v in obj.items():
             sub_schema = getattr(self, k)
@@ -40,7 +40,7 @@ class EgBaseModel(BaseModel):
 
         return obj
 
-    def to_table_init(self, db: Session):
+    def to_table_init(self, db: AutoCloseSession):
         return self.model_dump()
 
 
@@ -89,7 +89,7 @@ class DatasetBase(EgBaseModel):
 class DatasetCreate(DatasetBase):
     df: str  # from_json
 
-    def to_table_init(self, db: Session) -> dict:
+    def to_table_init(self, db: AutoCloseSession) -> dict:
         obj = self.recurse_table_init(db)
 
         # Handle dataframe
@@ -273,7 +273,7 @@ class ExperimentCreate(ExperimentBase):
     dataset: DatasetCreate | str
     model: ModelCreate | ModelRaw
 
-    def to_table_init(self, db: Session) -> dict:
+    def to_table_init(self, db: AutoCommitSession) -> dict:
         obj = self.recurse_table_init(db)
 
         # Handle Dataset
@@ -485,7 +485,7 @@ class ExperimentSetCreate(ExperimentSetBase):
     experiments: list[ExperimentCreate] | None = None
     cv: GridCV | None = None
 
-    def to_table_init(self, db: Session, expe_size: int = 0) -> dict:
+    def to_table_init(self, db: AutoCloseSession, expe_size: int = 0) -> dict:
         obj = self.recurse_table_init(db)
 
         if self.experiments is not None and self.cv is not None:

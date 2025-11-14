@@ -11,6 +11,7 @@ import evalap.api.crud as crud
 import evalap.api.models as models
 import evalap.api.schemas as schemas
 from evalap.api.config import ZMQ_SENDER_URL
+from evalap.api.types import AutoCloseSession
 
 
 class MessageType(str, Enum):
@@ -18,7 +19,7 @@ class MessageType(str, Enum):
     observation = "observations"  # Ask to generate an observation
 
 
-def _fix_answer_num_count(db, db_exp, commit=True):
+def _fix_answer_num_count(db: AutoCloseSession, db_exp, commit=True):
     # num_try: number of answers.
     # num_success: number of answer where answer is not None.
     counts = (
@@ -40,7 +41,7 @@ def _fix_answer_num_count(db, db_exp, commit=True):
     return db_exp
 
 
-def _fix_result_num_count(db, result, commit=True):
+def _fix_result_num_count(db: AutoCloseSession, result, commit=True):
     # num_try: number of computed result/metric
     # num_success: number of metric where score is not None
     counts = (
@@ -67,7 +68,7 @@ def _fix_result_num_count(db, result, commit=True):
     return result
 
 
-def dispatch_tasks(db, db_exp, message_type: MessageType):
+def dispatch_tasks(db: AutoCloseSession, db_exp, message_type: MessageType):
     context = zmq.Context()
     sender = context.socket(zmq.PUSH)
     sender.connect(ZMQ_SENDER_URL)
@@ -164,7 +165,7 @@ def dispatch_tasks(db, db_exp, message_type: MessageType):
     context.term()
 
 
-def dispatch_retries(db, retry_runs: schemas.RetryRuns):
+def dispatch_retries(db: AutoCloseSession, retry_runs: schemas.RetryRuns):
     context = zmq.Context()
     sender = context.socket(zmq.PUSH)
     sender.connect(ZMQ_SENDER_URL)
