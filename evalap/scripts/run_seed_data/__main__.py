@@ -5,8 +5,7 @@ This module provides functionality to seed the database with predefined datasets
 for development, testing, or initial setup purposes.
 """
 
-import pandas as pd
-from datasets import load_dataset
+from datasets import Dataset, load_dataset
 from sqlalchemy.orm import Session
 
 from evalap.api import crud, schemas
@@ -29,7 +28,8 @@ def create_civics_dataset(db: Session) -> None:
     ds = load_dataset("llm-values/CIVICS")
 
     # Convert to pandas DataFrame with explicit type annotation
-    df_civics: pd.DataFrame = ds["test"].to_pandas()  # type: ignore[assignment]
+    df_civics: Dataset = ds["test"]
+    df_civics = df_civics.to_pandas()
 
     dataset = schemas.DatasetCreate(
         name=dataset_name,
@@ -64,7 +64,8 @@ def create_toxic_chat_dataset(db: Session) -> None:
     ds = load_dataset("lmsys/toxic-chat", "toxicchat0124")
 
     # Convert to pandas DataFrame with explicit type annotation
-    df_toxic_chat: pd.DataFrame = ds["test"].to_pandas()  # type: ignore[assignment]
+    df_toxic_chat: Dataset = ds["test"]
+    df_toxic_chat = df_toxic_chat.to_pandas()
 
     dataset = schemas.DatasetCreate(
         name=dataset_name,
@@ -98,7 +99,8 @@ def create_deccp_dataset(db: Session) -> None:
     ds = load_dataset("augmxnt/deccp")
 
     # Convert to pandas DataFrame (using censored split)
-    df_censored: pd.DataFrame = ds["censored"].to_pandas()  # type: ignore[assignment]
+    df_censored: Dataset = ds["censored"]
+    df_censored = df_censored.to_pandas()
 
     dataset = schemas.DatasetCreate(
         name=dataset_name,
