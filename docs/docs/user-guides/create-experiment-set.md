@@ -53,7 +53,7 @@ common_params = {
     "dataset": "qa_benchmark_v2",  # assuming this dataset has been added before
     "model": {"sampling_params": {"temperature": 0.2}},
     "metrics": metrics,
-    "judge_model": "gpt-4.1",
+    "judge_model": "gpt-4o",
 }
 
 # Parameters that will vary across experiments
