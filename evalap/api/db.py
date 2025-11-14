@@ -15,28 +15,26 @@ engine = (
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
+def get_db():
+    """FastAPI dependency for database session with automatic transaction management."""
+    db = SessionLocal()
+    try:
+        # FastAPI manages request-scoped transactions itself; wrapping this in
+        # db.begin() would conflict with its lifecycle and lead to closed-context errors.
+        yield db
+    finally:
+        db.close()
+
+
 @contextmanager
-def _db_session():
-    """Internal context manager for a transactional DB session."""
+def get_db_context():
+    """Context manager for database session with automatic transaction management."""
     db = SessionLocal()
     try:
         with db.begin():
             yield db
     finally:
         db.close()
-
-
-def get_db():
-    """FastAPI dependency for database session with automatic transaction management."""
-    with _db_session() as db:
-        yield db
-
-
-@contextmanager
-def get_db_context():
-    """Context manager for database session with automatic transaction management."""
-    with _db_session() as db:
-        yield db
 
 
 def create_database_if_not_exists(database_url: str = DATABASE_URI):
