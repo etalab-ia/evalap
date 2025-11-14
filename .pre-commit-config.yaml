@@ -6,11 +6,12 @@ repos:
       # Run the linter with auto-fixes
       - id: ruff
         types_or: [python, pyi]
-        args: [
+        args:
+          [
             --fix,
             --exit-non-zero-on-fix,
             --config=pyproject.toml,
-            "--select=F,Q,I"
+            "--select=F,Q,I",
           ]
       # Run the formatter
       - id: ruff-format
@@ -43,3 +44,9 @@ repos:
       # Remove trailing whitespace
       - id: trailing-whitespace
         exclude: '^(\.claude/|\.cursor/|\.specify/|\.windsurf/)'
+
+  - repo: https://github.com/RobertCraigie/pyright-python
+    rev: v1.1.407
+    hooks:
+      - id: pyright
+        args: ["--config=pyproject.toml"]

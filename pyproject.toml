@@ -107,11 +107,17 @@ ignore = [
 known-third-party = ["alembic"]
 known-first-party = ["api", "config", "tests", "ui"]
 
+[tool.pyright]
+pythonVersion = "3.12"
+typeCheckingMode = "off"
+reportAttributeAccessIssue = "error"
+
 [dependency-groups]
 dev = [
-    "pre-commit>=4.3.0",
-    "ruff>=0.13.0",
-    "pytest-cov>=7.0.0",
     "ipykernel>=6.30.1",
+    "pre-commit>=4.3.0",
+    "pyright>=1.1.300",
+    "pytest-cov>=7.0.0",
+    "ruff>=0.13.0",
     "watchdog>=6.0.0",
 ]
