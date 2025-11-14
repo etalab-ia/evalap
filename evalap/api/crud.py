@@ -118,8 +118,14 @@ def get_effective_dataset_size(db_exp: models.Experiment) -> int:
 def get_dataset_iterator(
     db_exp: models.Experiment, columns_map: dict | None = None
 ) -> Generator[tuple[int, dict], None, None]:
+    """Yield dataset rows with optional column remapping and sampling limits."""
+
     limit = get_effective_dataset_size(db_exp) if DATASET_SAMPLE_LIMIT > 0 else None
     emitted = 0
+    final_columns_map = {**(db_exp.dataset.columns_map or {})}
+    if columns_map:
+        final_columns_map.update(columns_map)
+    limit_reached = False
 
     if db_exp.with_vision:
         # Parquet based dataset
@@ -130,24 +136,27 @@ def get_dataset_iterator(
             df = batch.to_pandas()
             for num_line, row in df.iterrows():
                 if limit is not None and emitted >= limit:
-                    return
+                    limit_reached = True
+                    break
                 row_dict = row.to_dict()
                 row_dict = {k: (v.item() if isinstance(v, np.generic) else v) for k, v in row_dict.items()}
-                for k, v in (db_exp.dataset.columns_map or {}).items():
+                for k, v in final_columns_map.items():
                     row_dict[k] = row_dict[v]
                 yield num_line + batch_number * batch_size, row_dict
                 emitted += 1
 
             batch_number += 1
+            if limit_reached:
+                break
     else:
         # Dataframe based dataset
         df = pd.read_json(StringIO(db_exp.dataset.df))
         for num_line, row in df.iterrows():
             if limit is not None and emitted >= limit:
-                return
+                break
             row_dict = row.to_dict()
             row_dict = {k: (v.item() if isinstance(v, np.generic) else v) for k, v in row_dict.items()}
-            for k, v in (db_exp.dataset.columns_map or {}).items():
+            for k, v in final_columns_map.items():
                 row_dict[k] = row_dict[v]
             yield num_line, row_dict
             emitted += 1
