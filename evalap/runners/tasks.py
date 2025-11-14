@@ -297,12 +297,15 @@ def generate_observation(message: dict, mcp_bridge: MCPBridgeClient):
                 if not getattr(msg, require):
                     raise ValueError(f"The metric '{msg.metric_name}' require a non null `{require}` value.")
                 continue
-            try:
-                metric_params[require] = dataset_row[require]
-            except KeyError:
-                metric_params[require] = metadata.get(require)
 
-            if not metric_params[require]:
+            # Don't override existing metric_params
+            if require not in metric_params or metric_params.get(require) is None:
+                try:
+                    metric_params[require] = dataset_row[require]
+                except KeyError:
+                    metric_params[require] = metadata.get(require)
+
+            if metric_params.get(require) is None:
                 if require in ["context", "retrieval_context"]:
                     ignore_error = True
                 raise ValueError(f"The metric '{msg.metric_name}' require a non null `{require}` value.")
@@ -315,9 +318,9 @@ def generate_observation(message: dict, mcp_bridge: MCPBridgeClient):
         else:
             score = metric_result
 
-        if isinstance(score, (float, int)):
-            score = score.item() if hasattr(score, "item") else score
-        elif score is not None:
+        if score is not None and hasattr(score, "item"):
+            score = score.item()
+        if score is not None and not isinstance(score, (float, int)):
             raise ValueError("Unsupported score type: %s %s" % (type(score), score))
 
         if obs_result and hasattr(obs_result, "usage") and hasattr(obs_result.usage, "completion_tokens"):
