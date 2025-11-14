@@ -17,10 +17,10 @@ Below is a summary of the main datasets used to evaluate LLM compliance. Each on
 
 | Dataset Used            | Main Evaluation Objective                          | Key Metrics                      | Notes                                           |
 |-------------------------|---------------------------------------------------|---------------------------------|-------------------------------------------------|
-| **llm-values/CIVICS**   | Cultural sensitivity and value variation          | `bias`, `answer_relevancy`, `faithfulness` | Measures cultural coherence and neutrality     |
-| **lmsys-toxic-chat**    | Toxicity in LLM generations                        | `toxicity`, `bias`, `answer_relevancy`       | Ensures moderation, detects unsafe outputs     |
-| **crows-pairs**         | Implicit linguistic and social biases              | `bias`, `answer_relevancy`, `faithfulness`   | Ensures robustness against stereotypes         |
-| **DECCP**               | Censorship (focus on China-related topics)         | `toxicity`, `bias`, `answer_relevancy`       | Detects censorship in Chinese content          |
+| **llm-values/CIVICS**   | Cultural sensitivity and value variation          | `bias`| Measures cultural coherence and neutrality     |
+| **lmsys-toxic-chat**    | Toxicity in LLM generations                        | `toxicity`  `bias`     | Ensures moderation, detects unsafe outputs     |
+| **crows-pairs**         | Implicit linguistic and social biases              | `bias`  | Ensures robustness against stereotypes         |
+| **DECCP**               | Censorship (focus on China-related topics)         | `toxicity`  `bias`      | Detects censorship in Chinese content          |
 
 
 ---
@@ -29,24 +29,30 @@ Below is a summary of the main datasets used to evaluate LLM compliance. Each on
 
 | Metric                 | Description                                        | Desired Outcome                              |
 |------------------------|---------------------------------------------------|----------------------------------------------|
-| **answer_relevancy**   | Response relevance to original prompt             | High = accurate and pertinent answers        |
-| **bias**               | Social/ethnic bias in generation                  | Prefer low values for neutrality              |
-| **faithfulness**       | Factual accuracy and fidelity                     | High indicates truthful, reliable output     |
-| **toxicity**           | Offensive, discriminatory, harmful content        | Low score required for ethical compliance    |
+| `bias`             | Social/ethnic bias in generation                  | Prefer low values for neutrality              |
+| `toxicity`          | Offensive, discriminatory, harmful content        | Low score required for ethical compliance    |
 
 Additional technical indicators can be attached for operational monitoring:
 
-| Indicator              | Description                                        |
+| Metric              | Description                                        |
 |------------------------|---------------------------------------------------|
 | `generation_time`      | Time taken to generate an answer                  |
-| `nb_tokens_prompt` / `nb_tokens_completion` | Token volume processed in prompts/completions   |
+| `nb_tokens_prompt` `nb_tokens_completion` | Token volume processed in prompts/completions   |
 | `energy_consumption`   | Inference energy usage                             |
 | `gwp_consumption`      | Carbon impact (Global Warming Potential)          |
 
 ---
 
-## Example: run Compliance
+## Compliance assessment campaign cost alert
 
+These datasets contain numerous questions. Launching a compliance campaign can be costly. We recommend:
+- performing stratified sampling to reduce the number of questions while retaining the information contained
+- setting repeat to a maximum of 3
+- using a mini-type judge
+
+---
+
+## Example: run Compliance
 Here are typical approaches to prepare and publish datasets for compliance evaluation on EvalAP.
 
 ### Load and Publish Datasets
@@ -67,12 +73,12 @@ import requests
 dotenv.load_dotenv("../.env")
 sys.path.append("..")
 
-# Replace with your Evalap API endpoint
-API_URL = "https://evalap.etalab.gouv.fr/v1"
+# Replace with your Evalap API key and endpoint
+EVALAP_API_URL = "http://localhost:8000/v1"
+EVALAP_API_KEY = os.getenv("EVALAP_API_KEY")
 
-# Replace with your API key or authentication token
 HEADERS = {
-    "Authorization": "Bearer YOUR_API_KEY",
+    "Authorization": "Bearer {EVALAP_API_KEY}",
     "Content-Type": "application/json"
 }
 
@@ -159,7 +165,7 @@ In this example:
 
 ```python
 products = product_name
-JUDGE = "gpt-4.1"
+JUDGE = "gpt-5-mini"
 
 # Common technical metrics
 technical_metrics = [
@@ -219,7 +225,7 @@ for dataset_name, info in datasets_metrics.items():
     expset = {
         "name": expset_name,
         "readme": expset_readme,
-        "cv": {"common_params": common_params, "grid_params": grid_params, "repeat": 5},
+        "cv": {"common_params": common_params, "grid_params": grid_params, "repeat": 3},
     }
 
     # Launch the experiment set
@@ -239,7 +245,7 @@ for dataset_name, info in datasets_metrics.items():
 
 After launching an experiment:
 
-1. Navigate to the compliance details page
+1. Navigate to the compliance details page : http://localhost:8501/compliance
 2. View summary results showing:
    - Overall performance metrics for each model
    - Support table displaying the number of experiments used for score averaging
