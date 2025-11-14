@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import pyarrow.parquet as pq
 from sqlalchemy import and_, desc, func, select
-from sqlalchemy.orm import Session, aliased, joinedload
+from sqlalchemy.orm import aliased, joinedload
 
 import evalap.api.models as models
 import evalap.api.schemas as schemas
@@ -13,6 +13,7 @@ from evalap.api.config import DATASET_SAMPLE_LIMIT
 from evalap.api.errors import SchemaError
 from evalap.api.metrics import Metric, metric_registry
 from evalap.api.models import create_object_from_dict
+from evalap.api.types import AutoCloseSession, AutoCommitSession
 from evalap.utils import get_parquet_row_by_index
 
 #
@@ -20,7 +21,7 @@ from evalap.utils import get_parquet_row_by_index
 #
 
 
-def create_dataset(db: Session, dataset: schemas.DatasetCreate) -> models.Dataset:
+def create_dataset(db: AutoCloseSession, dataset: schemas.DatasetCreate) -> models.Dataset:
     dataset = dataset.to_table_init(db) if isinstance(dataset, schemas.EgBaseModel) else dataset
     db_dataset = create_object_from_dict(db, models.Dataset, dataset)
     db.add(db_dataset)
@@ -29,25 +30,25 @@ def create_dataset(db: Session, dataset: schemas.DatasetCreate) -> models.Datase
     return db_dataset
 
 
-def get_datasets(db: Session) -> list[models.Dataset]:
+def get_datasets(db: AutoCommitSession) -> list[models.Dataset]:
     return db.query(models.Dataset).all()
 
 
 # TODO: filter by compliance
-def get_dataset(db: Session, dataset_id: int) -> models.Dataset | None:
+def get_dataset(db: AutoCommitSession, dataset_id: int) -> models.Dataset | None:
     return db.query(models.Dataset).filter(models.Dataset.id == dataset_id).first()
 
 
-def get_dataset_by_name(db: Session, dataset_name: str) -> models.Dataset | None:
+def get_dataset_by_name(db: AutoCommitSession, dataset_name: str) -> models.Dataset | None:
     return db.query(models.Dataset).filter(models.Dataset.name == dataset_name).first()
 
 
-def get_model(db: Session, model_id: int) -> models.Model | None:
+def get_model(db: AutoCommitSession, model_id: int) -> models.Model | None:
     return db.query(models.Model).filter(models.Model.id == model_id).first()
 
 
 def update_dataset(
-    db: Session, dataset_id: int, dataset_update: schemas.DatasetUpdate | dict
+    db: AutoCloseSession, dataset_id: int, dataset_update: schemas.DatasetUpdate | dict
 ) -> models.Dataset | None:
     if isinstance(dataset_update, dict):
         dataset_update = schemas.DatasetUpdate(**dataset_update)
@@ -63,14 +64,15 @@ def update_dataset(
     return db_dataset
 
 
-def remove_dataset(db: Session, dataset_id: int) -> bool:
+def remove_dataset(db: AutoCloseSession, dataset_id: int) -> bool:
     linked_experiments = (
         db.query(func.count(models.Experiment.id)).filter(models.Experiment.dataset_id == dataset_id).scalar()
     )
     if linked_experiments > 0:
         raise SchemaError(
             f"This dataset is linked to {linked_experiments} experiments.\n"
-            "You must either delete linked experiments or associated them to another dataset to remove this one."
+            "You must either delete linked experiments or associated them to another dataset "
+            "to remove this one."
         )
 
     db_dataset = db.query(models.Dataset).get(dataset_id)
@@ -156,7 +158,7 @@ def get_dataset_iterator(
 #
 
 
-def get_metrics(db: Session) -> list[Metric]:
+def get_metrics(db: AutoCommitSession) -> list[Metric]:
     return list(metric_registry.get_metrics())
 
 
@@ -166,7 +168,7 @@ def get_metrics(db: Session) -> list[Metric]:
 
 
 def get_answer(
-    db: Session,
+    db: AutoCommitSession,
     answer_id: int | None = None,
     experiment_id: int | None = None,
     num_line: int | None = None,
@@ -180,7 +182,7 @@ def get_answer(
 
 
 def get_result(
-    db: Session,
+    db: AutoCommitSession,
     result_id: int | None = None,
     experiment_id: int | None = None,
     metric_name: str | None = None,
@@ -194,7 +196,7 @@ def get_result(
         raise ValueError("Should give at list an result_id or a couple experiment_id/metric_name couple.")
 
 
-def create_result(db: Session, result: schemas.ResultCreate) -> models.Result:
+def create_result(db: AutoCloseSession, result: schemas.ResultCreate) -> models.Result:
     result = result.to_table_init(db) if isinstance(result, schemas.EgBaseModel) else result
     db_result = create_object_from_dict(db, models.Result, result)
     db.add(db_result)
@@ -204,7 +206,7 @@ def create_result(db: Session, result: schemas.ResultCreate) -> models.Result:
 
 
 def update_result(
-    db: Session, result_id: int, result_update: schemas.ResultUpdate | dict
+    db: AutoCommitSession, result_id: int, result_update: schemas.ResultUpdate | dict
 ) -> models.Result | None:
     if isinstance(result_update, dict):
         result_update = schemas.ResultUpdate(**result_update)
@@ -225,7 +227,7 @@ def update_result(
 #
 
 
-def create_experiment(db: Session, experiment: schemas.ExperimentCreate) -> models.Experiment:
+def create_experiment(db: AutoCloseSession, experiment: schemas.ExperimentCreate) -> models.Experiment:
     experiment = experiment.to_table_init(db) if isinstance(experiment, schemas.EgBaseModel) else experiment
     db_exp = create_object_from_dict(db, models.Experiment, experiment)
     db.add(db_exp)
@@ -234,12 +236,12 @@ def create_experiment(db: Session, experiment: schemas.ExperimentCreate) -> mode
     return db_exp
 
 
-def get_experiment(db: Session, experiment_id: int) -> models.Experiment | None:
+def get_experiment(db: AutoCommitSession, experiment_id: int) -> models.Experiment | None:
     return db.query(models.Experiment).get(experiment_id)
 
 
 def get_experiments(
-    db: Session,
+    db: AutoCommitSession,
     skip: int = 0,
     limit: int = 100,
     backward: bool = False,
@@ -264,7 +266,7 @@ def get_experiments(
 
 
 def update_experiment(
-    db: Session, experiment_id: int, experiment_update: schemas.ExperimentUpdate | dict
+    db: AutoCommitSession, experiment_id: int, experiment_update: schemas.ExperimentUpdate | dict
 ) -> models.Experiment | None:
     if isinstance(experiment_update, dict):
         experiment_update = schemas.ExperimentUpdate(**experiment_update)
@@ -284,7 +286,7 @@ def update_experiment(
     return db_exp
 
 
-def remove_experiment(db: Session, experiment_id: int) -> bool:
+def remove_experiment(db: AutoCloseSession, experiment_id: int) -> bool:
     db_exp = db.query(models.Experiment).get(experiment_id)
     if db_exp is None:
         return False
@@ -308,7 +310,9 @@ def remove_experiment(db: Session, experiment_id: int) -> bool:
 #
 
 
-def create_experimentset(db: Session, experimentset: schemas.ExperimentSetCreate) -> models.ExperimentSet:
+def create_experimentset(
+    db: AutoCloseSession, experimentset: schemas.ExperimentSetCreate
+) -> models.ExperimentSet:
     experimentset = (
         experimentset.to_table_init(db) if isinstance(experimentset, schemas.EgBaseModel) else experimentset
     )
@@ -320,7 +324,7 @@ def create_experimentset(db: Session, experimentset: schemas.ExperimentSetCreate
 
 
 def get_experimentsets(
-    db: Session,
+    db: AutoCommitSession,
     skip: int = 0,
     limit: int = 100,
     backward: bool = False,
@@ -341,12 +345,12 @@ def get_experimentsets(
     return query.offset(skip).limit(limit).all()
 
 
-def get_experimentset(db: Session, experimentset_id: int) -> models.ExperimentSet | None:
+def get_experimentset(db: AutoCommitSession, experimentset_id: int) -> models.ExperimentSet | None:
     return db.query(models.ExperimentSet).get(experimentset_id)
 
 
 def update_experimentset(
-    db: Session, experimentset_id: int, experimentset_update: schemas.ExperimentSetUpdate | dict
+    db: AutoCloseSession, experimentset_id: int, experimentset_update: schemas.ExperimentSetUpdate | dict
 ) -> models.ExperimentSet | None:
     if isinstance(experimentset_update, dict):
         experimentset_update = schemas.ExperimentSetUpdate(**experimentset_update)
@@ -366,7 +370,7 @@ def update_experimentset(
     return db_expset
 
 
-def remove_experimentset(db: Session, experimentset_id: int) -> bool:
+def remove_experimentset(db: AutoCloseSession, experimentset_id: int) -> bool:
     db_expset = db.query(models.ExperimentSet).get(experimentset_id)
     if db_expset is None:
         return False
@@ -383,7 +387,7 @@ def remove_experimentset(db: Session, experimentset_id: int) -> bool:
 #
 
 
-def upsert_answer(db: Session, experiment_id: int, num_line: int, answer: dict) -> models.Answer:
+def upsert_answer(db: AutoCommitSession, experiment_id: int, num_line: int, answer: dict) -> models.Answer:
     # Check if the record already exists
     db_answer = db.query(models.Answer).filter_by(num_line=num_line, experiment_id=experiment_id).first()
 
@@ -401,7 +405,9 @@ def upsert_answer(db: Session, experiment_id: int, num_line: int, answer: dict) 
     return db_answer
 
 
-def upsert_observation(db: Session, result_id: int, num_line: int, observation: dict) -> models.Answer:
+def upsert_observation(
+    db: AutoCommitSession, result_id: int, num_line: int, observation: dict
+) -> models.Answer:
     # Check if the record already exists
     db_observation = (
         db.query(models.ObservationTable).filter_by(num_line=num_line, result_id=result_id).first()
@@ -427,7 +433,7 @@ def upsert_observation(db: Session, result_id: int, num_line: int, observation: 
 
 
 def get_leaderboard(
-    db: Session,
+    db: AutoCommitSession,
     metric_name: str = "judge_notator",
     dataset_name: str = None,
     judge_model: str = None,
@@ -523,7 +529,7 @@ def get_leaderboard(
 #
 
 
-def get_ops_metrics(db: Session):
+def get_ops_metrics(db: AutoCommitSession):
     experiment_sets_count = db.query(func.count(models.ExperimentSet.id)).scalar()
     unique_experiments_count = db.query(func.count(models.Experiment.id)).scalar()
     unique_answers_count = db.query(func.count(models.Answer.id)).scalar()
@@ -631,13 +637,13 @@ def _aggregate_emissions(entries):
     }
 
 
-def get_ops_eco_answers(db: Session):
+def get_ops_eco_answers(db: AutoCommitSession):
     answers = db.query(models.Answer).filter(models.Answer.emission_carbon.isnot(None)).all()
     result = _aggregate_emissions(answers)
     return result
 
 
-def get_ops_eco_observation_table(db: Session):
+def get_ops_eco_observation_table(db: AutoCommitSession):
     observations = (
         db.query(models.ObservationTable).filter(models.ObservationTable.emission_carbon.isnot(None)).all()
     )
@@ -650,7 +656,7 @@ def get_ops_eco_observation_table(db: Session):
 #
 
 
-def create_locustrun(db: Session, run: schemas.LocustRunCreate) -> models.LocustRun:
+def create_locustrun(db: AutoCloseSession, run: schemas.LocustRunCreate) -> models.LocustRun:
     run = run.to_table_init(db) if isinstance(run, schemas.EgBaseModel) else run
     db_run = create_object_from_dict(db, models.LocustRun, run)
     db.add(db_run)
@@ -659,12 +665,12 @@ def create_locustrun(db: Session, run: schemas.LocustRunCreate) -> models.Locust
     return db_run
 
 
-def get_locustrun(db: Session, run_id: int) -> models.LocustRun | None:
+def get_locustrun(db: AutoCommitSession, run_id: int) -> models.LocustRun | None:
     return db.query(models.LocustRun).filter(models.LocustRun.id == run_id).first()
 
 
 def get_locustruns(
-    db: Session, skip: int = 0, limit: int = 100, backward: bool = False
+    db: AutoCommitSession, skip: int = 0, limit: int = 100, backward: bool = False
 ) -> list[models.LocustRun]:
     query = db.query(models.LocustRun)
     if backward:
@@ -679,7 +685,7 @@ def get_locustruns(
 #
 
 
-def create_loadtesting(db: Session, run: schemas.LoadTestingCreate) -> models.LoadTesting:
+def create_loadtesting(db: AutoCloseSession, run: schemas.LoadTestingCreate) -> models.LoadTesting:
     run = run.to_table_init(db) if isinstance(run, schemas.EgBaseModel) else run
     db_run = create_object_from_dict(db, models.LoadTesting, run)
     db.add(db_run)
@@ -688,11 +694,11 @@ def create_loadtesting(db: Session, run: schemas.LoadTestingCreate) -> models.Lo
     return db_run
 
 
-def get_loadtesting(db: Session, run_id: int) -> models.LoadTesting | None:
+def get_loadtesting(db: AutoCommitSession, run_id: int) -> models.LoadTesting | None:
     return db.query(models.LoadTesting).filter(models.LoadTesting.id == run_id).first()
 
 
-def remove_loadtesting(db: Session, run_id: int) -> bool:
+def remove_loadtesting(db: AutoCloseSession, run_id: int) -> bool:
     load_testing = db.query(models.LoadTesting).filter(models.LoadTesting.id == run_id).first()
     if not load_testing:
         return False
@@ -703,7 +709,7 @@ def remove_loadtesting(db: Session, run_id: int) -> bool:
 
 
 def get_loadtestings(
-    db: Session, skip: int = 0, limit: int = 100, backward: bool = False
+    db: AutoCommitSession, skip: int = 0, limit: int = 100, backward: bool = False
 ) -> list[models.LoadTesting]:
     query = db.query(models.LoadTesting)
     if backward:

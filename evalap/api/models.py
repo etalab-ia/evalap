@@ -120,10 +120,10 @@ class Dataset(Base):
     df = Column(JSON)  # df
     size = Column(Integer)  # rows
     columns = Column(JSON)  # list[str]
-    parquet_path = Column(Text)
+    parquet_path: str | None = Column(Text)
     parquet_size = Column(Integer)  # rows
     parquet_columns = Column(JSON)  # list[str]
-    parquet_byte_size = Column(Integer)
+    parquet_byte_size: int = Column(Integer)
     compliance = Column(Boolean, default=False)
 
 
@@ -153,7 +153,7 @@ class Result(Base):
     metric_params = Column(JSON)  # dict
     num_try = Column(Integer, default=0)
     num_success = Column(Integer, default=0)
-    metric_status = Column(String)
+    metric_status: str = Column(String)
 
     # One
     experiment_id = Column(Integer, ForeignKey("experiments.id"))
@@ -214,7 +214,7 @@ class Experiment(Base):
     readme = Column(Text)
     is_archived = Column(Boolean, default=False)  # do not allow user to remove without IAM.
     created_at = Column(DateTime, server_default=func.now())
-    experiment_status = Column(String)
+    experiment_status: str = Column(String)
     with_vision = Column(Boolean)
     num_try = Column(Integer, default=0)
     num_success = Column(Integer, default=0)

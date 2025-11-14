@@ -8,7 +8,6 @@ import pyarrow.parquet as pq
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, ValidationError
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
 
 import evalap.api.crud as crud
 import evalap.api.schemas as schemas
@@ -17,6 +16,7 @@ from evalap.api.errors import CustomIntegrityError, SchemaError
 from evalap.api.metrics import Metric, metric_registry
 from evalap.api.models import is_equal
 from evalap.api.security import admin_only, get_current_user
+from evalap.api.types import AutoCloseSession
 from evalap.clients import LlmClient, MCPBridgeClient, multi_step_generate
 from evalap.logger import logger
 from evalap.runners import dispatch_retries, dispatch_tasks
@@ -37,7 +37,9 @@ def _needs_output(db_exp):
 
 @router.post("/dataset", response_model=schemas.Dataset, tags=["datasets"])
 def create_dataset(
-    dataset: schemas.DatasetCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)
+    dataset: schemas.DatasetCreate,
+    db: AutoCloseSession = Depends(get_db),
+    current_user=Depends(get_current_user),
 ):
     try:
         db_dataset = crud.create_dataset(db, dataset)
@@ -51,13 +53,16 @@ def create_dataset(
 
 
 @router.get("/datasets", response_model=list[schemas.Dataset], tags=["datasets"])
-def read_datasets(db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+def read_datasets(db: AutoCloseSession = Depends(get_db), current_user=Depends(get_current_user)):
     return crud.get_datasets(db)
 
 
 @router.get("/dataset/{id}", response_model=schemas.Dataset | schemas.DatasetFull, tags=["datasets"])
 def read_dataset(
-    id: int, with_df: bool = False, db: Session = Depends(get_db), current_user=Depends(get_current_user)
+    id: int,
+    with_df: bool = False,
+    db: AutoCloseSession = Depends(get_db),
+    current_user=Depends(get_current_user),
 ):
     dataset = crud.get_dataset(db, id)
     if dataset is None:
@@ -74,7 +79,7 @@ def read_dataset_by_query(
     id: str | None = None,
     name: str | None = None,
     with_df: bool = False,
-    db: Session = Depends(get_db),
+    db: AutoCloseSession = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
     dataset = None
@@ -100,7 +105,7 @@ def read_dataset_by_query(
 def patch_dataset(
     id: int,
     dataset_patch: schemas.DatasetPatch,
-    db: Session = Depends(get_db),
+    db: AutoCloseSession = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
     db_dataset = crud.update_dataset(db, id, dataset_patch)
@@ -116,7 +121,7 @@ def patch_dataset(
 )
 def delete_dataset(
     id: int,
-    db: Session = Depends(get_db),
+    db: AutoCloseSession = Depends(get_db),
     admin_check=Depends(admin_only),
     current_user=Depends(get_current_user),
 ):
@@ -135,7 +140,7 @@ def delete_dataset(
 # @TODO write /dataset/{id}/download_parquet
 @router.post("/dataset/{id}/upload_parquet", response_model=schemas.Dataset, tags=["datasets"])
 async def upload_parquet_dataset(
-    id: int, request: Request, db: Session = Depends(get_db), current_user=Depends(get_current_user)
+    id: int, request: Request, db: AutoCloseSession = Depends(get_db), current_user=Depends(get_current_user)
 ):
     """
     Endpoint to handle streaming upload of Parquet data for a specific dataset.
@@ -207,7 +212,7 @@ async def upload_parquet_dataset(
 
 
 @router.get("/metrics", response_model=list[Metric], tags=["metrics"])
-def read_metrics(db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+def read_metrics(db: AutoCloseSession = Depends(get_db), current_user=Depends(get_current_user)):
     return crud.get_metrics(db)
 
 
@@ -223,7 +228,9 @@ def read_metrics(db: Session = Depends(get_db), current_user=Depends(get_current
     tags=["experiments"],
 )
 def create_experiment(
-    experiment: schemas.ExperimentCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)
+    experiment: schemas.ExperimentCreate,
+    db: AutoCloseSession = Depends(get_db),
+    current_user=Depends(get_current_user),
 ):
     try:
         db_exp = crud.create_experiment(db, experiment)
@@ -251,7 +258,7 @@ def create_experiment(
 def patch_experiment(
     id: int,
     experiment_patch: schemas.ExperimentPatch,
-    db: Session = Depends(get_db),
+    db: AutoCloseSession = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
     db_exp = crud.update_experiment(db, id, experiment_patch)
@@ -298,7 +305,7 @@ def patch_experiment(
 )
 def delete_experiment(
     id: int,
-    db: Session = Depends(get_db),
+    db: AutoCloseSession = Depends(get_db),
     admin_check=Depends(admin_only),
     current_user=Depends(get_current_user),
 ):
@@ -323,7 +330,7 @@ def read_experiment(
     with_answers: bool = False,
     with_dataset: bool = False,
     with_eco: bool = False,
-    db: Session = Depends(get_db),
+    db: AutoCloseSession = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
     experiment = crud.get_experiment(db, id)
@@ -356,7 +363,7 @@ def read_experiments(
     set_id: int | None = None,
     orphan: bool = True,
     compliance: bool | None = Query(None, description="Filter Experiment by compliance dataset (True/False)."),
-    db: Session = Depends(get_db),
+    db: AutoCloseSession = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
     experiments = crud.get_experiments(
@@ -381,7 +388,7 @@ def read_experiments(
 )
 def create_experimentset(
     experimentset: schemas.ExperimentSetCreate,
-    db: Session = Depends(get_db),
+    db: AutoCloseSession = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
     try:
@@ -410,7 +417,7 @@ def create_experimentset(
 def patch_experimentset(
     id: int,
     experimentset_patch: schemas.ExperimentSetPatch,
-    db: Session = Depends(get_db),
+    db: AutoCloseSession = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
     db_expset = crud.update_experimentset(db, id, experimentset_patch)
@@ -468,7 +475,7 @@ def read_experimentsets(
     limit: int = 100,
     backward: bool = True,
     compliance: bool | None = Query(None, description="Filter ExperimentSet by compliance dataset."),
-    db: Session = Depends(get_db),
+    db: AutoCloseSession = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
     experimentsets = crud.get_experimentsets(
@@ -485,7 +492,9 @@ def read_experimentsets(
     response_model=schemas.ExperimentSet,
     tags=["experiment_set"],
 )
-def read_experimentset(id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+def read_experimentset(
+    id: int, db: AutoCloseSession = Depends(get_db), current_user=Depends(get_current_user)
+):
     experimentset = crud.get_experimentset(db, id)
     if experimentset is None:
         raise HTTPException(status_code=410, detail="ExperimentSet not found")
@@ -498,7 +507,7 @@ def read_experimentset(id: int, db: Session = Depends(get_db), current_user=Depe
 )
 def delete_experimentset(
     id: int,
-    db: Session = Depends(get_db),
+    db: AutoCloseSession = Depends(get_db),
     admin_check=Depends(admin_only),
     current_user=Depends(get_current_user),
 ):
@@ -519,7 +528,7 @@ def retry_runs(
         default=False,
         description="Force retry of all unfinished runs, by resetting their status to pending. <!> Warning this can cause incoherent num_try/num_success value if another runner work on the same experiments.",
     ),
-    db: Session = Depends(get_db),
+    db: AutoCloseSession = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
     experimentset = crud.get_experimentset(db, id)
@@ -591,7 +600,7 @@ def read_leaderboard(
     dataset_name: str = None,
     judge_model: str = None,
     limit: int = 100,
-    db: Session = Depends(get_db),
+    db: AutoCloseSession = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
     return crud.get_leaderboard(
@@ -605,12 +614,12 @@ def read_leaderboard(
 
 
 @router.get("/ops_metrics", response_model=schemas.OpsMetrics, tags=["ops"])
-def read_ops_metrics(db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+def read_ops_metrics(db: AutoCloseSession = Depends(get_db), current_user=Depends(get_current_user)):
     return crud.get_ops_metrics(db)
 
 
 @router.get("/ops_eco", response_model=schemas.OpsEcoGlobal, tags=["ops"])
-def read_ops_eco(db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+def read_ops_eco(db: AutoCloseSession = Depends(get_db), current_user=Depends(get_current_user)):
     answers_data = crud.get_ops_eco_answers(db)
     observations_data = crud.get_ops_eco_observation_table(db)
     return {
@@ -674,7 +683,7 @@ def _generate(input: GenerateInput):
 
 @router.post("/generate", response_model=schemas.Answer, tags=["generate"])
 async def generate(
-    input: GenerateInput, db: Session = Depends(get_db), current_user=Depends(get_current_user)
+    input: GenerateInput, db: AutoCloseSession = Depends(get_db), current_user=Depends(get_current_user)
 ):
     answer = None
     think = None
@@ -726,7 +735,9 @@ async def generate(
     tags=["locust"],
 )
 def create_locustrun(
-    run: schemas.LocustRunCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)
+    run: schemas.LocustRunCreate,
+    db: AutoCloseSession = Depends(get_db),
+    current_user=Depends(get_current_user),
 ):
     try:
         db_run = crud.create_locustrun(db, run)
@@ -750,7 +761,7 @@ def get_locustruns(
     skip: int = 0,
     limit: int = 100,
     backward: bool = True,
-    db: Session = Depends(get_db),
+    db: AutoCloseSession = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
     try:
@@ -771,7 +782,7 @@ def get_locustruns(
     description="Get locust run with data.",
     tags=["locust"],
 )
-def get_locustrun(run_id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+def get_locustrun(run_id: int, db: AutoCloseSession = Depends(get_db), current_user=Depends(get_current_user)):
     try:
         db_run = crud.get_locustrun(db, run_id)
         return db_run
@@ -806,7 +817,9 @@ def get_locustrun(run_id: int, db: Session = Depends(get_db), current_user=Depen
     tags=["loadtesting"],
 )
 def create_loadtesting(
-    run: schemas.LoadTestingCreate, db: Session = Depends(get_db), current_user=Depends(get_current_user)
+    run: schemas.LoadTestingCreate,
+    db: AutoCloseSession = Depends(get_db),
+    current_user=Depends(get_current_user),
 ):
     try:
         db_run = crud.create_loadtesting(db, run)
@@ -830,7 +843,7 @@ def get_loadtestings(
     skip: int = 0,
     limit: int = 100,
     backward: bool = True,
-    db: Session = Depends(get_db),
+    db: AutoCloseSession = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
     try:
@@ -851,7 +864,9 @@ def get_loadtestings(
     description="Get loadtesting run with data.",
     tags=["loadtesting"],
 )
-def get_loadtesting(run_id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+def get_loadtesting(
+    run_id: int, db: AutoCloseSession = Depends(get_db), current_user=Depends(get_current_user)
+):
     try:
         db_run = crud.get_loadtesting(db, run_id)
         return db_run
@@ -869,7 +884,9 @@ def get_loadtesting(run_id: int, db: Session = Depends(get_db), current_user=Dep
     description="Remove loadtesting run.",
     tags=["loadtesting"],
 )
-def remove_loadtesting(run_id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+def remove_loadtesting(
+    run_id: int, db: AutoCloseSession = Depends(get_db), current_user=Depends(get_current_user)
+):
     try:
         if not crud.remove_loadtesting(db, run_id):
             raise HTTPException(status_code=410, detail="LoadTesting not found")

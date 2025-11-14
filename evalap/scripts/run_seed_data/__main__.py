@@ -5,6 +5,7 @@ This module provides functionality to seed the database with predefined datasets
 for development, testing, or initial setup purposes.
 """
 
+import pandas as pd
 from datasets import load_dataset
 from sqlalchemy.orm import Session
 
@@ -27,8 +28,8 @@ def create_civics_dataset(db: Session) -> None:
     # Load the CIVICS dataset from Hugging Face
     ds = load_dataset("llm-values/CIVICS")
 
-    # Convert to pandas DataFrame
-    df_civics = ds["test"].to_pandas()
+    # Convert to pandas DataFrame with explicit type annotation
+    df_civics: pd.DataFrame = ds["test"].to_pandas()  # type: ignore[assignment]
 
     dataset = schemas.DatasetCreate(
         name=dataset_name,
@@ -62,8 +63,8 @@ def create_toxic_chat_dataset(db: Session) -> None:
     # Load the toxic-chat dataset from Hugging Face
     ds = load_dataset("lmsys/toxic-chat", "toxicchat0124")
 
-    # Convert to pandas DataFrame
-    df_toxic_chat = ds["test"].to_pandas()
+    # Convert to pandas DataFrame with explicit type annotation
+    df_toxic_chat: pd.DataFrame = ds["test"].to_pandas()  # type: ignore[assignment]
 
     dataset = schemas.DatasetCreate(
         name=dataset_name,
@@ -97,7 +98,7 @@ def create_deccp_dataset(db: Session) -> None:
     ds = load_dataset("augmxnt/deccp")
 
     # Convert to pandas DataFrame (using censored split)
-    df_censored = ds["censored"].to_pandas()
+    df_censored: pd.DataFrame = ds["censored"].to_pandas()  # type: ignore[assignment]
 
     dataset = schemas.DatasetCreate(
         name=dataset_name,
