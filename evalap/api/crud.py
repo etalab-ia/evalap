@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session, aliased, joinedload
 
 import evalap.api.models as models
 import evalap.api.schemas as schemas
+from evalap.api.config import DATASET_SAMPLE_LIMIT
 from evalap.api.errors import SchemaError
 from evalap.api.metrics import Metric, metric_registry
 from evalap.api.models import create_object_from_dict
@@ -107,6 +108,9 @@ def get_dataset_row(
 def get_dataset_iterator(
     db_exp: models.Experiment, columns_map: dict | None = None
 ) -> Generator[tuple[int, dict], None, None]:
+    limit = DATASET_SAMPLE_LIMIT if DATASET_SAMPLE_LIMIT > 0 else None
+    emitted = 0
+
     if db_exp.with_vision:
         # Parquet based dataset
         pf = pq.ParquetFile(db_exp.dataset.parquet_path)
@@ -115,22 +119,28 @@ def get_dataset_iterator(
         for batch in pf.iter_batches(batch_size=batch_size):
             df = batch.to_pandas()
             for num_line, row in df.iterrows():
-                row = row.to_dict()
-                row = {k: (v.item() if isinstance(v, np.generic) else v) for k, v in row.items()}
+                if limit is not None and emitted >= limit:
+                    return
+                row_dict = row.to_dict()
+                row_dict = {k: (v.item() if isinstance(v, np.generic) else v) for k, v in row_dict.items()}
                 for k, v in (db_exp.dataset.columns_map or {}).items():
-                    row[k] = row[v]
-                yield num_line + batch_number * batch_size, row
+                    row_dict[k] = row_dict[v]
+                yield num_line + batch_number * batch_size, row_dict
+                emitted += 1
 
             batch_number += 1
     else:
         # Dataframe based dataset
         df = pd.read_json(StringIO(db_exp.dataset.df))
         for num_line, row in df.iterrows():
-            row = row.to_dict()
-            row = {k: (v.item() if isinstance(v, np.generic) else v) for k, v in row.items()}
+            if limit is not None and emitted >= limit:
+                return
+            row_dict = row.to_dict()
+            row_dict = {k: (v.item() if isinstance(v, np.generic) else v) for k, v in row_dict.items()}
             for k, v in (db_exp.dataset.columns_map or {}).items():
-                row[k] = row[v]
-            yield num_line, row
+                row_dict[k] = row_dict[v]
+            yield num_line, row_dict
+            emitted += 1
 
 
 #
