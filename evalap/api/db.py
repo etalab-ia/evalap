@@ -1,3 +1,5 @@
+from contextlib import contextmanager
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
@@ -13,12 +15,28 @@ engine = (
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
-def get_db():
+@contextmanager
+def _db_session():
+    """Internal context manager for a transactional DB session."""
     db = SessionLocal()
     try:
-        yield db
+        with db.begin():
+            yield db
     finally:
         db.close()
+
+
+def get_db():
+    """FastAPI dependency for database session with automatic transaction management."""
+    with _db_session() as db:
+        yield db
+
+
+@contextmanager
+def get_db_context():
+    """Context manager for database session with automatic transaction management."""
+    with _db_session() as db:
+        yield db
 
 
 def create_database_if_not_exists(database_url: str = DATABASE_URI):
