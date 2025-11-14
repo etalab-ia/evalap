@@ -215,7 +215,7 @@ def update_result(
     # Update fields
     for key, value in vars(result_update).items():
         setattr(db_result, key, value) if value is not None else None
-    db.commit()
+    db.flush()
     db.refresh(db_result)
     return db_result
 
@@ -279,7 +279,7 @@ def update_experiment(
         if key == "experiment_status" and value == schemas.ExperimentStatus.finished:
             for result in db_exp.results:
                 result.metric_status = schemas.MetricStatus.finished
-    db.commit()
+    db.flush()
     db.refresh(db_exp)
     return db_exp
 
