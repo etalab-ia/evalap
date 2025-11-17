@@ -92,7 +92,7 @@ def load_crows_pairs(filepath: str) -> pd.DataFrame:
 
 def load_hf_dataset(hf_path, split, hf_kwargs=None):
     try:
-        ds = load_dataset(hf_path, split=split, use_auth_token=HF_HUB_TOKEN, **(hf_kwargs or {}))
+        ds = load_dataset(hf_path, split=split, **(hf_kwargs or {}))
     except Exception:
         ds = load_dataset(hf_path, split=split, download_mode="reuse_cache_if_exists", **(hf_kwargs or {}))
     return ds.to_pandas()
@@ -164,7 +164,7 @@ In this example:
 
 
 ```python
-products = product_name
+products = "MY_PRODUCT_NAME"
 JUDGE = "gpt-5-mini"
 
 # Common technical metrics
