@@ -15,10 +15,10 @@ class TestGetProviderConfig:
     @patch.dict(
         os.environ,
         {
-            "SCALEWAY_ACCESS_KEY": "test-access-key",
-            "SCALEWAY_SECRET_KEY": "test-secret-key",
-            "SCALEWAY_PROJECT_ID": "test-project-id",
-            "SCALEWAY_REGION": "fr-par",
+            "SCW_ACCESS_KEY": "test-access-key",
+            "SCW_SECRET_KEY": "test-secret-key",
+            "SCW_PROJECT_ID": "test-project-id",
+            "SCW_REGION": "fr-par",
         },
     )
     def test_get_provider_config_from_env(self, mock_config_class):
@@ -39,9 +39,9 @@ class TestGetProviderConfig:
     @patch.dict(
         os.environ,
         {
-            "SCALEWAY_ACCESS_KEY": "test-access-key",
-            "SCALEWAY_SECRET_KEY": "test-secret-key",
-            "SCALEWAY_PROJECT_ID": "test-project-id",
+            "SCW_ACCESS_KEY": "test-access-key",
+            "SCW_SECRET_KEY": "test-secret-key",
+            "SCW_PROJECT_ID": "test-project-id",
         },
     )
     def test_get_provider_config_default_region(self, mock_config_class):
@@ -59,10 +59,10 @@ class TestGetProviderConfig:
     @patch.dict(
         os.environ,
         {
-            "SCALEWAY_ACCESS_KEY": "test-access-key",
-            "SCALEWAY_SECRET_KEY": "test-secret-key",
-            "SCALEWAY_PROJECT_ID": "test-project-id",
-            "SCALEWAY_REGION": "nl-ams",
+            "SCW_ACCESS_KEY": "test-access-key",
+            "SCW_SECRET_KEY": "test-secret-key",
+            "SCW_PROJECT_ID": "test-project-id",
+            "SCW_REGION": "nl-ams",
         },
     )
     def test_get_provider_config_custom_region(self, mock_config_class):
@@ -80,10 +80,10 @@ class TestGetProviderConfig:
     @patch.dict(
         os.environ,
         {
-            "SCALEWAY_ACCESS_KEY": "test-access-key",
-            "SCALEWAY_SECRET_KEY": "test-secret-key",
-            "SCALEWAY_PROJECT_ID": "test-project-id",
-            "SCALEWAY_REGION": "fr-par",
+            "SCW_ACCESS_KEY": "test-access-key",
+            "SCW_SECRET_KEY": "test-secret-key",
+            "SCW_PROJECT_ID": "test-project-id",
+            "SCW_REGION": "fr-par",
         },
     )
     def test_get_provider_config_returns_dict(self, mock_config_class):
@@ -117,7 +117,7 @@ class TestGetProviderConfig:
         with patch.dict(
             os.environ,
             {
-                "SCALEWAY_PROJECT_ID": "test-project-id",
+                "SCW_PROJECT_ID": "test-project-id",
             },
         ):
             config = get_provider_config()

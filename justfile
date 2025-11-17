@@ -292,63 +292,58 @@ sync:
 pulumi *args:
   #!/usr/bin/env bash
   cd infra
-  uv run pulumi {{args}}
+  uv run --env-file ../.env pulumi {{args}}
 
 #
 # Pulumi State Backend Management
 #
 
-state-backend-setup:
-  #!/usr/bin/env bash
-  echo "Setting up Pulumi state backend with state locking on Scaleway..."
-  ./infra/scripts/setup_state_backend.sh
-
 state-login stack="dev":
   #!/usr/bin/env bash
   cd infra
   echo "Logging into Pulumi backend for stack: {{stack}}"
-  uv run pulumi stack select {{stack}}
-  uv run pulumi login 's3://evalap-pulumi-state?endpoint=s3.fr-par.scw.cloud&region=fr-par&s3ForcePathStyle=true'
+  uv run --env-file ../.env pulumi --stack select {{stack}}
+  uv run --env-file ../.env pulumi --login 's3://evalap-pulumi-state?endpoint=s3.fr-par.scw.cloud&region=fr-par&s3ForcePathStyle=true'
 
 state-logout:
   #!/usr/bin/env bash
   cd infra
   echo "Logging out of Pulumi backend..."
-  uv run pulumi logout
+  uv run --env-file ../.env pulumi logout
 
 state-export stack="dev":
   #!/usr/bin/env bash
   cd infra
   echo "Exporting state for stack: {{stack}}"
-  uv run pulumi stack export --stack {{stack}}
+  uv run --env-file ../.env pulumi stack export --stack {{stack}}
 
 state-import file stack="dev":
   #!/usr/bin/env bash
   cd infra
   echo "Importing state for stack: {{stack}} from {{file}}"
-  uv run pulumi stack import --stack {{stack}} < {{file}}
+  uv run --env-file ../.env pulumi stack import --stack {{stack}} < {{file}}
 
 state-list:
   #!/usr/bin/env bash
   cd infra
   echo "Listing all Pulumi stacks..."
-  uv run pulumi stack ls
+  uv run --env-file ../.env pulumi stack ls
 
 state-info stack="dev":
   #!/usr/bin/env bash
   cd infra
   echo "Getting state info for stack: {{stack}}"
-  uv run pulumi stack select {{stack}}
-  uv run pulumi stack output
+  uv run --env-file ../.env pulumi stack select {{stack}}
+  uv run --env-file ../.env pulumi stack output
 
 state-refresh stack="dev":
   #!/usr/bin/env bash
   cd infra
   echo "Refreshing state for stack: {{stack}}"
-  uv run pulumi refresh --stack {{stack}} --yes
+  uv run --env-file ../.env pulumi refresh --stack {{stack}} --yes
 
 state-validate:
   #!/usr/bin/env bash
   echo "Validating state backend configuration..."
   cd infra
-  uv run python -c "import sys; sys.path.insert(0, '.'); from infra.utils import validation; validation.validate_state_backend_config(bucket_name='evalap-pulumi-state', region='fr-par', endpoint='https://s3.fr-par.scw.cloud'); print('✓ State backend configuration is valid')"
+  uv run --env-file ../.env python -c "import sys; sys.path.insert(0, '.'); from infra.utils import validation; validation.validate_state_backend_config(bucket_name='evalap-pulumi-state', region='fr-par', endpoint='https://s3.fr-par.scw.cloud'); print('✓ State backend configuration is valid')"

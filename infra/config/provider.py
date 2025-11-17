@@ -17,17 +17,17 @@ def get_scaleway_provider() -> scaleway.Provider:
         ValueError: If required credentials are not available
     """
     # Get credentials from environment variables
-    access_key = os.getenv("SCALEWAY_ACCESS_KEY")
-    secret_key = os.getenv("SCALEWAY_SECRET_KEY")
-    project_id = os.getenv("SCALEWAY_PROJECT_ID")
-    region = os.getenv("SCALEWAY_REGION", "fr-par")
+    access_key = os.getenv("SCW_ACCESS_KEY")
+    secret_key = os.getenv("SCW_SECRET_KEY")
+    project_id = os.getenv("SCW_PROJECT_ID")
+    region = os.getenv("SCW_REGION", "fr-par")
 
     if not access_key:
-        raise ValueError("SCALEWAY_ACCESS_KEY environment variable not set")
+        raise ValueError("SCW_ACCESS_KEY environment variable not set")
     if not secret_key:
-        raise ValueError("SCALEWAY_SECRET_KEY environment variable not set")
+        raise ValueError("SCW_SECRET_KEY environment variable not set")
     if not project_id:
-        raise ValueError("SCALEWAY_PROJECT_ID environment variable not set")
+        raise ValueError("SCW_PROJECT_ID environment variable not set")
 
     # Create provider with explicit credentials
     provider = scaleway.Provider(
@@ -51,10 +51,10 @@ def get_provider_config() -> dict:
     config = pulumi.Config()
 
     return {
-        "region": config.get("scaleway:region") or os.getenv("SCALEWAY_REGION", "fr-par"),
-        "project_id": config.get("scaleway:project_id") or os.getenv("SCALEWAY_PROJECT_ID"),
-        "access_key": config.get_secret("scaleway:access_key") or os.getenv("SCALEWAY_ACCESS_KEY"),
-        "secret_key": config.get_secret("scaleway:secret_key") or os.getenv("SCALEWAY_SECRET_KEY"),
+        "region": config.get("scaleway:region") or os.getenv("SCW_REGION", "fr-par"),
+        "project_id": config.get("scaleway:project_id") or os.getenv("SCW_PROJECT_ID"),
+        "access_key": config.get_secret("scaleway:access_key") or os.getenv("SCW_ACCESS_KEY"),
+        "secret_key": config.get_secret("scaleway:secret_key") or os.getenv("SCW_SECRET_KEY"),
     }
 
 

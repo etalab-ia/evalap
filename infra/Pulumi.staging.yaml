@@ -1,5 +1,7 @@
+encryptionsalt: v1:DzD1084CACo=:v1:VTijKAyw7fLgd6Qw:MUA9iOEdDZ4sau9qEsUd32CKulLOVA==
 config:
-  scaleway:region: fr-par
-  scaleway:project_id: ${env:SCALEWAY_PROJECT_ID}
-  scaleway:access_key: ${env:SCALEWAY_ACCESS_KEY}
-  scaleway:secret_key: ${env:SCALEWAY_SECRET_KEY}
+  evalap:project_id: ${env:SCW_PROJECT_ID}
+  evalap:access_key: ${env:SCW_ACCESS_KEY}
+  evalap:secret_key: ${env:SCW_SECRET_KEY}
+  evalap:db_password:
+    secure: v1:M5s18jWNlYaGPKX6:6L7CihKJ3gaAemrX6NIf7llAj5QoCBQ93xycKdnBIU4CZLDiUZ8jywWI8AaixuU=
