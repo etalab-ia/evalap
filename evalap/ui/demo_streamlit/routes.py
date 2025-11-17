@@ -63,13 +63,6 @@ ROUTES = [
         "description": "Statistical overview of usage",
         "icon": ":material/settings:",
     },
-    {
-        "id": "launch_test_evaluation",
-        "path": "views/launch_test_evaluation.py",
-        "title": "launch_test_evaluation",
-        "description": "Exemple for launch test evaluation",
-        "icon": ":material/visibility:",
-    },
 ]
 
 
