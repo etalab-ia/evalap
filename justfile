@@ -322,7 +322,7 @@ state-export stack="dev":
   echo "Exporting state for stack: {{stack}}"
   uv run pulumi stack export --stack {{stack}}
 
-state-import stack="dev" file:
+state-import file stack="dev":
   #!/usr/bin/env bash
   cd infra
   echo "Importing state for stack: {{stack}} from {{file}}"
@@ -350,22 +350,5 @@ state-refresh stack="dev":
 state-validate:
   #!/usr/bin/env bash
   echo "Validating state backend configuration..."
-  python3 << 'PYTHON'
-import os
-import sys
-sys.path.insert(0, 'infra')
-
-from infra.utils import validation
-
-try:
-    # Validate backend config
-    validation.validate_state_backend_config(
-        bucket_name="evalap-pulumi-state",
-        region="fr-par",
-        endpoint="https://s3.fr-par.scw.cloud"
-    )
-    print("✓ State backend configuration is valid")
-except ValueError as e:
-    print(f"✗ Configuration error: {e}")
-    sys.exit(1)
-PYTHON
+  cd infra
+  uv run python -c "import sys; sys.path.insert(0, '.'); from infra.utils import validation; validation.validate_state_backend_config(bucket_name='evalap-pulumi-state', region='fr-par', endpoint='https://s3.fr-par.scw.cloud'); print('✓ State backend configuration is valid')"
