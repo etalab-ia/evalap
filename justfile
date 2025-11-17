@@ -361,7 +361,8 @@ pra:
   # Fetch and checkout branch (fresh copy)
   echo "🔄 Fetching and checking out branch: $selected_branch..."
   git fetch origin "$selected_branch"
-  git checkout -B "$selected_branch" "origin/$selected_branch"
+  git clean -fd  # Remove untracked files and directories
+  git reset --hard "origin/$selected_branch"  # Reset to match remote exactly
 
   echo ""
   echo "📚 Installing Python dependencies..."
