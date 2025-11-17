@@ -286,7 +286,7 @@ sync:
   uv run pre-commit install
 
 # Test a PR: list open PRs, select one, checkout its branch, migrate, and run
-pra:
+pray:
   #!/usr/bin/env bash
   set -e
 
