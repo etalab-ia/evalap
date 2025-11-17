@@ -16,7 +16,8 @@ PROMPT_CHOICES = [
     "Explain the procedure linked to the selected guide.",
 ]
 
-DEFAULT_JUDGE_MODEL = "gpt-5-mini"
+DEFAULT_MODEL = "albert-small"
+DEFAULT_JUDGE_MODEL = "albert-large"
 CHOICE_METRICS = "judge_notator"
 DEFAULT_METRICS = [
     "generation_time",
@@ -143,7 +144,7 @@ def create_experiment_set(
             },
         }
 
-    expset_name = f"{datetime.now().strftime('%Y%m%d')}_launch_test_evaluation"
+    expset_name = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_launch_test_evaluation"
 
     expset = {
         "name": expset_name,
@@ -152,7 +153,11 @@ def create_experiment_set(
             "common_params": {
                 "dataset": dataset,
                 "metrics": metrics,
-                "judge_model": judge_model,
+                "judge_model": {
+                    "name": judge_model,
+                    "base_url": DEFAULT_PROVIDER_URL,
+                    "api_key": api_key,
+                },
             },
             "grid_params": {"model": [model_config]},
             "repeat": 1,
@@ -219,7 +224,7 @@ def main():
         )
     with col_key2:
         user_api_key = st.text_input(
-            " ", type="password", key="user_api_key_input", label_visibility="collapsed"
+            " ", type="password", key="user_api_key_launch", label_visibility="collapsed"
         )
 
     st.write(
@@ -241,7 +246,7 @@ def main():
                 col["id"] for col in public_collections if col["name"] in collections_selected_names
             ]
         with col2:
-            st.selectbox("LLM", "albert-small", key="selected_llm")
+            st.selectbox("LLM", DEFAULT_MODEL, key="selected_llm")
         with col3:
             selected_prompt = st.selectbox(
                 "Select a prompt", ["Select prompt"] + PROMPT_CHOICES, key="selected_prompt"
@@ -255,7 +260,7 @@ def main():
                 "Select a test dataset", ["Select dataset"] + datasets, key="main_dataset_select"
             )
         with col5:
-            st.selectbox("LLM Judge", "albert-large", key="selected_judge")
+            st.selectbox("LLM Judge", DEFAULT_JUDGE_MODEL, key="selected_judge")
         with col6:
             selected_metrics = st.selectbox("Select metric", CHOICE_METRICS, key="selected_metrics")
 
@@ -272,9 +277,9 @@ def main():
             experimentset = create_experiment_set(
                 dataset=dataset,
                 collection_ids=collections_selected_ids,
-                model_name="albert-small",
+                model_name=DEFAULT_MODEL,
                 prompt=selected_prompt if selected_prompt and selected_prompt != "Select prompt" else "",
-                judge_model="albert-large",
+                judge_model=DEFAULT_JUDGE_MODEL,
                 api_key=user_api_key,
                 metrics=METRICS_FOR_EXPSET,
             )
@@ -294,21 +299,18 @@ def main():
                     result = post_experiment_set(experimentset, user_api_key)
                     if result and "id" in result:
                         expset_id = result["id"]
-                        st.success(f"Experiment set créé: {result['name']} (ID: {expset_id})")
-                        st.info(
-                            "🚨 Note importante : conservez cet ID dans vos notes personnelles. "
-                            "L'application est en version bêta et ne possède pas d'authentification ni de persistance."
-                        )
+                        st.success(f"Experiment set created: {result['name']} (ID: {expset_id})")
+
                         dashboard_url = f"/experiments_set?expset={expset_id}"
                         st.markdown(button_style, unsafe_allow_html=True)
                         st.markdown(
-                            f'<a href="{dashboard_url}" target="_blank" class="custom-button">Voir les résultats détaillés dans le dashboard</a>',
+                            f'<a href="{dashboard_url}" class="custom-button">See detailed results in the dashboard</a>',
                             unsafe_allow_html=True,
                         )
                     else:
-                        st.error("Erreur lors de la création de l'experiment set")
+                        st.error("Error creating experiment set")
                 except Exception as e:
-                    st.error(f"Erreur lors de la création de l'experiment set : {e}")
+                    st.error(f"Error creating experiment set : {e}")
 
         with button_col2:
             with st.popover("📋 Copy code"):
