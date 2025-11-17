@@ -918,12 +918,16 @@ def show_header(experimentset):
 def run_core_experiments(compliance=False):
     # Fetch or re-fetch data
     # --
+    refresh_needed = st.session_state.get("refresh_main", False)
     experiment_sets = _fetch(
         "get",
         "/experiment_sets",
         data={"compliance": compliance},
-        refresh=st.session_state.get("refresh_main"),
+        refresh=refresh_needed,
     )
+    # Reset refresh flag after use
+    if refresh_needed:
+        st.session_state["refresh_main"] = False
 
     # Check if user wants to show launch_test_evaluation (via URL or button click)
     launch_param = st.query_params.get("launch")
@@ -1103,7 +1107,8 @@ def run_core_experiments(compliance=False):
         with col1:
             st.title("Compliance" if compliance else "Experiments")
         with col2:
-            if st.button("🔄 Refresh", key="refresh_main"):
+            if st.button("🔄 Refresh", key="refresh_btn_main"):
+                st.session_state["refresh_main"] = True
                 st.rerun()
         with col3:
             if st.button("🚀 Launch Test Evaluation", key="launch_test_eval_btn"):
