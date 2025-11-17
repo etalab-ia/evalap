@@ -198,7 +198,7 @@ def generate_answer(message: dict, mcp_bridge: MCPBridgeClient | None):
 
     # Phase D: maybe trigger observations in a separate short-lived transaction
     if current_num_try >= dataset_size and msg.follow_observation:
-        with SessionLocal() as db:
+        with get_db_context() as db:
             db_exp = crud.get_experiment(db, msg.exp_id)
             if db_exp is not None:
                 dispatch_tasks(db, db_exp, MessageType.observation)
