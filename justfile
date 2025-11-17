@@ -361,6 +361,18 @@ pray:
   # Fetch and checkout branch (fresh copy)
   echo "🔄 Fetching and checking out branch: $selected_branch..."
   git fetch origin "$selected_branch"
+
+  echo ""
+  echo "⚠️  WARNING: The following operations will:"
+  echo "   - Remove ALL untracked files and directories (git clean -fd)"
+  echo "   - Discard ALL local uncommitted changes (git reset --hard)"
+  echo ""
+  read -p "   Type 'yes' to continue: " confirm_clean
+  if [ "$confirm_clean" != "yes" ]; then
+    echo "❌ Aborted by user"
+    exit 1
+  fi
+
   git clean -fd  # Remove untracked files and directories
   git reset --hard "origin/$selected_branch"  # Reset to match remote exactly
 
