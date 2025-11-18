@@ -9,7 +9,7 @@
 
 **Decision**: Pulumi with Python SDK
 
-**Rationale**: 
+**Rationale**:
 - Python SDK aligns with EvalAP's existing technology stack and team expertise
 - Type-safe infrastructure definitions using Python type hints
 - Better integration with existing Python tooling (pytest, ruff, etc.)
@@ -85,7 +85,7 @@
 - Supports zero-downtime deployments through blue-green patterns
 - Aligns with Pulumi's recommended practices
 
-**Pattern**: 
+**Pattern**:
 - Base infrastructure in components/
 - Environment-specific stacks in stacks/
 - Configuration models in config/ for type safety
@@ -150,7 +150,7 @@
 **Rationale**:
 - Validates component interactions and dependencies
 - Tests real Scaleway API interactions
-- Verifies deployment and rollback procedures
+- Verifies deployment procedures and recovery via redeployments from version control
 - Confidence in production deployments
 
 **Pattern**:

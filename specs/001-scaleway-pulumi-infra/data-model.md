@@ -10,6 +10,7 @@
 Represents a complete deployment environment (dev/staging/production) with all associated resources.
 
 **Fields**:
+
 - `name`: str - Stack identifier (e.g., "dev", "staging", "production")
 - `environment`: str - Environment type (development, staging, production)
 - `region`: str - Scaleway region (e.g., "fr-par-2")
@@ -17,6 +18,7 @@ Represents a complete deployment environment (dev/staging/production) with all a
 - `tags`: Dict[str, str] - Resource tags for cost allocation and identification
 
 **Relationships**:
+
 - Has many ServerlessContainer
 - Has many DatabaseInstance
 - Has many ObjectStorageBucket
@@ -25,6 +27,7 @@ Represents a complete deployment environment (dev/staging/production) with all a
 - Has one MonitoringConfig
 
 **Validation Rules**:
+
 - Name must match pattern: `^[a-z][a-z0-9-]*$`
 - Environment must be one of: ["development", "staging", "production"]
 - Region must be valid Scaleway region
@@ -35,6 +38,7 @@ Represents a complete deployment environment (dev/staging/production) with all a
 Represents a Scaleway Serverless Container for application deployment.
 
 **Fields**:
+
 - `name`: str - Container name
 - `registryImage`: str - Container image URL (format: `rg.fr-par.scw.cloud/$NAMESPACE/$IMAGE`)
 - `cpuLimit`: int - CPU limit in millicores (100-4000, e.g., 140 = 0.14 vCPU)
@@ -52,11 +56,13 @@ Represents a Scaleway Serverless Container for application deployment.
 - `deploy`: bool - Whether to deploy the container (default true)
 
 **Relationships**:
+
 - Belongs to InfrastructureStack
 - References Secret for credentials
 - Attached to PrivateNetwork (optional, beta feature)
 
 **Validation Rules**:
+
 - CPU limit: 100-4000 millicores
 - Memory limit: 128-8192 MB (must match CPU allocation per Scaleway limits)
 - Min scale: 0-10
@@ -71,6 +77,7 @@ Represents a Scaleway Serverless Container for application deployment.
 Represents a Scaleway Managed PostgreSQL instance.
 
 **Fields**:
+
 - `name`: str - Database instance name
 - `engine`: str - Database engine (PostgreSQL, MySQL, etc.)
 - `nodeType`: str - Instance size (e.g., "db-dev-s", "db-pro-m")
@@ -86,12 +93,14 @@ Represents a Scaleway Managed PostgreSQL instance.
 - `tags`: Dict[str, str] - Resource tags
 
 **Relationships**:
+
 - Belongs to InfrastructureStack
 - Has many DatabaseUser
 - Has many DatabaseBackup
 - References Secret for credentials
 
 **Validation Rules**:
+
 - Volume size: 5-500 GB (only for sbs_5k/sbs_15k)
 - Volume type: lssd, sbs_5k, or sbs_15k
 - Backup retention: 1-365 days
@@ -105,6 +114,7 @@ Represents a Scaleway Managed PostgreSQL instance.
 Represents a Scaleway Object Storage bucket.
 
 **Fields**:
+
 - `name`: str - Bucket name (globally unique, DNS-compliant)
 - `region`: str - Bucket region
 - `projectId`: str - Scaleway project ID
@@ -116,12 +126,14 @@ Represents a Scaleway Object Storage bucket.
 - `forceDestroy`: bool - Force destroy even with objects (default false)
 
 **Relationships**:
+
 - Belongs to InfrastructureStack
 - Has many StoredObject
 - Has many LifecycleRule
 - Has many CorsRule
 
 **Validation Rules**:
+
 - Name must be globally unique and DNS-compliant
 - Region must be valid Scaleway region
 - Versioning: enabled or suspended (cannot revert to unversioned)
@@ -129,6 +141,7 @@ Represents a Scaleway Object Storage bucket.
 - Object lock is immutable once enabled
 
 **Important Notes**:
+
 - Storage class (STANDARD, GLACIER, ONEZONE_IA) is configured per-object or via lifecycle rules, not at bucket level
 - Once versioning is enabled, bucket cannot return to unversioned state
 - ACL attribute is deprecated; use BucketAcl resource instead
@@ -138,6 +151,7 @@ Represents a Scaleway Object Storage bucket.
 Represents a secret stored in Scaleway Secret Manager.
 
 **Fields**:
+
 - `name`: str - Secret name (pattern: `^[a-z][a-z0-9-]*$`)
 - `description`: str - Human-readable description
 - `projectId`: str - Scaleway project ID
@@ -146,17 +160,20 @@ Represents a secret stored in Scaleway Secret Manager.
 - `versions`: List[SecretVersion] - Secret versions (immutable history)
 
 **Relationships**:
+
 - Belongs to InfrastructureStack
 - Has many SecretVersion
 - Referenced by ServerlessContainer
 - Referenced by DatabaseInstance
 
 **Validation Rules**:
+
 - Name: `^[a-z][a-z0-9-]*$`
 - Each version is immutable
 - Versions are accessed via SecretVersion resource
 
 **Important Notes**:
+
 - Secret content is stored in SecretVersion resources, not directly in Secret
 - Each update creates a new immutable version
 - Secrets are encrypted at rest by Scaleway
@@ -166,6 +183,7 @@ Represents a secret stored in Scaleway Secret Manager.
 Represents a Scaleway Private Network for service isolation.
 
 **Fields**:
+
 - `name`: str - Network name
 - `projectId`: str - Scaleway project ID
 - `region`: str - Scaleway region
@@ -173,16 +191,19 @@ Represents a Scaleway Private Network for service isolation.
 - `tags`: Dict[str, str] - Network tags
 
 **Relationships**:
+
 - Belongs to InfrastructureStack
 - Has many Subnet
 - Has many NetworkAttachment
 
 **Validation Rules**:
+
 - CIDR must be valid private network range (10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16)
 - Subnet CIDRs must be within network CIDR
 - Subnet CIDRs must not overlap
 
 **Important Notes**:
+
 - Private networks enable secure inter-service communication
 - Containers and databases can be attached to private networks
 - Beta feature: VPC integration requires `activate_vpc_integration=true` on namespace
@@ -192,6 +213,7 @@ Represents a Scaleway Private Network for service isolation.
 Represents monitoring and alerting configuration.
 
 **Fields**:
+
 - `enabled`: bool - Enable monitoring
 - `alert_channels`: List[AlertChannel] - Notification channels
 - `metric_rules`: List[MetricRule] - Metric alerting rules
@@ -199,12 +221,14 @@ Represents monitoring and alerting configuration.
 - `dashboard_configs`: List[DashboardConfig] - Custom dashboards
 
 **Relationships**:
+
 - Belongs to InfrastructureStack
 - Has many AlertChannel
 - Has many MetricRule
 - Has many LogRule
 
 **Validation Rules**:
+
 - At least one alert channel if monitoring enabled
 - Metric rules must have valid thresholds
 - Log rules must have valid patterns
@@ -216,6 +240,7 @@ Represents monitoring and alerting configuration.
 Configuration for container health checks.
 
 **Fields**:
+
 - `protocol`: str - Protocol (http, tcp)
 - `path`: str - HTTP path (if protocol is http)
 - `port`: int - Port number
@@ -225,6 +250,7 @@ Configuration for container health checks.
 - `unhealthy_threshold`: int - Consecutive failures to mark unhealthy
 
 **Validation Rules**:
+
 - Protocol: ["http", "tcp"]
 - Port: 1-65535
 - Interval: 5-300 seconds
@@ -236,12 +262,14 @@ Configuration for container health checks.
 Network attachment configuration for services.
 
 **Fields**:
+
 - `private_network_id`: str - Private network ID
 - `subnet_ids`: List[str] - Subnet IDs for attachment
 - `public_ips`: List[str] - Public IP addresses (if any)
 - `security_group_ids`: List[str] - Security group IDs
 
 **Validation Rules**:
+
 - Must attach to at least one subnet
 - Security groups must exist in same VPC
 
@@ -250,6 +278,7 @@ Network attachment configuration for services.
 Object lifecycle rule for storage buckets.
 
 **Fields**:
+
 - `id`: str - Rule identifier
 - `status`: str - Rule status (enabled, disabled)
 - `filter`: LifecycleFilter - Object filter conditions
@@ -257,6 +286,7 @@ Object lifecycle rule for storage buckets.
 - `expiration_days`: int - Object expiration in days
 
 **Validation Rules**:
+
 - Status: ["enabled", "disabled"]
 - Transitions must be in chronological order
 - Expiration: 1-3650 days
@@ -266,6 +296,7 @@ Object lifecycle rule for storage buckets.
 Metric alerting rule configuration.
 
 **Fields**:
+
 - `name`: str - Rule name
 - `metric_name`: str - Metric to monitor
 - `threshold`: float - Alert threshold value
@@ -274,6 +305,7 @@ Metric alerting rule configuration.
 - `severity`: str - Alert severity (critical, warning, info)
 
 **Validation Rules**:
+
 - Comparison: ["gt", "lt", "eq", "gte", "lte"]
 - Duration: 60-3600 seconds
 - Severity: ["critical", "warning", "info"]
@@ -285,6 +317,7 @@ Metric alerting rule configuration.
 Represents Pulumi state stored in Object Storage.
 
 **Fields**:
+
 - `stack_name`: str - Stack identifier
 - `state_version`: str - State version identifier
 - `checkpoint_data`: str - Serialized state data
@@ -295,10 +328,12 @@ Represents Pulumi state stored in Object Storage.
 - `lock_timestamp`: datetime - Lock acquisition time
 
 **Relationships**:
+
 - Belongs to InfrastructureStack
 - Has many StateSnapshot
 
 **Validation Rules**:
+
 - Stack name must match InfrastructureStack
 - State version must be UUID
 - Lock duration maximum: 1 hour
@@ -308,6 +343,7 @@ Represents Pulumi state stored in Object Storage.
 Historical snapshot of infrastructure state.
 
 **Fields**:
+
 - `state_id`: str - Unique snapshot identifier
 - `timestamp`: datetime - Snapshot creation time
 - `state_data`: str - Complete state snapshot
@@ -315,9 +351,11 @@ Historical snapshot of infrastructure state.
 - `deployment_id`: str - Associated deployment ID
 
 **Relationships**:
+
 - Belongs to InfrastructureState
 
 **Validation Rules**:
+
 - State ID must be UUID
 - Resource count must be >= 0
 
@@ -328,6 +366,7 @@ Historical snapshot of infrastructure state.
 Complete configuration for an infrastructure stack.
 
 **Fields**:
+
 - `stack_info`: StackInfo - Basic stack information
 - `containers`: List[ContainerConfig] - Container configurations
 - `databases`: List[DatabaseConfig] - Database configurations
@@ -337,6 +376,7 @@ Complete configuration for an infrastructure stack.
 - `secrets`: List[SecretConfig] - Secret configurations
 
 **Validation Rules**:
+
 - At least one container must be defined
 - Database configuration required for production
 - Monitoring required for production
@@ -358,7 +398,7 @@ Complete configuration for an infrastructure stack.
 1. **Lock Acquisition**: Acquire exclusive lock on InfrastructureState
 2. **State Update**: Apply changes and update state data
 3. **Checkpoint Creation**: Create state checkpoint in Object Storage
-4. **Snapshot Creation**: Create historical snapshot for rollback
+4. **Snapshot Creation**: Create historical snapshot for auditing and troubleshooting
 5. **Lock Release**: Release lock for next operation
 
 ### Resource Dependencies
@@ -389,6 +429,7 @@ Complete configuration for an infrastructure stack.
 ## Validation Rules Summary
 
 All entities must follow these validation principles:
+
 - Type safety through Pydantic models
 - Referential integrity between related entities
 - Business rule validation for domain-specific constraints

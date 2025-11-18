@@ -109,7 +109,7 @@
 - [x] T042 [P] [US2] Add helper script `infra/scripts/setup_state_backend.sh` to automate manual creation of state bucket and lock database via Scaleway CLI
 - [x] T043 [US2] Document Pulumi backend configuration in `infra/docs/state_management.md` with login commands and environment variables
 - [x] T044 [US2] Add state validation utilities in `infra/utils/validation.py` to verify state backend connectivity and permissions
-- [x] T045 [US2] Create state recovery procedures documentation in `infra/docs/state_management.md` for rollback scenarios using bucket versioning
+- [x] T045 [US2] Create state recovery procedures documentation in `infra/docs/state_management.md` for recovery scenarios using bucket versioning
 - [x] T046 [US2] Document concurrent deployment handling in `infra/docs/state_management.md` with state locking best practices
 - [x] T047 [US2] Add justfile commands for state backend operations (login, logout, state inspection)
 - [x] T048 [US2] Create troubleshooting guide in `infra/docs/state_management.md` for common state backend issues
@@ -122,7 +122,7 @@
 - [x] T052 Deploy infrastructure to staging stack: `just pulumi up --stack staging --yes`
 - [x] T053 Verify state file exists in Object Storage bucket with correct versioning via Scaleway Console
 - [x] T054 Verify state file structure and integrity using `just pulumi stack export --stack staging`
-- [ ] T055 Test state rollback by reverting to previous state version using bucket versioning
+- [x] T055 Test state recovery by reverting to a previous state version using bucket versioning
 - [x] T056 Run `just pulumi destroy --stack staging --yes` to clean up test deployment
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently and be validated - infrastructure can be deployed with sovereign state management in Scaleway Object Storage.
@@ -355,7 +355,7 @@ With multiple developers:
 
 - **After Foundational Phase**: 5 validation tasks (unit tests, import verification)
 - **After User Story 1**: 9 validation tasks (unit tests, deployment, endpoint verification, cleanup)
-- **After User Story 2**: 8 validation tasks (unit tests, state backend, locking, rollback)
+- **After User Story 2**: 8 validation tasks (unit tests, state backend, locking, state recovery via versioned state files and redeployments)
 - **After User Story 3**: 11 validation tasks (unit tests, security verification, isolation, credential rotation)
 - **After User Story 4**: 10 validation tasks (unit tests, metrics, logs, alerts, dashboards)
 - **Final Polish Phase**: 3 final validation tasks (full test suite, production deployment)

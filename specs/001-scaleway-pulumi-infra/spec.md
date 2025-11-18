@@ -165,7 +165,7 @@ Operations teams need comprehensive monitoring and alerting to ensure infrastruc
 - **SC-001**: Infrastructure developers can deploy a complete application stack in under 15 minutes
 - **SC-002**: System supports 50+ concurrent infrastructure deployments without state conflicts
 - **SC-003**: 99.9% of infrastructure deployments complete successfully without manual intervention
-- **SC-004**: All infrastructure state changes are tracked with full audit trail and rollback capability
+- **SC-004**: All infrastructure state changes are tracked with a full audit trail to support safe redeployments based on version control history
 - **SC-005**: Security configurations pass automated compliance checks for 100% of deployments
 - **SC-006**: Infrastructure provisioning costs are reduced by 40% compared to manual setup
 - **SC-007**: Mean time to detect infrastructure issues is under 5 minutes through automated monitoring
