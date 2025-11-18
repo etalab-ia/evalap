@@ -311,17 +311,17 @@ state-logout:
   echo "Logging out of Pulumi backend..."
   uv run --env-file ../.env pulumi logout
 
-state-export stack="dev":
+state-export file stack="dev":
   #!/usr/bin/env bash
   cd infra
-  echo "Exporting state for stack: {{stack}}"
-  uv run --env-file ../.env pulumi stack export --stack {{stack}}
+  echo "Exporting state for stack: {{stack}} to {{file}}"
+  uv run --env-file ../.env pulumi stack export --stack {{stack}} --file {{file}}
 
 state-import file stack="dev":
   #!/usr/bin/env bash
   cd infra
   echo "Importing state for stack: {{stack}} from {{file}}"
-  uv run --env-file ../.env pulumi stack import --stack {{stack}} < {{file}}
+  uv run --env-file ../.env pulumi stack import --stack {{stack}} --file {{file}}
 
 state-list:
   #!/usr/bin/env bash

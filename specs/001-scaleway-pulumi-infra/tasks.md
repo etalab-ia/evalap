@@ -119,11 +119,11 @@
 - [x] T049 [P] Manually create Scaleway Object Storage bucket `evalap-pulumi-state` with versioning enabled via Scaleway Console or CLI
 - [x] T050 [P] Manually create Scaleway PostgreSQL database for state locking via Scaleway Console or CLI (required for team collaboration)
 - [x] T051 Configure Pulumi to use Scaleway Object Storage backend: `pulumi login 's3://evalap-pulumi-state?endpoint=s3.fr-par.scw.cloud&region=fr-par&s3ForcePathStyle=true'`
-- [ ] T052 Deploy infrastructure to staging stack: `just pulumi up --stack staging --yes`
-- [ ] T053 Verify state file exists in Object Storage bucket with correct versioning via Scaleway Console
-- [ ] T054 Verify state file structure and integrity using `just pulumi stack export --stack staging`
+- [x] T052 Deploy infrastructure to staging stack: `just pulumi up --stack staging --yes`
+- [x] T053 Verify state file exists in Object Storage bucket with correct versioning via Scaleway Console
+- [x] T054 Verify state file structure and integrity using `just pulumi stack export --stack staging`
 - [ ] T055 Test state rollback by reverting to previous state version using bucket versioning
-- [ ] T056 Run `just pulumi destroy --stack staging --yes` to clean up test deployment
+- [x] T056 Run `just pulumi destroy --stack staging --yes` to clean up test deployment
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently and be validated - infrastructure can be deployed with sovereign state management in Scaleway Object Storage.
 
