@@ -18,7 +18,7 @@ PROMPT_CHOICES = [
 
 DEFAULT_MODEL = "albert-small"
 DEFAULT_JUDGE_MODEL = "albert-large"
-CHOICE_METRICS = "judge_notator"
+CHOICE_METRICS = ["judge_notator", "judge_exactness"]
 DEFAULT_METRICS = [
     "generation_time",
     "nb_tokens_prompt",
@@ -262,10 +262,12 @@ def main():
         with col5:
             st.selectbox("LLM Judge", DEFAULT_JUDGE_MODEL, key="selected_judge")
         with col6:
-            selected_metrics = st.selectbox("Select metric", CHOICE_METRICS, key="selected_metrics")
+            selected_metrics = st.multiselect(
+                "Select generation metrics", options=CHOICE_METRICS, key="selected_metrics"
+            )
 
         if selected_metrics:
-            selected_metrics_list = [m.strip() for m in selected_metrics.split(",") if m.strip()]
+            selected_metrics_list = [m.strip() for m in selected_metrics if m.strip()]
         else:
             selected_metrics_list = []
 
