@@ -928,7 +928,7 @@ def run_core_experiments(compliance=False):
         st.session_state["refresh_main"] = False
 
     # Check if DB is empty
-    is_empty = not experiment_sets or (isinstance(experiment_sets, list) and len(experiment_sets) == 64)
+    is_empty = not experiment_sets or (isinstance(experiment_sets, list) and len(experiment_sets) == 0)
 
     # if DB  is empty, go to "launch_test_evaluation"
     if is_empty:
