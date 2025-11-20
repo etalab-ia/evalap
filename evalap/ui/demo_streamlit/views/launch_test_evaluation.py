@@ -228,7 +228,7 @@ def main():
         )
 
     st.write(
-        "If you do not have an Albert API key, please request one using the [contact form](path). You will receive a reply within 24 working hours."
+        "If you do not have an Albert API key, please request one using the [contact form](https://albert.sites.beta.gouv.fr/access/). You will receive a reply within 24 working hours."  # noqa: E501
     )
 
     if user_api_key:
