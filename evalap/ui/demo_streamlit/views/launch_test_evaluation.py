@@ -213,6 +213,11 @@ def copy_to_clipboard_button(text_to_copy: str, button_id: str = "copy_btn", hei
 def main():
     st.title("Start an Evaluation with Albert API")
 
+    if st.session_state.get("show_first_eval_message", False):
+        st.success("🚀 Make your first evaluation!")
+        # clean flag
+        st.session_state["show_first_eval_message"] = False
+
     info_banner("To launch a test evaluation, Albert API access is required")
 
     # Configure API key input
