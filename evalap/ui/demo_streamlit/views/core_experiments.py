@@ -928,12 +928,39 @@ def run_core_experiments(compliance=False):
         st.session_state["refresh_main"] = False
 
     # Check if DB is empty
-    is_empty = not experiment_sets or (isinstance(experiment_sets, list) and len(experiment_sets) == 0)
+    is_empty = not experiment_sets or (isinstance(experiment_sets, list) and len(experiment_sets) == 64)
 
-    # if DB  is empty, go to "launch_test_evaluation"
+    # Display info banner
+    st.markdown(
+        """
+        <div style="
+            background-color:#E3ECFF;
+            color:#000091;
+            border:1px solid #B5C7F9;
+            padding:18px;
+            border-radius:7px;
+            margin-bottom:24px;
+            ">
+        <strong>ℹ️ From this page, you can access the results of your experiments. </strong><br><br>
+        You can also start a test experiment with the EvalAP environment
+        <strong><a href="/launch" style="color:#000091; text-decoration:underline;">from the test page</a></strong>.<br>
+        Access documentation to start evaluating your own AI system
+        <strong><a href="/home" style="color:#000091; text-decoration:underline;">from the home page</a></strong>.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    # if DB is empty, show button to launch test
     if is_empty:
-        st.session_state["show_first_eval_message"] = True
-        st.switch_page("views/launch_test_evaluation.py")
+        st.title("Experiments")
+
+        col1, col2, col3 = st.columns([2, 1, 2])
+        with col2:
+            if st.button(
+                "🚀 Launch Test Evaluation", key="launch_test_eval_btn_empty", use_container_width=True
+            ):
+                st.switch_page("views/launch_test_evaluation.py")
         return
 
     # View Branching
