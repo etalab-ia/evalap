@@ -604,7 +604,7 @@ def count_unique_models_and_metrics(exp_set: dict[str, any]) -> tuple[int, int]:
     experiments = exp_set.get("experiments", [])
     for experiment in experiments:
         model = experiment.get("model", {})
-        if "name" in model:
+        if model and "name" in model:
             unique_models.add(model["name"])
 
         for result in experiment.get("results", []):
@@ -747,7 +747,7 @@ def compute_failure_rates(exp_set: dict[str, any]) -> tuple[dict[str, float], di
 
     for experiment in experiments:
         model = experiment.get("model", {})
-        model_name = model.get("name")
+        model_name = model.get("name") if model else None
         num_try = experiment.get("num_try", 0)
         num_success = experiment.get("num_success", 0)
         if model_name:
@@ -913,24 +913,8 @@ def show_header(experimentset):
     st.markdown(run_status, unsafe_allow_html=True)
 
 
-def run_core_experiments(compliance=False):
-    # Fetch or re-fetch data
-    # --
-    refresh_needed = st.session_state.get("refresh_main", False)
-    experiment_sets = _fetch(
-        "get",
-        "/experiment_sets",
-        data={"compliance": compliance},
-        refresh=refresh_needed,
-    )
-    # Reset refresh flag after use
-    if refresh_needed:
-        st.session_state["refresh_main"] = False
-
-    # Check if DB is empty
-    is_empty = not experiment_sets or (isinstance(experiment_sets, list) and len(experiment_sets) == 64)
-
-    # Display info banner
+def _display_info_banner():
+    """Display the info banner with links"""
     st.markdown(
         """
         <div style="
@@ -951,175 +935,181 @@ def run_core_experiments(compliance=False):
         unsafe_allow_html=True,
     )
 
-    # if DB is empty, show button to launch test
-    if is_empty:
-        st.title("Experiments")
 
-        col1, col2, col3 = st.columns([2, 1, 2])
-        with col2:
-            if st.button(
-                "🚀 Launch Test Evaluation", key="launch_test_eval_btn_empty", use_container_width=True
-            ):
-                st.switch_page("views/launch_test_evaluation.py")
-        return
+def _display_experiment_list_view(experiment_sets, compliance):
+    """Display the list of all experiment sets"""
+    col1, col2, col3 = st.columns([3, 1, 1])
+    with col1:
+        st.title("Compliance" if compliance else "Experiments")
+    with col2:
+        if st.button("🔄 Refresh", key="refresh_btn_main"):
+            st.session_state["refresh_main"] = True
+            st.rerun()
+    with col3:
+        if st.button("🚀 Launch Test Evaluation", key="launch_test_eval_btn"):
+            st.switch_page("views/launch_test_evaluation.py")
 
-    # View Branching
-    # --
-    expid = st.query_params.get("expset") or st.session_state.get("expset_id")
-    if expid:
-        st.session_state["expset_id"] = expid
-        st.query_params.expset = expid
+    display_experiment_sets(experiment_sets, compliance)
 
-        # Horizontal menu toolbar
-        col1, col2 = st.columns([3, 1])
-        with col1:
-            if st.button(":arrow_left: Go back", key="go_back"):
-                st.session_state["expset_id"] = None
-                st.query_params.pop("expset")
-                st.rerun()
 
-        with col2:
-            if st.button("🔄 Refresh", key="refresh_experimentset"):
-                st.rerun()
+def _display_experiment_detail_view(expid, experiment_sets, compliance):
+    """Display details of a single experiment set"""
+    # Save state
+    st.session_state["expset_id"] = expid
+    st.query_params.expset = expid
 
-        # Get the expset (or the orphan experiments)
-        if expid.isdigit():
-            experimentset = next((x for x in experiment_sets if x["id"] == int(expid)), None)
-            force_refresh = experimentset is None
-            if force_refresh:
-                if not compliance:
-                    # In non-compliance view, do not allow opening a filtered-out (likely compliance) set
-                    st.error("This experiment set is not available in this view.")
-                else:
-                    # In compliance view, do not allow opening a non-compliance set selected elsewhere
-                    st.error("This experiment set is not available.")
-                # Clean the persisted selection in both cases
-                st.session_state["expset_id"] = None
-                st.query_params.pop("expset")
-                st.rerun()
-            try:
-                experimentset = _fetch_experimentset(
-                    expid,
-                    experimentset,
-                    refresh=force_refresh or st.session_state.get("refresh_experimentset"),
-                )
-            except ValueError as ve:
-                st.error(f"Failed to fetch experiment set: {ve}")
-                return
+    # Navigation buttons
+    col1, col2 = st.columns([3, 1])
+    with col1:
+        if st.button(":arrow_left: Go back", key="go_back"):
+            st.session_state["expset_id"] = None
+            st.query_params.pop("expset")
+            st.rerun()
+    with col2:
+        if st.button("🔄 Refresh", key="refresh_experimentset"):
+            st.rerun()
 
-        elif expid == "orphan" and not compliance:
-            experimentset = {
-                "id": None,
-                "name": "Orphan experiments",
-                "created_at": "",
-                "experiments": fetch("get", "/experiments", {"orphan": True, "backward": True}),
-            }
+    # Fetch experiment set data
+    if expid.isdigit():
+        experimentset = next((x for x in experiment_sets if x["id"] == int(expid)), None)
+        force_refresh = experimentset is None
 
-        else:
-            st.error("Invalid experiment set id: %s" % expid)
+        if force_refresh:
+            if not compliance:
+                st.error("This experiment set is not available in this view.")
+            else:
+                st.error("This experiment set is not available.")
+            st.session_state["expset_id"] = None
+            st.query_params.pop("expset")
+            st.rerun()
+
+        try:
+            experimentset = _fetch_experimentset(
+                expid,
+                experimentset,
+                refresh=force_refresh or st.session_state.get("refresh_experimentset"),
+            )
+        except ValueError as ve:
+            st.error(f"Failed to fetch experiment set: {ve}")
             return
 
-        if not experimentset.get("experiments"):
-            return st.warning("No experiments yet to display")
-
-        experiments_df = pd.DataFrame(
-            [
-                {
-                    "Id": expe["id"],
-                    "Name": expe["name"],
-                    "Dataset": expe["dataset"]["name"],
-                    "Model": (expe["model"]["aliased_name"] or expe["model"]["name"])
-                    if expe.get("model")
-                    else "Undefined model",
-                    "Model params": _format_model_params(expe),
-                    "Status": expe["experiment_status"],
-                    "Created at": expe["created_at"],
-                    "Num try": expe["num_try"],
-                    "Num success": expe["num_success"],
-                    "Num observation try": expe["num_observation_try"],
-                    "Num observation success": expe["num_observation_success"],
-                }
-                for expe in experimentset["experiments"]
-            ]
-        )
-        experiments_df.sort_values(by="Id", ascending=True, inplace=True)
-
-        show_header(experimentset)
-
-        # Display tabs
-        # --
-        tab_index = {
-            1: {
-                "key": "scores",
-                "title": "⭐ Scores",
-                "func": display_experiment_set_score,
-            },
-            2: {
-                "key": "overview",
-                "title": "📊 Set Overview",
-                "func": display_experiment_set_overview,
-            },
-            3: {
-                "key": "details",
-                "title": "📝 Details by Experiment",
-                "func": display_experiment_details,
-            },
-            4: {
-                "key": "ops",
-                "title": "🚨 Global infos",
-                "func": display_ops_analysis,
-            },
+    elif expid == "orphan" and not compliance:
+        experimentset = {
+            "id": None,
+            "name": "Orphan experiments",
+            "created_at": "",
+            "experiments": fetch("get", "/experiments", {"orphan": True, "backward": True}),
         }
-
-        tab1, tab2, tab3, tab4 = st.tabs(
-            [
-                tab_index[1]["title"],
-                tab_index[2]["title"],
-                tab_index[3]["title"],
-                tab_index[4]["title"],
-            ]
-        )
-
-        def show_warning_in_tabs(message):
-            with tab1:
-                st.warning(message)
-            with tab2:
-                st.warning(message)
-            with tab3:
-                st.warning(message)
-
-        df = experiments_df  # alias
-        warnings_to_show = []
-        if not (df["Status"] == "finished").all():
-            warnings_to_show.append("some experiments are not finished")
-        if df["Num success"].sum() != df["Num try"].sum():
-            warnings_to_show.append("some answers are failed")
-        if df["Num observation success"].sum() != df["Num observation try"].sum():
-            warnings_to_show.append("some metrics are failed")
-
-        if warnings_to_show:
-            show_warning_in_tabs("Warning: " + " AND ".join(warnings_to_show))
-
-        with tab1:
-            tab_index[1]["func"](experimentset, experiments_df)
-        with tab2:
-            tab_index[2]["func"](experimentset, experiments_df)
-        with tab3:
-            tab_index[3]["func"](experimentset, experiments_df)
-        with tab4:
-            tab_index[4]["func"](experimentset)
-
     else:
-        col1, col2, col3 = st.columns([3, 1, 1])
-        with col1:
-            st.title("Compliance" if compliance else "Experiments")
-        with col2:
-            if st.button("🔄 Refresh", key="refresh_btn_main"):
-                st.session_state["refresh_main"] = True
-                st.rerun()
-        with col3:
-            # if user click on "launch_test_eval_btn" , then go to "launch_test_evaluation"
-            if st.button("🚀 Launch Test Evaluation", key="launch_test_eval_btn"):
-                st.switch_page("views/launch_test_evaluation.py")
+        st.error("Invalid experiment set id: %s" % expid)
+        return
 
-        display_experiment_sets(experiment_sets, compliance)
+    # Check if experiments exist
+    if not experimentset.get("experiments"):
+        st.warning("No experiments yet to display")
+        return
+
+    # Prepare experiments dataframe
+    experiments_df = pd.DataFrame(
+        [
+            {
+                "Id": expe["id"],
+                "Name": expe["name"],
+                "Dataset": expe["dataset"]["name"],
+                "Model": (expe["model"]["aliased_name"] or expe["model"]["name"])
+                if expe.get("model")
+                else "Undefined model",
+                "Model params": _format_model_params(expe),
+                "Status": expe["experiment_status"],
+                "Created at": expe["created_at"],
+                "Num try": expe["num_try"],
+                "Num success": expe["num_success"],
+                "Num observation try": expe["num_observation_try"],
+                "Num observation success": expe["num_observation_success"],
+            }
+            for expe in experimentset["experiments"]
+        ]
+    )
+    experiments_df.sort_values(by="Id", ascending=True, inplace=True)
+
+    # Display header
+    show_header(experimentset)
+
+    # Display tabs
+    tab1, tab2, tab3, tab4 = st.tabs(
+        [
+            "⭐ Scores",
+            "📊 Set Overview",
+            "📝 Details by Experiment",
+            "🚨 Global infos",
+        ]
+    )
+
+    # Show warnings if needed
+    def show_warning_in_tabs(message):
+        with tab1:
+            st.warning(message)
+        with tab2:
+            st.warning(message)
+        with tab3:
+            st.warning(message)
+
+    df = experiments_df
+    warnings_to_show = []
+    if not (df["Status"] == "finished").all():
+        warnings_to_show.append("some experiments are not finished")
+    if df["Num success"].sum() != df["Num try"].sum():
+        warnings_to_show.append("some answers are failed")
+    if df["Num observation success"].sum() != df["Num observation try"].sum():
+        warnings_to_show.append("some metrics are failed")
+
+    if warnings_to_show:
+        show_warning_in_tabs("Warning: " + " AND ".join(warnings_to_show))
+
+    # Display tab content
+    with tab1:
+        display_experiment_set_score(experimentset, experiments_df)
+    with tab2:
+        display_experiment_set_overview(experimentset, experiments_df)
+    with tab3:
+        display_experiment_details(experimentset, experiments_df)
+    with tab4:
+        display_ops_analysis(experimentset)
+
+
+def run_core_experiments(compliance=False):
+    # 1. FETCH DATA
+    refresh_needed = st.session_state.get("refresh_main", False)
+    experiment_sets = _fetch(
+        "get",
+        "/experiment_sets",
+        data={"compliance": compliance},
+        refresh=refresh_needed,
+    )
+    if refresh_needed:
+        st.session_state["refresh_main"] = False
+
+    is_empty = not experiment_sets or (isinstance(experiment_sets, list) and len(experiment_sets) == 0)
+
+    # 2. CHECK IF VIEWING SPECIFIC EXPERIMENT SET
+    expid = st.query_params.get("expset") or st.session_state.get("expset_id")
+
+    if expid:
+        # Show single experiment set
+        _display_experiment_detail_view(expid, experiment_sets, compliance)
+    else:
+        # Show info banner in main page
+        _display_info_banner()
+
+        if is_empty:
+            # if empty, just button for launch
+            st.title("Experiments")
+            col1, col2, col3 = st.columns([2, 1, 2])
+            with col2:
+                if st.button(
+                    "🚀 Launch Test Evaluation", key="launch_test_eval_btn_empty", use_container_width=True
+                ):
+                    st.switch_page("views/launch_test_evaluation.py")
+        else:
+            # Show all experiment sets
+            _display_experiment_list_view(experiment_sets, compliance)
