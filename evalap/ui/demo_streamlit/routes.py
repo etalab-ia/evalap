@@ -43,6 +43,13 @@ ROUTES = [
         "icon": ":material/fact_check:",
     },
     {
+        "id": "launch",
+        "path": "views/launch_test_evaluation.py",
+        "title": "Test EvalAP",
+        "description": "Test an evaluation",
+        "icon": ":material/rocket_launch:",
+    },
+    {
         "id": "datasets",
         "path": "views/datasets.py",
         "title": "Datasets",
