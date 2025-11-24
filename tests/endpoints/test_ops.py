@@ -37,9 +37,9 @@ def assert_ops_metrics_types(metrics_dict):
 
     for key in numeric_keys:
         assert key in metrics_dict, f"Missing key in response: {key}"
-        assert isinstance(
-            metrics_dict[key], (int, float)
-        ), f"The '{key}' field must be a float or int: {type(metrics_dict[key])}"
+        assert isinstance(metrics_dict[key], (int, float)), (
+            f"The '{key}' field must be a float or int: {type(metrics_dict[key])}"
+        )
 
     assert "distinct_models" in metrics_dict
     assert isinstance(metrics_dict["distinct_models"], list), "'distinct_models' must be a list"
@@ -74,9 +74,9 @@ ops_eco_cases = [
 def assert_emissions_dict(emissions_dict):
     assert isinstance(emissions_dict, dict)
     for key, value in emissions_dict.items():
-        assert isinstance(
-            value, (float, int)
-        ), f"The '{key}' field is not a float or int: {value} (type: {type(value)})"
+        assert isinstance(value, (float, int)), (
+            f"The '{key}' field is not a float or int: {value} (type: {type(value)})"
+        )
 
 
 class TestEndpointsOpsEco(TestApi):
