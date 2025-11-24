@@ -201,7 +201,7 @@ def create_service_public_dataset(db: Session) -> None:
     Elle finance les services locaux (écoles, voirie, etc.) et est calculée sur la valeur locative cadastrale du bien.""",
     ]
 
-    df = pd.DataFrame({"Query": query, "output_true": output_true})
+    df = pd.DataFrame({"query": query, "output_true": output_true})
 
     dataset = schemas.DatasetCreate(
         name=dataset_name,
@@ -263,7 +263,7 @@ def create_annuaire_entreprises_dataset(db: Session) -> None:
         ),
         df=df.to_json(),
         default_metric="judge_notator",
-        compliance=True,
+        compliance=False,
     )
 
     created = crud.create_dataset(db, dataset)
