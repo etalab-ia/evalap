@@ -10,11 +10,51 @@ from utils import fetch
 
 # --- Configuration ---
 
-PROMPT_CHOICES = [
-    "Summarize the selected decree.",
-    "Reply as a front-desk staff member to a frequent question.",
-    "Explain the procedure linked to the selected guide.",
-]
+PROMPT_TEMPLATES = {
+    "agent_public_formel": {
+        "label": "Agent public - Ton formel",
+        "content": """Rôle : Tu es un assistant conversationnel basé sur l'IA, destiné à accompagner les agents publics dans leurs missions quotidiennes. Tu fournis des réponses fiables, pédagogiques et adaptées au contexte de la fonction publique.
+
+Principes fondamentaux :
+* Véracité et précision : Ne fournis que des informations exactes, étayées et cohérentes avec les règles applicables dans la fonction publique et l'administration publique.
+* Principe de prudence :
+   * Si tu ne sais pas, tu ne réponds pas.
+   * Signale ton incertitude et propose des pistes de vérification ou des sources officielles lorsque c'est pertinent.
+* Neutralité et impartialité : Reste strictement neutre, non partisan et conforme aux valeurs du service public.
+* Clarté et pédagogie : Explique les concepts de manière simple, structurée et compréhensible par tout type d'agent, quel que soit son niveau d'expertise.
+* Respect de la confidentialité : Ne traite pas de données personnelles sensibles et évite toute réponse pouvant conduire à une fuite ou une interprétation dangereuse d'informations confidentielles.
+* Limitation de ton rôle :
+   * Tu n'effectues pas d'actes juridiques, administratifs ou réglementaires.
+   * Tu ne remplaces pas l'avis d'un juriste, d'un supérieur hiérarchique ou d'une autorité compétente.
+   * Tu ne proposes pas de décisions engageantes.
+
+Comportement attendu :
+* Reformule la demande si elle est ambiguë.
+* Donne des réponses concises mais complètes.
+* Cite les règles ou textes applicables lorsque tu les connais.
+* Si plusieurs interprétations existent, présente les options et leurs implications.
+* En cas d'incertitude, utilise une reformulation du type : "Je ne dispose pas d'informations suffisamment fiables pour répondre avec certitude à cette question."
+""",
+    },
+    "agent_public_familier": {
+        "label": "Agent public - Ton familier",
+        "content": """Tu es un assistant conçu pour filer un coup de main aux agents publics dans leurs missions. Ton rôle : réfléchir avec eux, proposer des pistes, clarifier les idées, et aider à construire des solutions — sans jamais inventer n'importe quoi.
+
+Règles essentielles :
+* Si tu ne sais pas, tu ne réponds pas. Tu le dis clairement et tu proposes où chercher plutôt que de broder.
+* Tu restes cool, clair et direct : pas de jargon inutile, pas de ton trop formel.
+* Tu aides à explorer des idées : tu proposes des angles de réflexion, tu questionnes, tu reformules, tu aides à structurer.
+* Tu restes neutre, fiable et aligné avec les valeurs du service public.
+* Tu n'es pas là pour faire de la réglementation "au mot près" ni pour prendre des décisions officielles : tu donnes des pistes, pas des actes administratifs.
+* Tes réponses doivent être simples, digestes, pratiques — comme si tu échangeais avec un collègue autour d'un tableau blanc.
+""",
+    },
+}
+
+COLLECTION_TO_DATASET = {
+    "service-public": "test_service_public",
+    "annuaire-administration-etat": "test_annuaire_entreprises",
+}
 
 DEFAULT_MODEL = "albert-small"
 DEFAULT_JUDGE_MODEL = "albert-large"
@@ -112,13 +152,23 @@ def list_datasets() -> list[str]:
         st.warning("No dataset available")
         return []
 
-    allowed = {"test_service_public", "test_annuaire_entreprises"}
+    # Use mapping values as a whitelist
+    allowed = set(COLLECTION_TO_DATASET.values())
 
     filtered = [ds["name"] for ds in datasets if ds["name"] in allowed and not _should_skip_dataset(ds)]
 
     if not filtered:
         st.warning("No datasets available among the filtered datasets.")
     return filtered
+
+
+def get_default_dataset(collections_selected_names, available_datasets):
+    for collection_name in collections_selected_names:
+        if collection_name in COLLECTION_TO_DATASET:
+            candidate = COLLECTION_TO_DATASET[collection_name]
+            if candidate in available_datasets:
+                return candidate
+    return None
 
 
 def post_experiment_set(expset, token):
@@ -255,17 +305,35 @@ def main():
         with col2:
             st.selectbox("LLM", DEFAULT_MODEL, key="selected_llm")
         with col3:
-            selected_prompt = st.selectbox(
-                "Select a prompt", ["Select prompt"] + PROMPT_CHOICES, key="selected_prompt"
-            )
+            # Create labels list for selectbox
+            prompt_labels = ["Select prompt"] + [v["label"] for v in PROMPT_TEMPLATES.values()]
+
+            selected_prompt_label = st.selectbox("Select a prompt", prompt_labels, key="selected_prompt")
+
+            # Retrieve the contents of the selected prompt
+            selected_prompt_content = None
+            if selected_prompt_label and selected_prompt_label != "Select prompt":
+                # Find the prompt corresponding to the label
+                for prompt_id, prompt_data in PROMPT_TEMPLATES.items():
+                    if prompt_data["label"] == selected_prompt_label:
+                        selected_prompt_content = prompt_data["content"]
+                        break
 
         st.subheader("Define evaluation parameters")
         col4, col5, col6 = st.columns(3)
         with col4:
             datasets = list_datasets()
+
+            # Determine the default dataset based on the selected collections
+            default_dataset = get_default_dataset(collections_selected_names, datasets)
+
             dataset = st.selectbox(
-                "Select a test dataset", ["Select dataset"] + datasets, key="main_dataset_select"
+                "Select a test dataset",
+                ["Select dataset"] + datasets,
+                index=(datasets.index(default_dataset) + 1) if default_dataset else 0,
+                key="main_dataset_select",
             )
+
         with col5:
             st.selectbox("LLM Judge", DEFAULT_JUDGE_MODEL, key="selected_judge")
         with col6:
@@ -287,7 +355,7 @@ def main():
                 dataset=dataset,
                 collection_ids=collections_selected_ids,
                 model_name=DEFAULT_MODEL,
-                prompt=selected_prompt if selected_prompt and selected_prompt != "Select prompt" else "",
+                prompt=selected_prompt_content if selected_prompt_content else "",
                 judge_model=DEFAULT_JUDGE_MODEL,
                 api_key=user_api_key,
                 metrics=METRICS_FOR_EXPSET,
