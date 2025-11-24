@@ -113,9 +113,6 @@ alembic-generate-revision name:
 alembic-upgrade:
   uv run alembic -c evalap/api/alembic.ini upgrade head
 
-seed:
-  uv run python -m evalap.scripts.run_seed_data
-
 alembic-downgrade hash:
   uv run alembic -c evalap/api/alembic.ini downgrade {{hash}}
 
@@ -140,6 +137,10 @@ list-indexes env="dev":
 #
 # DB Queries
 #
+
+seed:
+  uv run python -m evalap.scripts.run_seed_data
+
 
 [no-cd]
 drop-database db_name="evalap_dev":

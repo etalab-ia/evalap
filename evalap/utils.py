@@ -8,6 +8,7 @@ import pkgutil
 import re
 import subprocess
 import time
+from functools import wraps
 from itertools import product
 from typing import Any
 
@@ -111,6 +112,29 @@ class Timer:
 #
 # API/HTTP utils
 #
+
+
+def ttl_cache(seconds):
+    def decorator(func):
+        cache = {}
+
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            key = str(args) + str(kwargs)
+            current_time = time.time()
+
+            if key in cache:
+                result, timestamp = cache[key]
+                if current_time - timestamp < seconds:
+                    return result
+
+            result = func(*args, **kwargs)
+            cache[key] = (result, current_time)
+            return result
+
+        return wrapper
+
+    return decorator
 
 
 # Eventually cache with https://github.com/tkem/cachetools

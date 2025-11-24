@@ -154,7 +154,7 @@ class LlmClient:
         if not url:
             raise ValueError(f"Model unknown: {model}")
         response = requests.post(url + path, headers=headers, json=json_data, stream=stream, timeout=300)
-        log_and_raise_for_status(response, "Albert API error")
+        log_and_raise_for_status(response, "LLM Generation Error")
 
         if stream:
             return self._get_streaming_response(response)
@@ -174,7 +174,7 @@ class LlmClient:
         path: str = "/embeddings",
         openai_format: bool = False,
     ) -> list[float] | list[list[float]] | dict:
-        """Simple interface to create an embedding vector from a text input or a list of texd inputs."""
+        """Simple interface to create an embedding vector from a text input or a list of text inputs."""
 
         json_data = {"input": texts}
         json_data["model"] = model
