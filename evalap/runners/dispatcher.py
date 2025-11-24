@@ -214,7 +214,7 @@ def dispatch_retries(db, retry_runs: schemas.RetryRuns):
         # unfinished
         num_lines = db.query(models.Answer.num_line).filter(models.Answer.experiment_id == expid).all()
         num_lines = [num_line[0] for num_line in num_lines]
-        all_lines = db_exp.dataset.sample if db_exp.dataset.sample else range(dataset_size)
+        all_lines = db_exp.sample if db_exp.sample else range(dataset_size)
         num_lines_missing = [i for i in all_lines if i not in num_line_added and i not in num_lines]
         for num_line in num_lines_missing:
             row = crud.get_dataset_row(db_exp, num_line, df_fallback=df)
@@ -279,7 +279,7 @@ def dispatch_retries(db, retry_runs: schemas.RetryRuns):
             .all()
         )
         num_lines = [num_line[0] for num_line in num_lines]
-        all_lines = db_exp.dataset.sample if db_exp.dataset.sample else range(dataset_size)
+        all_lines = db_exp.sample if db_exp.sample else range(dataset_size)
         num_lines_missing = [i for i in all_lines if i not in num_line_added and i not in num_lines]
         for num_line in num_lines_missing:
             row = crud.get_dataset_row(db_exp, num_line, df_fallback=df)
