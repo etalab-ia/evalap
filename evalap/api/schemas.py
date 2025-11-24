@@ -76,11 +76,14 @@ class MetricStatus(str, Enum):
 
 
 class DatasetBase(EgBaseModel):
-    name: str
-    readme: str
+    name: str = Field(description="Name of the dataset")
+    readme: str = Field(description="Markdown-formatted readme or description of the dataset")
+    sample: list[int] | None = Field(
+        default=None, description="List of sample indices to select from the dataset, if applicable"
+    )
     default_metric: str
     columns_map: dict[str, str] | None = Field(
-        None,
+        default=None,
         description="A column names maping that indicates what names in dataset match the evalap stadandard (output, output_true etc)",
     )
     compliance: bool = False
