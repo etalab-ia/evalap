@@ -115,7 +115,7 @@ def get_dataset_iterator(
         for batch in pf.iter_batches(batch_size=batch_size):
             df = batch.to_pandas()
             for num_line, row in df.iterrows():
-                if db_exp.dataset.sample and num_line + batch_number * batch_size not in db_exp.dataset.sample:
+                if db_exp.sample and num_line + batch_number * batch_size not in db_exp.sample:
                     continue
                 row = row.to_dict()
                 row = {k: (v.item() if isinstance(v, np.generic) else v) for k, v in row.items()}
@@ -128,7 +128,7 @@ def get_dataset_iterator(
         # Dataframe based dataset
         df = pd.read_json(StringIO(db_exp.dataset.df))
         for num_line, row in df.iterrows():
-            if db_exp.dataset.sample and num_line not in db_exp.dataset.sample:
+            if db_exp.sample and num_line not in db_exp.sample:
                 continue
             row = row.to_dict()
             row = {k: (v.item() if isinstance(v, np.generic) else v) for k, v in row.items()}
