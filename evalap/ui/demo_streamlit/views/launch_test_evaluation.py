@@ -53,7 +53,7 @@ Règles essentielles :
 
 COLLECTION_TO_DATASET = {
     "service-public": "test_service_public",
-    "annuaire-administration-etat": "test_annuaire_entreprises",
+    "annuaire-administrations-etat": "test_annuaire_entreprises",
 }
 
 DEFAULT_MODEL = "albert-small"
