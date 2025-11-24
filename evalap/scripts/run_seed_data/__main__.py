@@ -116,7 +116,7 @@ def create_service_public_dataset(db: Session) -> None:
     """Create dataset test_service_public to evaluate responses regarding French public services."""
     dataset_name = "test_service_public"
 
-    # Vérification existence
+    # Check if dataset already exists before downloading
     existing = crud.get_dataset_by_name(db, dataset_name)
     if existing:
         print(f"Dataset '{dataset_name}'  already exists  (ID: {existing.id}). Skipping.")
@@ -214,14 +214,14 @@ def create_service_public_dataset(db: Session) -> None:
     )
 
     created = crud.create_dataset(db, dataset)
-    print(f"Dataset ajouté : {created.name} (ID: {created.id})")
+    print(f"Created dataset: {created.name} (ID: {created.id})")
 
 
 def create_annuaire_entreprises_dataset(db: Session) -> None:
     """Add le dataset test_annuaire_entreprises to evaluate answers about administrative acronyms."""
     dataset_name = "test_annuaire_entreprises"
 
-    # Vérification existence
+    # Check if dataset already exists before downloading
     existing = crud.get_dataset_by_name(db, dataset_name)
     if existing:
         print(f"Dataset '{dataset_name}'  already exists (ID: {existing.id}). Skipping.")
@@ -267,7 +267,7 @@ def create_annuaire_entreprises_dataset(db: Session) -> None:
     )
 
     created = crud.create_dataset(db, dataset)
-    print(f"Dataset ajouté : {created.name} (ID: {created.id})")
+    print(f"Created dataset: {created.name} (ID: {created.id})")
 
 
 def seed_all_datasets(db: Session | None = None) -> None:
