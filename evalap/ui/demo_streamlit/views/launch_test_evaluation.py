@@ -267,6 +267,28 @@ def copy_to_clipboard_button(text_to_copy: str, button_id: str = "copy_btn", hei
 # --- UI ---
 
 
+def validate_api_key(api_key):
+    if not api_key:
+        return False, None
+
+    try:
+        url = f"{ALBERT_PROVIDER_URL}/collections"
+        headers = {
+            "accept": "application/json",
+            "Authorization": f"Bearer {api_key}",
+        }
+        response = requests.get(url, headers=headers, timeout=5)
+
+        if response.status_code == 200:
+            return True, None
+        else:
+            return False, "Invalid API key"
+    except requests.exceptions.Timeout:
+        return False, "Request timeout"
+    except Exception as e:
+        return False, f"Connection error: {str(e)}"
+
+
 def render_api_key_section():
     info_banner("To launch a test evaluation, Albert API access is required")
 
@@ -281,44 +303,66 @@ def render_api_key_section():
             " ", type="password", key="user_api_key_launch", label_visibility="collapsed"
         )
 
+    is_valid = False
+    if user_api_key:
+        is_valid, error_msg = validate_api_key(user_api_key)
+
+        if is_valid:
+            st.success("✅ Valid API key")
+        else:
+            st.error(f"❌ {error_msg or 'Invalid API key'}")
+
     st.write(
         "If you do not have an Albert API key, please request one using the "
         "[contact form](https://albert.sites.beta.gouv.fr/access/). "
         "You will receive a reply within 24 working hours."
     )
 
-    return user_api_key
+    return user_api_key, is_valid
 
 
-def render_ai_system_config(user_api_key):
+def render_ai_system_config(user_api_key, is_api_key_valid):
     st.subheader("Configure the AI system to test")
 
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        public_collections = get_public_collections(user_api_key)
-        collection_names = [col["name"] for col in public_collections]
-        collections_selected_names = st.multiselect(
-            "Public Collections",
-            options=collection_names,
-            key="main_collection_select",
-        )
-        collections_selected_ids = [
-            col["id"] for col in public_collections if col["name"] in collections_selected_names
-        ]
+        if is_api_key_valid:
+            public_collections = get_public_collections(user_api_key)
+            collection_names = [col["name"] for col in public_collections]
+            collections_selected_names = st.multiselect(
+                "Public Collections",
+                options=collection_names,
+                key="main_collection_select",
+            )
+            collections_selected_ids = [
+                col["id"] for col in public_collections if col["name"] in collections_selected_names
+            ]
+        else:
+            st.multiselect(
+                "Public Collections",
+                options=[],
+                key="main_collection_select",
+                disabled=True,
+                help="Enter a valid API key to access collections",
+            )
+            collections_selected_names = []
+            collections_selected_ids = []
 
     with col2:
-        st.selectbox("LLM", DEFAULT_MODEL, key="selected_llm")
+        st.selectbox("LLM", DEFAULT_MODEL, key="selected_llm", disabled=not is_api_key_valid)
 
     with col3:
-        selected_prompt_content = render_prompt_selector()
+        selected_prompt_content = render_prompt_selector(is_api_key_valid)
 
     return collections_selected_ids, collections_selected_names, selected_prompt_content
 
 
-def render_prompt_selector():
+def render_prompt_selector(is_api_key_valid):
     prompt_labels = ["Select prompt"] + [v["label"] for v in PROMPT_TEMPLATES.values()]
-    selected_prompt_label = st.selectbox("Select a prompt", prompt_labels, key="selected_prompt")
+    selected_prompt_label = st.selectbox(
+        "Select a prompt", prompt_labels, key="selected_prompt", disabled=not is_api_key_valid
+    )
 
     if selected_prompt_label and selected_prompt_label != "Select prompt":
         for prompt_data in PROMPT_TEMPLATES.values():
@@ -328,27 +372,31 @@ def render_prompt_selector():
     return None
 
 
-def render_evaluation_params(collections_selected_names):
+def render_evaluation_params(collections_selected_names, is_api_key_valid):
     st.subheader("Define evaluation parameters")
 
     col4, col5, col6 = st.columns(3)
 
     with col4:
-        datasets = list_datasets()
-        default_dataset = get_default_dataset(collections_selected_names, datasets)
+        datasets = list_datasets() if is_api_key_valid else []
+        default_dataset = get_default_dataset(collections_selected_names, datasets) if datasets else None
         dataset = st.selectbox(
             "Select a test dataset",
             ["Select dataset"] + datasets,
             index=(datasets.index(default_dataset) + 1) if default_dataset else 0,
             key="main_dataset_select",
+            disabled=not is_api_key_valid,
         )
 
     with col5:
-        st.selectbox("LLM Judge", DEFAULT_JUDGE_MODEL, key="selected_judge")
+        st.selectbox("LLM Judge", DEFAULT_JUDGE_MODEL, key="selected_judge", disabled=not is_api_key_valid)
 
     with col6:
         selected_metrics = st.multiselect(
-            "Select generation metrics", options=CHOICE_METRICS, key="selected_metrics"
+            "Select generation metrics",
+            options=CHOICE_METRICS,
+            key="selected_metrics",
+            disabled=not is_api_key_valid,
         )
 
     metrics = (selected_metrics if selected_metrics else []) + DEFAULT_METRICS
@@ -357,7 +405,6 @@ def render_evaluation_params(collections_selected_names):
 
 
 def mask_api_keys_in_experimentset(experimentset):
-    """Clone l'experimentset et masque les clés API."""
     exp_for_code = copy.deepcopy(experimentset)
 
     if "cv" in exp_for_code and "grid_params" in exp_for_code["cv"]:
@@ -374,7 +421,6 @@ def mask_api_keys_in_experimentset(experimentset):
 
 
 def render_copy_code_popover(experimentset):
-    """Affiche le popover pour copier le code."""
     with st.popover("📋 Copy code"):
         try:
             exp_for_code = mask_api_keys_in_experimentset(experimentset)
@@ -407,7 +453,6 @@ def render_copy_code_popover(experimentset):
 
 
 def handle_run_evaluation(experimentset, user_api_key):
-    """Gère l'exécution de l'évaluation."""
     if not user_api_key:
         st.error("Please enter your access key before starting an assessment.")
         return
@@ -432,20 +477,24 @@ def handle_run_evaluation(experimentset, user_api_key):
         st.error(f"Error creating experiment set: {e}")
 
 
+# --- Main ---
+
+
 def main():
+    """Point d'entrée principal de l'application."""
     st.title("Start an Evaluation with Albert API")
 
-    user_api_key = render_api_key_section()
+    user_api_key, is_api_key_valid = render_api_key_section()
 
-    if not user_api_key:
-        return
+    collections_ids, collections_names, prompt_content = render_ai_system_config(
+        user_api_key, is_api_key_valid
+    )
 
-    collections_ids, collections_names, prompt_content = render_ai_system_config(user_api_key)
-
-    dataset, metrics = render_evaluation_params(collections_names)
+    dataset, metrics = render_evaluation_params(collections_names, is_api_key_valid)
 
     st.divider()
 
+    experimentset = None
     try:
         experimentset = create_experiment_set(
             dataset=dataset,
@@ -453,22 +502,27 @@ def main():
             model_name=DEFAULT_MODEL,
             prompt=prompt_content or "",
             judge_model=DEFAULT_JUDGE_MODEL,
-            api_key=user_api_key,
+            api_key=user_api_key or "YOUR_API_KEY",
             metrics=metrics,
         )
     except Exception as e:
         st.error(f"Error creating experiment set: {e}")
-        return
 
     empty_col, button_col1, button_col2 = st.columns([8, 3, 3])
 
     with button_col1:
-        run_button = st.button("Run Evaluation 🚀", key="eval_button")
+        run_button = st.button(
+            "Run Evaluation 🚀",
+            key="eval_button",
+            disabled=not is_api_key_valid,
+            help="Enter a valid API key to run evaluation" if not is_api_key_valid else None,
+        )
 
     with button_col2:
-        render_copy_code_popover(experimentset)
+        if experimentset:
+            render_copy_code_popover(experimentset)
 
-    if run_button:
+    if run_button and is_api_key_valid:
         handle_run_evaluation(experimentset, user_api_key)
 
 
