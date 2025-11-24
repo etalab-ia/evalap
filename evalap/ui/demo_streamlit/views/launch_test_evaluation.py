@@ -264,15 +264,12 @@ def copy_to_clipboard_button(text_to_copy: str, button_id: str = "copy_btn", hei
     components.html(html, height=height)
 
 
-# --- Main page ---
+# --- UI ---
 
 
-def main():
-    st.title("Start an Evaluation with Albert API")
-
+def render_api_key_section():
     info_banner("To launch a test evaluation, Albert API access is required")
 
-    # Configure API key input
     col_key1, col_key2 = st.columns([5, 5])
     with col_key1:
         st.markdown(
@@ -285,148 +282,194 @@ def main():
         )
 
     st.write(
-        "If you do not have an Albert API key, please request one using the [contact form](https://albert.sites.beta.gouv.fr/access/). You will receive a reply within 24 working hours."  # noqa: E501
+        "If you do not have an Albert API key, please request one using the "
+        "[contact form](https://albert.sites.beta.gouv.fr/access/). "
+        "You will receive a reply within 24 working hours."
     )
 
-    if user_api_key:
-        st.subheader("Configure the AI system to test")
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            public_collections = get_public_collections(user_api_key if user_api_key else "")
-            collection_names = [col["name"] for col in public_collections]
-            collections_selected_names = st.multiselect(
-                "Public Collections",
-                options=collection_names,
-                key="main_collection_select",
-            )
-            collections_selected_ids = [
-                col["id"] for col in public_collections if col["name"] in collections_selected_names
-            ]
-        with col2:
-            st.selectbox("LLM", DEFAULT_MODEL, key="selected_llm")
-        with col3:
-            # Create labels list for selectbox
-            prompt_labels = ["Select prompt"] + [v["label"] for v in PROMPT_TEMPLATES.values()]
+    return user_api_key
 
-            selected_prompt_label = st.selectbox("Select a prompt", prompt_labels, key="selected_prompt")
 
-            # Retrieve the contents of the selected prompt
-            selected_prompt_content = None
-            if selected_prompt_label and selected_prompt_label != "Select prompt":
-                # Find the prompt corresponding to the label
-                for prompt_id, prompt_data in PROMPT_TEMPLATES.items():
-                    if prompt_data["label"] == selected_prompt_label:
-                        selected_prompt_content = prompt_data["content"]
-                        break
+def render_ai_system_config(user_api_key):
+    st.subheader("Configure the AI system to test")
 
-        st.subheader("Define evaluation parameters")
-        col4, col5, col6 = st.columns(3)
-        with col4:
-            datasets = list_datasets()
+    col1, col2, col3 = st.columns(3)
 
-            # Determine the default dataset based on the selected collections
-            default_dataset = get_default_dataset(collections_selected_names, datasets)
+    with col1:
+        public_collections = get_public_collections(user_api_key)
+        collection_names = [col["name"] for col in public_collections]
+        collections_selected_names = st.multiselect(
+            "Public Collections",
+            options=collection_names,
+            key="main_collection_select",
+        )
+        collections_selected_ids = [
+            col["id"] for col in public_collections if col["name"] in collections_selected_names
+        ]
 
-            dataset = st.selectbox(
-                "Select a test dataset",
-                ["Select dataset"] + datasets,
-                index=(datasets.index(default_dataset) + 1) if default_dataset else 0,
-                key="main_dataset_select",
-            )
+    with col2:
+        st.selectbox("LLM", DEFAULT_MODEL, key="selected_llm")
 
-        with col5:
-            st.selectbox("LLM Judge", DEFAULT_JUDGE_MODEL, key="selected_judge")
-        with col6:
-            selected_metrics = st.multiselect(
-                "Select generation metrics", options=CHOICE_METRICS, key="selected_metrics"
-            )
+    with col3:
+        selected_prompt_content = render_prompt_selector()
 
-        if selected_metrics:
-            selected_metrics_list = [m.strip() for m in selected_metrics if m.strip()]
-        else:
-            selected_metrics_list = []
+    return collections_selected_ids, collections_selected_names, selected_prompt_content
 
-        METRICS_FOR_EXPSET = selected_metrics_list + DEFAULT_METRICS
 
-        st.divider()
+def render_prompt_selector():
+    prompt_labels = ["Select prompt"] + [v["label"] for v in PROMPT_TEMPLATES.values()]
+    selected_prompt_label = st.selectbox("Select a prompt", prompt_labels, key="selected_prompt")
 
+    if selected_prompt_label and selected_prompt_label != "Select prompt":
+        for prompt_data in PROMPT_TEMPLATES.values():
+            if prompt_data["label"] == selected_prompt_label:
+                return prompt_data["content"]
+
+    return None
+
+
+def render_evaluation_params(collections_selected_names):
+    st.subheader("Define evaluation parameters")
+
+    col4, col5, col6 = st.columns(3)
+
+    with col4:
+        datasets = list_datasets()
+        default_dataset = get_default_dataset(collections_selected_names, datasets)
+        dataset = st.selectbox(
+            "Select a test dataset",
+            ["Select dataset"] + datasets,
+            index=(datasets.index(default_dataset) + 1) if default_dataset else 0,
+            key="main_dataset_select",
+        )
+
+    with col5:
+        st.selectbox("LLM Judge", DEFAULT_JUDGE_MODEL, key="selected_judge")
+
+    with col6:
+        selected_metrics = st.multiselect(
+            "Select generation metrics", options=CHOICE_METRICS, key="selected_metrics"
+        )
+
+    metrics = (selected_metrics if selected_metrics else []) + DEFAULT_METRICS
+
+    return dataset, metrics
+
+
+def mask_api_keys_in_experimentset(experimentset):
+    """Clone l'experimentset et masque les clés API."""
+    exp_for_code = copy.deepcopy(experimentset)
+
+    if "cv" in exp_for_code and "grid_params" in exp_for_code["cv"]:
+        for model_cfg in exp_for_code["cv"]["grid_params"].get("model", []):
+            if "api_key" in model_cfg:
+                model_cfg["api_key"] = "YOUR_MODEL_API_KEY"
+
+    if "cv" in exp_for_code and "common_params" in exp_for_code["cv"]:
+        judge_model = exp_for_code["cv"]["common_params"].get("judge_model")
+        if isinstance(judge_model, dict) and "api_key" in judge_model:
+            judge_model["api_key"] = "YOUR_MODEL_API_KEY"
+
+    return exp_for_code
+
+
+def render_copy_code_popover(experimentset):
+    """Affiche le popover pour copier le code."""
+    with st.popover("📋 Copy code"):
         try:
-            experimentset = create_experiment_set(
-                dataset=dataset,
-                collection_ids=collections_selected_ids,
-                model_name=DEFAULT_MODEL,
-                prompt=selected_prompt_content if selected_prompt_content else "",
-                judge_model=DEFAULT_JUDGE_MODEL,
-                api_key=user_api_key,
-                metrics=METRICS_FOR_EXPSET,
+            exp_for_code = mask_api_keys_in_experimentset(experimentset)
+
+            st.markdown(
+                "This code allows you to reproduce an experiment set.  \n"
+                "**Caution**: the code might be incomplete, review it carefully "
+                "and uses it at your own risks"
             )
-        except Exception as e:
-            st.error(f"Error creating experiment set: {e}")
 
-        # Buttons and copy code with API key masked
-        empty_col, button_col1, button_col2 = st.columns([8, 3, 3])
-        with button_col1:
-            run_button = st.button("Run Evaluation 🚀", key="eval_button")
+            col1, col2 = st.columns([0.7, 0.3])
 
-        if run_button:
-            if not user_api_key:
-                st.error("Please enter your access key before starting an assessment.")
+            with col1:
+                copy_format = st.radio("Format:", ["Python", "cURL"], key="copy_format")
+
+            if copy_format == "Python":
+                code = template_manager.render_python(**exp_for_code)
+                lang = "python"
             else:
-                try:
-                    result = post_experiment_set(experimentset, user_api_key)
-                    if result and "id" in result:
-                        expset_id = result["id"]
-                        st.success(f"Experiment set created: {result['name']} (ID: {expset_id})")
+                code = template_manager.render_curl(**exp_for_code)
+                lang = "bash"
 
-                        dashboard_url = f"/experiments_set?expset={expset_id}"
-                        st.markdown(button_style, unsafe_allow_html=True)
-                        st.markdown(
-                            f'<a href="{dashboard_url}" class="custom-button">See detailed results in the dashboard</a>',
-                            unsafe_allow_html=True,
-                        )
-                    else:
-                        st.error("Error creating experiment set")
-                except Exception as e:
-                    st.error(f"Error creating experiment set : {e}")
+            with col2:
+                copy_to_clipboard_button(code, button_id="copy_btn")
 
-        with button_col2:
-            with st.popover("📋 Copy code"):
-                try:
-                    # Clone experimentset and substitute api_key by placeholder
-                    exp_for_code = copy.deepcopy(experimentset)
-                    if "cv" in exp_for_code and "grid_params" in exp_for_code["cv"]:
-                        for model_cfg in exp_for_code["cv"]["grid_params"].get("model", []):
-                            if "api_key" in model_cfg:
-                                model_cfg["api_key"] = "YOUR_MODEL_API_KEY"
+            st.code(code, language=lang)
 
-                    if "cv" in exp_for_code and "common_params" in exp_for_code["cv"]:
-                        if "judge_model" in exp_for_code["cv"]["common_params"]:
-                            jm = exp_for_code["cv"]["common_params"]["judge_model"]
-                            if isinstance(jm, dict) and "api_key" in jm:
-                                jm["api_key"] = "YOUR_MODEL_API_KEY"
+        except Exception as e:
+            st.error(f"Failed to render copy code template: {e}")
 
-                    st.markdown(
-                        "This code allows you to reproduce an experiment set.  \n"
-                        "**Caution**: the code might be incomplete, review it carefully and uses it at your own risks"
-                    )
 
-                    col1, col2 = st.columns([0.7, 0.3])
-                    with col1:
-                        copy_format = st.radio("Format:", ["Python", "cURL"], key="copy_format")
-                        if copy_format == "Python":
-                            code = template_manager.render_python(**exp_for_code)
-                            lang = "python"
-                        else:
-                            code = template_manager.render_curl(**exp_for_code)
-                            lang = "bash"
+def handle_run_evaluation(experimentset, user_api_key):
+    """Gère l'exécution de l'évaluation."""
+    if not user_api_key:
+        st.error("Please enter your access key before starting an assessment.")
+        return
 
-                    with col2:
-                        copy_to_clipboard_button(code, button_id="copy_btn")
+    try:
+        result = post_experiment_set(experimentset, user_api_key)
 
-                    st.code(code, language=lang)
+        if result and "id" in result:
+            expset_id = result["id"]
+            st.success(f"Experiment set created: {result['name']} (ID: {expset_id})")
 
-                except Exception as e:
-                    st.error(f"Failed: to render copy code template: {e}")
+            dashboard_url = f"/experiments_set?expset={expset_id}"
+            st.markdown(button_style, unsafe_allow_html=True)
+            st.markdown(
+                f'<a href="{dashboard_url}" class="custom-button">See detailed results in the dashboard</a>',
+                unsafe_allow_html=True,
+            )
+        else:
+            st.error("Error creating experiment set")
+
+    except Exception as e:
+        st.error(f"Error creating experiment set: {e}")
+
+
+def main():
+    st.title("Start an Evaluation with Albert API")
+
+    user_api_key = render_api_key_section()
+
+    if not user_api_key:
+        return
+
+    collections_ids, collections_names, prompt_content = render_ai_system_config(user_api_key)
+
+    dataset, metrics = render_evaluation_params(collections_names)
+
+    st.divider()
+
+    try:
+        experimentset = create_experiment_set(
+            dataset=dataset,
+            collection_ids=collections_ids,
+            model_name=DEFAULT_MODEL,
+            prompt=prompt_content or "",
+            judge_model=DEFAULT_JUDGE_MODEL,
+            api_key=user_api_key,
+            metrics=metrics,
+        )
+    except Exception as e:
+        st.error(f"Error creating experiment set: {e}")
+        return
+
+    empty_col, button_col1, button_col2 = st.columns([8, 3, 3])
+
+    with button_col1:
+        run_button = st.button("Run Evaluation 🚀", key="eval_button")
+
+    with button_col2:
+        render_copy_code_popover(experimentset)
+
+    if run_button:
+        handle_run_evaluation(experimentset, user_api_key)
 
 
 main()
