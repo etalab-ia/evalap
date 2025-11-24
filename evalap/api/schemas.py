@@ -78,9 +78,6 @@ class MetricStatus(str, Enum):
 class DatasetBase(EgBaseModel):
     name: str = Field(description="Name of the dataset")
     readme: str = Field(description="Markdown-formatted readme or description of the dataset")
-    sample: list[int] | None = Field(
-        default=None, description="List of sample indices to select from the dataset, if applicable"
-    )
     default_metric: str
     columns_map: dict[str, str] | None = Field(
         default=None,
@@ -268,6 +265,9 @@ class ExperimentBase(EgBaseModel):
     with_vision: bool = Field(
         False,
         description="Add the image to the user message if an 'img' field is present in the dataset (parquet).",
+    )
+    sample: list[int] | None = Field(
+        default=None, description="List of the sample indices to select from the dataset, if applicable."
     )
 
 
