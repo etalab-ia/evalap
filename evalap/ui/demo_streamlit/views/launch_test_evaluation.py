@@ -370,7 +370,7 @@ def main():
 
         if run_button:
             if not user_api_key:
-                st.error("Merci de renseigner votre clé d'accès avant de lancer une évaluation.")
+                st.error("Please enter your access key before starting an assessment.")
             else:
                 try:
                     result = post_experiment_set(experimentset, user_api_key)
