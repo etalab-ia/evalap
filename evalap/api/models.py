@@ -115,7 +115,7 @@ class Dataset(Base):
     created_at = Column(DateTime, server_default=func.now())
     name = Column(Text, unique=True)
     readme = Column(Text)
-    sample = Column(JSON) # list[int]
+    sample = Column(JSON)  # list[int]
     default_metric = Column(Text)
     columns_map = Column(JSON)  # dict[str, str]
     df = Column(JSON)  # df
