@@ -109,9 +109,16 @@ def _should_skip_dataset(dataset: dict) -> bool:
 def list_datasets() -> list[str]:
     datasets = fetch("get", "/datasets")
     if not datasets:
-        st.warning("Aucun dataset disponible")
+        st.warning("No dataset available")
         return []
-    return [ds["name"] for ds in datasets if not _should_skip_dataset(ds)]
+
+    allowed = {"test_service_public", "test_annuaire_entreprises"}
+
+    filtered = [ds["name"] for ds in datasets if ds["name"] in allowed and not _should_skip_dataset(ds)]
+
+    if not filtered:
+        st.warning("No datasets available among the filtered datasets.")
+    return filtered
 
 
 def post_experiment_set(expset, token):
