@@ -117,7 +117,7 @@
 ### Validation Tests for User Story 2
 
 - [x] T049 [P] Manually create Scaleway Object Storage bucket `evalap-pulumi-state` with versioning enabled via Scaleway Console or CLI
-- [x] T050 [P] Manually create Scaleway PostgreSQL database for state locking via Scaleway Console or CLI (required for team collaboration)
+- [x] T050 [REMOVED] ~~Manually create Scaleway PostgreSQL database for state locking~~ - Not needed; Pulumi S3 backend includes built-in file-based locking
 - [x] T051 Configure Pulumi to use Scaleway Object Storage backend: `pulumi login 's3://evalap-pulumi-state?endpoint=s3.fr-par.scw.cloud&region=fr-par&s3ForcePathStyle=true'`
 - [x] T052 Deploy infrastructure to staging stack: `just pulumi up --stack staging --yes`
 - [x] T053 Verify state file exists in Object Storage bucket with correct versioning via Scaleway Console

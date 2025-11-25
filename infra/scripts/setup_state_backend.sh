@@ -1,11 +1,11 @@
 #!/bin/bash
-# Setup Pulumi state backend on Scaleway with state locking
+# Setup Pulumi state backend on Scaleway
 #
 # This script automates the creation of:
 # 1. Object Storage bucket for state files with versioning
-# 2. PostgreSQL database for distributed state locking
 #
-# State locking is required for team collaboration and concurrent deployments.
+# Note: Pulumi's S3-compatible backend includes built-in file-based locking.
+# No separate database is needed for state locking.
 #
 # Usage: ./setup_state_backend.sh
 
@@ -20,14 +20,6 @@ NC='\033[0m' # No Color
 # Configuration
 BUCKET_NAME="${BUCKET_NAME:-evalap-pulumi-state}"
 REGION="${REGION:-fr-par}"
-DB_NAME="${DB_NAME:-evalap-pulumi-state-lock}"
-DB_ENGINE="${DB_ENGINE:-PostgreSQL-15}"
-DB_NODE_TYPE="${DB_NODE_TYPE:-DB-DEV-S}"
-LOCK_DB_NAME="${LOCK_DB_NAME:-pulumi_state_lock}"
-LOCK_TABLE_NAME="${LOCK_TABLE_NAME:-pulumi_state_locks}"
-
-# State locking is always enabled for team collaboration
-WITH_LOCKING=true
 
 # Helper functions
 log_info() {
@@ -121,66 +113,6 @@ create_lifecycle_policy() {
     log_info "Lifecycle policy setup instructions provided"
 }
 
-create_lock_database() {
-    log_info "Creating PostgreSQL instance for state locking: $DB_NAME"
-
-    # Check if instance already exists
-    if scw rdb instance list | grep -q "$DB_NAME"; then
-        log_warn "Instance $DB_NAME already exists, skipping creation"
-        return
-    fi
-
-    # Create RDB instance
-    scw rdb instance create \
-        name="$DB_NAME" \
-        engine="$DB_ENGINE" \
-        node-type="$DB_NODE_TYPE" \
-        region="$REGION" \
-        project-id="$SCW_PROJECT_ID"
-
-    log_info "PostgreSQL instance created successfully"
-    log_warn "Note: Instance creation may take 5-10 minutes. Check status in Scaleway Console."
-}
-
-create_lock_database_schema() {
-    log_info "Creating lock database schema"
-
-    # Get instance details
-    INSTANCE_ID=$(scw rdb instance list | grep "$DB_NAME" | awk '{print $1}')
-
-    if [[ -z "$INSTANCE_ID" ]]; then
-        log_error "Could not find instance $DB_NAME"
-        return 1
-    fi
-
-    log_info "Instance ID: $INSTANCE_ID"
-    log_warn "Please manually create the lock database using:"
-    echo ""
-    echo "  1. Get the endpoint from Scaleway Console"
-    echo "  2. Run the following commands:"
-    echo ""
-    echo "  PGPASSWORD=\$DB_PASSWORD psql \\"
-    echo "    -h <endpoint> \\"
-    echo "    -U postgres \\"
-    echo "    -c \"CREATE DATABASE $LOCK_DB_NAME;\""
-    echo ""
-    echo "  PGPASSWORD=\$DB_PASSWORD psql \\"
-    echo "    -h <endpoint> \\"
-    echo "    -U postgres \\"
-    echo "    -d $LOCK_DB_NAME \\"
-    echo "    << 'SQL'"
-    echo "  CREATE TABLE IF NOT EXISTS $LOCK_TABLE_NAME ("
-    echo "      LockID VARCHAR(255) PRIMARY KEY,"
-    echo "      Data TEXT,"
-    echo "      LeaseExpires TIMESTAMP WITH TIME ZONE"
-    echo "  );"
-    echo ""
-    echo "  CREATE INDEX IF NOT EXISTS idx_pulumi_lock_expires"
-    echo "  ON $LOCK_TABLE_NAME (LeaseExpires);"
-    echo "  SQL"
-    echo ""
-}
-
 configure_pulumi() {
     log_info "Configuring Pulumi backend"
 
@@ -251,14 +183,6 @@ main() {
     create_lifecycle_policy
     echo ""
 
-    if [[ "$WITH_LOCKING" == true ]]; then
-        create_lock_database
-        echo ""
-
-        create_lock_database_schema
-        echo ""
-    fi
-
     verify_setup
     echo ""
 
@@ -271,6 +195,9 @@ main() {
     echo "1. Configure Pulumi backend for each stack (see commands above)"
     echo "2. Set PULUMI_CONFIG_PASSPHRASE environment variable"
     echo "3. Run: pulumi up --stack dev --yes"
+    echo ""
+    echo "Note: Pulumi's S3-compatible backend includes built-in file-based locking."
+    echo "      No separate database is needed for concurrent deployment protection."
     echo ""
 }
 

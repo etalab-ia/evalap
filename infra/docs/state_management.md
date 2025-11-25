@@ -14,7 +14,7 @@ Pulumi state files contain sensitive infrastructure information and must be stor
 This guide uses:
 
 - **Scaleway Object Storage** (S3-compatible) for state file storage with versioning
-- **Scaleway PostgreSQL** (optional) for distributed state locking across concurrent deployments
+- **Built-in file-based locking** (automatic with S3 backend) for concurrent deployment protection
 
 ## Architecture
 
@@ -27,14 +27,15 @@ This guide uses:
          │               │               │
     ┌────▼────┐    ┌────▼────┐    ┌────▼────┐
     │  State  │    │  Lock   │    │ Backup  │
-    │ Storage │    │ Database│    │ History │
+    │ Storage │    │  Files  │    │ History │
     └────┬────┘    └────┬────┘    └────┬────┘
          │               │               │
     ┌────▼───────────────▼───────────────▼────┐
     │   Scaleway Object Storage Bucket         │
     │   (evalap-pulumi-state)                  │
     │   - State files (.pulumi/stacks/)        │
-    │   - Backups (.pulumi/backups/)           │
+    │   - Lock files (.pulumi/locks/)          │
+    │   - History (.pulumi/history/)           │
     │   - Versioning enabled                   │
     └─────────────────────────────────────────┘
 ```
@@ -51,6 +52,7 @@ evalap-pulumi-state/
 ```
 
 **Benefits**:
+
 - Single bucket to manage and secure
 - Unified versioning and backup policies
 - Simplified access control
@@ -111,74 +113,13 @@ Automatically delete old backups after 30 days using the setup script:
 ```
 
 Or manually via Scaleway Console:
+
 1. Click on the bucket "evalap-pulumi-state"
 2. Go to "Lifecycle rules" tab
 3. Click "Create rule"
 4. Prefix: `.pulumi/backups/`
 5. Expiration: 30 days
 6. Save
-
-## Manual Setup: State Locking Database (Required)
-
-State locking is **required** for team collaboration and concurrent deployments. Set up a PostgreSQL database for distributed state locking:
-
-### Step 1: Create PostgreSQL Instance
-
-```bash
-# Using Scaleway Console (recommended)
-# 1. Go to https://console.scaleway.com/rdb/instances
-# 2. Click "Create instance"
-# 3. Name: evalap-pulumi-state-lock
-# 4. Engine: PostgreSQL 15
-# 5. Node type: DB-DEV-S (smallest, sufficient for locking)
-# 6. Region: fr-par
-# 7. Click "Create instance"
-
-# OR using Scaleway CLI
-scw rdb instance create \
-  name=evalap-pulumi-state-lock \
-  engine=PostgreSQL-15 \
-  node-type=DB-DEV-S \
-  region=fr-par \
-  project-id=$SCW_PROJECT_ID
-```
-
-### Step 2: Create Lock Database
-
-```bash
-# Using Scaleway Console
-# 1. Click on the instance "evalap-pulumi-state-lock"
-# 2. Go to "Databases" tab
-# 3. Click "Create database"
-# 4. Name: pulumi_state_lock
-# 5. Click "Create database"
-
-# OR using psql
-PGPASSWORD=$DB_PASSWORD psql \
-  -h <endpoint> \
-  -U postgres \
-  -c "CREATE DATABASE pulumi_state_lock;"
-```
-
-### Step 3: Create Lock Table
-
-```bash
-# Connect to the database and create the lock table
-PGPASSWORD=$DB_PASSWORD psql \
-  -h <endpoint> \
-  -U postgres \
-  -d pulumi_state_lock \
-  << 'EOF'
-CREATE TABLE IF NOT EXISTS pulumi_state_locks (
-    LockID VARCHAR(255) PRIMARY KEY,
-    Data TEXT,
-    LeaseExpires TIMESTAMP WITH TIME ZONE
-);
-
-CREATE INDEX IF NOT EXISTS idx_pulumi_lock_expires
-ON pulumi_state_locks (LeaseExpires);
-EOF
-```
 
 ## Configuring Pulumi Backend
 
@@ -286,51 +227,54 @@ pulumi stack export --stack dev
 
 ## Concurrent Deployments and Locking
 
-### Without State Locking (Default)
+Pulumi's S3-compatible backend includes **built-in file-based locking** that automatically prevents concurrent operations on the same stack.
 
-When multiple team members deploy simultaneously without locking:
+### How It Works
+
+When you run `pulumi up`, Pulumi:
+
+1. Creates a lock file in `.pulumi/locks/<stack>/<lock-id>.json`
+2. Performs the deployment
+3. Removes the lock file on completion
+
+If another deployment attempts to run concurrently:
 
 ```bash
 # Developer A
-pulumi up --stack dev --yes
+pulumi up --stack dev --yes  # Acquires lock, proceeds
 
 # Developer B (concurrent)
-pulumi up --stack dev --yes  # May conflict with Developer A
+pulumi up --stack dev --yes  # Waits or fails with lock error
 ```
 
-**Risk**: State corruption or lost updates.
+### Lock File Location
 
-### With State Locking (PostgreSQL)
+Lock files are stored in the same bucket as state files:
 
-Configure Pulumi to use PostgreSQL for distributed locking:
-
-```bash
-# Set lock database environment variables
-export PULUMI_BACKEND_URL="s3://evalap-pulumi-state?endpoint=s3.fr-par.scw.cloud&region=fr-par&s3ForcePathStyle=true"
-export PULUMI_LOCK_DB_HOST="<postgres-endpoint>"
-export PULUMI_LOCK_DB_PORT="5432"
-export PULUMI_LOCK_DB_NAME="pulumi_state_lock"
-export PULUMI_LOCK_DB_USER="postgres"
-export PULUMI_LOCK_DB_PASSWORD="$DB_PASSWORD"
-
-# Now concurrent deployments are serialized
-pulumi up --stack dev --yes  # Acquires lock
-pulumi up --stack staging --yes  # Waits for lock release
+```
+evalap-pulumi-state/
+├── .pulumi/
+│   ├── stacks/dev.json
+│   ├── locks/dev/<uuid>.json    ← Lock file (temporary)
+│   └── history/dev/...
 ```
 
 ### Best Practices
 
 1. **Always use `--yes` flag** in CI/CD to avoid interactive prompts
-2. **Set lock timeout** to prevent deadlocks: `PULUMI_LOCK_TIMEOUT=300`
-3. **Monitor lock table** for stuck locks:
-   ```bash
-   PGPASSWORD=$DB_PASSWORD psql \
-     -h <endpoint> \
-     -U postgres \
-     -d pulumi_state_lock \
-     -c "SELECT * FROM pulumi_state_locks WHERE LeaseExpires < NOW();"
-   ```
-4. **Implement deployment queuing** in CI/CD to avoid concurrent deployments
+2. **Implement deployment queuing** in CI/CD to avoid concurrent deployments
+3. **Check for stale locks** if deployments fail unexpectedly:
+   - View `.pulumi/locks/` in Scaleway Console
+   - Delete stale lock files if a deployment crashed without cleanup
+
+### Handling Stuck Locks
+
+If a deployment crashes without releasing its lock:
+
+1. Go to Scaleway Console → Object Storage → `evalap-pulumi-state`
+2. Navigate to `.pulumi/locks/<stack>/`
+3. Delete any `.json` lock files
+4. Retry your deployment
 
 ## Troubleshooting
 
@@ -339,6 +283,7 @@ pulumi up --stack staging --yes  # Waits for lock release
 **Cause**: Incorrect Scaleway credentials or IAM permissions
 
 **Solution**:
+
 1. Verify credentials in `.env` file are correct
 2. Check Scaleway Console that your API key has Object Storage permissions
 3. Ensure `SCW_ACCESS_KEY` and `SCW_SECRET_KEY` are set correctly
@@ -349,6 +294,7 @@ pulumi up --stack staging --yes  # Waits for lock release
 **Cause**: Bucket doesn't exist or wrong region
 
 **Solution**:
+
 ```bash
 # List all buckets
 scw object-storage bucket list
@@ -357,25 +303,27 @@ scw object-storage bucket list
 # Expected: evalap-pulumi-state in fr-par region
 ```
 
-### Issue: "State lock timeout" during deployment
+### Issue: "State lock timeout" or "lock already held" during deployment
 
-**Cause**: Previous deployment didn't release lock or lock table is corrupted
+**Cause**: Previous deployment crashed without releasing its lock file
 
 **Solution**:
-```bash
-# Check lock status
-PGPASSWORD=$DB_PASSWORD psql \
-  -h <endpoint> \
-  -U postgres \
-  -d pulumi_state_lock \
-  -c "SELECT * FROM pulumi_state_locks;"
 
-# Force release stuck lock (use with caution)
-PGPASSWORD=$DB_PASSWORD psql \
-  -h <endpoint> \
-  -U postgres \
-  -d pulumi_state_lock \
-  -c "DELETE FROM pulumi_state_locks WHERE LeaseExpires < NOW();"
+1. Go to Scaleway Console → Object Storage → `evalap-pulumi-state`
+2. Navigate to `.pulumi/locks/<stack>/`
+3. Delete any stale `.json` lock files
+4. Retry your deployment
+
+Alternatively, use the AWS CLI (with Scaleway credentials):
+
+```bash
+# List lock files
+aws s3 ls s3://evalap-pulumi-state/.pulumi/locks/ \
+  --endpoint-url https://s3.fr-par.scw.cloud --recursive
+
+# Delete a specific lock file (use with caution)
+aws s3 rm s3://evalap-pulumi-state/.pulumi/locks/dev/<lock-id>.json \
+  --endpoint-url https://s3.fr-par.scw.cloud
 ```
 
 ### Issue: "Passphrase incorrect" error
@@ -383,6 +331,7 @@ PGPASSWORD=$DB_PASSWORD psql \
 **Cause**: `PULUMI_CONFIG_PASSPHRASE` not set or incorrect
 
 **Solution**:
+
 ```bash
 # Set passphrase
 export PULUMI_CONFIG_PASSPHRASE="your-secure-passphrase"
