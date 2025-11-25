@@ -139,7 +139,7 @@
 
 - [x] T057 [P] [US3] Create Secret Manager component in `infra/components/secret_manager.py` for credential storage and rotation
 - [x] T058 [P] [US3] Create IAM policy component in `infra/components/iam_policy.py` for service-specific role definitions with least privilege
-- [ ] T059 [P] [US3] Create PrivateNetwork component in `infra/components/private_network.py` for service isolation with subnet configuration
+- [x] T059 [P] [US3] Create PrivateNetwork component in `infra/components/private_network.py` for service isolation with subnet configuration
 - [ ] T060 [US3] Integrate Secret Manager with ServerlessContainer component for environment variable injection
 - [ ] T061 [US3] Integrate Secret Manager with DatabaseInstance component for credential management
 - [ ] T062 [US3] Integrate PrivateNetwork with ServerlessContainer for network isolation
@@ -153,7 +153,7 @@
 
 - [x] T068 [P] Run unit tests for Secret Manager component in `infra/tests/unit/test_secret_manager.py`
 - [x] T069 [P] Run unit tests for IAM policy component in `infra/tests/unit/test_iam_policy.py`
-- [ ] T070 [P] Run unit tests for PrivateNetwork component in `infra/tests/unit/test_private_network.py`
+- [x] T070 [P] Run unit tests for PrivateNetwork component in `infra/tests/unit/test_private_network.py`
 - [ ] T071 Deploy infrastructure with security configurations: `just pulumi up --stack staging --yes`
 - [ ] T072 Verify secrets are stored in Scaleway Secret Manager and not in code
 - [ ] T073 Verify IAM policies follow least privilege principle by checking Scaleway console

@@ -164,6 +164,48 @@ def validate_cidr_block(cidr: str) -> bool:
     return True
 
 
+def validate_private_network_cidr(cidr: str) -> bool:
+    """
+    Validate CIDR block is a valid private network range.
+
+    Private network ranges (RFC 1918):
+    - 10.0.0.0/8 (10.0.0.0 - 10.255.255.255)
+    - 172.16.0.0/12 (172.16.0.0 - 172.31.255.255)
+    - 192.168.0.0/16 (192.168.0.0 - 192.168.255.255)
+
+    Args:
+        cidr: CIDR block string (e.g., 10.0.0.0/16)
+
+    Returns:
+        bool: True if valid private network range
+
+    Raises:
+        ValueError: If CIDR is not a valid private network range
+    """
+    # First validate basic CIDR format
+    validate_cidr_block(cidr)
+
+    ip_part = cidr.split("/")[0]
+    octets = [int(o) for o in ip_part.split(".")]
+
+    # Check if in 10.0.0.0/8 range
+    if octets[0] == 10:
+        return True
+
+    # Check if in 172.16.0.0/12 range (172.16.x.x - 172.31.x.x)
+    if octets[0] == 172 and 16 <= octets[1] <= 31:
+        return True
+
+    # Check if in 192.168.0.0/16 range
+    if octets[0] == 192 and octets[1] == 168:
+        return True
+
+    raise ValueError(
+        f"CIDR '{cidr}' is not a valid private network range. "
+        "Must be within 10.0.0.0/8, 172.16.0.0/12, or 192.168.0.0/16"
+    )
+
+
 def validate_resource_name(name: str, resource_type: str = "resource") -> bool:
     """
     Validate resource name.
