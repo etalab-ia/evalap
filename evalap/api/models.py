@@ -216,6 +216,7 @@ class Experiment(Base):
     created_at = Column(DateTime, server_default=func.now())
     experiment_status = Column(String)
     with_vision = Column(Boolean)
+    sample = Column(JSON)  # list[int]
     num_try = Column(Integer, default=0)
     num_success = Column(Integer, default=0)
 

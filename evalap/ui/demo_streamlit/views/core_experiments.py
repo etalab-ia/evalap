@@ -12,6 +12,8 @@ from experimentset_utils import convert_experimentset_to_create
 from template_manager import TemplateManager
 from utils import _format_model_params, _rename_model_variants, fetch
 
+from views.launch_test_evaluation import main as launch_test_evaluation_main
+
 #
 # Cached method for critical data fetching
 #
@@ -917,15 +919,41 @@ def show_header(experimentset):
 def run_core_experiments(compliance=False):
     # Fetch or re-fetch data
     # --
+    refresh_needed = st.session_state.get("refresh_main", False)
     experiment_sets = _fetch(
         "get",
         "/experiment_sets",
         data={"compliance": compliance},
-        refresh=st.session_state.get("refresh_main"),
+        refresh=refresh_needed,
+    )
+    # Reset refresh flag after use
+    if refresh_needed:
+        st.session_state["refresh_main"] = False
+
+    # Check if user wants to show launch_test_evaluation (via URL or button click)
+    launch_param = st.query_params.get("launch")
+    show_launch = launch_param == "test_evaluation" or st.session_state.get(
+        "show_launch_test_evaluation", False
     )
 
-    if not experiment_sets:
-        return st.warning("No experiments yet to display")
+    # If DB is empty or user wants to show launch_test_evaluation
+    is_empty = not experiment_sets or (isinstance(experiment_sets, list) and len(experiment_sets) == 0)
+    if is_empty or show_launch:
+        # Update URL to reflect state
+        if show_launch and not is_empty:
+            st.query_params.launch = "test_evaluation"
+            st.session_state["show_launch_test_evaluation"] = True
+
+        # If button was clicked, allow going back
+        if show_launch and not is_empty:
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                if st.button(":arrow_left: Go back", key="back_from_launch"):
+                    st.query_params.pop("launch")
+                    st.session_state["show_launch_test_evaluation"] = False
+                    st.rerun()
+        launch_test_evaluation_main()
+        return
 
     # View Branching
     # --
@@ -1076,11 +1104,17 @@ def run_core_experiments(compliance=False):
             tab_index[4]["func"](experimentset)
 
     else:
-        col1, col2 = st.columns([3, 1])
+        col1, col2, col3 = st.columns([3, 1, 1])
         with col1:
             st.title("Compliance" if compliance else "Experiments")
         with col2:
-            if st.button("🔄 Refresh", key="refresh_main"):
+            if st.button("🔄 Refresh", key="refresh_btn_main"):
+                st.session_state["refresh_main"] = True
+                st.rerun()
+        with col3:
+            if st.button("🚀 Launch Test Evaluation", key="launch_test_eval_btn"):
+                st.query_params.launch = "test_evaluation"
+                st.session_state["show_launch_test_evaluation"] = True
                 st.rerun()
 
         display_experiment_sets(experiment_sets, compliance)
