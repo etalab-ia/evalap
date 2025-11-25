@@ -142,9 +142,19 @@ class DevelopmentStack:
                 "Database username",
             )
             pulumi_helpers.export_output(
+                "database_endpoint_ip",
+                database_outputs.get("endpoint_ip"),
+                "Database endpoint IP address",
+            )
+            pulumi_helpers.export_output(
+                "database_endpoint_port",
+                database_outputs.get("endpoint_port"),
+                "Database endpoint port",
+            )
+            pulumi_helpers.export_output(
                 "database_connection_string",
                 self.database.get_connection_string(),
-                "PostgreSQL connection string template (requires endpoint from Scaleway console)",
+                "PostgreSQL connection string (without password)",
             )
             pulumi_helpers.export_output(
                 "database_instance_id",

@@ -130,6 +130,8 @@ class DatabaseInstance(BaseComponent):
 
         return {
             "instance_id": self.instance.id,
+            "endpoint_ip": self.instance.endpoint_ip,
+            "endpoint_port": self.instance.endpoint_port,
             "database_name": self.config.database_name,
             "username": self.config.user_name,
             "engine": self.config.engine,
@@ -137,17 +139,28 @@ class DatabaseInstance(BaseComponent):
             "backup_retention_days": self.config.backup_retention_days,
         }
 
-    def get_connection_string(self) -> str:
+    def get_connection_string(self) -> pulumi.Output[str]:
         """
-        Get PostgreSQL connection string template.
+        Get PostgreSQL connection string.
 
         Returns:
-            str: Connection string template (without password, requires endpoint details from Scaleway console)
+            pulumi.Output[str]: Connection string (without password)
+
+        Note:
+            endpoint_ip and endpoint_port are deprecated but still functional.
+            The recommended approach is to use load_balancer or private_network attributes.
         """
         if not self.instance:
             raise ValueError("Instance not created yet")
 
-        return f"postgresql://{self.config.user_name}@<endpoint>:<port>/{self.config.database_name}"
+        # Use deprecated but functional endpoint_ip and endpoint_port
+        # These are still available as output properties
+        return pulumi.Output.all(
+            self.instance.endpoint_ip,
+            self.instance.endpoint_port,
+        ).apply(
+            lambda args: f"postgresql://{self.config.user_name}@{args[0]}:{args[1]}/{self.config.database_name}"
+        )
 
     def get_instance_id(self) -> pulumi.Output:
         """
