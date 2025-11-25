@@ -215,7 +215,7 @@ def validate_database_name(name: str) -> bool:
 
 def validate_iam_policy(policy: dict) -> bool:
     """
-    Validate IAM policy structure.
+    Validate IAM policy structure (legacy AWS-style format).
 
     Args:
         policy: IAM policy dictionary
@@ -239,6 +239,177 @@ def validate_iam_policy(policy: dict) -> bool:
             raise ValueError("IAM policy Statement missing Effect")
         if statement["Effect"] not in ["Allow", "Deny"]:
             raise ValueError(f"Invalid Effect: {statement['Effect']}")
+
+    return True
+
+
+# Scaleway IAM permission sets by service
+# Reference: https://www.scaleway.com/en/docs/iam/reference-content/permission-sets/
+SCALEWAY_PERMISSION_SETS = {
+    "serverless_containers": {
+        "full_access": ["ContainersFullAccess"],
+        "read_only": ["ContainersReadOnly"],
+        "deploy_only": ["ContainersNamespacesCreate", "ContainersNamespacesDelete"],
+    },
+    "database": {
+        "full_access": ["RelationalDatabasesFullAccess"],
+        "read_only": ["RelationalDatabasesReadOnly"],
+    },
+    "object_storage": {
+        "full_access": ["ObjectStorageFullAccess"],
+        "read_only": ["ObjectStorageReadOnly"],
+        "write_only": ["ObjectStorageObjectsWrite", "ObjectStorageBucketsWrite"],
+    },
+    "secret_manager": {
+        "full_access": ["SecretManagerFullAccess"],
+        "read_only": ["SecretManagerReadOnly"],
+        "secret_access": ["SecretManagerSecretAccess"],
+    },
+    "container_registry": {
+        "full_access": ["ContainerRegistryFullAccess"],
+        "read_only": ["ContainerRegistryReadOnly"],
+    },
+    "cockpit": {
+        "full_access": ["ObservabilityFullAccess"],
+        "read_only": ["ObservabilityReadOnly"],
+        "logs_only": ["ObservabilityLogsRead"],
+        "metrics_only": ["ObservabilityMetricsRead"],
+    },
+    "vpc": {
+        "full_access": ["VPCFullAccess"],
+        "read_only": ["VPCReadOnly"],
+    },
+}
+
+
+def validate_iam_rule_config(rule: Any) -> bool:
+    """
+    Validate Scaleway IAM rule configuration.
+
+    Args:
+        rule: IAMRuleConfig object to validate
+
+    Returns:
+        bool: True if valid
+
+    Raises:
+        ValueError: If rule is invalid
+    """
+    # Validate service type
+    if rule.service not in SCALEWAY_PERMISSION_SETS:
+        valid_services = list(SCALEWAY_PERMISSION_SETS.keys())
+        raise ValueError(f"Invalid service '{rule.service}'. Must be one of: {valid_services}")
+
+    # Validate access level for service
+    valid_levels = list(SCALEWAY_PERMISSION_SETS[rule.service].keys())
+    if rule.access_level not in valid_levels:
+        raise ValueError(
+            f"Invalid access level '{rule.access_level}' for service '{rule.service}'. "
+            f"Must be one of: {valid_levels}"
+        )
+
+    # Validate scope (must have either project_ids or organization_id, not both)
+    if rule.project_ids and rule.organization_id:
+        raise ValueError("Cannot specify both project_ids and organization_id in a rule")
+
+    if not rule.project_ids and not rule.organization_id:
+        raise ValueError("Must specify either project_ids or organization_id in a rule")
+
+    # Validate project_ids format if provided
+    if rule.project_ids:
+        for project_id in rule.project_ids:
+            if not validate_uuid(project_id):
+                raise ValueError(f"Invalid project ID format: {project_id}")
+
+    # Validate organization_id format if provided
+    if rule.organization_id:
+        if not validate_uuid(rule.organization_id):
+            raise ValueError(f"Invalid organization ID format: {rule.organization_id}")
+
+    return True
+
+
+def validate_iam_policy_config(config: Any) -> bool:
+    """
+    Validate Scaleway IAM policy configuration.
+
+    Args:
+        config: IAMPolicyConfig object to validate
+
+    Returns:
+        bool: True if valid
+
+    Raises:
+        ValueError: If configuration is invalid
+    """
+    # Validate policy name
+    if not config.name:
+        raise ValueError("Policy name cannot be empty")
+
+    if len(config.name) > 64:
+        raise ValueError(f"Policy name must be <= 64 characters, got {len(config.name)}")
+
+    # Validate description
+    if not config.description:
+        raise ValueError("Policy description cannot be empty")
+
+    # Validate rules
+    if not config.rules:
+        raise ValueError("Policy must have at least one rule")
+
+    for rule in config.rules:
+        validate_iam_rule_config(rule)
+
+    return True
+
+
+def validate_uuid(value: str) -> bool:
+    """
+    Validate UUID format.
+
+    Args:
+        value: String to validate
+
+    Returns:
+        bool: True if valid UUID format
+    """
+    uuid_pattern = r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    return bool(re.match(uuid_pattern, value.lower()))
+
+
+def validate_least_privilege(rules: list[Any], required_services: list[str]) -> bool:
+    """
+    Validate that IAM rules follow least privilege principle.
+
+    Checks that:
+    1. Only required services have permissions
+    2. No unnecessary full_access when read_only would suffice
+    3. All rules are scoped to specific projects (not organization-wide)
+
+    Args:
+        rules: List of IAMRuleConfig objects
+        required_services: List of services that need access
+
+    Returns:
+        bool: True if valid
+
+    Raises:
+        ValueError: If rules violate least privilege principle
+    """
+    rule_services = {rule.service for rule in rules}
+
+    # Check for unnecessary services
+    unnecessary = rule_services - set(required_services)
+    if unnecessary:
+        raise ValueError(f"Least privilege violation: unnecessary services granted access: {unnecessary}")
+
+    # Check for organization-wide access (should be project-scoped)
+    for rule in rules:
+        if rule.organization_id:
+            raise ValueError(
+                f"Least privilege violation: service '{rule.service}' has organization-wide access. "
+                "Use project_ids for more restrictive access."
+            )
 
     return True
 

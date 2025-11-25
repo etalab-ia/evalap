@@ -119,6 +119,57 @@ class MonitoringConfig(BaseModel):
     alert_email: Optional[str] = Field(default=None, description="Email for alerts")
 
 
+class IAMRuleConfig(BaseModel):
+    """Configuration for a single IAM policy rule."""
+
+    service: str = Field(
+        description="Service type: serverless_containers, database, object_storage, "
+        "secret_manager, container_registry, cockpit, vpc"
+    )
+    access_level: str = Field(description="Access level (full_access, read_only, etc.)")
+    project_ids: Optional[list[str]] = Field(
+        default=None,
+        description="List of project IDs to scope the rule (mutually exclusive with organization_id)",
+    )
+    organization_id: Optional[str] = Field(
+        default=None,
+        description="Organization ID to scope the rule (mutually exclusive with project_ids)",
+    )
+
+    @field_validator("service")
+    @classmethod
+    def validate_service(cls, v):
+        """Ensure service is one of the allowed values."""
+        allowed = {
+            "serverless_containers",
+            "database",
+            "object_storage",
+            "secret_manager",
+            "container_registry",
+            "cockpit",
+            "vpc",
+        }
+        if v not in allowed:
+            raise ValueError(f"Service must be one of {allowed}")
+        return v
+
+
+class IAMPolicyConfig(BaseModel):
+    """Configuration for an IAM policy with multiple rules."""
+
+    name: str = Field(description="Policy name")
+    description: str = Field(description="Human-readable description of the policy purpose")
+    rules: list[IAMRuleConfig] = Field(description="List of policy rules")
+    organization_id: Optional[str] = Field(
+        default=None,
+        description="Organization ID for the IAM application",
+    )
+    create_api_key: bool = Field(
+        default=False,
+        description="Whether to create an API key for the application",
+    )
+
+
 class StackConfiguration(BaseModel):
     """Complete stack configuration combining all components."""
 
@@ -131,6 +182,7 @@ class StackConfiguration(BaseModel):
     storage: StorageConfig = Field(default_factory=StorageConfig)
     network: NetworkConfig = Field(default_factory=NetworkConfig)
     monitoring: MonitoringConfig = Field(default_factory=MonitoringConfig)
+    iam_policies: list[IAMPolicyConfig] = Field(default_factory=list, description="IAM policies to create")
     tags: dict[str, str] = Field(default_factory=dict, description="Common tags for all resources")
 
     @field_validator("environment")

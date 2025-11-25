@@ -138,21 +138,21 @@
 ### Implementation for User Story 3
 
 - [x] T057 [P] [US3] Create Secret Manager component in `infra/components/secret_manager.py` for credential storage and rotation
-- [ ] T058 [P] [US3] Create IAM policy component in `infra/components/iam_policy.py` for service-specific role definitions with least privilege
+- [x] T058 [P] [US3] Create IAM policy component in `infra/components/iam_policy.py` for service-specific role definitions with least privilege
 - [ ] T059 [P] [US3] Create PrivateNetwork component in `infra/components/private_network.py` for service isolation with subnet configuration
 - [ ] T060 [US3] Integrate Secret Manager with ServerlessContainer component for environment variable injection
 - [ ] T061 [US3] Integrate Secret Manager with DatabaseInstance component for credential management
 - [ ] T062 [US3] Integrate PrivateNetwork with ServerlessContainer for network isolation
 - [ ] T063 [US3] Integrate PrivateNetwork with DatabaseInstance for database access restriction
-- [ ] T064 [US3] Implement IAM policy validation in `infra/utils/validation.py` to enforce least privilege principle
+- [x] T064 [US3] Implement IAM policy validation in `infra/utils/validation.py` to enforce least privilege principle
 - [ ] T065 [US3] Create security configuration documentation in `infra/docs/security.md` with IAM, secret, and network setup
 - [ ] T066 [US3] Add encryption configuration for data at rest and in transit in infrastructure components
 - [ ] T067 [US3] Implement audit logging for all infrastructure changes in `infra/utils/pulumi_helpers.py`
 
 ### Validation Tests for User Story 3
 
-- [ ] T068 [P] Run unit tests for Secret Manager component in `infra/tests/unit/test_secret_manager.py`
-- [ ] T069 [P] Run unit tests for IAM policy component in `infra/tests/unit/test_iam_policy.py`
+- [x] T068 [P] Run unit tests for Secret Manager component in `infra/tests/unit/test_secret_manager.py`
+- [x] T069 [P] Run unit tests for IAM policy component in `infra/tests/unit/test_iam_policy.py`
 - [ ] T070 [P] Run unit tests for PrivateNetwork component in `infra/tests/unit/test_private_network.py`
 - [ ] T071 Deploy infrastructure with security configurations: `just pulumi up --stack staging --yes`
 - [ ] T072 Verify secrets are stored in Scaleway Secret Manager and not in code
