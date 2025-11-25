@@ -152,6 +152,68 @@ def create_resource_tags(
     return tags
 
 
+def validate_secret_name(name: str) -> bool:
+    """
+    Validate Scaleway Secret Manager secret name.
+
+    Secret names must:
+    - Be 1-255 characters long
+    - Start with lowercase letter
+    - Contain only lowercase letters, digits, and hyphens
+
+    Args:
+        name: Secret name to validate
+
+    Returns:
+        bool: True if valid
+
+    Raises:
+        ValueError: If name is invalid
+    """
+    if not name or len(name) < 1 or len(name) > 255:
+        raise ValueError(f"Secret name must be 1-255 characters, got {len(name)}")
+
+    if not re.match(r"^[a-z][a-z0-9-]*$", name):
+        raise ValueError(
+            f"Secret name '{name}' must start with lowercase letter, "
+            "contain only lowercase letters, digits, and hyphens"
+        )
+
+    return True
+
+
+def validate_secret_path(path: str) -> bool:
+    """
+    Validate Scaleway Secret Manager secret path.
+
+    Secret paths must:
+    - Start with /
+    - Contain only alphanumeric characters, hyphens, underscores, and slashes
+
+    Args:
+        path: Secret path to validate
+
+    Returns:
+        bool: True if valid
+
+    Raises:
+        ValueError: If path is invalid
+    """
+    if not path:
+        raise ValueError("Secret path cannot be empty")
+
+    if not path.startswith("/"):
+        raise ValueError(f"Secret path '{path}' must start with /")
+
+    if not re.match(r"^/[a-zA-Z0-9\-_/]*$", path):
+        raise ValueError(
+            f"Secret path '{path}' contains invalid characters. "
+            "Use only alphanumeric characters, hyphens, underscores, and slashes"
+        )
+
+    return True
+
+
 def validate_cpu_memory_combination(cpu_millicores: int, memory_mb: int) -> bool:
     """
     Validate CPU and memory combination for serverless containers.

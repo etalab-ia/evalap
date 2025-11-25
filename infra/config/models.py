@@ -83,6 +83,32 @@ class NetworkConfig(BaseModel):
     enable_nat_gateway: bool = Field(default=False, description="Enable NAT gateway for outbound traffic")
 
 
+class SecretConfig(BaseModel):
+    """Configuration for a secret in Scaleway Secret Manager."""
+
+    name: str = Field(description="Secret name (must match ^[a-z][a-z0-9-]*$)")
+    description: Optional[str] = Field(default=None, description="Human-readable description")
+    data: str = Field(description="Secret data/value to store")
+    path: str = Field(default="/", description="Secret path in Secret Manager")
+    secret_type: Optional[str] = Field(
+        default=None,
+        description="Secret type (opaque, certificate, key_value, basic_credentials, etc.)",
+    )
+    protected: bool = Field(default=False, description="Protect secret from deletion")
+
+    @field_validator("name")
+    @classmethod
+    def validate_secret_name(cls, v):
+        """Ensure secret name follows Scaleway naming convention."""
+        import re
+
+        if not re.match(r"^[a-z][a-z0-9-]*$", v):
+            raise ValueError(f"Secret name '{v}' must match pattern ^[a-z][a-z0-9-]*$")
+        if len(v) > 255:
+            raise ValueError(f"Secret name must be <= 255 characters, got {len(v)}")
+        return v
+
+
 class MonitoringConfig(BaseModel):
     """Configuration for monitoring and observability."""
 

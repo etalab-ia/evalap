@@ -243,6 +243,79 @@ def validate_iam_policy(policy: dict) -> bool:
     return True
 
 
+def validate_secret_name(name: str) -> bool:
+    """
+    Validate secret name.
+
+    Args:
+        name: Secret name
+
+    Returns:
+        bool: True if valid
+
+    Raises:
+        ValueError: If name is invalid
+    """
+    return scaleway_helpers.validate_secret_name(name)
+
+
+def validate_secret_path(path: str) -> bool:
+    """
+    Validate secret path.
+
+    Args:
+        path: Secret path
+
+    Returns:
+        bool: True if valid
+
+    Raises:
+        ValueError: If path is invalid
+    """
+    return scaleway_helpers.validate_secret_path(path)
+
+
+def validate_secret_config(config: Any) -> bool:
+    """
+    Validate secret configuration.
+
+    Args:
+        config: SecretConfig object to validate
+
+    Returns:
+        bool: True if valid
+
+    Raises:
+        ValueError: If configuration is invalid
+    """
+    # Validate secret name
+    validate_secret_name(config.name)
+
+    # Validate secret path
+    validate_secret_path(config.path)
+
+    # Validate secret data is not empty
+    if not config.data:
+        raise ValueError("Secret data cannot be empty")
+
+    # Validate secret type if provided
+    valid_types = [
+        None,
+        "opaque",
+        "certificate",
+        "key_value",
+        "basic_credentials",
+        "database_credentials",
+        "ssh_key",
+    ]
+    if config.secret_type not in valid_types:
+        raise ValueError(
+            f"Invalid secret type '{config.secret_type}'. Must be one of: {[t for t in valid_types if t]}"
+        )
+
+    return True
+
+
 def validate_state_backend_config(
     bucket_name: str,
     region: str,
