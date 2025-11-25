@@ -5,8 +5,9 @@ from unittest.mock import MagicMock, patch
 import pytest
 from pydantic import ValidationError
 
+from infra.components.secret_manager import SecretManager
 from infra.components.serverless_container import ServerlessContainer
-from infra.config.models import ContainerConfig
+from infra.config.models import ContainerConfig, SecretConfig
 
 
 class TestServerlessContainer:
@@ -69,8 +70,8 @@ class TestServerlessContainer:
         with pytest.raises(ValidationError):
             ContainerConfig(cpu=50, memory=1024)  # CPU too low
 
-    @patch("infra.components.serverless_container.scaleway.ContainerNamespace")
-    @patch("infra.components.serverless_container.scaleway.Container")
+    @patch("infra.components.serverless_container.scaleway.containers.Namespace")
+    @patch("infra.components.serverless_container.scaleway.containers.Container")
     @patch("infra.components.serverless_container.pulumi_helpers.log_resource_creation")
     def test_create_success(self, mock_log, mock_container_class, mock_namespace_class, serverless_container):
         """Test successful creation of serverless container infrastructure."""
@@ -118,8 +119,8 @@ class TestServerlessContainer:
         assert env_vars["DEBUG"] == "false"
         assert env_vars["LOG_LEVEL"] == "info"  # Default added
 
-    @patch("infra.components.serverless_container.scaleway.ContainerNamespace")
-    @patch("infra.components.serverless_container.scaleway.Container")
+    @patch("infra.components.serverless_container.scaleway.containers.Namespace")
+    @patch("infra.components.serverless_container.scaleway.containers.Container")
     @patch("infra.components.serverless_container.pulumi_helpers.handle_error")
     def test_create_error_handling(
         self, mock_handle_error, mock_container_class, mock_namespace_class, serverless_container
@@ -140,7 +141,7 @@ class TestServerlessContainer:
     def test_create_namespace(self, serverless_container):
         """Test namespace creation method."""
         with patch(
-            "infra.components.serverless_container.scaleway.ContainerNamespace"
+            "infra.components.serverless_container.scaleway.containers.Namespace"
         ) as mock_namespace_class:
             mock_namespace = MagicMock()
             mock_namespace_class.return_value = mock_namespace
@@ -169,7 +170,9 @@ class TestServerlessContainer:
         mock_namespace.id = "test-namespace-id"
         serverless_container.namespace = mock_namespace
 
-        with patch("infra.components.serverless_container.scaleway.Container") as mock_container_class:
+        with patch(
+            "infra.components.serverless_container.scaleway.containers.Container"
+        ) as mock_container_class:
             mock_container = MagicMock()
             mock_container_class.return_value = mock_container
 
@@ -272,7 +275,9 @@ class TestServerlessContainer:
         mock_namespace.id = "test-namespace-id"
         serverless_container.namespace = mock_namespace
 
-        with patch("infra.components.serverless_container.scaleway.Container") as mock_container_class:
+        with patch(
+            "infra.components.serverless_container.scaleway.containers.Container"
+        ) as mock_container_class:
             mock_container = MagicMock()
             mock_container_class.return_value = mock_container
 
@@ -293,7 +298,9 @@ class TestServerlessContainer:
         # Add custom LOG_LEVEL to config
         serverless_container.config.environment_variables["LOG_LEVEL"] = "debug"
 
-        with patch("infra.components.serverless_container.scaleway.Container") as mock_container_class:
+        with patch(
+            "infra.components.serverless_container.scaleway.containers.Container"
+        ) as mock_container_class:
             mock_container = MagicMock()
             mock_container_class.return_value = mock_container
 
@@ -308,3 +315,224 @@ class TestServerlessContainer:
         """Test string representation of ServerlessContainer."""
         expected = "ServerlessContainer(name=test-container, environment=dev)"
         assert repr(serverless_container) == expected
+
+
+class TestServerlessContainerSecretIntegration:
+    """Tests for ServerlessContainer secret integration."""
+
+    @pytest.fixture
+    def secret_configs(self):
+        """Create secret configurations for testing."""
+        return [
+            SecretConfig(
+                name="db-password",
+                description="Database password",
+                data="super-secret-password",
+                path="/database",
+            ),
+            SecretConfig(
+                name="api-key",
+                description="External API key",
+                data="api-key-12345",
+                path="/external",
+            ),
+        ]
+
+    @pytest.fixture
+    def secret_manager(self, secret_configs):
+        """Create a SecretManager instance for testing."""
+        return SecretManager(
+            name="test-secrets",
+            environment="dev",
+            configs=secret_configs,
+            project_id="test-project-123",
+            region="fr-par",
+        )
+
+    @pytest.fixture
+    def container_config_with_secrets(self):
+        """Create a container config with secret environment variables."""
+        return ContainerConfig(
+            cpu=1000,
+            memory=1024,
+            environment_variables={"ENV": "test"},
+            secret_environment_variables={"DIRECT_SECRET": "direct-value"},
+        )
+
+    def test_container_config_with_secret_env_vars(self):
+        """Test ContainerConfig accepts secret_environment_variables."""
+        config = ContainerConfig(
+            cpu=1000,
+            memory=1024,
+            secret_environment_variables={"SECRET_KEY": "secret-value"},
+        )
+        assert config.secret_environment_variables == {"SECRET_KEY": "secret-value"}
+
+    def test_container_config_default_secret_env_vars(self):
+        """Test ContainerConfig has empty secret_environment_variables by default."""
+        config = ContainerConfig()
+        assert config.secret_environment_variables == {}
+
+    def test_serverless_container_with_secret_manager(self, container_config_with_secrets, secret_manager):
+        """Test ServerlessContainer initialization with SecretManager."""
+        container = ServerlessContainer(
+            name="test-container",
+            environment="dev",
+            config=container_config_with_secrets,
+            image_uri="rg.fr-par.scw.cloud/test-image:latest",
+            project_id="test-project-123",
+            secret_manager=secret_manager,
+            secret_mappings={
+                "db-password": "DATABASE_PASSWORD",
+                "api-key": "API_KEY",
+            },
+        )
+
+        assert container.secret_manager == secret_manager
+        assert container.secret_mappings == {
+            "db-password": "DATABASE_PASSWORD",
+            "api-key": "API_KEY",
+        }
+
+    def test_build_secret_environment_variables_from_config(self, container_config_with_secrets):
+        """Test building secret env vars from ContainerConfig."""
+        container = ServerlessContainer(
+            name="test-container",
+            environment="dev",
+            config=container_config_with_secrets,
+            image_uri="rg.fr-par.scw.cloud/test-image:latest",
+            project_id="test-project-123",
+        )
+
+        secret_env_vars = container._build_secret_environment_variables()
+        assert secret_env_vars == {"DIRECT_SECRET": "direct-value"}
+
+    def test_build_secret_environment_variables_from_secret_manager(self, secret_manager):
+        """Test building secret env vars from SecretManager."""
+        config = ContainerConfig(cpu=1000, memory=1024)
+        container = ServerlessContainer(
+            name="test-container",
+            environment="dev",
+            config=config,
+            image_uri="rg.fr-par.scw.cloud/test-image:latest",
+            project_id="test-project-123",
+            secret_manager=secret_manager,
+            secret_mappings={
+                "db-password": "DATABASE_PASSWORD",
+                "api-key": "API_KEY",
+            },
+        )
+
+        secret_env_vars = container._build_secret_environment_variables()
+        assert secret_env_vars == {
+            "DATABASE_PASSWORD": "super-secret-password",
+            "API_KEY": "api-key-12345",
+        }
+
+    def test_build_secret_environment_variables_combined(self, container_config_with_secrets, secret_manager):
+        """Test building secret env vars from both config and SecretManager."""
+        container = ServerlessContainer(
+            name="test-container",
+            environment="dev",
+            config=container_config_with_secrets,
+            image_uri="rg.fr-par.scw.cloud/test-image:latest",
+            project_id="test-project-123",
+            secret_manager=secret_manager,
+            secret_mappings={"db-password": "DATABASE_PASSWORD"},
+        )
+
+        secret_env_vars = container._build_secret_environment_variables()
+        assert secret_env_vars == {
+            "DIRECT_SECRET": "direct-value",
+            "DATABASE_PASSWORD": "super-secret-password",
+        }
+
+    def test_build_secret_environment_variables_missing_secret(self, secret_manager):
+        """Test building secret env vars with missing secret logs warning."""
+        config = ContainerConfig(cpu=1000, memory=1024)
+        container = ServerlessContainer(
+            name="test-container",
+            environment="dev",
+            config=config,
+            image_uri="rg.fr-par.scw.cloud/test-image:latest",
+            project_id="test-project-123",
+            secret_manager=secret_manager,
+            secret_mappings={"nonexistent-secret": "MISSING_VAR"},
+        )
+
+        secret_env_vars = container._build_secret_environment_variables()
+        # Missing secret should not be in result
+        assert "MISSING_VAR" not in secret_env_vars
+
+    @patch("infra.components.serverless_container.scaleway.containers.Namespace")
+    @patch("infra.components.serverless_container.scaleway.containers.Container")
+    @patch("infra.components.serverless_container.pulumi_helpers.log_resource_creation")
+    def test_create_container_with_secrets(
+        self,
+        mock_log,
+        mock_container_class,
+        mock_namespace_class,
+        container_config_with_secrets,
+        secret_manager,
+    ):
+        """Test container creation includes secret environment variables."""
+        mock_namespace = MagicMock()
+        mock_namespace.id = "test-namespace-id"
+        mock_namespace_class.return_value = mock_namespace
+
+        mock_container = MagicMock()
+        mock_container_class.return_value = mock_container
+
+        container = ServerlessContainer(
+            name="test-container",
+            environment="dev",
+            config=container_config_with_secrets,
+            image_uri="rg.fr-par.scw.cloud/test-image:latest",
+            project_id="test-project-123",
+            secret_manager=secret_manager,
+            secret_mappings={"db-password": "DATABASE_PASSWORD"},
+        )
+
+        container.create()
+
+        # Verify container was created with secret_environment_variables
+        mock_container_class.assert_called_once()
+        container_args = mock_container_class.call_args[1]
+        assert "secret_environment_variables" in container_args
+        assert container_args["secret_environment_variables"] == {
+            "DIRECT_SECRET": "direct-value",
+            "DATABASE_PASSWORD": "super-secret-password",
+        }
+
+    @patch("infra.components.serverless_container.scaleway.containers.Namespace")
+    @patch("infra.components.serverless_container.scaleway.containers.Container")
+    @patch("infra.components.serverless_container.pulumi_helpers.log_resource_creation")
+    def test_create_container_without_secrets(
+        self,
+        mock_log,
+        mock_container_class,
+        mock_namespace_class,
+    ):
+        """Test container creation without secrets doesn't include secret_env_vars."""
+        mock_namespace = MagicMock()
+        mock_namespace.id = "test-namespace-id"
+        mock_namespace_class.return_value = mock_namespace
+
+        mock_container = MagicMock()
+        mock_container_class.return_value = mock_container
+
+        config = ContainerConfig(cpu=1000, memory=1024)
+        container = ServerlessContainer(
+            name="test-container",
+            environment="dev",
+            config=config,
+            image_uri="rg.fr-par.scw.cloud/test-image:latest",
+            project_id="test-project-123",
+        )
+
+        container.create()
+
+        # Verify container was created without secret_environment_variables
+        mock_container_class.assert_called_once()
+        container_args = mock_container_class.call_args[1]
+        assert "secret_environment_variables" not in container_args

@@ -236,6 +236,62 @@ class SecretManager(BaseComponent):
             self.versions[config.name].id,
         )
 
+    def get_secrets_for_container(
+        self,
+        mappings: dict[str, str],
+    ) -> dict[str, str]:
+        """
+        Get multiple secrets formatted for container environment variable injection.
+
+        This method retrieves secret data from the SecretConfig objects and returns
+        them in a format suitable for Scaleway Serverless Container's
+        secret_environment_variables parameter.
+
+        Args:
+            mappings: Dictionary mapping secret names to environment variable names.
+                Format: {"secret_name": "ENV_VAR_NAME"}
+
+        Returns:
+            dict[str, str]: Dictionary of environment variable names to secret values
+
+        Example:
+            >>> secret_manager = SecretManager(...)
+            >>> secrets = secret_manager.get_secrets_for_container({
+            ...     "db-password": "DATABASE_PASSWORD",
+            ...     "api-key": "API_KEY",
+            ... })
+            >>> # secrets = {"DATABASE_PASSWORD": "...", "API_KEY": "..."}
+        """
+        result: dict[str, str] = {}
+
+        for secret_name, env_var_name in mappings.items():
+            # Find the config for this secret
+            config = self._get_config_by_name(secret_name)
+            if config:
+                result[env_var_name] = config.data
+                logger.debug(f"Mapped secret '{secret_name}' to env var '{env_var_name}'")
+            else:
+                logger.warning(
+                    f"Secret '{secret_name}' not found in configs. Available: {[c.name for c in self.configs]}"
+                )
+
+        return result
+
+    def _get_config_by_name(self, secret_name: str) -> Optional[SecretConfig]:
+        """
+        Get SecretConfig by name.
+
+        Args:
+            secret_name: Name of the secret
+
+        Returns:
+            SecretConfig if found, None otherwise
+        """
+        for config in self.configs:
+            if config.name == secret_name:
+                return config
+        return None
+
     def update_secret_version(
         self,
         secret_name: str,

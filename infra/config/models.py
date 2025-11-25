@@ -26,6 +26,10 @@ class ContainerConfig(BaseModel):
     environment_variables: dict[str, str] = Field(
         default_factory=dict, description="Environment variables for container"
     )
+    secret_environment_variables: dict[str, str] = Field(
+        default_factory=dict,
+        description="Secret environment variables (stored securely, not displayed after validation)",
+    )
 
     @field_validator("memory")
     @classmethod

@@ -352,3 +352,99 @@ class TestSecretValidation:
         with pytest.raises(ValueError) as exc_info:
             validate_secret_config(config)
         assert "Invalid secret type" in str(exc_info.value)
+
+
+class TestSecretManagerContainerIntegration:
+    """Tests for SecretManager container integration methods."""
+
+    @pytest.fixture
+    def secret_configs(self):
+        """Create valid secret configurations for testing."""
+        return [
+            SecretConfig(
+                name="db-password",
+                description="Database password",
+                data="super-secret-password",
+                path="/database",
+            ),
+            SecretConfig(
+                name="api-key",
+                description="External API key",
+                data="api-key-12345",
+                path="/external",
+            ),
+            SecretConfig(
+                name="jwt-secret",
+                description="JWT signing secret",
+                data="jwt-secret-value",
+                path="/auth",
+            ),
+        ]
+
+    @pytest.fixture
+    def secret_manager(self, secret_configs):
+        """Create a SecretManager instance for testing."""
+        return SecretManager(
+            name="test-secrets",
+            environment="dev",
+            configs=secret_configs,
+            project_id="test-project-123",
+            region="fr-par",
+        )
+
+    def test_get_secrets_for_container_single(self, secret_manager):
+        """Test getting a single secret for container."""
+        result = secret_manager.get_secrets_for_container(
+            {
+                "db-password": "DATABASE_PASSWORD",
+            }
+        )
+
+        assert result == {"DATABASE_PASSWORD": "super-secret-password"}
+
+    def test_get_secrets_for_container_multiple(self, secret_manager):
+        """Test getting multiple secrets for container."""
+        result = secret_manager.get_secrets_for_container(
+            {
+                "db-password": "DATABASE_PASSWORD",
+                "api-key": "API_KEY",
+                "jwt-secret": "JWT_SECRET",
+            }
+        )
+
+        assert result == {
+            "DATABASE_PASSWORD": "super-secret-password",
+            "API_KEY": "api-key-12345",
+            "JWT_SECRET": "jwt-secret-value",
+        }
+
+    def test_get_secrets_for_container_missing_secret(self, secret_manager):
+        """Test getting secrets with missing secret name."""
+        result = secret_manager.get_secrets_for_container(
+            {
+                "db-password": "DATABASE_PASSWORD",
+                "nonexistent": "MISSING_VAR",
+            }
+        )
+
+        # Only existing secret should be in result
+        assert result == {"DATABASE_PASSWORD": "super-secret-password"}
+        assert "MISSING_VAR" not in result
+
+    def test_get_secrets_for_container_empty_mappings(self, secret_manager):
+        """Test getting secrets with empty mappings."""
+        result = secret_manager.get_secrets_for_container({})
+        assert result == {}
+
+    def test_get_config_by_name_found(self, secret_manager):
+        """Test _get_config_by_name returns config when found."""
+        config = secret_manager._get_config_by_name("db-password")
+
+        assert config is not None
+        assert config.name == "db-password"
+        assert config.data == "super-secret-password"
+
+    def test_get_config_by_name_not_found(self, secret_manager):
+        """Test _get_config_by_name returns None when not found."""
+        config = secret_manager._get_config_by_name("nonexistent")
+        assert config is None
