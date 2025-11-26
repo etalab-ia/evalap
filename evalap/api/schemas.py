@@ -5,7 +5,7 @@ from typing import Any, Literal, Optional
 
 import numpy as np
 import pandas as pd
-from pydantic import BaseModel, ConfigDict, Field, create_model
+from pydantic import BaseModel, ConfigDict, Field, create_model, field_serializer
 from sqlalchemy.orm import Session
 
 import evalap.api.models as models
@@ -22,12 +22,17 @@ class EgBaseModel(BaseModel):
     model_config = ConfigDict(
         from_attributes=True,
         protected_namespaces=(),
-        json_encoders={
-            # np.nan is not serializable !
-            float: lambda v: None if np.isnan(v) else v,
-        },
         extra="forbid",  # Do not allow unknow field
     )
+
+    @field_serializer("*", mode="wrap")
+    @classmethod
+    def serialize_nan_as_none(cls, value: Any, handler: Any) -> Any:
+        """Serialize NaN float values as None for JSON compatibility."""
+        result = handler(value)
+        if isinstance(result, float) and np.isnan(result):
+            return None
+        return result
 
     def recurse_table_init(self, db: Session) -> dict:
         obj = self.model_dump()

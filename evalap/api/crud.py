@@ -51,7 +51,7 @@ def update_dataset(
     if isinstance(dataset_update, dict):
         dataset_update = schemas.DatasetUpdate(**dataset_update)
 
-    db_dataset = db.query(models.Dataset).get(dataset_id)
+    db_dataset = db.get(models.Dataset, dataset_id)
     if db_dataset is None:
         return None
     # Update fields
@@ -72,7 +72,7 @@ def remove_dataset(db: Session, dataset_id: int) -> bool:
             "You must either delete linked experiments or associated them to another dataset to remove this one."
         )
 
-    db_dataset = db.query(models.Dataset).get(dataset_id)
+    db_dataset = db.get(models.Dataset, dataset_id)
     if db_dataset is None:
         return False
 
@@ -195,7 +195,7 @@ def update_result(
     if isinstance(result_update, dict):
         result_update = schemas.ResultUpdate(**result_update)
 
-    db_result = db.query(models.Result).get(result_id)
+    db_result = db.get(models.Result, result_id)
     if db_result is None:
         return None
     # Update fields
@@ -221,7 +221,7 @@ def create_experiment(db: Session, experiment: schemas.ExperimentCreate) -> mode
 
 
 def get_experiment(db: Session, experiment_id: int) -> models.Experiment | None:
-    return db.query(models.Experiment).get(experiment_id)
+    return db.get(models.Experiment, experiment_id)
 
 
 def get_experiments(
@@ -255,7 +255,7 @@ def update_experiment(
     if isinstance(experiment_update, dict):
         experiment_update = schemas.ExperimentUpdate(**experiment_update)
 
-    db_exp = db.query(models.Experiment).get(experiment_id)
+    db_exp = db.get(models.Experiment, experiment_id)
     if db_exp is None:
         return None
     # Update fields
@@ -271,7 +271,7 @@ def update_experiment(
 
 
 def remove_experiment(db: Session, experiment_id: int) -> bool:
-    db_exp = db.query(models.Experiment).get(experiment_id)
+    db_exp = db.get(models.Experiment, experiment_id)
     if db_exp is None:
         return False
 
@@ -328,7 +328,7 @@ def get_experimentsets(
 
 
 def get_experimentset(db: Session, experimentset_id: int) -> models.ExperimentSet | None:
-    return db.query(models.ExperimentSet).get(experimentset_id)
+    return db.get(models.ExperimentSet, experimentset_id)
 
 
 def update_experimentset(
@@ -337,7 +337,7 @@ def update_experimentset(
     if isinstance(experimentset_update, dict):
         experimentset_update = schemas.ExperimentSetUpdate(**experimentset_update)
 
-    db_expset = db.query(models.ExperimentSet).get(experimentset_id)
+    db_expset = db.get(models.ExperimentSet, experimentset_id)
     if db_expset is None:
         return None
     # Update fields
@@ -353,7 +353,7 @@ def update_experimentset(
 
 
 def remove_experimentset(db: Session, experimentset_id: int) -> bool:
-    db_expset = db.query(models.ExperimentSet).get(experimentset_id)
+    db_expset = db.get(models.ExperimentSet, experimentset_id)
     if db_expset is None:
         return False
 
