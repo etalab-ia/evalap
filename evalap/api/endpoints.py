@@ -525,13 +525,9 @@ def stop_runs(
     n_stopped = 0
     for exp in experimentset.experiments:
         if exp.experiment_status != "finished":
-            exp.experiment_status = "stopped"
+            crud.update_experiment(db, exp.id, dict(experiment_status="finished"))
             n_stopped += 1
-            for result in exp.results:
-                if result.metric_status != "finished":
-                    result.metric_status = "stopped"
 
-    db.commit()
     return f"{n_stopped} experiments stopped"
 
 
