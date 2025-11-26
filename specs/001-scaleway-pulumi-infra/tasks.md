@@ -147,7 +147,7 @@
 - [x] T064 [US3] Implement IAM policy validation in `infra/utils/validation.py` to enforce least privilege principle
 - [x] T065 [US3] Create security configuration documentation in `infra/docs/security.md` with IAM, secret, and network setup
 - [x] T066 [US3] Add encryption configuration for data at rest and in transit in infrastructure components
-- [ ] T067 [US3] Implement audit logging for all infrastructure changes in `infra/utils/pulumi_helpers.py`
+- [x] T067 [US3] Implement audit logging for all infrastructure changes in `infra/utils/pulumi_helpers.py`
 
 ### Validation Tests for User Story 3
 

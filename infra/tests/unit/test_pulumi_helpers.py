@@ -1,15 +1,22 @@
 """Unit tests for Pulumi helper utilities."""
 
+import json
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from infra.utils.pulumi_helpers import (
+    AuditEvent,
+    AuditLogger,
+    AuditOperation,
+    AuditSeverity,
     apply_with_logging,
     combine_outputs,
+    configure_audit_logging,
     create_resource_name,
     create_tags,
     export_output,
+    get_audit_logger,
     get_output_value,
     handle_error,
     log_resource_creation,
@@ -236,3 +243,356 @@ class TestHandleError:
         with pytest.raises(Exception) as exc_info:
             handle_error(error)
         assert exc_info.value is error
+
+
+# =============================================================================
+# Audit Logging Tests
+# =============================================================================
+
+
+class TestAuditOperation:
+    """Tests for AuditOperation enum."""
+
+    def test_audit_operation_values(self):
+        """Test that all expected operations are defined."""
+        assert AuditOperation.CREATE.value == "create"
+        assert AuditOperation.UPDATE.value == "update"
+        assert AuditOperation.DELETE.value == "delete"
+        assert AuditOperation.DEPLOY.value == "deploy"
+        assert AuditOperation.PREVIEW.value == "preview"
+        assert AuditOperation.REFRESH.value == "refresh"
+        assert AuditOperation.DESTROY.value == "destroy"
+
+
+class TestAuditSeverity:
+    """Tests for AuditSeverity enum."""
+
+    def test_audit_severity_values(self):
+        """Test that all expected severities are defined."""
+        assert AuditSeverity.INFO.value == "info"
+        assert AuditSeverity.WARNING.value == "warning"
+        assert AuditSeverity.ERROR.value == "error"
+        assert AuditSeverity.CRITICAL.value == "critical"
+
+
+class TestAuditEvent:
+    """Tests for AuditEvent dataclass."""
+
+    def test_audit_event_creation(self):
+        """Test creating an audit event with required fields."""
+        event = AuditEvent(
+            timestamp="2024-01-15T10:30:00Z",
+            operation="create",
+            resource_type="DatabaseInstance",
+            resource_name="evalap-db-dev",
+            stack="dev",
+            project="evalap",
+            environment="dev",
+        )
+        assert event.timestamp == "2024-01-15T10:30:00Z"
+        assert event.operation == "create"
+        assert event.resource_type == "DatabaseInstance"
+        assert event.resource_name == "evalap-db-dev"
+        assert event.stack == "dev"
+        assert event.project == "evalap"
+        assert event.environment == "dev"
+        assert event.severity == "info"  # Default
+        assert event.success is True  # Default
+        assert event.error_message is None  # Default
+        assert event.duration_ms is None  # Default
+
+    def test_audit_event_to_dict(self):
+        """Test converting audit event to dictionary."""
+        event = AuditEvent(
+            timestamp="2024-01-15T10:30:00Z",
+            operation="create",
+            resource_type="Container",
+            resource_name="api-container",
+            stack="staging",
+            project="evalap",
+            environment="staging",
+            details={"cpu": "1000m", "memory": "1024MB"},
+        )
+        result = event.to_dict()
+        assert isinstance(result, dict)
+        assert result["timestamp"] == "2024-01-15T10:30:00Z"
+        assert result["operation"] == "create"
+        assert result["details"] == {"cpu": "1000m", "memory": "1024MB"}
+
+    def test_audit_event_to_json(self):
+        """Test converting audit event to JSON string."""
+        event = AuditEvent(
+            timestamp="2024-01-15T10:30:00Z",
+            operation="delete",
+            resource_type="ObjectBucket",
+            resource_name="storage-bucket",
+            stack="dev",
+            project="evalap",
+            environment="dev",
+            severity="warning",
+        )
+        json_str = event.to_json()
+        assert isinstance(json_str, str)
+        parsed = json.loads(json_str)
+        assert parsed["operation"] == "delete"
+        assert parsed["severity"] == "warning"
+
+    def test_audit_event_with_error(self):
+        """Test audit event with error details."""
+        event = AuditEvent(
+            timestamp="2024-01-15T10:30:00Z",
+            operation="create",
+            resource_type="DatabaseInstance",
+            resource_name="evalap-db",
+            stack="prod",
+            project="evalap",
+            environment="production",
+            severity="error",
+            success=False,
+            error_message="Connection timeout",
+            duration_ms=5000,
+        )
+        assert event.success is False
+        assert event.error_message == "Connection timeout"
+        assert event.duration_ms == 5000
+
+
+class TestAuditLogger:
+    """Tests for AuditLogger class."""
+
+    @patch("infra.utils.pulumi_helpers.pulumi.get_stack")
+    @patch("infra.utils.pulumi_helpers.pulumi.get_project")
+    def test_audit_logger_initialization(self, mock_project, mock_stack):
+        """Test AuditLogger initialization."""
+        mock_stack.return_value = "dev"
+        mock_project.return_value = "evalap"
+
+        audit_log = AuditLogger(environment="dev")
+        assert audit_log.environment == "dev"
+        assert audit_log._start_times == {}
+
+    @patch("infra.utils.pulumi_helpers.audit_logger")
+    @patch("infra.utils.pulumi_helpers.logger")
+    @patch("infra.utils.pulumi_helpers.pulumi.get_stack")
+    @patch("infra.utils.pulumi_helpers.pulumi.get_project")
+    def test_log_create(self, mock_project, mock_stack, mock_logger, mock_audit_logger):
+        """Test logging a create operation."""
+        mock_stack.return_value = "dev"
+        mock_project.return_value = "evalap"
+
+        audit_log = AuditLogger(environment="dev")
+        audit_log.log_create(
+            resource_type="DatabaseInstance",
+            resource_name="evalap-db",
+            details={"engine": "PostgreSQL-15"},
+        )
+
+        mock_audit_logger.info.assert_called_once()
+        mock_logger.info.assert_called_once()
+        call_args = mock_logger.info.call_args[0][0]
+        assert "AUDIT" in call_args
+        assert "Created" in call_args
+        assert "DatabaseInstance" in call_args
+
+    @patch("infra.utils.pulumi_helpers.audit_logger")
+    @patch("infra.utils.pulumi_helpers.logger")
+    @patch("infra.utils.pulumi_helpers.pulumi.get_stack")
+    @patch("infra.utils.pulumi_helpers.pulumi.get_project")
+    def test_log_update(self, mock_project, mock_stack, mock_logger, mock_audit_logger):
+        """Test logging an update operation."""
+        mock_stack.return_value = "staging"
+        mock_project.return_value = "evalap"
+
+        audit_log = AuditLogger(environment="staging")
+        audit_log.log_update(
+            resource_type="Container",
+            resource_name="api-container",
+            changes={"cpu": "2000m"},
+        )
+
+        mock_audit_logger.info.assert_called_once()
+        mock_logger.info.assert_called_once()
+        call_args = mock_logger.info.call_args[0][0]
+        assert "Updated" in call_args
+
+    @patch("infra.utils.pulumi_helpers.audit_logger")
+    @patch("infra.utils.pulumi_helpers.logger")
+    @patch("infra.utils.pulumi_helpers.pulumi.get_stack")
+    @patch("infra.utils.pulumi_helpers.pulumi.get_project")
+    def test_log_delete(self, mock_project, mock_stack, mock_logger, mock_audit_logger):
+        """Test logging a delete operation."""
+        mock_stack.return_value = "dev"
+        mock_project.return_value = "evalap"
+
+        audit_log = AuditLogger(environment="dev")
+        audit_log.log_delete(
+            resource_type="ObjectBucket",
+            resource_name="old-bucket",
+            reason="Cleanup",
+        )
+
+        mock_audit_logger.warning.assert_called_once()
+        mock_logger.warning.assert_called_once()
+        call_args = mock_logger.warning.call_args[0][0]
+        assert "Deleted" in call_args
+
+    @patch("infra.utils.pulumi_helpers.audit_logger")
+    @patch("infra.utils.pulumi_helpers.logger")
+    @patch("infra.utils.pulumi_helpers.pulumi.get_stack")
+    @patch("infra.utils.pulumi_helpers.pulumi.get_project")
+    def test_log_error(self, mock_project, mock_stack, mock_logger, mock_audit_logger):
+        """Test logging an error."""
+        mock_stack.return_value = "prod"
+        mock_project.return_value = "evalap"
+
+        audit_log = AuditLogger(environment="production")
+        error = ValueError("Invalid configuration")
+        audit_log.log_error(
+            resource_type="DatabaseInstance",
+            resource_name="evalap-db",
+            operation=AuditOperation.CREATE,
+            error=error,
+        )
+
+        mock_audit_logger.error.assert_called_once()
+        mock_logger.error.assert_called_once()
+        call_args = mock_logger.error.call_args[0][0]
+        assert "Failed" in call_args
+        assert "Invalid configuration" in call_args
+
+    @patch("infra.utils.pulumi_helpers.audit_logger")
+    @patch("infra.utils.pulumi_helpers.logger")
+    @patch("infra.utils.pulumi_helpers.pulumi.get_stack")
+    @patch("infra.utils.pulumi_helpers.pulumi.get_project")
+    def test_log_deployment_start(self, mock_project, mock_stack, mock_logger, mock_audit_logger):
+        """Test logging deployment start."""
+        mock_stack.return_value = "staging"
+        mock_project.return_value = "evalap"
+
+        audit_log = AuditLogger(environment="staging")
+        audit_log.log_deployment_start(
+            stack_name="staging",
+            resources=["database", "container", "storage"],
+        )
+
+        mock_audit_logger.info.assert_called_once()
+        mock_logger.info.assert_called_once()
+        call_args = mock_logger.info.call_args[0][0]
+        assert "Starting deployment" in call_args
+
+    @patch("infra.utils.pulumi_helpers.audit_logger")
+    @patch("infra.utils.pulumi_helpers.logger")
+    @patch("infra.utils.pulumi_helpers.pulumi.get_stack")
+    @patch("infra.utils.pulumi_helpers.pulumi.get_project")
+    def test_log_deployment_complete(self, mock_project, mock_stack, mock_logger, mock_audit_logger):
+        """Test logging deployment completion."""
+        mock_stack.return_value = "staging"
+        mock_project.return_value = "evalap"
+
+        audit_log = AuditLogger(environment="staging")
+        audit_log.log_deployment_complete(
+            stack_name="staging",
+            resources_created=3,
+            resources_updated=1,
+            resources_deleted=0,
+        )
+
+        mock_audit_logger.info.assert_called_once()
+        mock_logger.info.assert_called_once()
+        call_args = mock_logger.info.call_args[0][0]
+        assert "Deployment complete" in call_args
+        assert "created=3" in call_args
+
+    @patch("infra.utils.pulumi_helpers.audit_logger")
+    @patch("infra.utils.pulumi_helpers.logger")
+    @patch("infra.utils.pulumi_helpers.pulumi.get_stack")
+    @patch("infra.utils.pulumi_helpers.pulumi.get_project")
+    def test_log_deployment_failed(self, mock_project, mock_stack, mock_logger, mock_audit_logger):
+        """Test logging deployment failure."""
+        mock_stack.return_value = "prod"
+        mock_project.return_value = "evalap"
+
+        audit_log = AuditLogger(environment="production")
+        error = RuntimeError("Deployment timeout")
+        audit_log.log_deployment_failed(
+            stack_name="prod",
+            error=error,
+            partial_resources={"created": 2, "failed": 1},
+        )
+
+        mock_audit_logger.critical.assert_called_once()
+        mock_logger.critical.assert_called_once()
+        call_args = mock_logger.critical.call_args[0][0]
+        assert "FAILED" in call_args
+
+    @patch("infra.utils.pulumi_helpers.pulumi.get_stack")
+    @patch("infra.utils.pulumi_helpers.pulumi.get_project")
+    def test_duration_tracking(self, mock_project, mock_stack):
+        """Test operation duration tracking."""
+        mock_stack.return_value = "dev"
+        mock_project.return_value = "evalap"
+
+        audit_log = AuditLogger(environment="dev")
+
+        # Start operation
+        audit_log.start_operation("DatabaseInstance", "evalap-db")
+        assert "DatabaseInstance:evalap-db" in audit_log._start_times
+
+        # Get duration (should remove from tracking)
+        duration = audit_log._get_duration_ms("DatabaseInstance", "evalap-db")
+        assert duration is not None
+        assert duration >= 0
+        assert "DatabaseInstance:evalap-db" not in audit_log._start_times
+
+    @patch("infra.utils.pulumi_helpers.pulumi.get_stack")
+    @patch("infra.utils.pulumi_helpers.pulumi.get_project")
+    def test_duration_tracking_no_start(self, mock_project, mock_stack):
+        """Test duration tracking when operation was not started."""
+        mock_stack.return_value = "dev"
+        mock_project.return_value = "evalap"
+
+        audit_log = AuditLogger(environment="dev")
+        duration = audit_log._get_duration_ms("Container", "api")
+        assert duration is None
+
+
+class TestGetAuditLogger:
+    """Tests for get_audit_logger function."""
+
+    @patch("infra.utils.pulumi_helpers._audit_logger_instance", None)
+    @patch("infra.utils.pulumi_helpers.os.environ.get")
+    def test_get_audit_logger_creates_instance(self, mock_env_get):
+        """Test that get_audit_logger creates a new instance."""
+        mock_env_get.return_value = "dev"
+        audit_log = get_audit_logger()
+        assert isinstance(audit_log, AuditLogger)
+        assert audit_log.environment == "dev"
+
+    @patch("infra.utils.pulumi_helpers._audit_logger_instance", None)
+    def test_get_audit_logger_with_environment(self):
+        """Test get_audit_logger with explicit environment."""
+        audit_log = get_audit_logger(environment="production")
+        assert audit_log.environment == "production"
+
+
+class TestConfigureAuditLogging:
+    """Tests for configure_audit_logging function."""
+
+    @patch("infra.utils.pulumi_helpers.audit_logger")
+    def test_configure_audit_logging_default(self, mock_audit_logger):
+        """Test configuring audit logging with defaults."""
+        mock_audit_logger.handlers = []
+        configure_audit_logging()
+        mock_audit_logger.setLevel.assert_called()
+
+    @patch("infra.utils.pulumi_helpers.audit_logger")
+    def test_configure_audit_logging_with_file(self, mock_audit_logger):
+        """Test configuring audit logging with file output."""
+        import tempfile
+
+        mock_audit_logger.handlers = []
+        with tempfile.NamedTemporaryFile(suffix=".log", delete=False) as f:
+            configure_audit_logging(log_file=f.name)
+        mock_audit_logger.setLevel.assert_called()
+        # File handler should be added
+        assert mock_audit_logger.addHandler.call_count >= 1

@@ -668,6 +668,188 @@ scw secret-manager secret list region=fr-par
 scw vpc private-network list region=fr-par
 ```
 
+## Audit Logging
+
+EvalAP implements comprehensive audit logging for all infrastructure changes to support compliance, debugging, and operational visibility.
+
+### Overview
+
+Audit logging captures:
+
+- **Timestamps**: ISO 8601 format with UTC timezone
+- **Actor identification**: User or service account making the change
+- **Operation details**: Create, update, delete, deploy operations
+- **Resource information**: Type, name, stack, project
+- **Success/failure status**: With error details when applicable
+- **Duration tracking**: Performance monitoring for operations
+
+### Audit Event Structure
+
+Each audit event contains:
+
+```json
+{
+  "timestamp": "2024-01-15T10:30:00+00:00",
+  "operation": "create",
+  "resource_type": "DatabaseInstance",
+  "resource_name": "evalap-db-production",
+  "stack": "production",
+  "project": "evalap",
+  "environment": "production",
+  "severity": "info",
+  "actor": "deploy-user",
+  "details": { "engine": "PostgreSQL-15", "volume_size": 50 },
+  "success": true,
+  "error_message": null,
+  "duration_ms": 181000
+}
+```
+
+### Using the Audit Logger
+
+#### Basic Usage
+
+```python
+from infra.utils import get_audit_logger, AuditOperation
+
+# Get the audit logger instance
+audit = get_audit_logger(environment="production")
+
+# Log resource creation
+audit.start_operation("DatabaseInstance", "evalap-db")
+# ... create resource ...
+audit.log_create(
+    resource_type="DatabaseInstance",
+    resource_name="evalap-db",
+    details={"engine": "PostgreSQL-15"},
+)
+
+# Log resource updates
+audit.log_update(
+    resource_type="Container",
+    resource_name="api-container",
+    changes={"cpu": "2000m", "memory": "2048MB"},
+)
+
+# Log resource deletion
+audit.log_delete(
+    resource_type="ObjectBucket",
+    resource_name="old-bucket",
+    reason="Cleanup after migration",
+)
+```
+
+#### Deployment Logging
+
+```python
+from infra.utils import get_audit_logger
+
+audit = get_audit_logger(environment="staging")
+
+# Log deployment start
+audit.log_deployment_start(
+    stack_name="staging",
+    resources=["database", "container", "storage"],
+)
+
+try:
+    # ... perform deployment ...
+    audit.log_deployment_complete(
+        stack_name="staging",
+        resources_created=3,
+        resources_updated=1,
+        resources_deleted=0,
+    )
+except Exception as e:
+    audit.log_deployment_failed(
+        stack_name="staging",
+        error=e,
+        partial_resources={"created": 2, "failed": 1},
+    )
+    raise
+```
+
+#### Error Logging
+
+```python
+from infra.utils import get_audit_logger, AuditOperation
+
+audit = get_audit_logger(environment="production")
+
+try:
+    # ... operation that might fail ...
+    pass
+except Exception as e:
+    audit.log_error(
+        resource_type="DatabaseInstance",
+        resource_name="evalap-db",
+        operation=AuditOperation.CREATE,
+        error=e,
+        details={"attempted_config": {...}},
+    )
+    raise
+```
+
+### Configuring Audit Logging
+
+#### Console Output (Default)
+
+```python
+from infra.utils import configure_audit_logging
+import logging
+
+# Configure with default settings (console output)
+configure_audit_logging(log_level=logging.INFO)
+```
+
+#### File Output with JSON Format
+
+```python
+from infra.utils import configure_audit_logging
+import logging
+
+# Configure with file output for log aggregation
+configure_audit_logging(
+    log_file="/var/log/evalap/audit.log",
+    log_level=logging.INFO,
+    json_format=True,  # Machine-readable JSON format
+)
+```
+
+### Severity Levels
+
+| Severity   | Use Case                                   |
+| ---------- | ------------------------------------------ |
+| `info`     | Normal operations (create, update, deploy) |
+| `warning`  | Destructive operations (delete)            |
+| `error`    | Operation failures                         |
+| `critical` | Deployment failures affecting production   |
+
+### Integration with Scaleway Cockpit
+
+Audit logs can be forwarded to Scaleway Cockpit for centralized monitoring:
+
+1. Configure file-based audit logging with JSON format
+2. Use Cockpit's log collection agent to forward logs
+3. Create dashboards for infrastructure change visibility
+4. Set up alerts for critical events
+
+### Best Practices
+
+1. **Always log deployment boundaries**: Use `log_deployment_start` and `log_deployment_complete/failed`
+2. **Include relevant details**: Add configuration details to help with debugging
+3. **Use duration tracking**: Call `start_operation` before long-running operations
+4. **Log errors with context**: Include operation type and attempted configuration
+5. **Protect audit logs**: Store in secure location with appropriate retention
+
+### Audit Log Retention
+
+| Environment | Retention Period | Storage Location        |
+| ----------- | ---------------- | ----------------------- |
+| Development | 7 days           | Local file              |
+| Staging     | 30 days          | Scaleway Object Storage |
+| Production  | 90 days          | Scaleway Object Storage |
+
 ## Related Documentation
 
 - [State Management](./state_management.md) - Pulumi state backend configuration
