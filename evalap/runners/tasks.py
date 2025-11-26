@@ -6,6 +6,7 @@ from sqlalchemy import update
 
 import evalap.api.crud as crud
 import evalap.api.models as models
+import evalap.api.schemas as schemas
 from evalap.api.config import DEFAULT_JUDGE_MODEL
 from evalap.api.db import SessionLocal
 from evalap.api.metrics import get_judge_model, metric_registry
@@ -34,6 +35,9 @@ def generate_answer(message: dict, mcp_bridge: MCPBridgeClient | None):
     with SessionLocal() as db:
         print("+", end="", flush=True)
         exp = crud.get_experiment(db, msg.exp_id)
+        if exp.experiment_status == schemas.ExperimentStatus.stopped:
+            return
+
         model = crud.get_model(db, msg.model_id)
         sampling_params = model.sampling_params or {}
         extra_params = model.extra_params or {}
@@ -188,6 +192,9 @@ def generate_observation(message: dict, mcp_bridge: MCPBridgeClient):
     with SessionLocal() as db:
         print(".", end="", flush=True)
         result = crud.get_result(db, experiment_id=msg.exp_id, metric_name=msg.metric_name)
+        if result.experiment.experiment_status == schemas.ExperimentStatus.stopped:
+            return
+
         answer = crud.get_answer(db, experiment_id=msg.exp_id, num_line=msg.line_id)
         dataset_row = crud.get_dataset_row(result.experiment, msg.line_id)
         score = None

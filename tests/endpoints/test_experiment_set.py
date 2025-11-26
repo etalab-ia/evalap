@@ -87,6 +87,10 @@ class TestEndpointsExperimentSet(TestApi):
         log_and_assert(response, 200)
         expset_id = response.json()["id"]
 
+        # Stop expset
+        response = expsets.stop_experimentset(client, expset_id)
+        log_and_assert(response, 200)
+
         # Read first experiment set
         response = expsets.read_experimentset(client, expset_id)
         log_and_assert(response, 200)

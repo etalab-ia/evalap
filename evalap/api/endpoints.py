@@ -508,6 +508,30 @@ def delete_experimentset(
 
 
 @router.post(
+    "/stop/experiment_set/{id}",
+    description="Stop running experiments.",
+    tags=["experiment_set"],
+)
+def stop_runs(
+    id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    # complete function
+    experimentset = crud.get_experimentset(db, id)
+    if experimentset is None:
+        raise HTTPException(status_code=410, detail="ExperimentSet not found")
+
+    n_stopped = 0
+    for exp in experimentset.experiments:
+        if exp.experiment_status != "finished":
+            crud.update_experiment(db, exp.id, dict(experiment_status="finished"))
+            n_stopped += 1
+
+    return f"{n_stopped} experiments stopped"
+
+
+@router.post(
     "/retry/experiment_set/{id}",
     response_model=schemas.RetryRuns,
     description="Re-run failed runs and continue unfinished answers or metrics.",
@@ -532,6 +556,13 @@ def retry_runs(
 
     # Retry failed runs (answers and metrics)
     for exp in experimentset.experiments:
+        # Change stopped status to pending
+        if exp.experiment_status == "stopped":
+            crud.update_experiment(db, exp.id, dict(experiment_status="pending"))
+            for result in exp.results:
+                if result.metric_status == "stopped":
+                    crud.update_result(db, result.id, dict(metric_status="pending"))
+
         if exp.experiment_status != "finished" and not force:
             continue
 
