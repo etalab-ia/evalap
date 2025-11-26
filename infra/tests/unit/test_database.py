@@ -829,3 +829,131 @@ class TestDatabasePrivateNetworkIntegration:
         # Should not raise when use_private_network=True
         connection_string = db.get_connection_string(use_private_network=True)
         assert connection_string is not None
+
+
+class TestDatabaseEncryptionConfiguration:
+    """Tests for DatabaseInstance encryption at rest configuration."""
+
+    @pytest.fixture
+    def database_config_encrypted(self):
+        """Create a database configuration with encryption enabled."""
+        return DatabaseConfig(
+            engine="PostgreSQL-15",
+            volume_size=50,
+            enable_encryption_at_rest=True,
+            user_name="testuser",
+            database_name="testdb",
+        )
+
+    @pytest.fixture
+    def database_config_unencrypted(self):
+        """Create a database configuration with encryption disabled."""
+        return DatabaseConfig(
+            engine="PostgreSQL-15",
+            volume_size=50,
+            enable_encryption_at_rest=False,
+            user_name="testuser",
+            database_name="testdb",
+        )
+
+    def test_encryption_enabled_by_default(self):
+        """Test that encryption at rest is enabled by default."""
+        config = DatabaseConfig()
+        assert config.enable_encryption_at_rest is True
+
+    def test_encryption_can_be_disabled(self):
+        """Test that encryption at rest can be explicitly disabled."""
+        config = DatabaseConfig(enable_encryption_at_rest=False)
+        assert config.enable_encryption_at_rest is False
+
+    @patch("infra.components.database.scaleway.databases.Instance")
+    def test_create_instance_with_encryption_enabled(self, mock_instance_class, database_config_encrypted):
+        """Test that _create_instance passes encryption_at_rest=True."""
+        mock_instance = MagicMock()
+        mock_instance_class.return_value = mock_instance
+
+        db = DatabaseInstance(
+            name="test-database",
+            environment="dev",
+            config=database_config_encrypted,
+            project_id="test-project-123",
+        )
+
+        with patch("infra.components.database.pulumi.Config") as mock_config_class:
+            mock_config = MagicMock()
+            mock_config.require_secret.return_value = "test-password"
+            mock_config_class.return_value = mock_config
+
+            db._create_instance()
+
+        # Verify encryption_at_rest is passed to instance creation
+        mock_instance_class.assert_called_once()
+        call_kwargs = mock_instance_class.call_args[1]
+        assert call_kwargs["encryption_at_rest"] is True
+
+    @patch("infra.components.database.scaleway.databases.Instance")
+    def test_create_instance_with_encryption_disabled(self, mock_instance_class, database_config_unencrypted):
+        """Test that _create_instance passes encryption_at_rest=False."""
+        mock_instance = MagicMock()
+        mock_instance_class.return_value = mock_instance
+
+        db = DatabaseInstance(
+            name="test-database",
+            environment="dev",
+            config=database_config_unencrypted,
+            project_id="test-project-123",
+        )
+
+        with patch("infra.components.database.pulumi.Config") as mock_config_class:
+            mock_config = MagicMock()
+            mock_config.require_secret.return_value = "test-password"
+            mock_config_class.return_value = mock_config
+
+            db._create_instance()
+
+        # Verify encryption_at_rest is passed to instance creation
+        mock_instance_class.assert_called_once()
+        call_kwargs = mock_instance_class.call_args[1]
+        assert call_kwargs["encryption_at_rest"] is False
+
+    def test_get_outputs_includes_encryption_status(self, database_config_encrypted):
+        """Test that get_outputs includes encryption_at_rest_enabled."""
+        db = DatabaseInstance(
+            name="test-database",
+            environment="dev",
+            config=database_config_encrypted,
+            project_id="test-project-123",
+        )
+
+        # Mock instance
+        mock_instance = MagicMock()
+        mock_instance.id = "instance-123"
+        mock_instance.endpoint_ip = "1.2.3.4"
+        mock_instance.endpoint_port = 5432
+        db.instance = mock_instance
+
+        outputs = db.get_outputs()
+
+        assert "encryption_at_rest_enabled" in outputs
+        assert outputs["encryption_at_rest_enabled"] is True
+
+    def test_get_outputs_encryption_disabled(self, database_config_unencrypted):
+        """Test that get_outputs shows encryption disabled when configured."""
+        db = DatabaseInstance(
+            name="test-database",
+            environment="dev",
+            config=database_config_unencrypted,
+            project_id="test-project-123",
+        )
+
+        # Mock instance
+        mock_instance = MagicMock()
+        mock_instance.id = "instance-123"
+        mock_instance.endpoint_ip = "1.2.3.4"
+        mock_instance.endpoint_port = 5432
+        db.instance = mock_instance
+
+        outputs = db.get_outputs()
+
+        assert "encryption_at_rest_enabled" in outputs
+        assert outputs["encryption_at_rest_enabled"] is False

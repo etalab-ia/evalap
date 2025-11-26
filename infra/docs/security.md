@@ -406,6 +406,137 @@ validate_private_network_cidr("10.0.0.0/16")  # Returns True
 validate_private_network_cidr("8.8.8.0/24")   # Raises ValueError
 ```
 
+## Encryption Configuration
+
+EvalAP implements encryption for data at rest and in transit across all infrastructure components.
+
+### Encryption Overview
+
+| Service                   | Encryption at Rest                  | Encryption in Transit            |
+| ------------------------- | ----------------------------------- | -------------------------------- |
+| **Managed PostgreSQL**    | ✅ Enabled via `encryption_at_rest` | ✅ SSL/TLS (client-configurable) |
+| **Object Storage**        | ✅ SSE-C available (customer keys)  | ✅ HTTPS by default              |
+| **Serverless Containers** | N/A (stateless)                     | ✅ HTTPS endpoints               |
+| **Secret Manager**        | ✅ Encrypted by default             | ✅ HTTPS by default              |
+
+### Database Encryption at Rest
+
+Scaleway Managed PostgreSQL supports encryption at rest, which encrypts all data stored on disk using AES-256 encryption. This is enabled by default in EvalAP infrastructure.
+
+```python
+from infra.config.models import DatabaseConfig
+
+# Encryption at rest is enabled by default
+database_config = DatabaseConfig(
+    engine="PostgreSQL-15",
+    volume_size=20,
+    enable_encryption_at_rest=True,  # Default: True
+)
+```
+
+**Important Notes**:
+
+- Encryption at rest can only be enabled at instance creation time
+- Once enabled, it cannot be disabled without recreating the instance
+- There is a small performance overhead (~5-10%) for encrypted instances
+- Encryption keys are managed by Scaleway (no customer key management required)
+
+### Database Encryption in Transit (SSL/TLS)
+
+Scaleway Managed PostgreSQL supports SSL connections. To enforce SSL:
+
+1. **Client Configuration**: Configure your application's database connection to use SSL:
+
+```python
+# SQLAlchemy connection string with SSL
+DATABASE_URL = "postgresql://user:pass@host:port/db?sslmode=require"
+```
+
+2. **SSL Modes**:
+
+   - `disable`: No SSL (not recommended)
+   - `allow`: Try SSL, fall back to non-SSL
+   - `prefer`: Try SSL first (default)
+   - `require`: Require SSL connection
+   - `verify-ca`: Require SSL and verify server certificate
+   - `verify-full`: Require SSL, verify certificate and hostname
+
+3. **Download TLS Certificate** (for `verify-ca` or `verify-full`):
+   - Available from Scaleway Console → Database → Instance → TLS Certificate
+
+### Object Storage Encryption
+
+#### Server-Side Encryption with Customer Keys (SSE-C)
+
+Scaleway Object Storage supports SSE-C for encryption at rest with customer-provided keys:
+
+```python
+# SSE-C requires:
+# 1. 256-bit (32-byte) base64-encoded encryption key
+# 2. Base64-encoded MD5 digest of the key
+# 3. AES256 algorithm specification
+
+# Example using AWS CLI (S3-compatible):
+# aws s3 cp file.txt s3://bucket/file.txt \
+#   --sse-c AES256 \
+#   --sse-c-key <base64-key> \
+#   --sse-c-key-md5 <base64-md5>
+```
+
+**Note**: SSE-C requires managing encryption keys externally. For most use cases, the default HTTPS transport encryption is sufficient.
+
+#### Transport Encryption
+
+All Object Storage API calls use HTTPS by default:
+
+- Endpoint: `https://<bucket>.s3.<region>.scw.cloud`
+- All data in transit is encrypted via TLS 1.2+
+
+### Serverless Container Encryption
+
+Serverless Containers are stateless and do not store persistent data. Security is provided through:
+
+1. **HTTPS Endpoints**: All container endpoints use HTTPS by default
+2. **Secret Environment Variables**: Sensitive data injected via Secret Manager (encrypted)
+3. **Private Networks**: Optional network isolation for inter-service communication
+
+### Secret Manager Encryption
+
+Scaleway Secret Manager provides:
+
+1. **Encryption at Rest**: All secrets encrypted using Scaleway-managed keys
+2. **Encryption in Transit**: HTTPS-only API access
+3. **Immutable Versioning**: Each secret update creates a new encrypted version
+4. **Access Control**: IAM policies control who can read/write secrets
+
+### Recommended Encryption Settings by Environment
+
+| Setting                     | Development | Staging     | Production    |
+| --------------------------- | ----------- | ----------- | ------------- |
+| Database encryption at rest | Optional    | Recommended | **Required**  |
+| Database SSL mode           | `prefer`    | `require`   | `verify-full` |
+| Object Storage SSE-C        | Optional    | Optional    | Recommended   |
+| Private Network             | Optional    | Recommended | **Required**  |
+
+### Enabling Encryption in Infrastructure Code
+
+```python
+from infra.config.models import DatabaseConfig, NetworkConfig
+
+# Production-ready configuration with encryption
+database_config = DatabaseConfig(
+    engine="PostgreSQL-15",
+    volume_size=50,
+    enable_encryption_at_rest=True,  # Encrypt data at rest
+    enable_high_availability=True,   # HA for production
+)
+
+network_config = NetworkConfig(
+    enable_private_network=True,     # Network isolation
+    cidr_block="10.0.0.0/16",
+)
+```
+
 ## Security Best Practices
 
 ### 1. Never Hardcode Secrets

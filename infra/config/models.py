@@ -64,6 +64,10 @@ class DatabaseConfig(BaseModel):
     )
     enable_backups: bool = Field(default=True, description="Enable automated backups")
     enable_high_availability: bool = Field(default=False, description="Enable high availability mode")
+    enable_encryption_at_rest: bool = Field(
+        default=True,
+        description="Enable encryption at rest for database storage (recommended for production)",
+    )
     user_name: str = Field(default="postgres", description="Database admin username")
     database_name: str = Field(default="evalap", description="Default database name")
 

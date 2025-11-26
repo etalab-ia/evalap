@@ -127,6 +127,7 @@ class DatabaseInstance(BaseComponent):
             engine=self.config.engine,
             node_type="DB-DEV-S",  # Development instance type
             is_ha_cluster=self.config.enable_high_availability,
+            encryption_at_rest=self.config.enable_encryption_at_rest,
             user_name=self.config.user_name,
             password=password,
             project_id=self.project_id,
@@ -236,6 +237,7 @@ class DatabaseInstance(BaseComponent):
             "engine": self.config.engine,
             "volume_size_gb": self.config.volume_size,
             "backup_retention_days": self.config.backup_retention_days,
+            "encryption_at_rest_enabled": self.config.enable_encryption_at_rest,
             "private_network_enabled": self.private_network is not None and self.private_network.is_enabled(),
         }
 
