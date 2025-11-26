@@ -145,7 +145,7 @@
 - [x] T062 [US3] Integrate PrivateNetwork with ServerlessContainer for network isolation
 - [x] T063 [US3] Integrate PrivateNetwork with DatabaseInstance for database access restriction
 - [x] T064 [US3] Implement IAM policy validation in `infra/utils/validation.py` to enforce least privilege principle
-- [ ] T065 [US3] Create security configuration documentation in `infra/docs/security.md` with IAM, secret, and network setup
+- [x] T065 [US3] Create security configuration documentation in `infra/docs/security.md` with IAM, secret, and network setup
 - [ ] T066 [US3] Add encryption configuration for data at rest and in transit in infrastructure components
 - [ ] T067 [US3] Implement audit logging for all infrastructure changes in `infra/utils/pulumi_helpers.py`
 
