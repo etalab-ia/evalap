@@ -524,7 +524,7 @@ def stop_runs(
 
     n_stopped = 0
     for exp in experimentset.experiments:
-        if exp.experiment_status != ["finished"]:
+        if exp.experiment_status != "finished":
             exp.experiment_status = "stopped"
             n_stopped += 1
             for result in exp.results:
