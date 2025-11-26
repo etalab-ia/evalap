@@ -1,7 +1,9 @@
 """Database Instance component for Scaleway Managed PostgreSQL."""
 
+from __future__ import annotations
+
 import logging
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional, Union
 
 import pulumi
 import pulumiverse_scaleway as scaleway
@@ -9,6 +11,9 @@ import pulumiverse_scaleway as scaleway
 from infra.components import BaseComponent
 from infra.config.models import DatabaseConfig
 from infra.utils import pulumi_helpers, scaleway_helpers, validation
+
+if TYPE_CHECKING:
+    from infra.components.secret_manager import SecretManager
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +34,8 @@ class DatabaseInstance(BaseComponent):
         region: str = "fr-par",
         tags: Optional[dict[str, str]] = None,
         opts: Optional[pulumi.ResourceOptions] = None,
+        secret_manager: Optional[SecretManager] = None,
+        password_secret_name: Optional[str] = None,
     ):
         """
         Initialize DatabaseInstance component.
@@ -41,11 +48,24 @@ class DatabaseInstance(BaseComponent):
             region: Scaleway region (default: fr-par)
             tags: Optional tags for resources
             opts: Optional Pulumi resource options
+            secret_manager: Optional SecretManager instance for credential management.
+                When provided, the database password will be retrieved from the secret
+                manager instead of Pulumi config.
+            password_secret_name: Name of the secret containing the database password.
+                Required when secret_manager is provided.
         """
         super().__init__(name, environment, tags, opts)
         self.config = config
         self.project_id = project_id
         self.region = region
+        self.secret_manager = secret_manager
+        self.password_secret_name = password_secret_name
+
+        # Validate secret manager configuration
+        if secret_manager is not None and password_secret_name is None:
+            raise ValueError("password_secret_name is required when secret_manager is provided")
+        if password_secret_name is not None and secret_manager is None:
+            raise ValueError("secret_manager is required when password_secret_name is provided")
 
         # Validate configuration
         validation.validate_database_config(config.volume_size, config.backup_retention_days)
@@ -84,6 +104,9 @@ class DatabaseInstance(BaseComponent):
 
         logger.debug(f"Creating RDB instance: {instance_name}")
 
+        # Get password from secret manager or Pulumi config
+        password = self._get_password()
+
         self.instance = scaleway.databases.Instance(
             f"{self.name}-instance",
             name=instance_name,
@@ -91,11 +114,29 @@ class DatabaseInstance(BaseComponent):
             node_type="DB-DEV-S",  # Development instance type
             is_ha_cluster=self.config.enable_high_availability,
             user_name=self.config.user_name,
-            password=pulumi.Config().require_secret("db_password"),
+            password=password,
             project_id=self.project_id,
             region=self.region,
             opts=self.opts,
         )
+
+    def _get_password(self) -> Union[str, pulumi.Output[str]]:
+        """
+        Get database password from secret manager or Pulumi config.
+
+        Returns:
+            Password string or Pulumi Output containing the password.
+
+        Priority:
+            1. Secret Manager (if configured)
+            2. Pulumi Config (fallback)
+        """
+        if self.secret_manager is not None and self.password_secret_name is not None:
+            logger.debug(f"Using password from SecretManager secret: {self.password_secret_name}")
+            return self.secret_manager.get_secret_data(self.password_secret_name)
+
+        logger.debug("Using password from Pulumi config")
+        return pulumi.Config().require_secret("db_password")
 
     def _create_database(self) -> None:
         """Create default database."""

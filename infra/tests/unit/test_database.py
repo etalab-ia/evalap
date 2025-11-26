@@ -6,7 +6,8 @@ import pytest
 from pydantic import ValidationError
 
 from infra.components.database import DatabaseInstance
-from infra.config.models import DatabaseConfig
+from infra.components.secret_manager import SecretManager
+from infra.config.models import DatabaseConfig, SecretConfig
 
 
 class TestDatabaseInstance:
@@ -385,3 +386,150 @@ class TestDatabaseInstance:
             instance_args = mock_instance_class.call_args[1]
             assert instance_args["node_type"] == "DB-DEV-S"
             assert instance_args["engine"] == "PostgreSQL-15"
+
+
+class TestDatabaseSecretManagerIntegration:
+    """Tests for DatabaseInstance integration with SecretManager."""
+
+    @pytest.fixture
+    def secret_configs(self):
+        """Create secret configurations including database password."""
+        return [
+            SecretConfig(
+                name="db-password",
+                description="Database password",
+                data="secret-from-manager",
+                path="/database",
+            ),
+        ]
+
+    @pytest.fixture
+    def secret_manager(self, secret_configs):
+        """Create a SecretManager instance for testing."""
+        return SecretManager(
+            name="test-secrets",
+            environment="dev",
+            configs=secret_configs,
+            project_id="test-project-123",
+            region="fr-par",
+        )
+
+    @pytest.fixture
+    def database_config(self):
+        """Create a valid database configuration for testing."""
+        return DatabaseConfig(
+            engine="PostgreSQL-15",
+            volume_size=50,
+            backup_retention_days=14,
+            user_name="testuser",
+            database_name="testdb",
+        )
+
+    def test_database_with_secret_manager_initialization(self, database_config, secret_manager):
+        """Test DatabaseInstance initializes correctly with SecretManager."""
+        db = DatabaseInstance(
+            name="test-database",
+            environment="dev",
+            config=database_config,
+            project_id="test-project-123",
+            secret_manager=secret_manager,
+            password_secret_name="db-password",
+        )
+
+        assert db.secret_manager is secret_manager
+        assert db.password_secret_name == "db-password"
+
+    def test_database_secret_manager_without_secret_name_raises(self, database_config, secret_manager):
+        """Test that providing secret_manager without password_secret_name raises error."""
+        with pytest.raises(ValueError, match="password_secret_name is required"):
+            DatabaseInstance(
+                name="test-database",
+                environment="dev",
+                config=database_config,
+                project_id="test-project-123",
+                secret_manager=secret_manager,
+                # Missing password_secret_name
+            )
+
+    def test_database_secret_name_without_manager_raises(self, database_config):
+        """Test that providing password_secret_name without secret_manager raises error."""
+        with pytest.raises(ValueError, match="secret_manager is required"):
+            DatabaseInstance(
+                name="test-database",
+                environment="dev",
+                config=database_config,
+                project_id="test-project-123",
+                password_secret_name="db-password",
+                # Missing secret_manager
+            )
+
+    def test_get_password_from_secret_manager(self, database_config, secret_manager):
+        """Test _get_password retrieves password from SecretManager."""
+        db = DatabaseInstance(
+            name="test-database",
+            environment="dev",
+            config=database_config,
+            project_id="test-project-123",
+            secret_manager=secret_manager,
+            password_secret_name="db-password",
+        )
+
+        password = db._get_password()
+        assert password == "secret-from-manager"
+
+    def test_get_password_from_pulumi_config(self, database_config):
+        """Test _get_password falls back to Pulumi config when no SecretManager."""
+        db = DatabaseInstance(
+            name="test-database",
+            environment="dev",
+            config=database_config,
+            project_id="test-project-123",
+        )
+
+        with patch("infra.components.database.pulumi.Config") as mock_config_class:
+            mock_config = MagicMock()
+            mock_config.require_secret.return_value = "pulumi-config-password"
+            mock_config_class.return_value = mock_config
+
+            password = db._get_password()
+
+            assert password == "pulumi-config-password"
+            mock_config.require_secret.assert_called_once_with("db_password")
+
+    @patch("infra.components.database.scaleway.databases.Instance")
+    def test_create_instance_uses_secret_manager_password(
+        self, mock_instance_class, database_config, secret_manager
+    ):
+        """Test that _create_instance uses password from SecretManager."""
+        mock_instance = MagicMock()
+        mock_instance_class.return_value = mock_instance
+
+        db = DatabaseInstance(
+            name="test-database",
+            environment="dev",
+            config=database_config,
+            project_id="test-project-123",
+            secret_manager=secret_manager,
+            password_secret_name="db-password",
+        )
+
+        db._create_instance()
+
+        # Verify instance was created with password from SecretManager
+        mock_instance_class.assert_called_once()
+        call_kwargs = mock_instance_class.call_args[1]
+        assert call_kwargs["password"] == "secret-from-manager"
+
+    def test_get_password_invalid_secret_name_raises(self, database_config, secret_manager):
+        """Test _get_password raises KeyError for invalid secret name."""
+        db = DatabaseInstance(
+            name="test-database",
+            environment="dev",
+            config=database_config,
+            project_id="test-project-123",
+            secret_manager=secret_manager,
+            password_secret_name="nonexistent-secret",
+        )
+
+        with pytest.raises(KeyError, match="nonexistent-secret"):
+            db._get_password()

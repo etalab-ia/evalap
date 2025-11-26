@@ -448,3 +448,20 @@ class TestSecretManagerContainerIntegration:
         """Test _get_config_by_name returns None when not found."""
         config = secret_manager._get_config_by_name("nonexistent")
         assert config is None
+
+    def test_get_secret_data_success(self, secret_manager):
+        """Test get_secret_data returns correct secret value."""
+        data = secret_manager.get_secret_data("db-password")
+        assert data == "super-secret-password"
+
+    def test_get_secret_data_different_secret(self, secret_manager):
+        """Test get_secret_data works for different secrets."""
+        data = secret_manager.get_secret_data("api-key")
+        assert data == "api-key-12345"
+
+    def test_get_secret_data_not_found(self, secret_manager):
+        """Test get_secret_data raises KeyError for unknown secret."""
+        with pytest.raises(KeyError) as exc_info:
+            secret_manager.get_secret_data("nonexistent-secret")
+        assert "nonexistent-secret" in str(exc_info.value)
+        assert "not found in configs" in str(exc_info.value)

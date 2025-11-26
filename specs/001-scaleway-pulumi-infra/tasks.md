@@ -141,7 +141,7 @@
 - [x] T058 [P] [US3] Create IAM policy component in `infra/components/iam_policy.py` for service-specific role definitions with least privilege
 - [x] T059 [P] [US3] Create PrivateNetwork component in `infra/components/private_network.py` for service isolation with subnet configuration
 - [x] T060 [US3] Integrate Secret Manager with ServerlessContainer component for environment variable injection
-- [ ] T061 [US3] Integrate Secret Manager with DatabaseInstance component for credential management
+- [x] T061 [US3] Integrate Secret Manager with DatabaseInstance component for credential management
 - [ ] T062 [US3] Integrate PrivateNetwork with ServerlessContainer for network isolation
 - [ ] T063 [US3] Integrate PrivateNetwork with DatabaseInstance for database access restriction
 - [x] T064 [US3] Implement IAM policy validation in `infra/utils/validation.py` to enforce least privilege principle

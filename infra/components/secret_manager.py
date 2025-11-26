@@ -189,6 +189,29 @@ class SecretManager(BaseComponent):
             )
         return self.versions[secret_name].id
 
+    def get_secret_data(self, secret_name: str) -> str:
+        """
+        Get the raw data/value for a specific secret.
+
+        This method retrieves the secret data from the SecretConfig.
+        Use this when you need the actual secret value (e.g., for database passwords).
+
+        Args:
+            secret_name: Name of the secret (as defined in SecretConfig)
+
+        Returns:
+            str: The secret data/value
+
+        Raises:
+            KeyError: If secret name not found in configs
+        """
+        config = self._get_config_by_name(secret_name)
+        if config is None:
+            raise KeyError(
+                f"Secret '{secret_name}' not found in configs. Available: {[c.name for c in self.configs]}"
+            )
+        return config.data
+
     def get_secret_for_container(self, secret_name: str, env_var_name: str) -> dict[str, pulumi.Output]:
         """
         Get secret reference formatted for serverless container environment variables.
