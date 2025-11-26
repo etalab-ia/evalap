@@ -265,6 +265,10 @@ def update_experiment(
         if key == "experiment_status" and value == schemas.ExperimentStatus.finished:
             for result in db_exp.results:
                 result.metric_status = schemas.MetricStatus.finished
+        # If experiment_status is set to stopped, update all result status too.
+        if key == "experiment_status" and value == schemas.ExperimentStatus.stopped:
+            for result in db_exp.results:
+                result.metric_status = schemas.MetricStatus.stopped
     db.commit()
     db.refresh(db_exp)
     return db_exp
