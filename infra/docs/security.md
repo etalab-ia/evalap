@@ -850,6 +850,28 @@ Audit logs can be forwarded to Scaleway Cockpit for centralized monitoring:
 | Staging     | 30 days          | Scaleway Object Storage |
 | Production  | 90 days          | Scaleway Object Storage |
 
+### Future: Scaleway Audit Trail Integration
+
+Scaleway offers [Audit Trail](https://www.scaleway.com/en/docs/audit-trail/) (beta) which provides automatic API-level logging for some Scaleway products.
+
+**Currently supported products relevant to EvalAP:**
+
+- IAM (policy, user, API key, and group changes)
+- Secret Manager (secret and version operations)
+
+**Not yet supported (as of November 2025):**
+
+- Serverless Containers
+- Managed PostgreSQL
+- Object Storage
+- Private Networks/VPC
+
+**Recommendation**: When Serverless Containers and Managed PostgreSQL are added to Audit Trail, consider enabling it as a **complement** to application-level audit logging for defense-in-depth observability. The current `AuditLogger` implementation in `infra/utils/pulumi_helpers.py` should be retained because:
+
+1. It captures Pulumi deployment orchestration (preview, up, destroy phases)
+2. It provides custom context (duration tracking, deployment phases, configuration details)
+3. It logs all infrastructure operations regardless of Scaleway API integration status
+
 ## Related Documentation
 
 - [State Management](./state_management.md) - Pulumi state backend configuration
