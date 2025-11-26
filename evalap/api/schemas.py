@@ -62,12 +62,14 @@ class ExperimentStatus(str, Enum):
     running_answers = "running_answers"
     running_metrics = "running_metrics"
     finished = "finished"
+    stopped = "stopped"
 
 
 class MetricStatus(str, Enum):
     pending = "pending"
     running = "running"
     finished = "finished"
+    stopped = "stopped"
 
 
 #
