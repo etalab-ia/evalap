@@ -143,7 +143,7 @@
 - [x] T060 [US3] Integrate Secret Manager with ServerlessContainer component for environment variable injection
 - [x] T061 [US3] Integrate Secret Manager with DatabaseInstance component for credential management
 - [x] T062 [US3] Integrate PrivateNetwork with ServerlessContainer for network isolation
-- [ ] T063 [US3] Integrate PrivateNetwork with DatabaseInstance for database access restriction
+- [x] T063 [US3] Integrate PrivateNetwork with DatabaseInstance for database access restriction
 - [x] T064 [US3] Implement IAM policy validation in `infra/utils/validation.py` to enforce least privilege principle
 - [ ] T065 [US3] Create security configuration documentation in `infra/docs/security.md` with IAM, secret, and network setup
 - [ ] T066 [US3] Add encryption configuration for data at rest and in transit in infrastructure components

@@ -87,21 +87,16 @@ class TestDatabaseInstance:
                 project_id="test-project-123",
             )
 
-    @patch("infra.components.database.scaleway.DatabaseInstance")
-    @patch("infra.components.database.scaleway.Database")
-    @patch("infra.components.database.scaleway.DatabaseUser")
+    @patch("infra.components.database.scaleway.databases.Instance")
+    @patch("infra.components.database.scaleway.databases.Database")
     @patch("infra.components.database.pulumi_helpers.log_resource_creation")
-    def test_create_success(
-        self, mock_log, mock_user_class, mock_database_class, mock_instance_class, database_instance
-    ):
+    def test_create_success(self, mock_log, mock_database_class, mock_instance_class, database_instance):
         """Test successful creation of database infrastructure."""
-        # Mock the instance, database, and user objects
+        # Mock the instance and database objects
         mock_instance = MagicMock()
         mock_database = MagicMock()
-        mock_user = MagicMock()
         mock_instance_class.return_value = mock_instance
         mock_database_class.return_value = mock_database
-        mock_user_class.return_value = mock_user
 
         # Mock the config secret
         with patch("infra.components.database.pulumi.Config") as mock_config_class:
@@ -137,13 +132,7 @@ class TestDatabaseInstance:
         database_args = mock_database_class.call_args[1]
         assert database_args["name"] == "testdb"
 
-        # Verify user was created
-        mock_user_class.assert_called_once()
-        user_args = mock_user_class.call_args[1]
-        assert user_args["name"] == "testuser"
-        assert user_args["is_admin"] is True
-
-    @patch("infra.components.database.scaleway.DatabaseInstance")
+    @patch("infra.components.database.scaleway.databases.Instance")
     @patch("infra.components.database.pulumi_helpers.handle_error")
     def test_create_error_handling(self, mock_handle_error, mock_instance_class, database_instance):
         """Test error handling during database creation."""
@@ -161,11 +150,16 @@ class TestDatabaseInstance:
 
     def test_create_instance(self, database_instance):
         """Test instance creation method."""
-        with patch("infra.components.database.scaleway.DatabaseInstance") as mock_instance_class:
+        with patch("infra.components.database.scaleway.databases.Instance") as mock_instance_class:
             mock_instance = MagicMock()
             mock_instance_class.return_value = mock_instance
 
-            database_instance._create_instance()
+            with patch("infra.components.database.pulumi.Config") as mock_config_class:
+                mock_config = MagicMock()
+                mock_config.require_secret.return_value = "test-password"
+                mock_config_class.return_value = mock_config
+
+                database_instance._create_instance()
 
             # Verify instance creation with correct parameters
             mock_instance_class.assert_called_once()
@@ -177,18 +171,23 @@ class TestDatabaseInstance:
             assert call_args[1]["is_ha_cluster"] is False
             assert call_args[1]["project_id"] == "test-project-123"
             assert call_args[1]["region"] == "fr-par"
-            assert isinstance(call_args[1]["tags"], dict)
+            assert call_args[1]["private_network"] is None
             assert call_args[1]["opts"] == database_instance.opts
 
     def test_create_instance_with_high_availability(self, database_instance):
         """Test instance creation with high availability enabled."""
         database_instance.config.enable_high_availability = True
 
-        with patch("infra.components.database.scaleway.DatabaseInstance") as mock_instance_class:
+        with patch("infra.components.database.scaleway.databases.Instance") as mock_instance_class:
             mock_instance = MagicMock()
             mock_instance_class.return_value = mock_instance
 
-            database_instance._create_instance()
+            with patch("infra.components.database.pulumi.Config") as mock_config_class:
+                mock_config = MagicMock()
+                mock_config.require_secret.return_value = "test-password"
+                mock_config_class.return_value = mock_config
+
+                database_instance._create_instance()
 
             # Verify HA is enabled
             instance_args = mock_instance_class.call_args[1]
@@ -207,7 +206,7 @@ class TestDatabaseInstance:
         mock_instance.id = "test-instance-id"
         database_instance.instance = mock_instance
 
-        with patch("infra.components.database.scaleway.Database") as mock_database_class:
+        with patch("infra.components.database.scaleway.databases.Database") as mock_database_class:
             mock_database = MagicMock()
             mock_database_class.return_value = mock_database
 
@@ -218,40 +217,6 @@ class TestDatabaseInstance:
                 "test-database-database",
                 instance_id="test-instance-id",
                 name="testdb",
-                opts=database_instance.opts,
-            )
-
-    def test_create_user_without_instance(self, database_instance):
-        """Test that user creation fails without instance."""
-        with pytest.raises(ValueError, match="Instance must be created before user"):
-            database_instance._create_user()
-
-    def test_create_user_success(self, database_instance):
-        """Test successful user creation."""
-        # Mock instance
-        mock_instance = MagicMock()
-        mock_instance.id = "test-instance-id"
-        database_instance.instance = mock_instance
-
-        with patch("infra.components.database.scaleway.DatabaseUser") as mock_user_class:
-            mock_user = MagicMock()
-            mock_user_class.return_value = mock_user
-
-            # Mock config
-            with patch("infra.components.database.pulumi.Config") as mock_config_class:
-                mock_config = MagicMock()
-                mock_config.require_secret.return_value = "secret-password"
-                mock_config_class.return_value = mock_config
-
-                database_instance._create_user()
-
-            # Verify user creation with correct parameters
-            mock_user_class.assert_called_once_with(
-                "test-database-user",
-                instance_id="test-instance-id",
-                name="testuser",
-                password="secret-password",
-                is_admin=True,
                 opts=database_instance.opts,
             )
 
@@ -273,12 +238,12 @@ class TestDatabaseInstance:
 
         # Check that outputs contain expected keys and values
         assert outputs["instance_id"] == "test-instance-id"
-        assert outputs["host"] == "192.168.1.100"
-        assert outputs["port"] == 5432
+        assert outputs["endpoint_ip"] == "192.168.1.100"
+        assert outputs["endpoint_port"] == 5432
         assert outputs["database_name"] == "testdb"
         assert outputs["username"] == "testuser"
         assert outputs["engine"] == "PostgreSQL-15"
-        assert "endpoint" in outputs  # pulumi.Output.concat result
+        assert outputs["private_network_enabled"] is False
 
     def test_get_connection_string_not_created(self, database_instance):
         """Test get_connection_string raises error when instance not created."""
@@ -312,34 +277,6 @@ class TestDatabaseInstance:
         instance_id = database_instance.get_instance_id()
         assert instance_id == "test-instance-id"
 
-    def test_get_host_not_created(self, database_instance):
-        """Test get_host raises error when instance not created."""
-        with pytest.raises(ValueError, match="Instance not created yet"):
-            database_instance.get_host()
-
-    def test_get_host_success(self, database_instance):
-        """Test get_host returns instance host."""
-        mock_instance = MagicMock()
-        mock_instance.endpoint_ip = "192.168.1.100"
-        database_instance.instance = mock_instance
-
-        host = database_instance.get_host()
-        assert host == "192.168.1.100"
-
-    def test_get_port_not_created(self, database_instance):
-        """Test get_port raises error when instance not created."""
-        with pytest.raises(ValueError, match="Instance not created yet"):
-            database_instance.get_port()
-
-    def test_get_port_success(self, database_instance):
-        """Test get_port returns instance port."""
-        mock_instance = MagicMock()
-        mock_instance.endpoint_port = 5432
-        database_instance.instance = mock_instance
-
-        port = database_instance.get_port()
-        assert port == 5432
-
     def test_repr(self, database_instance):
         """Test string representation of DatabaseInstance."""
         expected = "DatabaseInstance(name=test-database, environment=dev)"
@@ -355,11 +292,16 @@ class TestDatabaseInstance:
             project_id="test-project-123",
         )
 
-        with patch("infra.components.database.scaleway.DatabaseInstance") as mock_instance_class:
+        with patch("infra.components.database.scaleway.databases.Instance") as mock_instance_class:
             mock_instance = MagicMock()
             mock_instance_class.return_value = mock_instance
 
-            db._create_instance()
+            with patch("infra.components.database.pulumi.Config") as mock_config_class:
+                mock_config = MagicMock()
+                mock_config.require_secret.return_value = "test-password"
+                mock_config_class.return_value = mock_config
+
+                db._create_instance()
 
             # Verify engine is set correctly
             instance_args = mock_instance_class.call_args[1]
@@ -376,11 +318,16 @@ class TestDatabaseInstance:
             project_id="test-project-123",
         )
 
-        with patch("infra.components.database.scaleway.DatabaseInstance") as mock_instance_class:
+        with patch("infra.components.database.scaleway.databases.Instance") as mock_instance_class:
             mock_instance = MagicMock()
             mock_instance_class.return_value = mock_instance
 
-            db._create_instance()
+            with patch("infra.components.database.pulumi.Config") as mock_config_class:
+                mock_config = MagicMock()
+                mock_config.require_secret.return_value = "test-password"
+                mock_config_class.return_value = mock_config
+
+                db._create_instance()
 
             # Verify instance was created with correct node type
             instance_args = mock_instance_class.call_args[1]
@@ -533,3 +480,352 @@ class TestDatabaseSecretManagerIntegration:
 
         with pytest.raises(KeyError, match="nonexistent-secret"):
             db._get_password()
+
+
+class TestDatabasePrivateNetworkIntegration:
+    """Tests for DatabaseInstance integration with PrivateNetwork."""
+
+    @pytest.fixture
+    def database_config(self):
+        """Create a valid database configuration for testing."""
+        return DatabaseConfig(
+            engine="PostgreSQL-15",
+            volume_size=50,
+            backup_retention_days=14,
+            user_name="testuser",
+            database_name="testdb",
+        )
+
+    @pytest.fixture
+    def mock_private_network(self):
+        """Create a mock PrivateNetwork instance."""
+        pn = MagicMock()
+        pn.name = "test-private-network"
+        pn.is_enabled.return_value = True
+        pn.get_private_network_id.return_value = "pn-12345"
+        return pn
+
+    @pytest.fixture
+    def mock_disabled_private_network(self):
+        """Create a mock disabled PrivateNetwork instance."""
+        pn = MagicMock()
+        pn.name = "disabled-private-network"
+        pn.is_enabled.return_value = False
+        return pn
+
+    def test_database_with_private_network_initialization(self, database_config, mock_private_network):
+        """Test DatabaseInstance initializes correctly with PrivateNetwork."""
+        db = DatabaseInstance(
+            name="test-database",
+            environment="dev",
+            config=database_config,
+            project_id="test-project-123",
+            private_network=mock_private_network,
+        )
+
+        assert db.private_network is mock_private_network
+        assert db.private_network_ip is None
+
+    def test_database_with_private_network_and_static_ip(self, database_config, mock_private_network):
+        """Test DatabaseInstance initializes with private network and static IP."""
+        db = DatabaseInstance(
+            name="test-database",
+            environment="dev",
+            config=database_config,
+            project_id="test-project-123",
+            private_network=mock_private_network,
+            private_network_ip="172.16.20.4/22",
+        )
+
+        assert db.private_network is mock_private_network
+        assert db.private_network_ip == "172.16.20.4/22"
+
+    def test_build_private_network_config_none_when_no_network(self, database_config):
+        """Test _build_private_network_config returns None when no private network."""
+        db = DatabaseInstance(
+            name="test-database",
+            environment="dev",
+            config=database_config,
+            project_id="test-project-123",
+        )
+
+        config = db._build_private_network_config()
+        assert config is None
+
+    def test_build_private_network_config_none_when_disabled(
+        self, database_config, mock_disabled_private_network
+    ):
+        """Test _build_private_network_config returns None when network is disabled."""
+        db = DatabaseInstance(
+            name="test-database",
+            environment="dev",
+            config=database_config,
+            project_id="test-project-123",
+            private_network=mock_disabled_private_network,
+        )
+
+        config = db._build_private_network_config()
+        assert config is None
+
+    @patch("infra.components.database.scaleway.databases.InstancePrivateNetworkArgs")
+    def test_build_private_network_config_with_ipam(
+        self, mock_pn_args_class, database_config, mock_private_network
+    ):
+        """Test _build_private_network_config with IPAM mode (no static IP)."""
+        mock_pn_args = MagicMock()
+        mock_pn_args_class.return_value = mock_pn_args
+
+        db = DatabaseInstance(
+            name="test-database",
+            environment="dev",
+            config=database_config,
+            project_id="test-project-123",
+            private_network=mock_private_network,
+        )
+
+        config = db._build_private_network_config()
+
+        mock_pn_args_class.assert_called_once_with(
+            pn_id="pn-12345",
+            enable_ipam=True,
+        )
+        assert config is mock_pn_args
+
+    @patch("infra.components.database.scaleway.databases.InstancePrivateNetworkArgs")
+    def test_build_private_network_config_with_static_ip(
+        self, mock_pn_args_class, database_config, mock_private_network
+    ):
+        """Test _build_private_network_config with static IP mode."""
+        mock_pn_args = MagicMock()
+        mock_pn_args_class.return_value = mock_pn_args
+
+        db = DatabaseInstance(
+            name="test-database",
+            environment="dev",
+            config=database_config,
+            project_id="test-project-123",
+            private_network=mock_private_network,
+            private_network_ip="172.16.20.4/22",
+        )
+
+        config = db._build_private_network_config()
+
+        mock_pn_args_class.assert_called_once_with(
+            pn_id="pn-12345",
+            ip_net="172.16.20.4/22",
+        )
+        assert config is mock_pn_args
+
+    @patch("infra.components.database.scaleway.databases.Instance")
+    def test_create_instance_with_private_network(
+        self, mock_instance_class, database_config, mock_private_network
+    ):
+        """Test _create_instance includes private network configuration."""
+        mock_instance = MagicMock()
+        mock_instance_class.return_value = mock_instance
+
+        db = DatabaseInstance(
+            name="test-database",
+            environment="dev",
+            config=database_config,
+            project_id="test-project-123",
+            private_network=mock_private_network,
+        )
+
+        with patch("infra.components.database.pulumi.Config") as mock_config_class:
+            mock_config = MagicMock()
+            mock_config.require_secret.return_value = "test-password"
+            mock_config_class.return_value = mock_config
+
+            db._create_instance()
+
+        # Verify instance was created with private_network parameter
+        mock_instance_class.assert_called_once()
+        call_kwargs = mock_instance_class.call_args[1]
+        assert "private_network" in call_kwargs
+        assert call_kwargs["private_network"] is not None
+
+    @patch("infra.components.database.scaleway.databases.Instance")
+    def test_create_instance_without_private_network(self, mock_instance_class, database_config):
+        """Test _create_instance without private network configuration."""
+        mock_instance = MagicMock()
+        mock_instance_class.return_value = mock_instance
+
+        db = DatabaseInstance(
+            name="test-database",
+            environment="dev",
+            config=database_config,
+            project_id="test-project-123",
+        )
+
+        with patch("infra.components.database.pulumi.Config") as mock_config_class:
+            mock_config = MagicMock()
+            mock_config.require_secret.return_value = "test-password"
+            mock_config_class.return_value = mock_config
+
+            db._create_instance()
+
+        # Verify instance was created with private_network=None
+        mock_instance_class.assert_called_once()
+        call_kwargs = mock_instance_class.call_args[1]
+        assert call_kwargs["private_network"] is None
+
+    def test_is_private_network_enabled_true(self, database_config, mock_private_network):
+        """Test is_private_network_enabled returns True when configured."""
+        db = DatabaseInstance(
+            name="test-database",
+            environment="dev",
+            config=database_config,
+            project_id="test-project-123",
+            private_network=mock_private_network,
+        )
+
+        assert db.is_private_network_enabled() is True
+
+    def test_is_private_network_enabled_false_no_network(self, database_config):
+        """Test is_private_network_enabled returns False when not configured."""
+        db = DatabaseInstance(
+            name="test-database",
+            environment="dev",
+            config=database_config,
+            project_id="test-project-123",
+        )
+
+        assert db.is_private_network_enabled() is False
+
+    def test_is_private_network_enabled_false_disabled(self, database_config, mock_disabled_private_network):
+        """Test is_private_network_enabled returns False when network is disabled."""
+        db = DatabaseInstance(
+            name="test-database",
+            environment="dev",
+            config=database_config,
+            project_id="test-project-123",
+            private_network=mock_disabled_private_network,
+        )
+
+        assert db.is_private_network_enabled() is False
+
+    def test_get_private_network_connection_string_not_created(self, database_config, mock_private_network):
+        """Test get_private_network_connection_string raises error when instance not created."""
+        db = DatabaseInstance(
+            name="test-database",
+            environment="dev",
+            config=database_config,
+            project_id="test-project-123",
+            private_network=mock_private_network,
+        )
+
+        with pytest.raises(ValueError, match="Instance not created yet"):
+            db.get_private_network_connection_string()
+
+    def test_get_private_network_connection_string_no_network(self, database_config):
+        """Test get_private_network_connection_string raises error when no private network."""
+        db = DatabaseInstance(
+            name="test-database",
+            environment="dev",
+            config=database_config,
+            project_id="test-project-123",
+        )
+
+        # Mock instance as created
+        db.instance = MagicMock()
+
+        with pytest.raises(ValueError, match="Private network not configured"):
+            db.get_private_network_connection_string()
+
+    def test_get_private_network_host_not_created(self, database_config, mock_private_network):
+        """Test get_private_network_host raises error when instance not created."""
+        db = DatabaseInstance(
+            name="test-database",
+            environment="dev",
+            config=database_config,
+            project_id="test-project-123",
+            private_network=mock_private_network,
+        )
+
+        with pytest.raises(ValueError, match="Instance not created yet"):
+            db.get_private_network_host()
+
+    def test_get_private_network_port_not_created(self, database_config, mock_private_network):
+        """Test get_private_network_port raises error when instance not created."""
+        db = DatabaseInstance(
+            name="test-database",
+            environment="dev",
+            config=database_config,
+            project_id="test-project-123",
+            private_network=mock_private_network,
+        )
+
+        with pytest.raises(ValueError, match="Instance not created yet"):
+            db.get_private_network_port()
+
+    def test_get_outputs_includes_private_network_info(self, database_config, mock_private_network):
+        """Test get_outputs includes private network information when configured."""
+        db = DatabaseInstance(
+            name="test-database",
+            environment="dev",
+            config=database_config,
+            project_id="test-project-123",
+            private_network=mock_private_network,
+        )
+
+        # Mock instance with private network endpoint
+        mock_instance = MagicMock()
+        mock_instance.id = "instance-123"
+        mock_instance.endpoint_ip = "1.2.3.4"
+        mock_instance.endpoint_port = 5432
+        mock_instance.private_network.hostname = "db.private.local"
+        mock_instance.private_network.ip = "172.16.20.4"
+        mock_instance.private_network.port = 5432
+        mock_instance.private_network.pn_id = "pn-12345"
+        db.instance = mock_instance
+
+        outputs = db.get_outputs()
+
+        assert outputs["private_network_enabled"] is True
+        assert "private_network_endpoint" in outputs
+        assert outputs["private_network_endpoint"]["hostname"] == "db.private.local"
+        assert outputs["private_network_endpoint"]["ip"] == "172.16.20.4"
+        assert outputs["private_network_endpoint"]["port"] == 5432
+        assert outputs["private_network_endpoint"]["pn_id"] == "pn-12345"
+
+    def test_get_outputs_no_private_network(self, database_config):
+        """Test get_outputs when private network is not configured."""
+        db = DatabaseInstance(
+            name="test-database",
+            environment="dev",
+            config=database_config,
+            project_id="test-project-123",
+        )
+
+        # Mock instance
+        mock_instance = MagicMock()
+        mock_instance.id = "instance-123"
+        mock_instance.endpoint_ip = "1.2.3.4"
+        mock_instance.endpoint_port = 5432
+        db.instance = mock_instance
+
+        outputs = db.get_outputs()
+
+        assert outputs["private_network_enabled"] is False
+        assert "private_network_endpoint" not in outputs
+
+    def test_get_connection_string_with_private_network_flag(self, database_config, mock_private_network):
+        """Test get_connection_string with use_private_network=True."""
+        db = DatabaseInstance(
+            name="test-database",
+            environment="dev",
+            config=database_config,
+            project_id="test-project-123",
+            private_network=mock_private_network,
+        )
+
+        # Mock instance with private network endpoint
+        mock_instance = MagicMock()
+        mock_instance.private_network.hostname = "db.private.local"
+        mock_instance.private_network.port = 5432
+        db.instance = mock_instance
+
+        # Should not raise when use_private_network=True
+        connection_string = db.get_connection_string(use_private_network=True)
+        assert connection_string is not None
