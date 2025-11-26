@@ -57,7 +57,7 @@ class PrivateNetwork(BaseComponent):
             validation.validate_cidr_block(config.cidr_block)
 
         # Initialize resource references
-        self.vpc: Optional[scaleway.Vpc] = None
+        self.vpc: Optional[scaleway.network.Vpc] = None
         self.private_network: Optional[scaleway.network.PrivateNetwork] = None
 
     def create(self) -> None:
@@ -90,7 +90,7 @@ class PrivateNetwork(BaseComponent):
 
         logger.debug(f"Creating VPC: {vpc_name}")
 
-        self.vpc = scaleway.Vpc(
+        self.vpc = scaleway.network.Vpc(
             f"{self.name}-vpc",
             name=vpc_name,
             project_id=self.project_id,

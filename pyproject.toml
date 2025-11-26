@@ -67,6 +67,13 @@ testpaths = ["tests/", "infra/tests/"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+filterwarnings = [
+    # Ignore deprecation warnings from pulumiverse_scaleway library internals
+    # These are emitted during import when the library loads deprecated module aliases
+    "ignore:scaleway\\.index.*has been deprecated:DeprecationWarning",
+    # Ignore asyncio Future deprecation warning from Pulumi SDK
+    "ignore:There is no current event loop:DeprecationWarning",
+]
 
 
 # Packaging

@@ -74,8 +74,8 @@ class ServerlessContainer(BaseComponent):
         validation.validate_container_config(config.cpu, config.memory)
 
         # Initialize resource references
-        self.namespace: Optional[scaleway.ContainerNamespace] = None
-        self.container: Optional[scaleway.Container] = None
+        self.namespace: Optional[scaleway.containers.Namespace] = None
+        self.container: Optional[scaleway.containers.Container] = None
 
     def create(self) -> None:
         """Create the serverless container infrastructure."""

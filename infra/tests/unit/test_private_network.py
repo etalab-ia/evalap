@@ -113,7 +113,7 @@ class TestPrivateNetwork:
         assert "team:platform" in tags_list
 
     @patch("infra.components.private_network.pulumi.ResourceOptions")
-    @patch("infra.components.private_network.scaleway.Vpc")
+    @patch("infra.components.private_network.scaleway.network.Vpc")
     @patch("infra.components.private_network.scaleway.network.PrivateNetwork")
     @patch("infra.components.private_network.pulumi_helpers.log_resource_creation")
     def test_create_success(
@@ -150,7 +150,7 @@ class TestPrivateNetwork:
         assert private_network.vpc == mock_vpc
         assert private_network.private_network == mock_pn
 
-    @patch("infra.components.private_network.scaleway.Vpc")
+    @patch("infra.components.private_network.scaleway.network.Vpc")
     @patch("infra.components.private_network.scaleway.network.PrivateNetwork")
     @patch("infra.components.private_network.pulumi_helpers.log_resource_creation")
     def test_create_disabled_skips_creation(
@@ -173,7 +173,7 @@ class TestPrivateNetwork:
         assert private_network_disabled.private_network is None
 
     @patch("infra.components.private_network.pulumi.ResourceOptions")
-    @patch("infra.components.private_network.scaleway.Vpc")
+    @patch("infra.components.private_network.scaleway.network.Vpc")
     @patch("infra.components.private_network.scaleway.network.PrivateNetwork")
     @patch("infra.components.private_network.pulumi_helpers.log_resource_creation")
     def test_get_outputs_enabled(
@@ -213,7 +213,7 @@ class TestPrivateNetwork:
         assert outputs["region"] == "fr-par"
 
     @patch("infra.components.private_network.pulumi.ResourceOptions")
-    @patch("infra.components.private_network.scaleway.Vpc")
+    @patch("infra.components.private_network.scaleway.network.Vpc")
     @patch("infra.components.private_network.scaleway.network.PrivateNetwork")
     @patch("infra.components.private_network.pulumi_helpers.log_resource_creation")
     def test_get_vpc_id(
@@ -238,7 +238,7 @@ class TestPrivateNetwork:
         assert vpc_id == "vpc-id-123"
 
     @patch("infra.components.private_network.pulumi.ResourceOptions")
-    @patch("infra.components.private_network.scaleway.Vpc")
+    @patch("infra.components.private_network.scaleway.network.Vpc")
     @patch("infra.components.private_network.scaleway.network.PrivateNetwork")
     @patch("infra.components.private_network.pulumi_helpers.log_resource_creation")
     def test_get_private_network_id(
@@ -288,7 +288,7 @@ class TestPrivateNetwork:
         assert "not created" in str(exc_info.value)
 
     @patch("infra.components.private_network.pulumi.ResourceOptions")
-    @patch("infra.components.private_network.scaleway.Vpc")
+    @patch("infra.components.private_network.scaleway.network.Vpc")
     @patch("infra.components.private_network.scaleway.network.PrivateNetwork")
     @patch("infra.components.private_network.pulumi_helpers.log_resource_creation")
     def test_get_database_private_network_config(
@@ -315,7 +315,7 @@ class TestPrivateNetwork:
         assert db_config["pn_id"] == "pn-id-456"
 
     @patch("infra.components.private_network.pulumi.ResourceOptions")
-    @patch("infra.components.private_network.scaleway.Vpc")
+    @patch("infra.components.private_network.scaleway.network.Vpc")
     @patch("infra.components.private_network.scaleway.network.PrivateNetwork")
     @patch("infra.components.private_network.pulumi_helpers.log_resource_creation")
     def test_get_container_private_network_config(
