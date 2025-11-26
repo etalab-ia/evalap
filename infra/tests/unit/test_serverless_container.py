@@ -5,9 +5,10 @@ from unittest.mock import MagicMock, patch
 import pytest
 from pydantic import ValidationError
 
+from infra.components.private_network import PrivateNetwork
 from infra.components.secret_manager import SecretManager
 from infra.components.serverless_container import ServerlessContainer
-from infra.config.models import ContainerConfig, SecretConfig
+from infra.config.models import ContainerConfig, NetworkConfig, SecretConfig
 
 
 class TestServerlessContainer:
@@ -536,3 +537,264 @@ class TestServerlessContainerSecretIntegration:
         mock_container_class.assert_called_once()
         container_args = mock_container_class.call_args[1]
         assert "secret_environment_variables" not in container_args
+
+
+class TestServerlessContainerPrivateNetworkIntegration:
+    """Tests for ServerlessContainer private network integration."""
+
+    @pytest.fixture
+    def container_config(self):
+        """Create a valid container configuration for testing."""
+        return ContainerConfig(
+            cpu=1000,
+            memory=1024,
+            environment_variables={"ENV": "test"},
+        )
+
+    @pytest.fixture
+    def network_config_enabled(self):
+        """Create a network configuration with private network enabled."""
+        return NetworkConfig(
+            enable_private_network=True,
+            cidr_block="10.0.0.0/24",
+        )
+
+    @pytest.fixture
+    def network_config_disabled(self):
+        """Create a network configuration with private network disabled."""
+        return NetworkConfig(
+            enable_private_network=False,
+        )
+
+    @pytest.fixture
+    def private_network_enabled(self, network_config_enabled):
+        """Create a PrivateNetwork instance with private network enabled."""
+        return PrivateNetwork(
+            name="test-network",
+            environment="dev",
+            config=network_config_enabled,
+            project_id="test-project-123",
+            region="fr-par",
+        )
+
+    @pytest.fixture
+    def private_network_disabled(self, network_config_disabled):
+        """Create a PrivateNetwork instance with private network disabled."""
+        return PrivateNetwork(
+            name="test-network",
+            environment="dev",
+            config=network_config_disabled,
+            project_id="test-project-123",
+            region="fr-par",
+        )
+
+    def test_serverless_container_with_private_network(self, container_config, private_network_enabled):
+        """Test ServerlessContainer initialization with PrivateNetwork."""
+        container = ServerlessContainer(
+            name="test-container",
+            environment="dev",
+            config=container_config,
+            image_uri="rg.fr-par.scw.cloud/test-image:latest",
+            project_id="test-project-123",
+            private_network=private_network_enabled,
+        )
+
+        assert container.private_network == private_network_enabled
+
+    def test_serverless_container_without_private_network(self, container_config):
+        """Test ServerlessContainer initialization without PrivateNetwork."""
+        container = ServerlessContainer(
+            name="test-container",
+            environment="dev",
+            config=container_config,
+            image_uri="rg.fr-par.scw.cloud/test-image:latest",
+            project_id="test-project-123",
+        )
+
+        assert container.private_network is None
+
+    def test_is_connected_to_private_network_true(self, container_config, private_network_enabled):
+        """Test is_connected_to_private_network returns True when connected."""
+        container = ServerlessContainer(
+            name="test-container",
+            environment="dev",
+            config=container_config,
+            image_uri="rg.fr-par.scw.cloud/test-image:latest",
+            project_id="test-project-123",
+            private_network=private_network_enabled,
+        )
+
+        assert container.is_connected_to_private_network() is True
+
+    def test_is_connected_to_private_network_false_no_network(self, container_config):
+        """Test is_connected_to_private_network returns False when no network."""
+        container = ServerlessContainer(
+            name="test-container",
+            environment="dev",
+            config=container_config,
+            image_uri="rg.fr-par.scw.cloud/test-image:latest",
+            project_id="test-project-123",
+        )
+
+        assert container.is_connected_to_private_network() is False
+
+    def test_is_connected_to_private_network_false_disabled(self, container_config, private_network_disabled):
+        """Test is_connected_to_private_network returns False when network disabled."""
+        container = ServerlessContainer(
+            name="test-container",
+            environment="dev",
+            config=container_config,
+            image_uri="rg.fr-par.scw.cloud/test-image:latest",
+            project_id="test-project-123",
+            private_network=private_network_disabled,
+        )
+
+        assert container.is_connected_to_private_network() is False
+
+    def test_get_private_network_id_none_when_no_network(self, container_config):
+        """Test _get_private_network_id returns None when no network configured."""
+        container = ServerlessContainer(
+            name="test-container",
+            environment="dev",
+            config=container_config,
+            image_uri="rg.fr-par.scw.cloud/test-image:latest",
+            project_id="test-project-123",
+        )
+
+        assert container._get_private_network_id() is None
+
+    def test_get_private_network_id_none_when_disabled(self, container_config, private_network_disabled):
+        """Test _get_private_network_id returns None when network disabled."""
+        container = ServerlessContainer(
+            name="test-container",
+            environment="dev",
+            config=container_config,
+            image_uri="rg.fr-par.scw.cloud/test-image:latest",
+            project_id="test-project-123",
+            private_network=private_network_disabled,
+        )
+
+        assert container._get_private_network_id() is None
+
+    def test_get_private_network_id_none_when_not_created(self, container_config, private_network_enabled):
+        """Test _get_private_network_id returns None when network not created yet."""
+        container = ServerlessContainer(
+            name="test-container",
+            environment="dev",
+            config=container_config,
+            image_uri="rg.fr-par.scw.cloud/test-image:latest",
+            project_id="test-project-123",
+            private_network=private_network_enabled,
+        )
+
+        # Network is enabled but not created yet, should return None
+        assert container._get_private_network_id() is None
+
+    @patch("infra.components.serverless_container.scaleway.containers.Namespace")
+    @patch("infra.components.serverless_container.scaleway.containers.Container")
+    @patch("infra.components.serverless_container.pulumi_helpers.log_resource_creation")
+    def test_create_container_with_private_network(
+        self,
+        mock_log,
+        mock_container_class,
+        mock_namespace_class,
+        container_config,
+        private_network_enabled,
+    ):
+        """Test container creation includes private_network_id when configured."""
+        mock_namespace = MagicMock()
+        mock_namespace.id = "test-namespace-id"
+        mock_namespace_class.return_value = mock_namespace
+
+        mock_container = MagicMock()
+        mock_container_class.return_value = mock_container
+
+        # Mock the private network to return a network ID
+        mock_pn = MagicMock()
+        mock_pn.id = "test-private-network-id"
+        private_network_enabled.private_network = mock_pn
+
+        container = ServerlessContainer(
+            name="test-container",
+            environment="dev",
+            config=container_config,
+            image_uri="rg.fr-par.scw.cloud/test-image:latest",
+            project_id="test-project-123",
+            private_network=private_network_enabled,
+        )
+
+        container.create()
+
+        # Verify container was created with private_network_id
+        mock_container_class.assert_called_once()
+        container_args = mock_container_class.call_args[1]
+        assert "private_network_id" in container_args
+        assert container_args["private_network_id"] == "test-private-network-id"
+
+    @patch("infra.components.serverless_container.scaleway.containers.Namespace")
+    @patch("infra.components.serverless_container.scaleway.containers.Container")
+    @patch("infra.components.serverless_container.pulumi_helpers.log_resource_creation")
+    def test_create_container_without_private_network(
+        self,
+        mock_log,
+        mock_container_class,
+        mock_namespace_class,
+        container_config,
+    ):
+        """Test container creation without private_network_id when not configured."""
+        mock_namespace = MagicMock()
+        mock_namespace.id = "test-namespace-id"
+        mock_namespace_class.return_value = mock_namespace
+
+        mock_container = MagicMock()
+        mock_container_class.return_value = mock_container
+
+        container = ServerlessContainer(
+            name="test-container",
+            environment="dev",
+            config=container_config,
+            image_uri="rg.fr-par.scw.cloud/test-image:latest",
+            project_id="test-project-123",
+        )
+
+        container.create()
+
+        # Verify container was created without private_network_id
+        mock_container_class.assert_called_once()
+        container_args = mock_container_class.call_args[1]
+        assert "private_network_id" not in container_args
+
+    @patch("infra.components.serverless_container.scaleway.containers.Namespace")
+    @patch("infra.components.serverless_container.scaleway.containers.Container")
+    @patch("infra.components.serverless_container.pulumi_helpers.log_resource_creation")
+    def test_create_container_with_disabled_private_network(
+        self,
+        mock_log,
+        mock_container_class,
+        mock_namespace_class,
+        container_config,
+        private_network_disabled,
+    ):
+        """Test container creation without private_network_id when network disabled."""
+        mock_namespace = MagicMock()
+        mock_namespace.id = "test-namespace-id"
+        mock_namespace_class.return_value = mock_namespace
+
+        mock_container = MagicMock()
+        mock_container_class.return_value = mock_container
+
+        container = ServerlessContainer(
+            name="test-container",
+            environment="dev",
+            config=container_config,
+            image_uri="rg.fr-par.scw.cloud/test-image:latest",
+            project_id="test-project-123",
+            private_network=private_network_disabled,
+        )
+
+        container.create()
+
+        # Verify container was created without private_network_id
+        mock_container_class.assert_called_once()
+        container_args = mock_container_class.call_args[1]
+        assert "private_network_id" not in container_args

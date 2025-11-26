@@ -13,6 +13,7 @@ from infra.config.models import ContainerConfig
 from infra.utils import pulumi_helpers, scaleway_helpers, validation
 
 if TYPE_CHECKING:
+    from infra.components.private_network import PrivateNetwork
     from infra.components.secret_manager import SecretManager
 
 logger = logging.getLogger(__name__)
@@ -37,6 +38,7 @@ class ServerlessContainer(BaseComponent):
         opts: Optional[pulumi.ResourceOptions] = None,
         secret_manager: Optional[SecretManager] = None,
         secret_mappings: Optional[dict[str, str]] = None,
+        private_network: Optional[PrivateNetwork] = None,
     ):
         """
         Initialize ServerlessContainer component.
@@ -55,6 +57,9 @@ class ServerlessContainer(BaseComponent):
                 Format: {"secret_name": "ENV_VAR_NAME"}
                 If provided with secret_manager, secrets will be injected as
                 secret environment variables.
+            private_network: Optional PrivateNetwork component for network isolation.
+                When provided, the container will be connected to the private network
+                for secure inter-service communication.
         """
         super().__init__(name, environment, tags, opts)
         self.config = config
@@ -63,6 +68,7 @@ class ServerlessContainer(BaseComponent):
         self.region = region
         self.secret_manager = secret_manager
         self.secret_mappings = secret_mappings or {}
+        self.private_network = private_network
 
         # Validate configuration
         validation.validate_container_config(config.cpu, config.memory)
@@ -145,6 +151,12 @@ class ServerlessContainer(BaseComponent):
         if secret_env_vars:
             container_args["secret_environment_variables"] = secret_env_vars
             logger.debug(f"Injecting {len(secret_env_vars)} secret environment variables")
+
+        # Add private network if configured
+        private_network_id = self._get_private_network_id()
+        if private_network_id:
+            container_args["private_network_id"] = private_network_id
+            logger.debug("Connecting container to private network")
 
         self.container = scaleway.containers.Container(
             f"{self.name}-container",
@@ -259,3 +271,33 @@ class ServerlessContainer(BaseComponent):
         if not self.container:
             raise ValueError("Container not created yet")
         return self.container.id
+
+    def _get_private_network_id(self) -> Optional[pulumi.Output]:
+        """
+        Get private network ID if configured.
+
+        Returns:
+            pulumi.Output: Private network ID if private_network is set and enabled,
+                None otherwise.
+        """
+        if not self.private_network:
+            return None
+
+        if not self.private_network.is_enabled():
+            logger.debug("Private network provided but not enabled, skipping")
+            return None
+
+        try:
+            return self.private_network.get_private_network_id()
+        except ValueError as e:
+            logger.warning(f"Could not get private network ID: {e}")
+            return None
+
+    def is_connected_to_private_network(self) -> bool:
+        """
+        Check if container is connected to a private network.
+
+        Returns:
+            bool: True if container is connected to a private network.
+        """
+        return self.private_network is not None and self.private_network.is_enabled()
