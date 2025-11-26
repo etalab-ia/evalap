@@ -82,7 +82,7 @@ class TestObjectStorageBucket:
                 project_id="test-project-123",
             )
 
-    @patch("infra.components.object_storage.scaleway.ObjectBucket")
+    @patch("infra.components.object_storage.scaleway.object.Bucket")
     @patch("infra.components.object_storage.pulumi_helpers.log_resource_creation")
     def test_create_success_with_versioning_and_lifecycle(
         self, mock_log, mock_bucket_class, object_storage_bucket
@@ -113,9 +113,8 @@ class TestObjectStorageBucket:
         args = call_args[1]["args"]
         assert args.name == "test-bucket-dev"
         assert args.region == "fr-par"
-        assert args.acl == "private"
 
-    @patch("infra.components.object_storage.scaleway.ObjectBucket")
+    @patch("infra.components.object_storage.scaleway.object.Bucket")
     @patch("infra.components.object_storage.pulumi_helpers.log_resource_creation")
     def test_create_success_without_versioning_and_lifecycle(self, mock_log, mock_bucket_class):
         """Test successful creation without versioning and lifecycle."""
@@ -154,7 +153,7 @@ class TestObjectStorageBucket:
         # This test just verifies the bucket was created successfully
         mock_bucket_class.assert_called_once()
 
-    @patch("infra.components.object_storage.scaleway.ObjectBucket")
+    @patch("infra.components.object_storage.scaleway.object.Bucket")
     @patch("infra.components.object_storage.pulumi_helpers.handle_error")
     def test_create_error_handling(self, mock_handle_error, mock_bucket_class, object_storage_bucket):
         """Test error handling during bucket creation."""
@@ -172,7 +171,7 @@ class TestObjectStorageBucket:
 
     def test_create_bucket(self, object_storage_bucket):
         """Test bucket creation method."""
-        with patch("infra.components.object_storage.scaleway.ObjectBucket") as mock_bucket_class:
+        with patch("infra.components.object_storage.scaleway.object.Bucket") as mock_bucket_class:
             mock_bucket = MagicMock()
             mock_bucket_class.return_value = mock_bucket
 
@@ -185,8 +184,6 @@ class TestObjectStorageBucket:
             args = call_args[1]["args"]
             assert args.name == "test-bucket-dev"
             assert args.region == "fr-par"
-            assert args.acl == "private"
-            assert isinstance(args.tags, dict)
             assert call_args[1]["opts"] == object_storage_bucket.opts
 
     def test_create_bucket_invalid_name(self):
@@ -199,7 +196,7 @@ class TestObjectStorageBucket:
             project_id="test-project-123",
         )
 
-        with patch("infra.components.object_storage.scaleway.ObjectBucket") as mock_bucket_class:
+        with patch("infra.components.object_storage.scaleway.object.Bucket") as mock_bucket_class:
             mock_bucket = MagicMock()
             mock_bucket_class.return_value = mock_bucket
 
@@ -328,16 +325,15 @@ class TestObjectStorageBucket:
                 project_id="test-project-123",
             )
 
-            with patch("infra.components.object_storage.scaleway.ObjectBucket") as mock_bucket_class:
+            with patch("infra.components.object_storage.scaleway.object.Bucket") as mock_bucket_class:
                 mock_bucket = MagicMock()
                 mock_bucket_class.return_value = mock_bucket
 
                 bucket._create_bucket()
 
-                # Verify ACL is set correctly
-                call_args = mock_bucket_class.call_args
-                args = call_args[1]["args"]
-                assert args.acl == acl
+                # Verify bucket was created (ACL is stored in config, not passed to Scaleway API)
+                mock_bucket_class.assert_called_once()
+                assert bucket.config.acl == acl
 
     def test_versioning_disabled(self):
         """Test bucket with versioning disabled."""

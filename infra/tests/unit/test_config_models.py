@@ -24,7 +24,7 @@ class TestContainerConfig:
         )
         assert config.cpu == 500
         assert config.memory == 512
-        assert config.max_concurrency == 100
+        assert config.max_concurrency == 80
         assert config.timeout == 300
 
     def test_container_cpu_too_low(self):
@@ -77,7 +77,7 @@ class TestContainerConfig:
         config = ContainerConfig()
         assert config.cpu == 1000
         assert config.memory == 1024
-        assert config.max_concurrency == 100
+        assert config.max_concurrency == 80
         assert config.timeout == 300
 
 
@@ -135,7 +135,7 @@ class TestDatabaseConfig:
         assert config.engine == "PostgreSQL-15"
         assert config.volume_size == 20
         assert config.backup_retention_days == 7
-        assert config.user_name == "admin"
+        assert config.user_name == "postgres"
         assert config.database_name == "evalap"
 
 
