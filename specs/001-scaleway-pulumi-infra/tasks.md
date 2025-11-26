@@ -154,7 +154,7 @@
 - [x] T068 [P] Run unit tests for Secret Manager component in `infra/tests/unit/test_secret_manager.py`
 - [x] T069 [P] Run unit tests for IAM policy component in `infra/tests/unit/test_iam_policy.py`
 - [x] T070 [P] Run unit tests for PrivateNetwork component in `infra/tests/unit/test_private_network.py`
-- [ ] T071 Deploy infrastructure with security configurations: `just pulumi up --stack staging --yes`
+- [x] T071 Deploy infrastructure with security configurations: `just pulumi up --stack staging --yes`
 - [ ] T072 Verify secrets are stored in Scaleway Secret Manager and not in code
 - [ ] T073 Verify IAM policies follow least privilege principle by checking Scaleway console
 - [ ] T074 Verify private network is created and services are attached to it

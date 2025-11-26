@@ -227,11 +227,13 @@ class TestDatabaseInstance:
 
     def test_get_outputs_success(self, database_instance):
         """Test get_outputs returns correct data when instance created."""
-        # Mock instance
+        # Mock instance with load_balancer (replaces deprecated endpoint_ip/endpoint_port)
         mock_instance = MagicMock()
         mock_instance.id = "test-instance-id"
-        mock_instance.endpoint_ip = "192.168.1.100"
-        mock_instance.endpoint_port = 5432
+        mock_lb = MagicMock()
+        mock_lb.ip = "192.168.1.100"
+        mock_lb.port = 5432
+        mock_instance.load_balancer = mock_lb
         database_instance.instance = mock_instance
 
         outputs = database_instance.get_outputs()
@@ -252,10 +254,12 @@ class TestDatabaseInstance:
 
     def test_get_connection_string_success(self, database_instance):
         """Test get_connection_string returns correct connection string."""
-        # Mock instance
+        # Mock instance with load_balancer (replaces deprecated endpoint_ip/endpoint_port)
         mock_instance = MagicMock()
-        mock_instance.endpoint_ip = "192.168.1.100"
-        mock_instance.endpoint_port = 5432
+        mock_lb = MagicMock()
+        mock_lb.ip = "192.168.1.100"
+        mock_lb.port = 5432
+        mock_instance.load_balancer = mock_lb
         database_instance.instance = mock_instance
 
         connection_string = database_instance.get_connection_string()
@@ -769,11 +773,13 @@ class TestDatabasePrivateNetworkIntegration:
             private_network=mock_private_network,
         )
 
-        # Mock instance with private network endpoint
+        # Mock instance with load_balancer and private network endpoint
         mock_instance = MagicMock()
         mock_instance.id = "instance-123"
-        mock_instance.endpoint_ip = "1.2.3.4"
-        mock_instance.endpoint_port = 5432
+        mock_lb = MagicMock()
+        mock_lb.ip = "1.2.3.4"
+        mock_lb.port = 5432
+        mock_instance.load_balancer = mock_lb
         mock_instance.private_network.hostname = "db.private.local"
         mock_instance.private_network.ip = "172.16.20.4"
         mock_instance.private_network.port = 5432
@@ -798,11 +804,13 @@ class TestDatabasePrivateNetworkIntegration:
             project_id="test-project-123",
         )
 
-        # Mock instance
+        # Mock instance with load_balancer
         mock_instance = MagicMock()
         mock_instance.id = "instance-123"
-        mock_instance.endpoint_ip = "1.2.3.4"
-        mock_instance.endpoint_port = 5432
+        mock_lb = MagicMock()
+        mock_lb.ip = "1.2.3.4"
+        mock_lb.port = 5432
+        mock_instance.load_balancer = mock_lb
         db.instance = mock_instance
 
         outputs = db.get_outputs()

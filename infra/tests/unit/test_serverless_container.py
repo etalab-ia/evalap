@@ -108,7 +108,9 @@ class TestServerlessContainer:
         assert container_args["registry_image"] == "rg.fr-par.scw.cloud/test-image:latest"
         assert container_args["cpu_limit"] == 1000
         assert container_args["memory_limit"] == 1024
-        assert container_args["max_concurrency"] == 50
+        # scaling_options replaces deprecated max_concurrency
+        assert "scaling_options" in container_args
+        assert len(container_args["scaling_options"]) == 1
         assert container_args["timeout"] == 300
         assert container_args["privacy"] == "public"
         assert container_args["protocol"] == "http1"
@@ -188,7 +190,8 @@ class TestServerlessContainer:
             assert call_args[1]["registry_image"] == "rg.fr-par.scw.cloud/test-image:latest"
             assert call_args[1]["cpu_limit"] == 1000
             assert call_args[1]["memory_limit"] == 1024
-            assert call_args[1]["max_concurrency"] == 50
+            # scaling_options replaces deprecated max_concurrency
+            assert "scaling_options" in call_args[1]
             assert call_args[1]["timeout"] == 300
             assert isinstance(call_args[1]["environment_variables"], dict)
             assert call_args[1]["privacy"] == "public"

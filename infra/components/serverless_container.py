@@ -137,7 +137,11 @@ class ServerlessContainer(BaseComponent):
             "port": self.config.port,
             "cpu_limit": self.config.cpu,
             "memory_limit": self.config.memory,
-            "max_concurrency": self.config.max_concurrency,
+            "scaling_options": [
+                scaleway.containers.ContainerScalingOptionArgs(
+                    concurrent_requests_threshold=self.config.max_concurrency,
+                )
+            ],
             "timeout": self.config.timeout,
             "environment_variables": env_vars,
             "privacy": "public",

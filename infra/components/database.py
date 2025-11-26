@@ -133,6 +133,8 @@ class DatabaseInstance(BaseComponent):
             project_id=self.project_id,
             region=self.region,
             private_network=private_network_config,
+            # Enable public endpoint via load_balancer (replaces deprecated endpoint_ip/endpoint_port)
+            load_balancer=scaleway.databases.InstanceLoadBalancerArgs(),
             opts=self.opts,
         )
 
@@ -215,8 +217,8 @@ class DatabaseInstance(BaseComponent):
         Returns:
             dict: Dictionary containing:
                 - instance_id: RDB instance ID
-                - endpoint_ip: Database public endpoint IP (deprecated)
-                - endpoint_port: Database public endpoint port (deprecated)
+                - endpoint_ip: Database public endpoint IP (via load_balancer)
+                - endpoint_port: Database public endpoint port (via load_balancer)
                 - database_name: Database name
                 - username: Database username
                 - engine: Database engine
@@ -230,8 +232,8 @@ class DatabaseInstance(BaseComponent):
 
         outputs = {
             "instance_id": self.instance.id,
-            "endpoint_ip": self.instance.endpoint_ip,
-            "endpoint_port": self.instance.endpoint_port,
+            "endpoint_ip": self.instance.load_balancer.ip,
+            "endpoint_port": self.instance.load_balancer.port,
             "database_name": self.config.database_name,
             "username": self.config.user_name,
             "engine": self.config.engine,
@@ -263,10 +265,6 @@ class DatabaseInstance(BaseComponent):
 
         Returns:
             pulumi.Output[str]: Connection string (without password)
-
-        Note:
-            endpoint_ip and endpoint_port are deprecated but still functional.
-            The recommended approach is to use load_balancer or private_network attributes.
         """
         if not self.instance:
             raise ValueError("Instance not created yet")
@@ -274,11 +272,10 @@ class DatabaseInstance(BaseComponent):
         if use_private_network:
             return self.get_private_network_connection_string()
 
-        # Use deprecated but functional endpoint_ip and endpoint_port
-        # These are still available as output properties
+        # Use load_balancer endpoint (replaces deprecated endpoint_ip/endpoint_port)
         return pulumi.Output.all(
-            self.instance.endpoint_ip,
-            self.instance.endpoint_port,
+            self.instance.load_balancer.ip,
+            self.instance.load_balancer.port,
         ).apply(
             lambda args: f"postgresql://{self.config.user_name}@{args[0]}:{args[1]}/{self.config.database_name}"
         )
