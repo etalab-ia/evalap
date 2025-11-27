@@ -107,6 +107,16 @@ def get_dataset_row(
 def get_dataset_iterator(
     db_exp: models.Experiment, columns_map: dict | None = None
 ) -> Generator[tuple[int, dict], None, None]:
+    """
+    Iterate over rows of the experiment's dataset, yielding each row as a dict together with its integer row index.
+    
+    Parameters:
+        db_exp (models.Experiment): Experiment record whose dataset will be read. For vision datasets the underlying Parquet file is iterated in batches; for non-vision datasets the stored JSON dataframe is read. If `db_exp.sample` is set, only rows whose global index appears in that collection are yielded. Column remapping is applied from `db_exp.dataset.columns_map` when present.
+        columns_map (dict | None): Present for API compatibility but ignored; column remapping is taken from `db_exp.dataset.columns_map`.
+    
+    Returns:
+        tuple[int, dict]: Pairs of (row_index, row_dict). `row_index` is the integer position of the row within the dataset (for Parquet the batch offset is included). `row_dict` has numpy scalar values converted to native Python types and keys remapped per the dataset's columns_map.
+    """
     if db_exp.with_vision:
         # Parquet based dataset
         pf = pq.ParquetFile(db_exp.dataset.parquet_path)
@@ -265,10 +275,6 @@ def update_experiment(
         if key == "experiment_status" and value == schemas.ExperimentStatus.finished:
             for result in db_exp.results:
                 result.metric_status = schemas.MetricStatus.finished
-        # If experiment_status is set to stopped, update all result status too.
-        if key == "experiment_status" and value == schemas.ExperimentStatus.stopped:
-            for result in db_exp.results:
-                result.metric_status = schemas.MetricStatus.stopped
     db.commit()
     db.refresh(db_exp)
     return db_exp

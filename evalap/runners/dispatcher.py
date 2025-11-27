@@ -165,6 +165,22 @@ def dispatch_tasks(db, db_exp, message_type: MessageType):
 
 
 def dispatch_retries(db, retry_runs: schemas.RetryRuns):
+    """
+    Dispatch retries for failed and unfinished answers and observations by updating DB state and sending tasks to the worker queue.
+    
+    Processes:
+    - For each experiment id in retry_runs.experiment_ids and retry_runs.unfinished_experiment_ids:
+      sets the experiment to retry answers, resets failure markers, recomputes counters, and sends missing or failed answer tasks to the ZMQ sender.
+    - For each result id in retry_runs.result_ids and retry_runs.unfinished_result_ids:
+      sets the experiment/result to retry metrics, resets failure markers, recomputes counters, and sends missing or failed observation tasks to the ZMQ sender.
+    - Updates experiment and result statuses and commits DB changes as needed.
+    
+    Parameters:
+        retry_runs (schemas.RetryRuns): Container with lists of experiment and result ids to retry (fields: experiment_ids, unfinished_experiment_ids, result_ids, unfinished_result_ids).
+    
+    Raises:
+        ValueError: if an experiment referenced by retry_runs cannot be found.
+    """
     context = zmq.Context()
     sender = context.socket(zmq.PUSH)
     sender.connect(ZMQ_SENDER_URL)
