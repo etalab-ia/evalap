@@ -950,7 +950,7 @@ def _display_info_banner():
         Curious to try the plateform ? Try a sample run in the
         <strong><a href="/launch" style="color:#000091; text-decoration:underline;"> test page</a></strong>.<br>
         Ready to evaluate ? Check the
-        <strong><a href="/home" style="color:#000091; text-decoration:underline;"> home page docs </a></strong> to evaluate your own AI system.
+        <strong><a href="https://evalap.etalab.gouv.fr/doc/fr" style="color:#000091; text-decoration:underline;"> home page docs </a></strong> to evaluate your own AI system.
         </div>
         """,
         unsafe_allow_html=True,
