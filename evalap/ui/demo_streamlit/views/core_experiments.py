@@ -204,21 +204,24 @@ def display_experiment_sets(experiment_sets, compliance=False):
     # Show orphan experiments
     # --
     if not compliance:
-        st.markdown("---")
-        with st.container(border=True):
-            st.markdown(
-                f"<div style='position: absolute; top: 10px; right: 10px; "
-                f"width: 10px; height: 10px; border-radius: 50%; "
-                f"background: {status_color};' "
-                f"title='{status_description}'></div>",
-                unsafe_allow_html=True,
-            )
+        orphan_experiments = fetch("get", "/experiments", {"orphan": True, "backward": True})
 
-            if st.button("Orphan experiments", key="pick_expe_orphan"):
-                st.query_params["expset"] = "orphan"
-                st.rerun()
+        if orphan_experiments and len(orphan_experiments) > 0:
+            st.markdown("---")
+            with st.container(border=True):
+                st.markdown(
+                    f"<div style='position: absolute; top: 10px; right: 10px; "
+                    f"width: 10px; height: 10px; border-radius: 50%; "
+                    f"background: {status_color};' "
+                    f"title='{status_description}'></div>",
+                    unsafe_allow_html=True,
+                )
 
-            st.markdown("The experiments that are not in evaluation sets.")
+                if st.button("Orphan experiments", key="pick_expe_orphan"):
+                    st.query_params["expset"] = "orphan"
+                    st.rerun()
+
+                st.markdown("The experiments that are not in evaluation sets.")
 
 
 def display_experiment_set_overview(experimentset, experiments_df):
