@@ -936,6 +936,8 @@ def show_header(experimentset):
 
 def _display_info_banner():
     """Display the info banner with links"""
+    st.warning("⚠️ Note: The application is in beta. The experiment may not appear immediately in the tab")
+
     st.markdown(
         """
         <div style="
