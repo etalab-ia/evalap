@@ -52,10 +52,8 @@ Règles essentielles :
 }
 
 COLLECTION_TO_DATASET = {
-    # "service-public": "test_service_public",
-    # "annuaire-administrations-etat": "test_annuaire_entreprises",
-    "service-public": "MFS_questions_v01_head(2)",
-    "annuaire-administrations-etat": "Assistant IA - QA (test)",
+    "service-public": "test_service_public",
+    "annuaire-administrations-etat": "test_annuaire_entreprises",
 }
 
 DEFAULT_MODEL = "albert-small"

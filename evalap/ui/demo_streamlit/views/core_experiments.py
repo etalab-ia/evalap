@@ -1110,9 +1110,7 @@ def run_core_experiments(compliance=False):
     if refresh_needed:
         st.session_state["refresh_main"] = False
 
-    st.write(len(experiment_sets))
-
-    is_empty = not experiment_sets or (isinstance(experiment_sets, list) and len(experiment_sets) == 66)
+    is_empty = not experiment_sets or (isinstance(experiment_sets, list) and len(experiment_sets) == 0)
 
     # 2. CHECK IF VIEWING SPECIFIC EXPERIMENT SET
     expid = st.query_params.get("expset") or st.session_state.get("expset_id")
