@@ -925,11 +925,11 @@ def _display_info_banner():
             border-radius:7px;
             margin-bottom:24px;
             ">
-        <strong>ℹ️ From this page, you can access the results of your experiments. </strong><br><br>
-        You can also start a test experiment with the EvalAP environment
-        <strong><a href="/launch" style="color:#000091; text-decoration:underline;">from the test page</a></strong>.<br>
-        Access documentation to start evaluating your own AI system
-        <strong><a href="/home" style="color:#000091; text-decoration:underline;">from the home page</a></strong>.
+        ℹ️ Here, you can easily explore the results of your experiments.<br>
+        Curious to try the plateform ? Try a sample run in the
+        <strong><a href="/launch" style="color:#000091; text-decoration:underline;"> test page</a></strong>.<br>
+        Ready to evaluate ? Check the
+        <strong><a href="/home" style="color:#000091; text-decoration:underline;"> home page docs </a></strong> to evaluate your own AI system.
         </div>
         """,
         unsafe_allow_html=True,
