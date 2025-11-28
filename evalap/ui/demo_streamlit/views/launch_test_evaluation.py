@@ -302,7 +302,7 @@ def validate_api_key(api_key):
 
 def render_api_key_section():
     info_banner(
-        "ℹ️ This evaluation test runs on a RAG (Retrieval-Augmented Generation) system, "
+        "ℹ️ This test evaluation runs on a RAG (Retrieval-Augmented Generation) system, "
         "combining document retrieval with LLM reasoning to assess overall performance."
     )
 
@@ -563,7 +563,7 @@ def handle_run_evaluation(experimentset, user_api_key):
 
 def main():
     init_page_styles()
-    st.title("Evaluation test with Albert API")
+    st.title("Test evaluations with Albert API")
 
     user_api_key, is_api_key_valid = render_api_key_section()
 
@@ -593,7 +593,7 @@ def main():
 
     with button_col1:
         run_button = st.button(
-            "Run test",
+            "Run test evaluation",
             key="eval_button",
             disabled=not is_api_key_valid,
             help="Enter a valid API key to run evaluation" if not is_api_key_valid else None,

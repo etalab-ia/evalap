@@ -969,7 +969,7 @@ def _display_experiment_list_view(experiment_sets, compliance):
             st.session_state["refresh_main"] = True
             st.rerun()
     with col3:
-        if st.button("🚀 Launch Test Evaluation", key="launch_test_eval_btn"):
+        if st.button("🚀 Run Test Evaluation", key="launch_test_eval_btn"):
             st.switch_page("views/launch_test_evaluation.py")
 
     display_experiment_sets(experiment_sets, compliance)
