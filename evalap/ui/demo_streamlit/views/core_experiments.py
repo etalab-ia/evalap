@@ -414,6 +414,9 @@ def display_experiment_set_score(experimentset, experiments_df):
     experiments = experimentset.get("experiments", [])
     _rename_model_variants(experiments)
 
+    all_metrics = get_metrics()
+    ops_metrics = set(m["name"] for m in all_metrics if m.get("type") == "ops")
+
     # Group experiments by dataset name
     experiments_by_dataset = {}
     for expe in experiments:
@@ -465,6 +468,16 @@ def display_experiment_set_score(experimentset, experiments_df):
 
         df = pd.DataFrame(rows)
         df = _sort_columns(df, [])
+
+        metric_columns = [col for col in df.columns if col not in ["model", "Id"]]
+        non_ops_columns = [col for col in metric_columns if col not in ops_metrics]
+        ops_columns = [col for col in metric_columns if col in ops_metrics]
+
+        new_column_order = ["model"] + sorted(non_ops_columns) + sorted(ops_columns)
+        if "Id" in df.columns:
+            new_column_order = ["Id"] + new_column_order
+
+        df = df[new_column_order]
 
         if "model" not in df.columns:
             df["model"] = [expe.get("name", "Unknown Model") for expe in dataset_experiments]
@@ -1089,7 +1102,9 @@ def run_core_experiments(compliance=False):
     if refresh_needed:
         st.session_state["refresh_main"] = False
 
-    is_empty = not experiment_sets or (isinstance(experiment_sets, list) and len(experiment_sets) == 0)
+    st.write(len(experiment_sets))
+
+    is_empty = not experiment_sets or (isinstance(experiment_sets, list) and len(experiment_sets) == 66)
 
     # 2. CHECK IF VIEWING SPECIFIC EXPERIMENT SET
     expid = st.query_params.get("expset") or st.session_state.get("expset_id")
