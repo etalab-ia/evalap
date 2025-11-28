@@ -912,11 +912,16 @@ def show_header(experimentset):
     finished_ratio = 0
     failure_ratio = 0
     if counts["observation_length"] > 0:
-        finished_ratio = int(counts["total_observation_successes"] / counts["observation_length"] * 100)
-        failure_ratio = int(
-            (counts["total_observation_tries"] - counts["total_observation_successes"])
-            / counts["observation_length"]
-            * 100
+        finished_ratio = min(
+            100, int(counts["total_observation_successes"] / counts["observation_length"] * 100)
+        )
+        failure_ratio = min(
+            100,
+            int(
+                (counts["total_observation_tries"] - counts["total_observation_successes"])
+                / counts["observation_length"]
+                * 100
+            ),
         )
 
     run_status = f"**Finished**: {finished_ratio}%"
