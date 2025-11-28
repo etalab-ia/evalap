@@ -52,8 +52,10 @@ Règles essentielles :
 }
 
 COLLECTION_TO_DATASET = {
-    "service-public": "test_service_public",
-    "annuaire-administrations-etat": "test_annuaire_entreprises",
+    # "service-public": "test_service_public",
+    # "annuaire-administrations-etat": "test_annuaire_entreprises",
+    "service-public": "MFS_questions_v01_head(2)",
+    "annuaire-administrations-etat": "Assistant IA - QA (test)",
 }
 
 DEFAULT_MODEL = "albert-small"
@@ -78,49 +80,6 @@ template_manager = TemplateManager()
 # --- Utilitary Functions ---
 
 
-def info_banner(message):
-    st.markdown(
-        f"""
-        <div style="
-            background-color:#E3ECFF;
-            color:#000091;
-            border:1px solid #B5C7F9;
-            padding:18px;
-            border-radius:7px;
-            margin-bottom:24px;
-            ">
-        <strong>ℹ️ {message}</strong>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-button_style = """
-<style>
-.custom-button {
-    background-color: transparent;       /* Pas de fond */
-    color: #000091;                      /* Texte bleu DSFR */
-    border: 2px solid #000091;           /* Contour bleu DSFR */
-    padding: 12px 28px;
-    font-size: 20px;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    width: 100%;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-}
-.custom-button:hover {
-    background-color: #000091;           /* Fond bleu DSFR au survol */
-    color: white;                        /* Texte blanc au survol */
-    border-color: #000091;
-}
-</style>
-"""
-
-
 def get_public_collections(api_key):
     url = f"{ALBERT_PROVIDER_URL}/collections"
     headers = {
@@ -134,7 +93,7 @@ def get_public_collections(api_key):
             {"id": collection["id"], "name": collection["name"]}
             for collection in data.get("data", [])
             if collection.get("visibility") == "public"
-            and "data-gouv-datasets-catalog" not in collection.get("name", "")
+            and collection.get("name") in COLLECTION_TO_DATASET.keys()
         ]
         return public_cols
     else:
@@ -267,6 +226,60 @@ def copy_to_clipboard_button(text_to_copy: str, button_id: str = "copy_btn", hei
 # --- UI ---
 
 
+def info_banner(text):
+    """Display info banner with custom styling"""
+    st.markdown(
+        f"""
+        <div style="
+            background-color:#E3ECFF;
+            color:#000091;
+            border:1px solid #B5C7F9;
+            padding:18px;
+            border-radius:7px;
+            margin-bottom:24px;
+            ">
+            <span style="font-size:20px; font-weight:normal;">
+                {text}
+            </span>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def init_page_styles():
+    st.markdown(
+        """
+        <style>
+        h3 {
+            font-size: 20px !important;
+            font-weight: 600;
+        }
+        .custom-button {
+            background-color: transparent;
+            color: #000091;
+            border: 2px solid #000091;
+            padding: 12px 28px;
+            font-size: 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .custom-button:hover {
+            background-color: #000091;
+            color: white;
+            border-color: #000091;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def validate_api_key(api_key):
     if not api_key:
         return False, None
@@ -290,67 +303,125 @@ def validate_api_key(api_key):
 
 
 def render_api_key_section():
-    info_banner("To launch a test evaluation, Albert API access is required")
+    info_banner(
+        "ℹ️ This evaluation test runs on a RAG (Retrieval-Augmented Generation) system, "
+        "combining document retrieval with LLM reasoning to assess overall performance."
+    )
+
+    st.subheader("Access to Albert API to run a test")
 
     col_key1, col_key2 = st.columns([5, 5])
+
     with col_key1:
         st.markdown(
-            "<p style='margin-bottom: 0px;'>If you already have your Albert API key, enter it here:</p>",
+            "<p style='margin-bottom: 0px;'> Already have an API key? Enter it here </p>",
             unsafe_allow_html=True,
         )
+
     with col_key2:
-        user_api_key = st.text_input(
-            " ", type="password", key="user_api_key_launch", label_visibility="collapsed"
+        col_input, col_status = st.columns([4, 2])
+
+        with col_input:
+            user_api_key = st.text_input(
+                " ",
+                type="password",
+                key="user_api_key_launch",
+                label_visibility="collapsed",
+            )
+
+        is_valid = False
+        error_msg = None
+
+        if user_api_key:
+            is_valid, error_msg = validate_api_key(user_api_key)
+
+        with col_status:
+            if user_api_key:
+                if is_valid:
+                    st.markdown(
+                        """
+                        <div style="
+                            background-color:#d4f6dd;
+                            border:1px solid #7ac89b;
+                            padding:4px 6px;
+                            border-radius:4px;
+                            display:inline-block;
+                            margin-top:4px;
+                        ">
+                            <span style="font-size:12px;">✅ Valid API key</span>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+                else:
+                    st.markdown(
+                        f"""
+                        <div style="
+                            background-color:#ffd6d6;
+                            border:1px solid #ff9b9b;
+                            padding:4px 6px;
+                            border-radius:4px;
+                            display:inline-block;
+                            margin-top:4px;
+                        ">
+                            <span style="font-size:12px;">❌ {error_msg or "Invalid API key"}</span>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+
+    if not is_valid:
+        st.write(
+            "Don’t have one yet? Request it via the  "
+            "[contact form](https://albert.sites.beta.gouv.fr/access/) "
+            "- we’ll get back to you within 24 working hours."
         )
-
-    is_valid = False
-    if user_api_key:
-        is_valid, error_msg = validate_api_key(user_api_key)
-
-        if is_valid:
-            st.success("✅ Valid API key")
-        else:
-            st.error(f"❌ {error_msg or 'Invalid API key'}")
-
-    st.write(
-        "If you do not have an Albert API key, please request one using the "
-        "[contact form](https://albert.sites.beta.gouv.fr/access/). "
-        "You will receive a reply within 24 working hours."
-    )
 
     return user_api_key, is_valid
 
 
 def render_ai_system_config(user_api_key, is_api_key_valid):
-    st.subheader("Configure the AI system to test")
+    st.subheader("Set up the AI system you want to test")
 
     col1, col2, col3 = st.columns(3)
 
     with col1:
         if is_api_key_valid:
             public_collections = get_public_collections(user_api_key)
-            collection_names = [col["name"] for col in public_collections]
-            collections_selected_names = st.multiselect(
-                "Public Collections",
-                options=collection_names,
-                key="main_collection_select",
-            )
-            collections_selected_ids = [
-                col["id"] for col in public_collections if col["name"] in collections_selected_names
-            ]
+            if not public_collections:
+                st.info("No matching public collections available for this API key.")
+                collections_selected_names = []
+                collections_selected_ids = []
+            else:
+                collection_names = [col["name"] for col in public_collections]
+                collections_selected_names = st.multiselect(
+                    "Public Collections",
+                    options=collection_names,
+                    key="main_collection_select",
+                    help=("Select the knowledge base the test RAG system will use to retrieve information."),
+                )
+                collections_selected_ids = [
+                    col["id"] for col in public_collections if col["name"] in collections_selected_names
+                ]
         else:
             st.multiselect(
-                "Public Collections",
+                "Collections",
                 options=[],
                 key="main_collection_select",
                 disabled=True,
-                help="Enter a valid API key to access collections",
+                help=("Select the knowledge base the test RAG system will use to retrieve information."),
             )
             collections_selected_names = []
             collections_selected_ids = []
 
     with col2:
-        st.selectbox("LLM", DEFAULT_MODEL, key="selected_llm", disabled=not is_api_key_valid)
+        st.selectbox(
+            "Model",
+            DEFAULT_MODEL,
+            key="selected_llm",
+            disabled=not is_api_key_valid,
+            help="Choose the LLM that will generate answers based on the collection.",
+        )
 
     with col3:
         selected_prompt_content = render_prompt_selector(is_api_key_valid)
@@ -361,7 +432,11 @@ def render_ai_system_config(user_api_key, is_api_key_valid):
 def render_prompt_selector(is_api_key_valid):
     prompt_labels = ["Select prompt"] + [v["label"] for v in PROMPT_TEMPLATES.values()]
     selected_prompt_label = st.selectbox(
-        "Select a prompt", prompt_labels, key="selected_prompt", disabled=not is_api_key_valid
+        "Select a prompt",
+        prompt_labels,
+        key="selected_prompt",
+        disabled=not is_api_key_valid,
+        help="Pick the prompt template that guides how the model should respond.",
     )
 
     if selected_prompt_label and selected_prompt_label != "Select prompt":
@@ -373,7 +448,7 @@ def render_prompt_selector(is_api_key_valid):
 
 
 def render_evaluation_params(collections_selected_names, is_api_key_valid):
-    st.subheader("Define evaluation parameters")
+    st.subheader("Choose your evaluation parameter")
 
     col4, col5, col6 = st.columns(3)
 
@@ -381,22 +456,31 @@ def render_evaluation_params(collections_selected_names, is_api_key_valid):
         datasets = list_datasets() if is_api_key_valid else []
         default_dataset = get_default_dataset(collections_selected_names, datasets) if datasets else None
         dataset = st.selectbox(
-            "Select a test dataset",
+            "Dataset",
             ["Select dataset"] + datasets,
             index=(datasets.index(default_dataset) + 1) if default_dataset else 0,
             key="main_dataset_select",
             disabled=not is_api_key_valid,
+            help="Choose the reference dataset that will be used to evaluate the test RAG system.",
         )
 
     with col5:
-        st.selectbox("LLM Judge", DEFAULT_JUDGE_MODEL, key="selected_judge", disabled=not is_api_key_valid)
+        st.selectbox(
+            "Judge Model",
+            DEFAULT_JUDGE_MODEL,
+            key="selected_judge",
+            disabled=not is_api_key_valid,
+            help="Select the LLM that will assess and score the system’s answers.",
+        )
 
     with col6:
         selected_metrics = st.multiselect(
-            "Select generation metrics",
+            "Metrics",
             options=CHOICE_METRICS,
             key="selected_metrics",
             disabled=not is_api_key_valid,
+            help="Select the evaluation metrics you want to run on test system.",
+            placeholder="Select metrics",
         )
 
     metrics = (selected_metrics if selected_metrics else []) + DEFAULT_METRICS
@@ -465,7 +549,6 @@ def handle_run_evaluation(experimentset, user_api_key):
             st.success(f"Experiment set created: {result['name']} (ID: {expset_id})")
 
             dashboard_url = f"/experiments_set?expset={expset_id}"
-            st.markdown(button_style, unsafe_allow_html=True)
             st.markdown(
                 f'<a href="{dashboard_url}" class="custom-button">See detailed results in the dashboard</a>',
                 unsafe_allow_html=True,
@@ -481,8 +564,8 @@ def handle_run_evaluation(experimentset, user_api_key):
 
 
 def main():
-    """Point d'entrée principal de l'application."""
-    st.title("Start an Evaluation with Albert API")
+    init_page_styles()
+    st.title("Evaluation test with Albert API")
 
     user_api_key, is_api_key_valid = render_api_key_section()
 
@@ -512,7 +595,7 @@ def main():
 
     with button_col1:
         run_button = st.button(
-            "Run Evaluation 🚀",
+            "Run test",
             key="eval_button",
             disabled=not is_api_key_valid,
             help="Enter a valid API key to run evaluation" if not is_api_key_valid else None,
