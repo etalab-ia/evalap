@@ -4,6 +4,8 @@ from pathlib import Path
 import streamlit as st
 from PIL import Image
 
+# ---------- Header ----------
+
 
 def get_logo(filename="evalap_logo.png"):
     img_path = Path(__file__).resolve().parents[1] / "static" / "images"
@@ -11,41 +13,11 @@ def get_logo(filename="evalap_logo.png"):
     if os.path.exists(logo_path):
         logo = Image.open(logo_path)
     else:
-        logo = Image.new("RGBA", (200, 100), (255, 255, 255, 0))
+        logo = Image.New("RGBA", (200, 100), (255, 255, 255, 0))
     return logo
 
 
-# ---------- Global CSS for cards ----------
-st.markdown(
-    """
-    <style>
-    /* Make card containers take full height of the column */
-    div[data-testid="stVerticalBlockBorderWrapper"] {
-        height: 100%;
-    }
-    div[data-testid="stVerticalBlockBorderWrapper"] div[data-testid="stVerticalBlock"] {
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 0.35rem;
-    }
-    div[data-testid="stVerticalBlockBorderWrapper"] h3 {
-        font-size: 1.4rem !important;
-        text-align: center;
-    }
-    div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stLinkButton"] {
-        font-size: 0.8rem !important;
-        text-align: center;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
-
-
-# ---------- Header ----------
-col1, col2, _ = st.columns([0.2, 0.6, 0.2])
+col1, col2, _ = st.columns([0.2, 0.6, 0.2])  # Image column is 20%, content column is 60%
 
 with col1:
     st.image(get_logo(), width=150)
@@ -53,6 +25,7 @@ with col1:
 with col2:
     st.title("EvalAP")
 
+# ---------- Content ----------
 st.write(
     "EvalAP supports you in the **development** and **pre‑production evaluation** "
     "of AI systems, primarily systems that include RAG."
@@ -61,17 +34,13 @@ st.write(
 st.write(
     """EvalAP is built around the concept of experiment sets.
 
-
 An experiment set groups several related experiments for a given evaluation:
-
 
 - Find the system that best fits your business use case
 - Find the best configuration of a RAG engine
 - Detect biases or regressions in a set of models
 
-
 To run an experiment, you need:
-
 
 - A test dataset
 - One or more metrics and a judge
@@ -102,7 +71,6 @@ cards = [
         DOC_URL + "fr/docs/developer-guide/adding-a-new-metric",
         NB_URL,
     ),
-    # ("Configure the judge", DOC_URL + "fr/docs/user-guides/create-a-simple-experiment", NB_URL),
     (
         "Run an experiment",
         DOC_URL + "fr/docs/user-guides/evaluate-your-own-ia-system#22-run-eval",
