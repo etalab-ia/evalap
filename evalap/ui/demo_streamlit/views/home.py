@@ -83,6 +83,18 @@ cards = [
     ),
 ]
 
+st.markdown(
+    """
+    <style>
+    div[data-testid="stVerticalBlock"] > div:has(div.evalap-card) div[data-testid="stLinkButton"] {
+        display: flex;
+        justify-content: center;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 for col, (title, doc_link, nb_link) in zip(cols, cards):
     with col:
         with st.container(border=True):
