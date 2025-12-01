@@ -69,7 +69,7 @@ cards = [
     (
         "Configure metrics",
         DOC_URL + "fr/docs/developer-guide/adding-a-new-metric",
-        NB_URL,
+        NB_URL + "run_judge_adhoc.ipynb",
     ),
     (
         "Run an experiment",
