@@ -1,5 +1,6 @@
 import copy
 import json
+import os
 from datetime import datetime
 
 import requests
@@ -7,6 +8,8 @@ import streamlit as st
 import streamlit.components.v1 as components
 from template_manager import TemplateManager
 from utils import fetch
+
+EVALAP_FRONTEND_TOKEN = os.getenv("EVALAP_FRONTEND_TOKEN")
 
 # --- Configuration ---
 
@@ -67,10 +70,8 @@ DEFAULT_METRICS = [
     "gwp_consumption",
 ]
 DEFAULT_TEMPERATURE = 0.2
-DEFAULT_PROVIDER_URL = "https://albert.api.etalab.gouv.fr/v1"
+ALBERT_PROVIDER_URL = "https://albert.api.etalab.gouv.fr/v1"
 DEFAULT_METHOD_COLLECTION = "semantic"
-
-ALBERT_PROVIDER_URL = DEFAULT_PROVIDER_URL
 
 template_manager = TemplateManager()
 
@@ -143,7 +144,7 @@ def create_experiment_set(
 ):
     model_config = {
         "name": model_name,
-        "base_url": DEFAULT_PROVIDER_URL,
+        "base_url": ALBERT_PROVIDER_URL,
         "api_key": api_key,
         "system_prompt": prompt.strip(),
         "sampling_params": {"temperature": DEFAULT_TEMPERATURE},
@@ -169,7 +170,7 @@ def create_experiment_set(
                 "metrics": metrics,
                 "judge_model": {
                     "name": judge_model,
-                    "base_url": DEFAULT_PROVIDER_URL,
+                    "base_url": ALBERT_PROVIDER_URL,
                     "api_key": api_key,
                 },
             },
@@ -534,13 +535,13 @@ def render_copy_code_popover(experimentset):
             st.error(f"Failed to render copy code template: {e}")
 
 
-def handle_run_evaluation(experimentset, user_api_key):
-    if not user_api_key:
+def handle_run_evaluation(experimentset, is_valid):
+    if not is_valid:
         st.error("Please enter your access key before starting an assessment.")
         return
 
     try:
-        result = post_experiment_set(experimentset, user_api_key)
+        result = post_experiment_set(experimentset, is_valid)
 
         if result and "id" in result:
             expset_id = result["id"]
@@ -604,7 +605,7 @@ def main():
             render_copy_code_popover(experimentset)
 
     if run_button and is_api_key_valid:
-        handle_run_evaluation(experimentset, user_api_key)
+        handle_run_evaluation(experimentset, is_api_key_valid)
 
 
 main()
