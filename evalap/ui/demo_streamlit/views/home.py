@@ -107,4 +107,6 @@ for col, (title, doc_link, nb_link) in zip(cols, cards):
             st.link_button("Notebook", nb_link)
             st.markdown("</div>", unsafe_allow_html=True)
 
-st.markdown("Explore the [full documentation](https://evalap.etalab.gouv.fr/doc/).")
+st.markdown(
+    "Explore the [documentation](https://evalap.etalab.gouv.fr/doc/) and [notebook](https://github.com/etalab-ia/evalap/blob/main/notebooks/)"
+)
