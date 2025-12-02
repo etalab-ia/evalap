@@ -129,8 +129,8 @@ def get_default_dataset(collections_selected_names, available_datasets):
     return None
 
 
-def post_experiment_set(expset, token):
-    return fetch("post", "/experiment_set", data=expset, token=token)
+def post_experiment_set(expset, EVALAP_FRONTEND_TOKEN):
+    return fetch("post", "/experiment_set", data=expset, token=EVALAP_FRONTEND_TOKEN)
 
 
 def create_experiment_set(
@@ -541,7 +541,7 @@ def handle_run_evaluation(experimentset, is_valid):
         return
 
     try:
-        result = post_experiment_set(experimentset, is_valid)
+        result = post_experiment_set(experimentset, EVALAP_FRONTEND_TOKEN)
 
         if result and "id" in result:
             expset_id = result["id"]
@@ -584,7 +584,7 @@ def main():
             model_name=DEFAULT_MODEL,
             prompt=prompt_content or "",
             judge_model=DEFAULT_JUDGE_MODEL,
-            api_key=user_api_key or "YOUR_API_KEY",
+            api_key=user_api_key,
             metrics=metrics,
         )
     except Exception as e:
