@@ -958,25 +958,6 @@ def _display_info_banner():
     )
 
 
-def _display_experiment_list_view(experiment_sets, compliance):
-    """Display the list of all experiment sets"""
-    col1, col2, col3 = st.columns([3, 1, 1])
-    with col1:
-        st.title("Experiments")
-    with col2:
-        if st.button("🔄 Refresh", key="refresh_btn_main"):
-            st.session_state["refresh_main"] = True
-            st.rerun()
-
-        st.write(" filter by compliance here")
-
-    with col3:
-        if st.button("🚀 Run Test Evaluation", key="launch_test_eval_btn"):
-            st.switch_page("views/launch_test_evaluation.py")
-
-    display_experiment_sets(experiment_sets, compliance)
-
-
 def _display_experiment_detail_view(expid, experiment_sets, compliance):
     """Display details of a single experiment set"""
     # Save state
@@ -1099,13 +1080,65 @@ def _display_experiment_detail_view(expid, experiment_sets, compliance):
         display_ops_analysis(experimentset)
 
 
-def main(compliance=False):
+def _display_experiment_list_view(experiment_sets, compliance):
+    """Display the list of all experiment sets"""
+    col1, col2, col3 = st.columns([3, 1, 1])
+    with col1:
+        st.title("Experiments")
+    with col2:
+        if st.button("🔄 Refresh", key="refresh_btn_main"):
+            st.session_state["refresh_main"] = True
+            st.rerun()
+    with col3:
+        if st.button("🚀 Run Test Evaluation", key="launch_test_eval_btn"):
+            st.switch_page("views/launch_test_evaluation.py")
+
+    # Compliance filter
+    compliance_options = {"All": None, "Compliance only": True, "Non-compliance only": False}
+
+    # Fix index for compliance
+    current_index = 0
+    for idx, (label, value) in enumerate(compliance_options.items()):
+        if value == compliance:
+            current_index = idx
+            break
+
+    compliance_filter = st.radio(
+        "Filter by compliance:",
+        options=list(compliance_options.keys()),
+        index=current_index,
+        horizontal=True,
+        key="compliance_filter",
+    )
+
+    # If the filter has changed, update and reload.
+    selected_compliance = compliance_options[compliance_filter]
+    if selected_compliance != compliance:
+        st.session_state["compliance"] = selected_compliance
+        st.session_state["refresh_main"] = True
+        st.rerun()
+
+    display_experiment_sets(experiment_sets, compliance)
+
+
+def main(compliance=None):
     # 1. FETCH DATA
     refresh_needed = st.session_state.get("refresh_main", False)
+
+    # Retrieve the compliance value from session_state or use the default value
+    if "compliance" not in st.session_state:
+        st.session_state["compliance"] = compliance
+
+    current_compliance = st.session_state["compliance"]
+
+    fetch_data = {}
+    if current_compliance is not None:
+        fetch_data["compliance"] = current_compliance
+
     experiment_sets = _fetch(
         "get",
         "/experiment_sets",
-        data={"compliance": compliance},
+        data=fetch_data,
         refresh=refresh_needed,
     )
     if refresh_needed:
@@ -1118,7 +1151,7 @@ def main(compliance=False):
 
     if expid:
         # Show single experiment set
-        _display_experiment_detail_view(expid, experiment_sets, compliance)
+        _display_experiment_detail_view(expid, experiment_sets, current_compliance)
     else:
         # Show info banner in main page
         _display_info_banner()
@@ -1134,7 +1167,7 @@ def main(compliance=False):
                     st.switch_page("views/launch_test_evaluation.py")
         else:
             # Show all experiment sets
-            _display_experiment_list_view(experiment_sets, compliance)
+            _display_experiment_list_view(experiment_sets, current_compliance)
 
 
 main()
