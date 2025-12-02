@@ -29,32 +29,11 @@ ROUTES = [
         "icon": ":material/experiment:",
     },
     {
-        "id": "compliance",
-        "path": "views/compliance.py",
-        "title": "Compliance",
-        "description": "AI system compliance",
-        "icon": ":material/fact_check:",
-    },
-    {
         "id": "launch",
         "path": "views/launch_test_evaluation.py",
         "title": "Test EvalAP",
         "description": "Test an evaluation",
         "icon": ":material/rocket_launch:",
-    },
-    {
-        "id": "prompt_analyze",
-        "path": "views/prompt_analyze.py",
-        "title": "Prompt analyze",
-        "description": "Analyze differents prompts for your product",
-        "icon": ":material/trophy:",
-    },
-    {
-        "id": "leaderboard",
-        "path": "views/product_leaderboard.py",
-        "title": "Leaderboard",
-        "description": "Best models ranking list (by products)",
-        "icon": ":material/trophy:",
     },
     {
         "id": "ops",
