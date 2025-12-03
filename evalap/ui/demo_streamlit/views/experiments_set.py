@@ -1162,7 +1162,7 @@ def main(compliance=None):
             col1, col2, col3 = st.columns([2, 1, 2])
             with col2:
                 if st.button(
-                    "🚀 Launch Test Evaluation", key="launch_test_eval_btn_empty", use_container_width=True
+                    "🚀 Run Test Evaluation", key="launch_test_eval_btn_empty", use_container_width=True
                 ):
                     st.switch_page("views/launch_test_evaluation.py")
         else:
