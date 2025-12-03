@@ -153,19 +153,15 @@ seed:
   uv run python -m evalap.scripts.run_seed_data
 
 
-[no-cd]
 drop-database db_name="evalap_dev":
   uv run python scripts/drop_database.py {{db_name}}
 
-[no-cd]
 drop-table table_name:
   uv run python scripts/drop_table.py {{table_name}}
 
-[no-cd]
 reset-experiment-status *expids:
   uv run python scripts/reset_experiment_status.py {{expids}}
 
-[no-cd]
 get-experiment expid:
   uv run python scripts/get_experiment.py {{expid}}
 
