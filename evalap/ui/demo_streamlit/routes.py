@@ -1,4 +1,5 @@
 import streamlit as st
+from utils import fetch
 
 ROUTES = [
     {
@@ -45,16 +46,20 @@ ROUTES = [
 ]
 
 
-def get_page(route: str | dict):
-    if isinstance(route, str):
-        route = next((x for x in ROUTES if x["id"] == route), None)
-    elif isinstance(route, dict):
-        pass
-    else:
-        raise ValueError("Unsupported data type for route: %s" % type(route))
+def is_db_empty(refresh_needed=False):
+    all_experiment_sets = fetch("get", "/experiment_sets", data={}, refresh=refresh_needed)
+    return len(all_experiment_sets) == 0
 
-    if route is None:
-        raise ValueError("Route not found: %s" % route)
 
-    page = st.Page(route["path"], title=route["title"], icon=route.get("icon"), url_path=route["id"])
-    return page
+def main():
+    db_empty = is_db_empty()
+
+    available_routes = [route for route in ROUTES if not (db_empty and route["id"] == "ops")]
+
+    pages = [
+        st.Page(route["path"], title=route["title"], icon=route.get("icon"), url_path=route["id"])
+        for route in available_routes
+    ]
+
+    page = st.navigation(pages)
+    page.run()
