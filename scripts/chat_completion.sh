@@ -13,8 +13,21 @@ elif [ "$PROVIDER" = "openai" ]; then
   URL="https://api.openai.com/v1"
   API_KEY=$OPENAI_API_KEY
 elif [ "$PROVIDER" = "anthropic" ]; then
-  URL="https://api.anthropic.com/v1"
+  URL="https://api.anthropic.com/v1/messages"
   API_KEY=$ANTHROPIC_API_KEY
+
+  curl "$URL" \
+      -H "x-api-key: $API_KEY" \
+      -H "anthropic-version: 2023-06-01" \
+      -H "Content-Type: application/json" \
+      -d '{
+        "model": "'"$MODEL"'",
+        "max_tokens": 1024,
+        "messages": [
+          {"role": "user", "content": "Combien de fois '\''p'\'' dans développer ? Combien font 2*10+50-20 ?"}
+        ]
+      }'
+  exit 0
 elif [ "$PROVIDER" = "mistral" ]; then
   URL="https://api.mistral.ai/v1"
   API_KEY=$MISTRAL_API_KEY
