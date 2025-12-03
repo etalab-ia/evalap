@@ -26,25 +26,15 @@ with col2:
     st.title("EvalAP")
 
 # ---------- Content ----------
-st.write(
-    "EvalAP supports you in the **development** and **pre‑production evaluation** "
-    "of AI systems, primarily systems that include RAG."
-)
 
 st.write(
-    """EvalAP is built around the concept of experiment sets.
+    """EvalAP helps you build and evaluate AI systems in development and pre-production — especially those powered by RAG. Whether you’re fine-tuning a RAG pipeline, comparing models, or detecting biases, EvalAP helps you make data-driven decisions faster—so you can deploy with confidence.
 
-An experiment set groups several related experiments for a given evaluation:
+EvalAP is built around experiment sets, each experiment requires components:
+🔹 A test dataset – Your data, your scenarios.
+🔹 Metrics and a judge – Customizable evaluation criteria.
+🔹 AI models/systems or Q&A pairs – Compare multiple configurations at once.
 
-- Find the system that best fits your business use case
-- Find the best configuration of a RAG engine
-- Detect biases or regressions in a set of models
-
-To run an experiment, you need:
-
-- A test dataset
-- One or more metrics and a judge
-- The AI models/systems to evaluate, or question–answer pairs to evaluate
 """
 )
 
