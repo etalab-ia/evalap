@@ -1131,6 +1131,14 @@ def main(compliance=None):
 
     current_compliance = st.session_state["compliance"]
 
+    all_experiment_sets = _fetch(
+        "get",
+        "/experiment_sets",
+        data={},
+        refresh=refresh_needed,
+    )
+
+    # filter expset
     fetch_data = {}
     if current_compliance is not None:
         fetch_data["compliance"] = current_compliance
@@ -1141,23 +1149,30 @@ def main(compliance=None):
         data=fetch_data,
         refresh=refresh_needed,
     )
+
     if refresh_needed:
         st.session_state["refresh_main"] = False
 
-    is_empty = not experiment_sets or (isinstance(experiment_sets, list) and len(experiment_sets) == 0)
+    # empty info
+    is_truly_empty = not all_experiment_sets or (
+        isinstance(all_experiment_sets, list) and len(all_experiment_sets) == 0
+    )
+    is_filtered_empty = not experiment_sets or (
+        isinstance(experiment_sets, list) and len(experiment_sets) == 0
+    )
 
     # 2. CHECK IF VIEWING SPECIFIC EXPERIMENT SET
     expid = st.query_params.get("expset") or st.session_state.get("expset_id")
 
     if expid:
-        # Show single experiment set
-        _display_experiment_detail_view(expid, experiment_sets, current_compliance)
+        # Show single experiment set and details
+        _display_experiment_detail_view(expid, all_experiment_sets, current_compliance)
     else:
         # Show info banner in main page
         _display_info_banner()
 
-        if is_empty:
-            # if empty, just button for launch
+        # If 0 expset in the db
+        if is_truly_empty:
             st.title("Experiments")
             col1, col2, col3 = st.columns([2, 1, 2])
             with col2:
@@ -1166,8 +1181,13 @@ def main(compliance=None):
                 ):
                     st.switch_page("views/launch_test_evaluation.py")
         else:
-            # Show all experiment sets
+            # Show all experiment sets (même si filtered est vide, on affiche quand même le filtre)
             _display_experiment_list_view(experiment_sets, current_compliance)
+
+            if is_filtered_empty:
+                st.info(
+                    "No experiment sets match the current filter. Try changing the compliance filter above."
+                )
 
 
 main()
