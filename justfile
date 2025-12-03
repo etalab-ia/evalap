@@ -14,13 +14,102 @@ clean:
 #
 
 list-model provider="albert":
-  scripts/list_model.sh {{provider}}
+  #!/usr/bin/env sh
+  if [ "{{provider}}" = "albert" ]; then
+    URL="https://albert.api.etalab.gouv.fr/v1"
+    API_KEY=$ALBERT_API_KEY
+  elif [ "{{provider}}" = "albert-staging" ]; then
+    URL="https://albert.api.staging.etalab.gouv.fr/v1"
+    API_KEY=$ALBERT_API_KEY_STAGING
+  elif [ "{{provider}}" = "albert-dev" ]; then
+    URL="https://albert.api.dev.etalab.gouv.fr/v1"
+    API_KEY=$ALBERT_API_KEY_DEV
+  elif [ "{{provider}}" = "anthropic" ]; then
+    URL="https://api.anthropic.com/v1"
+    API_KEY=$ANTHROPIC_API_KEY
+    curl -XGET -H "x-api-key: $API_KEY" -H "anthropic-version: 2023-06-01" $URL/models | jq '[.data.[] | {id, type, owned_by, aliases}]'
+    exit 0
+  elif [ "{{provider}}" = "openai" ]; then
+    URL="https://api.openai.com/v1"
+    API_KEY=$OPENAI_API_KEY
+  elif [ "{{provider}}" = "mistral" ]; then
+    URL="https://api.mistral.ai/v1"
+    API_KEY=$MISTRAL_API_KEY
+  elif [ "{{provider}}" = "xai" ]; then
+    URL="https://api.x.ai/v1"
+    API_KEY=$XAI_API_KEY
+  elif [ "{{provider}}" = "mammouth" ]; then
+    URL="https://api.mammouth.ai/v1"
+    API_KEY=$MAMMOUTH_API_KEY
+  fi
+
+  curl -XGET -H "Authorization: Bearer $API_KEY" $URL/models | jq '[.data.[] | {id, type, owned_by, aliases}]'
 
 chat-completion model="mistralai/Mistral-Small-3.2-24B-Instruct-2506" provider="albert":
-  scripts/chat_completion.sh {{model}} {{provider}}
+  #!/usr/bin/env sh
+  if [ "{{provider}}" = "albert" ]; then
+    URL="https://albert.api.etalab.gouv.fr/v1"
+    API_KEY=$ALBERT_API_KEY
+  elif [ "{{provider}}" = "albert-staging" ]; then
+    URL="https://albert.api.staging.etalab.gouv.fr/v1"
+    API_KEY=$ALBERT_API_KEY_STAGING
+  elif [ "{{provider}}" = "openai" ]; then
+    URL="https://api.openai.com/v1"
+    API_KEY=$OPENAI_API_KEY
+  elif [ "{{provider}}" = "anthropic" ]; then
+    URL="https://api.anthropic.com/v1/messages"
+    API_KEY=$ANTHROPIC_API_KEY
+
+    curl "$URL" \
+        -H "x-api-key: $API_KEY" \
+        -H "anthropic-version: 2023-06-01" \
+        -H "Content-Type: application/json" \
+        -d '{
+          "model": "{{model}}",
+          "max_tokens": 1024,
+          "messages": [
+            {"role": "user", "content": "Combien de fois 'p' dans développer ? Combien font 2*10+50-20 ?"}
+          ]
+        }'
+    exit 0
+  elif [ "{{provider}}" = "mistral" ]; then
+    URL="https://api.mistral.ai/v1"
+    API_KEY=$MISTRAL_API_KEY
+  fi
+
+  curl "$URL/chat/completions" \
+      -H "Content-Type: application/json" \
+      -H "Authorization: Bearer $API_KEY" \
+      -d '{
+        "model": "{{model}}",
+        "messages": [
+          {"role": "system", "content": "Answer dramatically and with emojis."},
+          {"role": "user", "content": "Combien de fois 'p' dans développer ? Combien font 2*10+50-20 ?"}
+        ]
+      }'
 
 chat-completion-cortex:
-  scripts/chat_completion_cortex.sh
+  #!/usr/bin/env bash
+  models_and_urls=(
+    "https://model1.multivacplatform.org/v1|$CORTEX_API_KEY|meta-llama/Llama-3.2-3B-Instruct"
+    "https://model2.multivacplatform.org/v1|$CORTEX_API_KEY|deepseek-ai/DeepSeek-R1-Distill-Qwen-32B"
+    "https://model4.multivacplatform.org/v1|$CORTEX_API_KEY|meta-llama/Llama-3.3-70B-Instruct"
+  )
+
+  for entry in "${models_and_urls[@]}"; do
+    IFS='|' read -r url key model <<< "$entry"
+
+    curl "$url/chat/completions" \
+         -H "Content-Type: application/json" \
+         -H "Authorization: Bearer $key" \
+         -d '{
+           "model": "'"$model"'",
+           "messages": [
+             {"role": "system", "content": "Answer dramatically and with emojis."},
+             {"role": "user", "content": "Combien de fois 'p' dans développer ? Combien font 2*10+50-20 ?"}
+           ]
+           }' | jq
+    done
 
 #
 # Alembic commands
@@ -47,7 +136,14 @@ alembic-history:
 #
 
 list-indexes env="dev":
-  scripts/list_indexes.sh {{env}}
+  #!/usr/bin/env sh
+  if [ "{{env}}" = "dev" ]; then
+    curl -u elastic:$ELASTICSEARCH_PASSWORD -X GET "$ELASTICSEARCH_URL/_cat/indices?v"
+  elif [ "{{env}}" = "staging" ]; then
+    curl -u elastic:$ELASTICSEARCH_PASSWORD -X GET "$ELASTICSEARCH_URL/_cat/indices?v"
+  elif [ "{{env}}" = "prod" ]; then
+    curl -u elastic:$ELASTICSEARCH_PASSWORD -X GET "$ELASTICSEARCH_URL/_cat/indices?v"
+  fi
 
 #
 # DB Queries
