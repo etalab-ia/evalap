@@ -152,18 +152,24 @@ list-indexes env="dev":
 seed:
   uv run python -m evalap.scripts.run_seed_data
 
-
-drop-database db_name="evalap_dev":
-  uv run python scripts/drop_database.py {{db_name}}
-
-drop-table table_name:
-  uv run python scripts/drop_table.py {{table_name}}
-
-reset-experiment-status *expids:
-  uv run python scripts/reset_experiment_status.py {{expids}}
-
+[no-cd]
 get-experiment expid:
-  uv run python scripts/get_experiment.py {{expid}}
+  #!/usr/bin/env python
+  # See scripts/get_experiment.py for psycopg2 based approach to query the DB.
+  import sys, os; sys.path.append("{{work_dir}}")
+  from evalap.api.config import DATABASE_URI
+
+  PGURI = DATABASE_URI.replace("+psycopg2", "")
+  expid = "{{expid}}"
+  req = f"""
+    SELECT json_agg(row_to_json(t)) FROM (
+      SELECT *
+      FROM experiments
+      WHERE id = {expid}
+    ) t;
+  """.strip()
+  command = f'psql "{PGURI}" -t -P pager=off -c "{req}" | jq'
+  exit_status = os.system(command)
 
 rainfrog:
   rainfrog --url postgres://postgres:changeme@localhost:5432/evalap_dev
