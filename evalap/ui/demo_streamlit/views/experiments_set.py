@@ -203,7 +203,11 @@ def display_experiment_sets(experiment_sets, compliance=False):
 
     # Show orphan experiments
     # --
-    orphan_experiments = fetch("get", "/experiments", {"orphan": True, "backward": True})
+    fetch_data = {"orphan": True, "backward": True}
+    if compliance is not None:
+        fetch_data["compliance"] = compliance
+
+    orphan_experiments = fetch("get", "/experiments", fetch_data, show_error=False)
 
     if orphan_experiments and len(orphan_experiments) > 0:
         st.markdown("---")
