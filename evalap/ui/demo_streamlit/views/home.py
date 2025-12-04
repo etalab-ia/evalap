@@ -27,16 +27,28 @@ with col2:
 
 # ---------- Content ----------
 
-st.write(
-    """EvalAP helps you build and evaluate AI systems in development and pre-production — especially those powered by RAG. Whether you’re fine-tuning a RAG pipeline, comparing models, or detecting biases, EvalAP helps you make data-driven decisions faster—so you can deploy with confidence.
+st.markdown(
+    """
+    <p>
+        <span style="font-size:20px; font-weight:bold;">
+            EvalAP helps you build and evaluate AI systems in development and pre-production
+        </span>
+        — especially those powered by RAG.
+    </p>
 
-EvalAP is built around experiment sets, each experiment requires components:
-🔹 A test dataset – Your data, your scenarios.
-🔹 Metrics and a judge – Customizable evaluation criteria.
-🔹 AI models/systems or Q&A pairs – Compare multiple configurations at once.
-
-"""
+    Whether you're fine-tuning a RAG pipeline, comparing models, or detecting biases,
+    EvalAP helps you make data-driven decisions faster—so you can deploy with confidence.
+    <br><br>
+    EvalAP is built around experiment sets, each experiment requires components:
+    <ul>
+        <li>A test dataset – Your data, your scenarios.</li>
+        <li>Metrics and a judge – Customizable evaluation criteria.</li>
+        <li>AI models/systems or Q&A pairs – Compare multiple configurations at once.</li>
+    </ul>
+    """,
+    unsafe_allow_html=True,
 )
+
 
 st.markdown(
     '<h2 style="font-size: 20px; font-weight: bold; margin-top: 1.5rem; margin-bottom: 1rem;">Start your evaluation with our guides:</h2>',
