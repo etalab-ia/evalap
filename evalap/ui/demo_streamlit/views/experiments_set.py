@@ -1082,6 +1082,7 @@ def _display_experiment_detail_view(expid, experiment_sets, compliance):
 
 def _display_experiment_list_view(experiment_sets, compliance):
     """Display the list of all experiment sets"""
+    # Header avec boutons
     col1, col2, col3 = st.columns([3, 1, 1])
     with col1:
         st.title("Experiments")
@@ -1096,7 +1097,6 @@ def _display_experiment_list_view(experiment_sets, compliance):
     # Compliance filter
     compliance_options = {"All": None, "Compliance only": True, "Non-compliance only": False}
 
-    # Fix index for compliance
     current_index = 0
     for idx, (label, value) in enumerate(compliance_options.items()):
         if value == compliance:
@@ -1118,7 +1118,11 @@ def _display_experiment_list_view(experiment_sets, compliance):
         st.session_state["refresh_main"] = True
         st.rerun()
 
-    display_experiment_sets(experiment_sets, compliance)
+    # if filter returns expset => display, otherwise info message
+    if experiment_sets and len(experiment_sets) > 0:
+        display_experiment_sets(experiment_sets, compliance)
+    else:
+        st.info("No experiment sets match the current filter. Try changing the compliance filter above.")
 
 
 def main(compliance=None):
@@ -1157,9 +1161,6 @@ def main(compliance=None):
     is_truly_empty = not all_experiment_sets or (
         isinstance(all_experiment_sets, list) and len(all_experiment_sets) == 0
     )
-    is_filtered_empty = not experiment_sets or (
-        isinstance(experiment_sets, list) and len(experiment_sets) == 0
-    )
 
     # 2. CHECK IF VIEWING SPECIFIC EXPERIMENT SET
     expid = st.query_params.get("expset") or st.session_state.get("expset_id")
@@ -1171,7 +1172,7 @@ def main(compliance=None):
         # Show info banner in main page
         _display_info_banner()
 
-        # If 0 expset in the db
+        # if no expset
         if is_truly_empty:
             st.title("Experiments")
             col1, col2, col3 = st.columns([2, 1, 2])
@@ -1181,13 +1182,7 @@ def main(compliance=None):
                 ):
                     st.switch_page("views/launch_test_evaluation.py")
         else:
-            # Show all experiment sets (même si filtered est vide, on affiche quand même le filtre)
             _display_experiment_list_view(experiment_sets, current_compliance)
-
-            if is_filtered_empty:
-                st.info(
-                    "No experiment sets match the current filter. Try changing the compliance filter above."
-                )
 
 
 main()
