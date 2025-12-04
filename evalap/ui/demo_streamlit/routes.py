@@ -1,5 +1,4 @@
 import streamlit as st
-from utils import fetch
 
 ROUTES = [
     {
@@ -46,20 +45,26 @@ ROUTES = [
 ]
 
 
-def is_db_empty(refresh_needed=False):
-    all_experiment_sets = fetch("get", "/experiment_sets", data={}, refresh=refresh_needed)
-    return len(all_experiment_sets) == 0
+def get_filtered_routes(all_experiment_sets=None):
+    filtered_routes = ROUTES.copy()
+
+    # Hide the ops tab if all_experiment_sets is empty
+    if all_experiment_sets is not None and len(all_experiment_sets) == 0:
+        filtered_routes = [route for route in filtered_routes if route["id"] != "ops"]
+
+    return filtered_routes
 
 
-def main():
-    db_empty = is_db_empty()
+def get_page(route: str | dict):
+    if isinstance(route, str):
+        route = next((x for x in ROUTES if x["id"] == route), None)
+    elif isinstance(route, dict):
+        pass
+    else:
+        raise ValueError("Unsupported data type for route: %s" % type(route))
 
-    available_routes = [route for route in ROUTES if not (db_empty and route["id"] == "ops")]
+    if route is None:
+        raise ValueError("Route not found: %s" % route)
 
-    pages = [
-        st.Page(route["path"], title=route["title"], icon=route.get("icon"), url_path=route["id"])
-        for route in available_routes
-    ]
-
-    page = st.navigation(pages)
-    page.run()
+    page = st.Page(route["path"], title=route["title"], icon=route.get("icon"), url_path=route["id"])
+    return page
