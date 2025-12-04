@@ -175,7 +175,6 @@ class LlmClient:
         openai_format: bool = False,
     ) -> list[float] | list[list[float]] | dict:
         """Simple interface to create an embedding vector from a text input or a list of text inputs."""
-
         json_data = {"input": texts}
         json_data["model"] = model
         if doc_type:

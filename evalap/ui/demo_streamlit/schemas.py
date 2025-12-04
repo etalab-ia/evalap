@@ -267,6 +267,9 @@ class ExperimentBase(EgBaseModel):
         False,
         description="Add the image to the user message if an 'img' field is present in the dataset (parquet).",
     )
+    sample: list[int] | None = Field(
+        default=None, description="List of the sample indices to select from the dataset, if applicable."
+    )
 
 
 class ExperimentCreate(ExperimentBase):
