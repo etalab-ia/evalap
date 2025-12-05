@@ -53,11 +53,18 @@ def generate_answer(message: dict, mcp_bridge: MCPBridgeClient | None):
         query = "\n\n".join([model.prelude_prompt, query]) if model.prelude_prompt else query
         answer = None
         error_msg = None
+
+        if exp.sample:
+            dataset_size = len(exp.sample)
+        elif exp.with_vision:
+            dataset_size = exp.dataset.parquet_size
+        else:
+            dataset_size = exp.dataset.size
+
         try:
             # Generate answer
             # --
             if exp.with_vision:
-                dataset_size = exp.dataset.parquet_size
                 if msg.line_id >= 100:
                     # @DEBUG/@PERF
                     raise ValueError("limit to 100 input for vision")
@@ -78,7 +85,6 @@ def generate_answer(message: dict, mcp_bridge: MCPBridgeClient | None):
                     }
                 ]
             else:
-                dataset_size = exp.dataset.size
                 messages = [{"role": "user", "content": query}]
 
             if model.system_prompt:
@@ -327,7 +333,9 @@ def generate_observation(message: dict, mcp_bridge: MCPBridgeClient):
             if error_msg:
                 crud.upsert_observation(db, result.id, msg.line_id, dict(error_msg=error_msg))
 
-        if result.experiment.with_vision:
+        if result.experiment.sample:
+            dataset_size = len(result.experiment.sample)
+        elif result.experiment.with_vision:
             dataset_size = result.experiment.dataset.parquet_size
         else:
             dataset_size = result.experiment.dataset.size
