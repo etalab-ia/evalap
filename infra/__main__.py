@@ -135,8 +135,9 @@ def create_stack(config: StackConfiguration) -> None:
         stack = DevelopmentStack(config)
         stack.create()
     elif stack_name == "staging":
-        logger.warning("Staging stack not yet implemented, using development stack")
-        stack = DevelopmentStack(config)
+        from infra.stacks.staging import StagingStack
+
+        stack = StagingStack(config)
         stack.create()
     elif stack_name == "production":
         logger.warning("Production stack not yet implemented, using development stack")

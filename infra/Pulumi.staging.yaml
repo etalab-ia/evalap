@@ -7,3 +7,4 @@ config:
     secure: v1:xYAOByTsFm4w5M1i:h9E6aHseVA207GvXH6KnuAhiXLccn69RpViUI7BvyoKVgGWD
   evalap:secret_key:
     secure: v1:SFbyEvFn5qrtN3Al:s5LCNkNfDYIcND18tPw2kyq3u5z3yEuKytaTna5uOOHOpzgytjldo17qDN/wwprNgjb1bg==
+  evalap:network_enable_private: "true"

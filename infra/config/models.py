@@ -1,6 +1,6 @@
 """Pydantic configuration models for infrastructure components."""
 
-from typing import Optional
+from typing import Any, Optional
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -96,7 +96,7 @@ class SecretConfig(BaseModel):
 
     name: str = Field(description="Secret name (must match ^[a-z][a-z0-9-]*$)")
     description: Optional[str] = Field(default=None, description="Human-readable description")
-    data: str = Field(description="Secret data/value to store")
+    data: Any = Field(description="Secret data/value to store")
     path: str = Field(default="/", description="Secret path in Secret Manager")
     secret_type: Optional[str] = Field(
         default=None,
