@@ -17,7 +17,7 @@ from infra.config.models import (
     StackConfiguration,
     StorageConfig,
 )
-from infra.stacks.dev import DevelopmentStack
+from infra.stacks.application import ApplicationStack
 from infra.utils import pulumi_helpers
 
 # Configure logging
@@ -129,22 +129,10 @@ def create_stack(config: StackConfiguration) -> None:
 
     logger.info(f"Creating stack: {stack_name}")
 
-    # Currently only development stack is implemented
-    # This can be extended to support staging and production stacks
-    if stack_name == "dev":
-        stack = DevelopmentStack(config)
-        stack.create()
-    elif stack_name == "staging":
-        from infra.stacks.staging import StagingStack
-
-        stack = StagingStack(config)
-        stack.create()
-    elif stack_name == "production":
-        logger.warning("Production stack not yet implemented, using development stack")
-        stack = DevelopmentStack(config)
-        stack.create()
-    else:
-        raise ValueError(f"Unknown stack type: {stack_name}. Supported stacks: dev, staging, production")
+    # Create unified application stack
+    # The ApplicationStack adapts based on the configuration (e.g., enabling private network/monitoring)
+    stack = ApplicationStack(config)
+    stack.create()
 
     logger.info(f"Stack '{stack_name}' created successfully")
 

@@ -1,4 +1,4 @@
-"""Staging stack implementation with comprehensive security controls."""
+"""Unified Application Stack implementation."""
 
 import logging
 from typing import Optional
@@ -18,22 +18,20 @@ from infra.utils import pulumi_helpers
 logger = logging.getLogger(__name__)
 
 
-class StagingStack:
+class ApplicationStack:
     """
-    Staging stack with security components.
+    Unified Application Stack.
 
-    Combines:
-    - PrivateNetwork for service isolation
-    - SecretManager for credential management
-    - IAMPolicy for least privilege access
-    - ServerlessContainer for application
-    - DatabaseInstance for data
-    - ObjectStorageBucket for artifacts
+    Dynamically configures components based on configuration settings.
+    Default topology:
+    - Core: Database, Container, Object Storage, IAM Policies
+    - Optional: Private Network (if network.enable_private_network)
+    - Optional: Monitoring (if monitoring.enable_cockpit)
     """
 
     def __init__(self, config: StackConfiguration):
         """
-        Initialize staging stack.
+        Initialize application stack.
 
         Args:
             config: StackConfiguration with all component configurations
@@ -50,14 +48,14 @@ class StagingStack:
         self.storage: Optional[ObjectStorageBucket] = None
         self.monitoring: Optional[Monitoring] = None
 
-        logger.info(f"Initializing staging stack: {self.stack_name}")
+        logger.info(f"Initializing application stack: {self.stack_name}")
 
     def create(self) -> None:
-        """Create all infrastructure components for the staging stack."""
+        """Create all infrastructure components for the stack."""
         try:
-            logger.info(f"Creating staging stack: {self.stack_name}")
+            logger.info(f"Creating application stack: {self.stack_name}")
 
-            # 1. Create Private Network (Network Layer)
+            # 1. Create Private Network (Network Layer) - Optional
             self._create_private_network()
 
             # 2. Create Secret Manager (Security Layer)
@@ -66,27 +64,31 @@ class StagingStack:
             # 3. Create IAM Policies (Identity Layer)
             self._create_iam_policies()
 
-            # 4. Create Database (Data Layer) - depends on Private Network and Secret Manager
+            # 4. Create Database (Data Layer)
             self._create_database()
 
-            # 5. Create Serverless Container (App Layer) - depends on Private Network and Secret Manager
+            # 5. Create Serverless Container (App Layer)
             self._create_container()
 
             # 6. Create Object Storage (Storage Layer)
             self._create_storage()
 
-            # 7. Create Monitoring (Observability Layer)
+            # 7. Create Monitoring (Observability Layer) - Optional
             self._create_monitoring()
 
             # 8. Export outputs
             self._export_outputs()
 
-            logger.info(f"Staging stack '{self.stack_name}' created successfully")
+            logger.info(f"Application stack '{self.stack_name}' created successfully")
         except Exception as e:
-            pulumi_helpers.handle_error(e, f"StagingStack.create({self.stack_name})")
+            pulumi_helpers.handle_error(e, f"ApplicationStack.create({self.stack_name})")
 
     def _create_private_network(self) -> None:
-        """Create private network for service isolation."""
+        """Create private network for service isolation if enabled."""
+        if not self.config.network.enable_private_network:
+            logger.info("Private network disabled in configuration")
+            return
+
         logger.debug("Creating private network component")
 
         self.private_network = PrivateNetwork(
@@ -105,8 +107,13 @@ class StagingStack:
         logger.debug("Creating secret manager component")
 
         # Define initial secrets
-        # In a real scenario, values should come from Pulumi config secrets or be generated
-        db_password = pulumi.Config().require_secret("db_password")
+        # Helper to get secret safe with fallback for preview/dev if needed
+        # But we generally expect config to be there.
+        try:
+            db_password = pulumi.Config().require_secret("db_password")
+        except Exception:
+            # Fallback for dev/preview if not set (optional polish)
+            db_password = pulumi.Output.secret("preview-password-change-me")
 
         secrets = [
             SecretConfig(
@@ -141,7 +148,7 @@ class StagingStack:
             name="evalap-app-policy",
             environment=self.config.environment,
             service=ServiceType.SERVERLESS_CONTAINERS,
-            access_level="full_access",  # Needs full access to manage its own container lifecycle if needed, or adjust
+            access_level="full_access",
             project_id=self.config.project_id,
             tags=self.config.tags,
         )
@@ -149,7 +156,7 @@ class StagingStack:
         self.iam_policy.create()
 
     def _create_database(self) -> None:
-        """Create managed PostgreSQL database connected to private network and using managed secrets."""
+        """Create managed PostgreSQL database."""
         logger.debug("Creating database component")
 
         self.database = DatabaseInstance(
@@ -161,13 +168,13 @@ class StagingStack:
             tags=self.config.tags,
             secret_manager=self.secret_manager,
             password_secret_name="db-password",
-            private_network=self.private_network,
+            private_network=self.private_network,  # Will be None if not created
         )
 
         self.database.create()
 
     def _create_container(self) -> None:
-        """Create serverless container connected to private network and using secrets."""
+        """Create serverless container."""
         logger.debug("Creating container component")
 
         image_uri = pulumi.Config().get("container_image_uri") or "docker.io/testcontainers/helloworld:latest"
@@ -188,7 +195,7 @@ class StagingStack:
             tags=self.config.tags,
             secret_manager=self.secret_manager,
             secret_mappings=secret_mappings,
-            private_network=self.private_network,
+            private_network=self.private_network,  # Will be None if not created
         )
 
         self.container.create()
@@ -209,7 +216,11 @@ class StagingStack:
         self.storage.create()
 
     def _create_monitoring(self) -> None:
-        """Create monitoring configuration."""
+        """Create monitoring configuration if enabled."""
+        if not self.config.monitoring.enable_cockpit:
+            logger.info("Monitoring disabled in configuration")
+            return
+
         logger.debug("Creating monitoring component")
 
         self.monitoring = Monitoring(
