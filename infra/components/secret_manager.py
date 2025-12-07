@@ -112,6 +112,7 @@ class SecretManager(BaseComponent):
 
         logger.debug(f"Created secret '{secret_name}' with initial version")
 
+    def _format_tags_list(self) -> list[str]:
         """
         Format tags as a list of strings for Scaleway Secret Manager.
 

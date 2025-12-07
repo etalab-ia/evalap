@@ -267,6 +267,7 @@ class IAMPolicy(BaseComponent):
         logger.info(f"Created API key for application '{self.name}'")
         return self.api_key.secret_key
 
+    def _format_tags_list(self) -> list[str]:
         """
         Format tags as a list of strings for Scaleway IAM.
 
