@@ -1,0 +1,7 @@
+python:
+  version: '3.12'
+  packageManager: 'uv'
+
+node:
+  version: '20.0.0'
+  packageManager: 'pnpm' # Assuming pnpm as I saw it in the history

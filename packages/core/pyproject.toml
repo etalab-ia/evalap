@@ -1,0 +1,31 @@
+[project]
+name = "evalap-core"
+version = "0.1.0"
+description = "Shared core logic for EvalAP"
+requires-python = ">=3.12"
+dependencies = [
+    "sqlalchemy~=2.0.35",
+    "sqlalchemy-utils~=0.41.2",
+    "alembic~=1.13.3",
+    "pydantic~=2.11.9",
+    "python-dotenv~=1.1.1",
+    "psycopg2-binary~=2.9.10",
+    "pandas~=2.2.3",
+    "inflection~=0.5.1",
+    # ecologits dependencies if utils_eco needs them
+    "ecologits~=0.6.2",
+    # Others might be needed
+    "pyarrow~=19.0.1",
+    "deepeval~=3.5.1",
+    "ragas~=0.2.14",
+    "rapidfuzz~=3.13.0",
+    "toml~=0.10.2",
+    "fastapi~=0.115.2", # Maybe for some utils or models needing URL types
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/evalap"]
