@@ -267,24 +267,28 @@ class IAMPolicy(BaseComponent):
         logger.info(f"Created API key for application '{self.name}'")
         return self.api_key.secret_key
 
-    def _format_tags_list(self) -> list[str]:
         """
         Format tags as a list of strings for Scaleway IAM.
+
+        Uses "=" as separator and deduplicates tags.
 
         Returns:
             list[str]: Tags as list of strings
         """
-        tags_list = [
-            f"environment:{self.environment}",
-            f"component:{self.name}",
-            "managed-by:pulumi",
-        ]
+        # Start with default tags
+        final_tags = {
+            "environment": self.environment,
+            "component": self.name,
+            "managed-by": "pulumi",
+        }
 
-        # Add custom tags
-        for key, value in self.tags.items():
-            tags_list.append(f"{key}:{value}")
+        # Merge custom tags (overwriting defaults if keys match)
+        if self.tags:
+            for key, value in self.tags.items():
+                final_tags[key] = str(value)
 
-        return tags_list
+        # Format as key=value list
+        return [f"{key}={value}" for key, value in final_tags.items()]
 
     def get_outputs(self) -> dict[str, Any]:
         """

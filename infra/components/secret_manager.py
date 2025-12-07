@@ -112,26 +112,29 @@ class SecretManager(BaseComponent):
 
         logger.debug(f"Created secret '{secret_name}' with initial version")
 
-    def _format_tags_list(self) -> list[str]:
         """
         Format tags as a list of strings for Scaleway Secret Manager.
 
         Scaleway secrets use a list of strings for tags, not key-value pairs.
+        Uses "=" as separator and deduplicates tags.
 
         Returns:
             list[str]: Tags as list of strings
         """
-        tags_list = [
-            f"environment:{self.environment}",
-            f"component:{self.name}",
-            "managed-by:pulumi",
-        ]
+        # Start with default tags
+        final_tags = {
+            "environment": self.environment,
+            "component": self.name,
+            "managed-by": "pulumi",
+        }
 
-        # Add custom tags
-        for key, value in self.tags.items():
-            tags_list.append(f"{key}:{value}")
+        # Merge custom tags (overwriting defaults if keys match)
+        if self.tags:
+            for key, value in self.tags.items():
+                final_tags[key] = str(value)
 
-        return tags_list
+        # Format as key=value list
+        return [f"{key}={value}" for key, value in final_tags.items()]
 
     def get_outputs(self) -> dict[str, Any]:
         """
