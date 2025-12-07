@@ -79,7 +79,7 @@ def load_stack_configuration() -> StackConfiguration:
     # Load network configuration
     network_config = NetworkConfig(
         enable_private_network=config.get_bool("network_enable_private") or False,
-        cidr_block=config.get("network_cidr_block") or "10.0.0.0/16",
+        cidr_block=config.get("network_cidr_block") or "10.0.0.0/24",
         enable_nat_gateway=config.get_bool("network_enable_nat") or False,
     )
 
