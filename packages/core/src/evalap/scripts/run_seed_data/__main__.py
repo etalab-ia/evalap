@@ -8,8 +8,8 @@ for development, testing, or initial setup purposes.
 from datasets import load_dataset
 from sqlalchemy.orm import Session
 
-from evalap.api import crud, schemas
-from evalap.api.db import SessionLocal, create_database_if_not_exists
+from evalap.core import crud, schemas
+from evalap.core.db import SessionLocal, create_database_if_not_exists
 
 
 def create_civics_dataset(db: Session) -> None:

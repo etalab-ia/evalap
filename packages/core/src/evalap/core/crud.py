@@ -12,7 +12,7 @@ import evalap.core.schemas as schemas
 from evalap.core.errors import SchemaError
 from evalap.core.metrics import Metric, metric_registry
 from evalap.core.models import create_object_from_dict
-from evalap.utils import get_parquet_row_by_index
+from evalap.core.utils import get_parquet_row_by_index
 
 #
 # Datasets
