@@ -14,7 +14,7 @@ from evalap.clients import MCPBridgeClient, multi_step_generate, split_think_ans
 from evalap.core.logger import logger
 from evalap.runners import MessageType, dispatch_tasks
 from evalap.core.utils import Timer, get_parquet_row_by_index, image_to_base64
-from evalap.utils_eco import impact_carbon
+from evalap.core.utils_eco import impact_carbon
 
 
 @dataclass
