@@ -584,7 +584,10 @@ def retry_runs(
         if exp.experiment_status != "finished" and not force:
             continue
 
-        expected_output_len = exp.dataset.parquet_size if exp.with_vision else exp.dataset.size
+        if exp.sample:
+            expected_output_len = len(exp.sample)
+        else:
+            expected_output_len = exp.dataset.parquet_size if exp.with_vision else exp.dataset.size
 
         actual_output_len = exp.num_try
         if actual_output_len != expected_output_len:
