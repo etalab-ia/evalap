@@ -139,7 +139,6 @@ list-indexes env="dev":
 #
 
 seed:
-seed:
   uv run --package evalap-core python -m evalap.scripts.run_seed_data
 
 
