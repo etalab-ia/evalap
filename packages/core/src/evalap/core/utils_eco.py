@@ -3,16 +3,23 @@ from pathlib import Path
 import toml
 from ecologits.tracers.utils import compute_llm_impacts, electricity_mixes
 
-from evalap.logger import logger
+from evalap.core.logger import logger
 
 DEFAULT_PARAMS = {"params": 100, "active_params": 100, "total_params": 100}
 
 
+import importlib.resources
+
 def load_models_info() -> dict:
-    config_path = Path("evalap/config/models-extra-info.toml")
-    with open(config_path, "r", encoding="utf-8") as f:
-        config = toml.load(f)
-    return config
+    # Use importlib.resources to find the file within the package
+    try:
+        config_path = importlib.resources.files("evalap.config_data").joinpath("models-extra-info.toml")
+        with config_path.open("r", encoding="utf-8") as f:
+            config = toml.load(f)
+        return config
+    except (ImportError, FileNotFoundError):
+        logger.warning("Could not load models-extra-info.toml using importlib.resources. Fallback to empty config.")
+        return {}
 
 
 def get_model_name_from_path(full_name: str) -> str:
