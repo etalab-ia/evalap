@@ -10,7 +10,7 @@ from deepeval.key_handler import KEY_FILE_HANDLER
 from deepeval.models.base_model import DeepEvalBaseLLM
 
 from evalap.clients import LlmClient, get_api_url, split_think_answer
-from evalap.utils import func_inspect, import_classes, is_valid_url
+from evalap.core.utils import func_inspect, import_classes, is_valid_url
 
 # FIX deepeval: OSError: [Errno 24] Too many open files: '.deepeval'
 KEY_FILE_HANDLER.fetch_data = lambda x: None

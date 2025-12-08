@@ -2,7 +2,7 @@ import json
 import re
 
 from evalap.clients import LlmClient, split_think_answer
-from evalap.utils import render_jinja
+from evalap.core.utils import render_jinja
 
 from . import metric_registry
 

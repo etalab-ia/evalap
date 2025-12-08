@@ -16,6 +16,15 @@ members = [
 ]
 
 [[package]]
+name = "aiofiles"
+version = "24.1.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/0b/03/a88171e277e8caa88a4c77808c20ebb04ba74cc4681bf1e9416c862de237/aiofiles-24.1.0.tar.gz", hash = "sha256:22a075c9e5a3810f0c2e48f3008c94d68c65d763b9b03857924c99e57355166c", size = 30247, upload-time = "2024-06-24T11:02:03.584Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a5/45/30bb92d442636f570cb5651bc661f52b610e2eec3f891a5dc3a4c3667db0/aiofiles-24.1.0-py3-none-any.whl", hash = "sha256:b4ec55f4195e3eb5d7abd1bf7e061763e864dd4954231fb8539a0ef8bb8260e5", size = 15896, upload-time = "2024-06-24T11:02:01.529Z" },
+]
+
+[[package]]
 name = "aiohappyeyeballs"
 version = "2.6.1"
 source = { registry = "https://pypi.org/simple" }
@@ -490,6 +499,15 @@ wheels = [
 ]
 
 [[package]]
+name = "docopt-ng"
+version = "0.9.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/e4/50/8d6806cf13138127692ae6ff79ddeb4e25eb3b0bcc3c1bd033e7e04531a9/docopt_ng-0.9.0.tar.gz", hash = "sha256:91c6da10b5bb6f2e9e25345829fb8278c78af019f6fc40887ad49b060483b1d7", size = 32264, upload-time = "2023-05-30T20:46:25.064Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/6c/4a/c3b77fc1a24510b08918b43a473410c0168f6e657118807015f1f1edceea/docopt_ng-0.9.0-py3-none-any.whl", hash = "sha256:bfe4c8b03f9fca424c24ee0b4ffa84bf7391cb18c29ce0f6a8227a3b01b81ff9", size = 16689, upload-time = "2023-05-30T20:46:45.294Z" },
+]
+
+[[package]]
 name = "docstring-parser"
 version = "0.17.0"
 source = { registry = "https://pypi.org/simple" }
@@ -520,16 +538,20 @@ name = "evalap-api"
 version = "0.1.0"
 source = { editable = "apps/api" }
 dependencies = [
+    { name = "aiofiles" },
     { name = "evalap-core" },
     { name = "fastapi" },
+    { name = "pyarrow" },
     { name = "requests" },
     { name = "uvicorn" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "aiofiles", specifier = "~=24.1.0" },
     { name = "evalap-core", editable = "packages/core" },
     { name = "fastapi", specifier = "~=0.115.2" },
+    { name = "pyarrow", specifier = "~=19.0.1" },
     { name = "requests", specifier = "~=2.32.3" },
     { name = "uvicorn", specifier = "~=0.32.0" },
 ]
@@ -541,9 +563,11 @@ source = { editable = "packages/core" }
 dependencies = [
     { name = "alembic" },
     { name = "deepeval" },
+    { name = "docopt-ng" },
     { name = "ecologits" },
     { name = "fastapi" },
     { name = "inflection" },
+    { name = "jinja2" },
     { name = "pandas" },
     { name = "psycopg2-binary" },
     { name = "pyarrow" },
@@ -560,9 +584,11 @@ dependencies = [
 requires-dist = [
     { name = "alembic", specifier = "~=1.13.3" },
     { name = "deepeval", specifier = "~=3.5.1" },
+    { name = "docopt-ng", specifier = "~=0.9.0" },
     { name = "ecologits", specifier = "~=0.6.2" },
     { name = "fastapi", specifier = "~=0.115.2" },
     { name = "inflection", specifier = "~=0.5.1" },
+    { name = "jinja2", specifier = "~=3.1.4" },
     { name = "pandas", specifier = "~=2.2.3" },
     { name = "psycopg2-binary", specifier = "~=2.9.10" },
     { name = "pyarrow", specifier = "~=19.0.1" },
@@ -619,6 +645,7 @@ version = "0.1.0"
 source = { editable = "apps/ui" }
 dependencies = [
     { name = "evalap-core" },
+    { name = "jinja2" },
     { name = "pandas" },
     { name = "plotly" },
     { name = "requests" },
@@ -628,6 +655,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "evalap-core", editable = "packages/core" },
+    { name = "jinja2", specifier = "~=3.1.4" },
     { name = "pandas", specifier = "~=2.2.3" },
     { name = "plotly", specifier = "~=5.22.0" },
     { name = "requests", specifier = "~=2.32.3" },

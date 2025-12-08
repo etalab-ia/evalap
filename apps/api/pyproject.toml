@@ -8,6 +8,8 @@ dependencies = [
     "fastapi~=0.115.2",
     "uvicorn~=0.32.0",
     "requests~=2.32.3",
+    "aiofiles~=24.1.0",
+    "pyarrow~=19.0.1",
     # "supervisor~=4.2.5", # Only for runners?
 ]
 

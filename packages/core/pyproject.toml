@@ -12,6 +12,8 @@ dependencies = [
     "psycopg2-binary~=2.9.10",
     "pandas~=2.2.3",
     "inflection~=0.5.1",
+    "jinja2~=3.1.4",
+    "docopt-ng~=0.9.0",
     # ecologits dependencies if utils_eco needs them
     "ecologits~=0.6.2",
     # Others might be needed

@@ -2,7 +2,7 @@ import json
 
 from rapidfuzz import fuzz as stringfuzz
 
-from evalap.utils import extract_code
+from evalap.core.utils import extract_code
 
 from . import metric_registry
 
