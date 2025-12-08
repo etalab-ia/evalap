@@ -104,20 +104,20 @@ chat-completion-cortex:
 #
 
 alembic-init:
-  uv run alembic -c evalap/api/alembic.ini revision --autogenerate -m "Table Initialization"
+  uv run --package evalap-core alembic -c packages/core/src/evalap/core/alembic.ini revision --autogenerate -m "Table Initialization"
 
 alembic-generate-revision name:
-  uv run alembic -c evalap/api/alembic.ini upgrade head
-  uv run alembic -c evalap/api/alembic.ini revision --autogenerate -m "{{name}}"
+  uv run --package evalap-core alembic -c packages/core/src/evalap/core/alembic.ini upgrade head
+  uv run --package evalap-core alembic -c packages/core/src/evalap/core/alembic.ini revision --autogenerate -m "{{name}}"
 
 alembic-upgrade:
-  uv run alembic -c evalap/api/alembic.ini upgrade head
+  uv run --package evalap-core alembic -c packages/core/src/evalap/core/alembic.ini upgrade head
 
 alembic-downgrade hash:
-  uv run alembic -c evalap/api/alembic.ini downgrade {{hash}}
+  uv run --package evalap-core alembic -c packages/core/src/evalap/core/alembic.ini downgrade {{hash}}
 
 alembic-history:
-  uv run alembic -c evalap/api/alembic.ini history
+  uv run --package evalap-core alembic -c packages/core/src/evalap/core/alembic.ini history
 
 #
 # Search engine
@@ -139,7 +139,8 @@ list-indexes env="dev":
 #
 
 seed:
-  uv run python -m evalap.scripts.run_seed_data
+seed:
+  uv run --package evalap-core python -m evalap.scripts.run_seed_data
 
 
 [no-cd]
@@ -147,7 +148,7 @@ drop-database db_name="evalap_dev":
   #!/usr/bin/env python
   # Does not work !
   import sys, os; sys.path.append("{{work_dir}}")
-  from evalap.api.config import DATABASE_URI
+  from evalap.core.config import DATABASE_URI
 
   DB_NAME = "{{db_name}}"
   PGURI = DATABASE_URI.replace("+psycopg2", "")
@@ -158,7 +159,7 @@ drop-database db_name="evalap_dev":
 drop-table table_name:
   #!/usr/bin/env python
   import sys, os; sys.path.append("{{work_dir}}")
-  from evalap.api.config import DATABASE_URI
+  from evalap.core.config import DATABASE_URI
 
   TABLE_NAME = "{{table_name}}"
   PGURI = DATABASE_URI.replace("+psycopg2", "")
@@ -169,7 +170,7 @@ drop-table table_name:
 reset-experiment-status *expids:
   #!/usr/bin/env python
   import sys, os; sys.path.append("{{work_dir}}")
-  from evalap.api.config import DATABASE_URI
+  from evalap.core.config import DATABASE_URI
 
   PGURI = DATABASE_URI.replace("+psycopg2", "")
   expids = "{{expids}}".split()
@@ -185,7 +186,7 @@ reset-experiment-status *expids:
 get-experiment expid:
   #!/usr/bin/env python
   import sys, os; sys.path.append("{{work_dir}}")
-  from evalap.api.config import DATABASE_URI
+  from evalap.core.config import DATABASE_URI
 
   PGURI = DATABASE_URI.replace("+psycopg2", "")
   expid = "{{expid}}"
@@ -225,7 +226,7 @@ run mode="local" log_level="INFO":
 
     # Run database seeding
     echo -e "${PURPLE}Seeding database with initial datasets...${NC}"
-    uv run python -m evalap.scripts.run_seed_data
+    uv run --package evalap-core python -m evalap.scripts.run_seed_data
 
     echo -e "${BLUE}API: http://localhost:8000${NC}"
     echo -e "${CYAN}Streamlit: http://localhost:8501${NC}"
@@ -246,19 +247,19 @@ run mode="local" log_level="INFO":
 
     # Start API in background with blue prefix
     {
-      uv run uvicorn evalap.api.main:app --reload 2>&1 | sed $'s/^/\033[0;34m[API]\033[0m /'
+      uv run --package evalap-api uvicorn evalap.api.main:app --reload 2>&1 | sed $'s/^/\033[0;34m[API]\033[0m /'
     } &
     API_PID=$!
 
     # Start runner in background with yellow prefix
     {
-      LOG_LEVEL="{{log_level}}" PYTHONPATH="." uv run python -m evalap.runners 2>&1 | sed $'s/^/\033[1;33m[RUNNER]\033[0m /'
+      LOG_LEVEL="{{log_level}}" uv run --package evalap-runners python -m evalap.runners.main 2>&1 | sed $'s/^/\033[1;33m[RUNNER]\033[0m /'
     } &
     RUNNER_PID=$!
 
     # Start streamlit in background with cyan prefix
     {
-      uv run streamlit run evalap/ui/demo_streamlit/app.py --server.runOnSave true --server.headless=true 2>&1 | sed $'s/^/\033[0;36m[STREAMLIT]\033[0m /'
+      uv run --package evalap-ui streamlit run apps/ui/src/evalap/ui/app.py --server.runOnSave true --server.headless=true 2>&1 | sed $'s/^/\033[0;36m[STREAMLIT]\033[0m /'
     } &
     STREAMLIT_PID=$!
 
@@ -401,11 +402,11 @@ pray:
   # Run migrations and seed data
   echo ""
   echo "🔄 Running database migrations..."
-  uv run alembic -c evalap/api/alembic.ini upgrade head
+  uv run --package evalap-core alembic -c packages/core/src/evalap/core/alembic.ini upgrade head
 
   echo ""
   echo "🌱 Seeding database with initial datasets..."
-  uv run python -m evalap.scripts.run_seed_data || true
+  uv run --package evalap-core python -m evalap.scripts.run_seed_data || true
 
   echo ""
   echo "🚀 Starting EvalAP services..."
@@ -447,19 +448,19 @@ pray:
 
   # Start API in background with blue prefix
   {
-    uv run uvicorn evalap.api.main:app --reload 2>&1 | sed $'s/^/\033[0;34m[API]\033[0m /'
+    uv run --package evalap-api uvicorn evalap.api.main:app --reload 2>&1 | sed $'s/^/\033[0;34m[API]\033[0m /'
   } &
   API_PID=$!
 
   # Start runner in background with yellow prefix
   {
-    PYTHONPATH="." uv run python -m evalap.runners 2>&1 | sed $'s/^/\033[1;33m[RUNNER]\033[0m /'
+    uv run --package evalap-runners python -m evalap.runners.main 2>&1 | sed $'s/^/\033[1;33m[RUNNER]\033[0m /'
   } &
   RUNNER_PID=$!
 
   # Start streamlit in background with cyan prefix
   {
-    uv run streamlit run evalap/ui/demo_streamlit/app.py --server.runOnSave true --server.headless=true 2>&1 | sed $'s/^/\033[0;36m[STREAMLIT]\033[0m /'
+    uv run --package evalap-ui streamlit run apps/ui/src/evalap/ui/app.py --server.runOnSave true --server.headless=true 2>&1 | sed $'s/^/\033[0;36m[STREAMLIT]\033[0m /'
   } &
   STREAMLIT_PID=$!
 
