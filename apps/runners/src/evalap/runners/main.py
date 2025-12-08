@@ -6,7 +6,7 @@ import zmq
 
 from evalap.core.config import MAX_CONCURRENT_TASKS, ZMQ_SENDER_URL, ZMQ_WORKER_URL
 from evalap.clients import MCPBridgeClient
-from evalap.logger import logger
+from evalap.core.logger import logger
 
 from .tasks import process_task
 

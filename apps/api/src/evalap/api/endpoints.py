@@ -18,7 +18,7 @@ from evalap.core.metrics import Metric, metric_registry
 from evalap.core.models import is_equal
 from evalap.api.security import admin_only, get_current_user
 from evalap.clients import LlmClient, MCPBridgeClient, multi_step_generate
-from evalap.logger import logger
+from evalap.core.logger import logger
 from evalap.runners import dispatch_retries, dispatch_tasks
 
 router = APIRouter()

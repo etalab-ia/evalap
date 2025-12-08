@@ -11,9 +11,9 @@ from evalap.core.config import DEFAULT_JUDGE_MODEL
 from evalap.core.db import SessionLocal
 from evalap.core.metrics import get_judge_model, metric_registry
 from evalap.clients import MCPBridgeClient, multi_step_generate, split_think_answer
-from evalap.logger import logger
+from evalap.core.logger import logger
 from evalap.runners import MessageType, dispatch_tasks
-from evalap.utils import Timer, get_parquet_row_by_index, image_to_base64
+from evalap.core.utils import Timer, get_parquet_row_by_index, image_to_base64
 from evalap.utils_eco import impact_carbon
 
 

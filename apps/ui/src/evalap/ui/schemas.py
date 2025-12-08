@@ -12,7 +12,7 @@ import evalap.core.models as models
 from evalap.core.errors import SchemaError
 from evalap.core.metrics import metric_registry
 from evalap.clients.llm import LlmApiModels, get_api_url
-from evalap.utils import build_param_grid
+from evalap.core.utils import build_param_grid
 
 # @WARNING: this is a raw copy of the evalap.api.schema.py !
 
