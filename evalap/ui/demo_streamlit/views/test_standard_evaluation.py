@@ -559,7 +559,6 @@ def handle_run_evaluation(experimentset, is_valid):
 
 def render_launch_tab():
     init_page_styles()
-    st.title("Test evaluations with Albert API")
 
     user_api_key, is_api_key_valid = render_api_key_section()
 
