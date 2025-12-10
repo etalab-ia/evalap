@@ -11,7 +11,13 @@ from utils import fetch
 EVALAP_FRONTEND_TOKEN = os.getenv("EVALAP_FRONTEND_TOKEN")
 
 # Configuration
-ALBERT_PROVIDER_URL = "https://albert.api.etalab.gouv.fr/v1"
+PROVIDER_URLS = {
+    "Albert API": "https://albert.api.etalab.gouv.fr/v1",
+    "OpenAI": "https://api.openai.com/v1",
+    "Anthropic": "https://api.anthropic.com/v1",
+    "Mistral": "https://api.mistral.ai/v1",
+}
+
 DEFAULT_METRICS = [
     "generation_time",
     "nb_tokens_prompt",
@@ -53,6 +59,7 @@ def create_experiment_set(
     dataset,
     model_alias,
     your_ia_system,
+    judge_url,
     judge_model,
     api_key_judge,
     metrics,
@@ -74,7 +81,7 @@ def create_experiment_set(
         "metrics": metrics,
         "judge_model": {
             "name": judge_model,
-            "base_url": "changeme",  # TODO change
+            "base_url": judge_url,
             "api_key": api_key_judge,
         },
     }
@@ -287,7 +294,7 @@ def render_test_tab():
     with col2:
         datasets = ["dataset 1", "dataset 2"]  # list_datasets()
         gold_file = st.selectbox(
-            "Your Gold dataset",
+            " ",
             ["Select dataset"] + datasets,
             key="gold_dataset_select",
             help="Choose the reference dataset that will be used to evaluate the test RAG system.",
@@ -296,19 +303,38 @@ def render_test_tab():
     st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)
 
     # Judge model and API key
-    col_judge, col_privider, col_empyt, col_api, col_api_key = st.columns([3, 3, 2, 3, 7])
+    col_provider_info, col_provider, col_model_info, col_model, col_api, col_api_key = st.columns(
+        [3, 4, 3, 4, 3, 7]
+    )
 
-    with col_judge:
-        st.markdown("<p style='margin-bottom: 0px;'>Judge model</p>", unsafe_allow_html=True)
+    with col_provider_info:
+        st.markdown("<p style='margin-bottom: 0px;'>Judge Provider</p>", unsafe_allow_html=True)
 
-    with col_privider:
-        judge_model_options = ["select model provider", "OpenAI", "Anthropic", "Mistral", "Albert API"]
-        judge_model = st.selectbox(
-            "Judge model provider",
-            judge_model_options,
-            key="judge_model_test",
-            label_visibility="collapsed",  # if label_visibility, then help don't show
-            help="Select the LLM that will assess and score the system’s answers.",
+    with col_provider:
+        judge_provider_options = [
+            "select provider",
+            "Albert API",
+            "OpenAI",
+            "Anthropic",
+            "Mistral",
+        ]
+        judge_provider_name = st.selectbox(
+            " ",
+            judge_provider_options,
+            key="provider_judge_test",
+            help="Select the Provider LLM that will assess and score the system’s answers.",
+        )
+    judge_provider_url = PROVIDER_URLS.get(judge_provider_name, "")
+
+    with col_model_info:
+        st.markdown("<p style='margin-bottom: 0px;'>Judge Model</p>", unsafe_allow_html=True)
+
+    with col_model:
+        judge_model = st.text_input(
+            "",
+            key="model_judge_test",
+            placeholder="Input field",
+            help="Inform the Model LLM that will assess and score the system’s answers.",
         )
 
     with col_api:
@@ -316,11 +342,11 @@ def render_test_tab():
 
     with col_api_key:
         api_key_judge = st.text_input(
-            "",
+            " ",
             type="password",
             key="api_key_judge_test",
-            placeholder="Input field",
-            label_visibility="collapsed",
+            placeholder="Entrez votre clé API",
+            help="Inform the API key LLM",  # Tooltip apparaît au survol du label
         )
 
     st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)
@@ -355,8 +381,10 @@ def render_test_tab():
         st.warning("⚠️ Please upload your AI system answers CSV file first")
     elif gold_file == "Select dataset":
         st.warning("⚠️ Please select a Gold dataset")
-    elif judge_model == "select model provider":
-        st.warning("⚠️ Please select a judge model provider")
+    elif judge_provider_name == "select provider ":
+        st.warning("⚠️ Please select a judge provider")
+    elif not judge_model:
+        st.warning("⚠️ Please select a judge model ")
     elif not api_key_judge:
         st.warning("⚠️ Please provide an API key for the judge model")
     else:
@@ -365,6 +393,7 @@ def render_test_tab():
                 dataset=gold_file,
                 model_alias=model_alias,
                 your_ia_system=your_ia_system_file,
+                judge_provider=judge_provider_url,
                 judge_model=judge_model,
                 api_key_judge=api_key_judge,
                 metrics=metrics,
@@ -384,6 +413,6 @@ def render_test_tab():
         if experimentset:
             render_copy_code_popover(experimentset)
 
-    is_api_key_valid = True  # TODO real verif
+    is_api_key_valid = True  # TODO real verif if judge model acces tokenn
     if run_button and is_api_key_valid:
         handle_run_evaluation(experimentset, is_api_key_valid)
