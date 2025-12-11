@@ -3,6 +3,7 @@ import json
 import os
 
 import pandas as pd
+import requests
 import streamlit as st
 import streamlit.components.v1 as components
 from template_manager import TemplateManager
@@ -28,6 +29,44 @@ DEFAULT_METRICS = [
 CHOICE_METRICS = ["judge_notator", "judge_exactness"]
 
 template_manager = TemplateManager()
+
+
+def validate_provider_api_key(provider_name: str, api_key: str, model_name: str):
+    if not api_key or not api_key.strip():
+        return False, "API key is empty"
+
+    if provider_name not in PROVIDER_URLS:
+        return False, f"Unknown provider: {provider_name}"
+
+    base_url = PROVIDER_URLS[provider_name]
+
+    try:
+        if provider_name == "Anthropic":
+            response = requests.get(
+                "https://api.anthropic.com/v1/models",
+                headers={"x-api-key": api_key, "anthropic-version": "2023-06-01"},
+                timeout=10,
+            )
+        else:
+            response = requests.get(
+                f"{base_url}/models", headers={"Authorization": f"Bearer {api_key}"}, timeout=10
+            )
+
+        if response.status_code == 200:
+            return True, None
+        elif response.status_code == 401:
+            return False, "Invalid API key"
+        elif response.status_code == 403:
+            return False, "Access forbidden - check your API key permissions"
+        else:
+            return False, f"Authentication failed (status {response.status_code})"
+
+    except requests.exceptions.Timeout:
+        return False, "Request timeout - please try again"
+    except requests.exceptions.RequestException as e:
+        return False, f"Network error: {str(e)}"
+    except Exception as e:
+        return False, f"Validation error: {str(e)}"
 
 
 def info_banner(text):
@@ -175,7 +214,7 @@ def render_copy_code_popover(experimentset):
             col1, col2 = st.columns([0.7, 0.3])
 
             with col1:
-                copy_format = st.radio("Format:", ["Python", "cURL"], key="copy_format")
+                copy_format = st.radio("Format:", ["Python", "cURL"], key="copy_format_test_tab")
 
             if copy_format == "Python":
                 code = template_manager.render_python(**exp_for_code)
@@ -274,7 +313,7 @@ def render_test_tab():
                 st.success(f"✅ File uploaded: {uploaded_file.name} ({len(df)} rows)")
 
                 with st.expander("📊 Preview uploaded data"):
-                    st.dataframe(df.head(2))  # TODO drop
+                    st.dataframe(df.head(2))
 
         except Exception as e:
             st.error(f"❌ Error reading CSV file: {e}")
@@ -322,7 +361,7 @@ def render_test_tab():
             " ",
             judge_provider_options,
             key="provider_judge_test",
-            help="Select the Provider LLM that will assess and score the system’s answers.",
+            help="Select the Provider LLM that will assess and score the system's answers.",
         )
     judge_provider_url = PROVIDER_URLS.get(judge_provider_name, "")
 
@@ -334,7 +373,7 @@ def render_test_tab():
             "",
             key="model_judge_test",
             placeholder="Input field",
-            help="Inform the Model LLM that will assess and score the system’s answers.",
+            help="Inform the Model LLM that will assess and score the system's answers.",
         )
 
     with col_api:
@@ -346,7 +385,7 @@ def render_test_tab():
             type="password",
             key="api_key_judge_test",
             placeholder="Entrez votre clé API",
-            help="Inform the API key LLM",  # Tooltip apparaît au survol du label
+            help="Inform the API key LLM",
         )
 
     st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)
@@ -376,30 +415,43 @@ def render_test_tab():
     model_alias = "Model alias *****"
     your_ia_system_file = "change for file upload"
 
-    # Verif
+    # API key validation
+    is_api_key_valid = False
+    api_validation_error = None
+
     if "your_ia_system" not in st.session_state:
         st.warning("⚠️ Please upload your AI system answers CSV file first")
     elif gold_file == "Select dataset":
         st.warning("⚠️ Please select a Gold dataset")
-    elif judge_provider_name == "select provider ":
+    elif judge_provider_name == "select provider":
         st.warning("⚠️ Please select a judge provider")
     elif not judge_model:
-        st.warning("⚠️ Please select a judge model ")
+        st.warning("⚠️ Please provide a judge model name")
     elif not api_key_judge:
         st.warning("⚠️ Please provide an API key for the judge model")
     else:
-        try:
-            experimentset = create_experiment_set(
-                dataset=gold_file,
-                model_alias=model_alias,
-                your_ia_system=your_ia_system_file,
-                judge_provider=judge_provider_url,
-                judge_model=judge_model,
-                api_key_judge=api_key_judge,
-                metrics=metrics,
+        with st.spinner("Validating API key..."):
+            is_api_key_valid, api_validation_error = validate_provider_api_key(
+                judge_provider_name, api_key_judge, judge_model
             )
-        except Exception as e:
-            st.error(f"Error creating experiment set: {e}")
+
+        if not is_api_key_valid:
+            st.error(f"❌ API key validation failed: {api_validation_error}")
+        else:
+            st.success("✅ API key validated successfully")
+
+            try:
+                experimentset = create_experiment_set(
+                    dataset=gold_file,
+                    model_alias=model_alias,
+                    your_ia_system=your_ia_system_file,
+                    judge_url=judge_provider_url,
+                    judge_model=judge_model,
+                    api_key_judge=api_key_judge,
+                    metrics=metrics,
+                )
+            except Exception as e:
+                st.error(f"Error creating experiment set: {e}")
 
     empty_col, button_col1, button_col2 = st.columns([8, 3, 3])
 
@@ -407,12 +459,12 @@ def render_test_tab():
         run_button = st.button(
             "Run test evaluation",
             key="my_own_eval_button",
+            disabled=not is_api_key_valid,
         )
 
     with button_col2:
         if experimentset:
             render_copy_code_popover(experimentset)
 
-    is_api_key_valid = True  # TODO real verif if judge model acces tokenn
     if run_button and is_api_key_valid:
         handle_run_evaluation(experimentset, is_api_key_valid)
