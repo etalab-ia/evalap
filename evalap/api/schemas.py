@@ -289,8 +289,13 @@ class ExperimentCreate(ExperimentBase):
         else:
             dataset = models.Dataset(**obj["dataset"])
         obj["dataset"] = dataset
+        if self.sample:
+            dataset_size = len(self.sample)
+        else:
+            dataset_size = dataset.parquet_size if self.with_vision else dataset.size
+
         if isinstance(self.model, ModelRaw):
-            obj["num_try"] = dataset.parquet_size if self.with_vision else dataset.size
+            obj["num_try"] = dataset_size
             obj["num_success"] = len(self.model.output)
             if obj["num_try"] != obj["num_success"]:
                 raise SchemaError("The size of the model outputs must match the size of the dataset.")
@@ -305,8 +310,7 @@ class ExperimentCreate(ExperimentBase):
             # --
             answers = []
             m = self.model
-            df = pd.read_json(StringIO(dataset.df))
-            if len(df) != len(m.output):
+            if dataset_size != len(m.output):
                 raise SchemaError("The size of the model outputs must match the size of the dataset.")
 
             for i in range(len(m.output)):

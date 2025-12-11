@@ -206,7 +206,9 @@ def dispatch_retries(db, retry_runs: schemas.RetryRuns):
 
         db.commit()  # for obs.error_msg
 
-        if db_exp.with_vision:
+        if db_exp.sample:
+            dataset_size = len(db_exp.sample)
+        elif db_exp.with_vision:
             dataset_size = db_exp.dataset.parquet_size
         else:
             dataset_size = db_exp.dataset.size
@@ -267,7 +269,9 @@ def dispatch_retries(db, retry_runs: schemas.RetryRuns):
 
         db.commit()  # for obs.error_msg
 
-        if db_exp.with_vision:
+        if db_exp.sample:
+            dataset_size = len(db_exp.sample)
+        elif db_exp.with_vision:
             dataset_size = db_exp.dataset.parquet_size
         else:
             dataset_size = db_exp.dataset.size
