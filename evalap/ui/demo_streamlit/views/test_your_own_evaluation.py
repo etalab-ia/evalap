@@ -28,7 +28,40 @@ DEFAULT_METRICS = [
 ]
 CHOICE_METRICS = ["judge_notator", "judge_exactness"]
 
+DEFAULT_DATASETS = [
+    "llm-values-CIVICS",
+    "lmsys-toxic-chat",
+    "DECCP",
+    "test_service_public",
+    "test_annuaire_entreprises",
+]
+
 template_manager = TemplateManager()
+
+
+def _should_skip_dataset(dataset: dict) -> bool:
+    if "output" in dataset.get("columns", []):
+        return True
+
+    if dataset.get("name") in DEFAULT_DATASETS:
+        return True
+
+    return False
+
+
+def list_datasets() -> list[str]:
+    datasets = fetch("get", "/datasets")
+    if not datasets:
+        st.warning("No dataset available")
+        return []
+
+    filtered = [ds["name"] for ds in datasets if not _should_skip_dataset(ds)]
+
+    if not filtered:
+        st.warning("No datasets available among the filtered datasets.")
+        return []
+
+    return filtered
 
 
 def validate_provider_api_key(provider_name: str, api_key: str, model_name: str):
@@ -133,8 +166,8 @@ def create_experiment_set(
             },
         ]
     }
-    expset_name = "NAME ***"
-    expset_readme = "README ***"
+    expset_name = "NAME ***"  # TODO change
+    expset_readme = "README ***"  # TODO change
     expset = {
         "name": expset_name,
         "readme": expset_readme,
@@ -232,6 +265,144 @@ def render_copy_code_popover(experimentset):
             st.error(f"Failed to render copy code template: {e}")
 
 
+def handle_gold_dataset_upload():
+    """Handle gold dataset upload and API post"""
+
+    # User API key input
+    user_api_key = st.text_input(
+        "Enter your EvalAP access key",
+        type="password",
+        key="gold_dataset_api_key",
+        help="You need an EvalAP access key. Request one via the Tchap channel.",
+    )
+
+    if not user_api_key:
+        st.warning("⚠️ Please enter your EvalAP access key to upload a gold dataset.")
+        return
+
+    # Verify authentication
+    with st.spinner("Verifying your access key..."):
+        verif_authent = fetch("get", "/metrics", token=user_api_key, show_error=False)
+
+    if verif_authent is None:
+        st.error("❌ Your EvalAP access key is invalid.")
+        st.info(
+            "If you do not have an EvalAP access key, request one via the "
+            "[Tchap channel](https://www.tchap.gouv.fr/#/room/!gpLYRJyIwdkcHBGYeC:agent.dinum.tchap.gouv.fr)"
+        )
+        return
+
+    st.success("✅ Access key validated")
+
+    # File uploader
+    uploaded_gold_file = st.file_uploader(
+        "Upload your gold dataset (CSV or Excel)",
+        type=["csv", "xls", "xlsx"],
+        key="gold_dataset_uploader",
+        help="File must contain at least 'query' and 'output_true' columns",
+    )
+
+    if uploaded_gold_file is not None:
+        # Track file changes
+        if (
+            "uploaded_gold_file" not in st.session_state
+            or st.session_state["uploaded_gold_file"].name != uploaded_gold_file.name
+        ):
+            st.session_state["uploaded_gold_file"] = uploaded_gold_file
+            st.session_state["gold_dataset_loaded"] = False
+            if "gold_dataset_name" not in st.session_state:
+                st.session_state["gold_dataset_name"] = uploaded_gold_file.name.split(".")[0]
+            if "gold_dataset_readme" not in st.session_state:
+                st.session_state["gold_dataset_readme"] = ""
+    else:
+        if "uploaded_gold_file" in st.session_state:
+            uploaded_gold_file = st.session_state["uploaded_gold_file"]
+        else:
+            st.info("📁 Please upload a gold dataset file")
+            return
+
+    # Dataset name and description
+    st.text_input("Dataset name", key="gold_dataset_name", help="Give a meaningful name to your gold dataset")
+
+    st.text_area(
+        "Description (readme)",
+        key="gold_dataset_readme",
+        help="Describe your dataset (purpose, source, content, etc.)",
+    )
+
+    # Load and verify
+    if st.button("📊 Load and verify dataset", key="load_gold_dataset_btn"):
+        try:
+            uploaded_gold_file.seek(0)
+
+            # Read file based on extension
+            if uploaded_gold_file.name.endswith(".csv"):
+                df = pd.read_csv(uploaded_gold_file, delimiter=";", on_bad_lines="skip")
+            else:
+                df = pd.read_excel(uploaded_gold_file)
+
+            # Validate required columns
+            required_cols = {"query", "output_true"}
+            if required_cols.issubset(set(df.columns)):
+                st.session_state["loaded_gold_df"] = df
+                st.session_state["gold_dataset_loaded"] = True
+                st.success(f"✅ File loaded successfully: {len(df)} rows detected")
+
+                # Show preview
+                with st.expander("📋 Preview data", expanded=True):  # TODO: keep?
+                    st.dataframe(df.head(10), use_container_width=True)
+                    st.caption(f"Columns: {', '.join(df.columns)}")
+            else:
+                st.session_state["gold_dataset_loaded"] = False
+                st.error(
+                    f"❌ The file must contain at least 'query' and 'output_true' columns. "
+                    f"Found columns: {', '.join(df.columns)}"
+                )
+        except Exception as e:
+            st.session_state["gold_dataset_loaded"] = False
+            st.error(f"❌ Error loading file: {e}")
+
+    # Send to API button
+    if st.session_state.get("gold_dataset_loaded", False):
+        if st.button("🚀 Send dataset to EvalAP API", key="send_gold_dataset_btn", type="primary"):
+            current_name = st.session_state.get("gold_dataset_name", "")
+            current_readme = st.session_state.get("gold_dataset_readme", "")
+            df_to_send = st.session_state.get("loaded_gold_df", None)
+
+            if not current_name or not current_name.strip():
+                st.error("❌ Please provide a dataset name")
+                return
+
+            if df_to_send is not None:
+                with st.spinner(f"Sending dataset '{current_name}' to API..."):
+                    # Prepare dataset payload
+                    dataset = {
+                        "name": current_name,
+                        "df": df_to_send.to_json(),
+                        "readme": current_readme,
+                        "default_metric": "judge_notator",
+                    }
+
+                    # Post to API
+                    result = fetch("post", "/dataset", dataset, user_api_key)
+
+                if result:
+                    st.success(f"✅ Dataset created successfully: **{current_name}** (ID: {result.get('id')})")
+
+                    # Clean up session state
+                    if "uploaded_gold_file" in st.session_state:
+                        del st.session_state["uploaded_gold_file"]
+                    st.session_state["gold_dataset_loaded"] = False
+                    if "loaded_gold_df" in st.session_state:
+                        del st.session_state["loaded_gold_df"]
+
+                    st.info("💡 Refresh the page to see your new dataset in the dropdown list")
+                else:
+                    st.error("❌ Error creating the dataset. Please check your data and try again.")
+            else:
+                st.error("❌ No dataset loaded to send")
+
+
 def handle_run_evaluation(experimentset, is_valid):
     if not is_valid:
         st.error("Please enter your access key before starting an assessment.")
@@ -263,7 +434,7 @@ def render_test_tab():
     st.markdown("### Upload your AI system answers")
 
     st.markdown(
-        "<p style='color:#666; margin-bottom:20px;'>Run your test query with your AI system, then download the CSV file containing the query and responses.</p>",
+        "<p style='color:#666; margin-bottom:20px;'>Run your test query with your AI system, then download the CSV file containing the query and responses (named 'query' and 'answer' respectively).</p>",
         unsafe_allow_html=True,
     )
 
@@ -331,7 +502,7 @@ def render_test_tab():
         )
 
     with col2:
-        datasets = ["dataset 1", "dataset 2"]  # list_datasets()
+        datasets = list_datasets()
         gold_file = st.selectbox(
             " ",
             ["Select dataset"] + datasets,
@@ -340,6 +511,19 @@ def render_test_tab():
         )
 
     st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)
+
+    with st.expander("Load your gold dataset", expanded=False):
+        st.markdown(
+            """
+        Your **gold dataset** is your reference dataset containing:
+        - `query`: the questions/prompts
+        - `output_true`: the expected correct answers
+
+        ℹ️ **Note**: You only need to upload your gold dataset once.
+        It will then be available in the dropdown above for all your experiments.
+        """
+        )
+        handle_gold_dataset_upload()
 
     # Judge model and API key
     col_provider_info, col_provider, col_model_info, col_model, col_api, col_api_key = st.columns(
@@ -412,7 +596,7 @@ def render_test_tab():
     st.divider()
 
     experimentset = None
-    model_alias = "Model alias *****"
+    model_alias = "Model alias *****"  # TODO change
     your_ia_system_file = "change for file upload"
 
     # API key validation
