@@ -7,47 +7,12 @@ ROUTES = [
         "title": "Home",
         "icon": ":material/home:",
     },
-    # {
-    #     "id": "leaderboard",
-    #     "path": "views/leaderboard.py",
-    #     "title": "Leaderboard",
-    #     "description": "Best models ranking list",
-    #     "icon": ":material/trophy:",
-    # },
     {
-        "id": "leaderboard",
-        "path": "views/product_leaderboard.py",
-        "title": "Leaderboard",
-        "description": "Best models ranking list (by products)",
-        "icon": ":material/trophy:",
-    },
-    {
-        "id": "prompt_analyze",
-        "path": "views/prompt_analyze.py",
-        "title": "Prompt analyze",
-        "description": "Analyze differents prompts for your product",
-        "icon": ":material/trophy:",
-    },
-    {
-        "id": "experiments_set",
-        "path": "views/experiments_set.py",
-        "title": "Experiments",
-        "description": "Navigate the experiments collections groups",
-        "icon": ":material/experiment:",
-    },
-    {
-        "id": "compliance",
-        "path": "views/compliance.py",
-        "title": "Compliance",
-        "description": "AI system compliance",
-        "icon": ":material/fact_check:",
-    },
-    {
-        "id": "launch",
-        "path": "views/launch_test_evaluation.py",
-        "title": "Test EvalAP",
-        "description": "Test an evaluation",
-        "icon": ":material/rocket_launch:",
+        "id": "metrics",
+        "path": "views/metrics.py",
+        "title": "Metrics",
+        "description": "A list of available metrics",
+        "icon": ":material/visibility:",
     },
     {
         "id": "datasets",
@@ -57,11 +22,18 @@ ROUTES = [
         "icon": ":material/database:",
     },
     {
-        "id": "metrics",
-        "path": "views/metrics.py",
-        "title": "Metrics",
-        "description": "A list of available metrics",
-        "icon": ":material/visibility:",
+        "id": "experiments_set",
+        "path": "views/experiments_set.py",
+        "title": "Experiments",
+        "description": "Navigate the experiments collections groups",
+        "icon": ":material/experiment:",
+    },
+    {
+        "id": "launch",
+        "path": "views/launch_test_evaluation.py",
+        "title": "Test EvalAP",
+        "description": "Test an evaluation",
+        "icon": ":material/rocket_launch:",
     },
     {
         "id": "ops",
@@ -71,6 +43,16 @@ ROUTES = [
         "icon": ":material/settings:",
     },
 ]
+
+
+def get_filtered_routes(all_experiment_sets=None):
+    filtered_routes = ROUTES.copy()
+
+    # Hide the ops tab if all_experiment_sets is empty
+    if all_experiment_sets is not None and len(all_experiment_sets) == 0:
+        filtered_routes = [route for route in filtered_routes if route["id"] != "ops"]
+
+    return filtered_routes
 
 
 def get_page(route: str | dict):
