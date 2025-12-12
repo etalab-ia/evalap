@@ -115,10 +115,16 @@ class SearchEngineClient:
 
     def add_doc(self, index: str, document: dict, engine=None):
         engine = engine if engine else self.config.default_engine
+        document_id = None
+        if "id" in document:
+            document_id = document["id"]
+        elif "_id" in document:
+            document_id = document["_id"]
+
         match engine:
             case "elasticsearch":
                 client = Elasticsearch(self.config.es_url, basic_auth=self.config.es_creds)
-                client.index(index=index, id=document[self.id_attribute], document=document)
+                client.index(index=index, id=document_id, document=document)
             case "qdrant":
                 raise NotImplementedError
             case _:

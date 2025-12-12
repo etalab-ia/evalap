@@ -78,6 +78,7 @@ def chunk_document(document: str, max_words: int, tolerance: float = 2.1) -> lis
 def load_legalbenchrag(max_words=300) -> list[dict]:
     # Get all text files
     files = Path("notebooks/_data/LegalBenchRAG/corpus").glob("**/*.txt")
+    files = sorted(files)
 
     # Load and chunk documents
     documents = []
