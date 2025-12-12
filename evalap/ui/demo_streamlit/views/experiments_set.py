@@ -1000,10 +1000,11 @@ def _display_experiment_detail_view(expid, experiment_sets, compliance):
                 experimentset,
                 refresh=force_refresh or st.session_state.get("do_refresh_experimentset"),
             )
-            st.session_state["do_refresh_experimentset"] = False
         except ValueError as ve:
             st.error(f"Failed to fetch experiment set: {ve}")
             return
+        finally:
+            st.session_state["do_refresh_experimentset"] = False
 
     elif expid == "orphan":
         experimentset = {
