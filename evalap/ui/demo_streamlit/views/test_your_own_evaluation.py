@@ -177,13 +177,16 @@ def post_experiment_set(expset: Dict[str, Any], token: str) -> Optional[Dict[str
     return fetch("post", "/experiment_set", data=expset, token=token)
 
 
-def mask_api_keys_in_experimentset(experimentset: Dict[str, Any]) -> Dict[str, Any]:
+def mask_infos_in_experimentset(experimentset: Dict[str, Any]) -> Dict[str, Any]:
     exp_for_code = copy.deepcopy(experimentset)
 
     if "cv" in exp_for_code and "grid_params" in exp_for_code["cv"]:
         for model_cfg in exp_for_code["cv"]["grid_params"].get("model", []):
             if "api_key" in model_cfg:
                 model_cfg["api_key"] = "YOUR_MODEL_API_KEY"
+
+            if "output" in model_cfg:
+                model_cfg["output"] = "your_ia_system[REQUIRED_AI_SYSTEM_COLUMN].values.tolist()"
 
     if "cv" in exp_for_code and "common_params" in exp_for_code["cv"]:
         judge_model = exp_for_code["cv"]["common_params"].get("judge_model")
@@ -263,7 +266,7 @@ def render_copy_code_popover(experimentset: Dict[str, Any]) -> None:
 
     with st.popover("📋 Copy code"):
         try:
-            exp_for_code = mask_api_keys_in_experimentset(experimentset)
+            exp_for_code = mask_infos_in_experimentset(experimentset)
 
             st.markdown(
                 "This code allows you to reproduce an experiment set.  \n"
