@@ -30,10 +30,10 @@ def __fetch(method, endpoint, data=None):
 
 
 def _fetch_experimentset(expid, partial_expset, refresh=False):
-    if refresh:
-        __fetch_experimentset.clear(expid, partial_expset)
-        if not partial_expset:
-            partial_expset = fetch("get", f"/experiment_set/{expid}")
+    if refresh or not partial_expset:
+        __fetch_experimentset.clear()
+        partial_expset = fetch("get", f"/experiment_set/{expid}")
+
     return __fetch_experimentset(expid, partial_expset)
 
 
@@ -110,7 +110,7 @@ def _get_experiment_data(exp_id):
         "get",
         f"/experiment/{exp_id}",
         {"with_dataset": True, "with_results": True},
-        refresh=st.session_state.get("refresh_experimentset"),
+        refresh=st.session_state.get("do_refresh_experimentset"),
     )
     if not expe:
         return None
@@ -126,6 +126,9 @@ def _get_experiment_data(exp_id):
     if len(df) == 0 and expe["dataset"]["parquet_size"]:
         if expe["dataset"]["parquet_size"] > 0:
             df = pd.DataFrame(index=range(100))
+
+    if expe["sample"]:
+        df = df.iloc[expe["sample"]]
 
     # Merge answers and metrics into the dataset dataframe
     if "answers" in expe:
@@ -977,6 +980,7 @@ def _display_experiment_detail_view(expid, experiment_sets, compliance):
             st.rerun()
     with col2:
         if st.button("🔄 Refresh", key="refresh_experimentset"):
+            st.session_state["do_refresh_experimentset"] = True
             st.rerun()
 
     # Fetch experiment set data
@@ -994,8 +998,9 @@ def _display_experiment_detail_view(expid, experiment_sets, compliance):
             experimentset = _fetch_experimentset(
                 expid,
                 experimentset,
-                refresh=force_refresh or st.session_state.get("refresh_experimentset"),
+                refresh=force_refresh or st.session_state.get("do_refresh_experimentset"),
             )
+            st.session_state["do_refresh_experimentset"] = False
         except ValueError as ve:
             st.error(f"Failed to fetch experiment set: {ve}")
             return
