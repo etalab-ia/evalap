@@ -12,6 +12,7 @@ import evalap.api.models as models
 from evalap.api.errors import SchemaError
 from evalap.api.metrics import metric_registry
 from evalap.clients.llm import LlmApiModels, get_api_url
+from evalap.logger import logger
 from evalap.utils import build_param_grid
 
 
@@ -314,9 +315,10 @@ class ExperimentCreate(ExperimentBase):
                 raise SchemaError("The size of the model outputs must match the size of the dataset.")
 
             for i in range(len(m.output)):
+                num_line = self.sample[i] if self.sample else i
                 answers.append(
                     dict(
-                        num_line=i,
+                        num_line=num_line,
                         answer = m.output[i],
                         think=m.think[i] if m.think else None,
                         execution_time=m.execution_time[i] if m.execution_time else None,
