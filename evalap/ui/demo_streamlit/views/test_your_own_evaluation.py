@@ -122,6 +122,46 @@ def validate_provider_api_key(provider_name: str, api_key: str, model_name: str)
 # ============================================================================
 
 
+def _create_default_experimentset(
+    dataset: str = "SELECT_YOUR_DATASET",
+    model_alias: str = "your_model_alias",
+    judge_url: str = "https://api.openai.com/v1",
+    judge_model: str = "gpt-4",
+    metrics: Optional[List[str]] = None,
+) -> Dict[str, Any]:
+    """Create an experiment set with default values for code copying."""
+    if metrics is None:
+        metrics = DEFAULT_METRICS + ["judge_notator"]
+
+    common_params = {
+        "dataset": dataset,
+        "metrics": metrics,
+        "judge_model": {
+            "name": judge_model,
+            "base_url": judge_url,
+            "api_key": "YOUR_JUDGE_API_KEY",
+        },
+    }
+
+    grid_params = {
+        "model": [
+            {
+                "aliased_name": model_alias,
+                "output": "your_ia_system['answer'].values.tolist()",
+            },
+        ]
+    }
+
+    expset_name = "my_experiment_set"
+    expset_readme = "Experiment set description"
+
+    return {
+        "name": expset_name,
+        "readme": expset_readme,
+        "cv": {"common_params": common_params, "grid_params": grid_params, "repeat": 1},
+    }
+
+
 def create_experiment_set(
     dataset: str,
     model_alias: str,
@@ -261,17 +301,22 @@ def copy_to_clipboard_button(text_to_copy: str, button_id: str = "copy_btn", hei
     components.html(html, height=height)
 
 
-def render_copy_code_popover(experimentset: Dict[str, Any]) -> None:
+def render_copy_code_popover(experimentset: Optional[Dict[str, Any]] = None) -> None:
+    """Render copy code popover with default values if experimentset is None."""
     template_manager = TemplateManager()
 
     with st.popover("📋 Copy code"):
         try:
+            if experimentset is None:
+                experimentset = _create_default_experimentset()
+                st.info("⚠️ Using default values. Please configure the evaluation settings before running.")
+
             exp_for_code = mask_infos_in_experimentset(experimentset)
 
             st.markdown(
                 "This code allows you to reproduce an experiment set.  \n"
                 "**Caution**: the code might be incomplete, review it carefully "
-                "and uses it at your own risks"
+                "and use it at your own risks"
             )
 
             col1, col2 = st.columns([0.7, 0.3])
@@ -758,8 +803,7 @@ def render_test_tab() -> None:
         )
 
     with button_col2:
-        if experimentset:
-            render_copy_code_popover(experimentset)
+        render_copy_code_popover(experimentset)
 
     if run_button and is_api_key_valid:
         handle_run_evaluation(experimentset, is_api_key_valid)
