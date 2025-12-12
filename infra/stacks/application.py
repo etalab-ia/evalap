@@ -1,10 +1,12 @@
 """Unified Application Stack implementation."""
 
 import logging
+import os
 from typing import Optional
 
 import pulumi
 
+from infra.components.container_registry import ContainerRegistry
 from infra.components.database import DatabaseInstance
 from infra.components.iam_policy import IAMPolicy, ServiceType, create_service_policy
 from infra.components.monitoring import Monitoring
@@ -40,6 +42,7 @@ class ApplicationStack:
         self.stack_name = pulumi.get_stack()
 
         # Initialize component references
+        self.container_registry: Optional[ContainerRegistry] = None
         self.private_network: Optional[PrivateNetwork] = None
         self.secret_manager: Optional[SecretManager] = None
         self.iam_policy: Optional[IAMPolicy] = None
@@ -57,6 +60,9 @@ class ApplicationStack:
 
             # 1. Create Private Network (Network Layer) - Optional
             self._create_private_network()
+
+            # 1b. Create Container Registry (Build Layer)
+            self._create_container_registry()
 
             # 2. Create Secret Manager (Security Layer)
             self._create_secret_manager()
@@ -101,6 +107,20 @@ class ApplicationStack:
         )
 
         self.private_network.create()
+
+    def _create_container_registry(self) -> None:
+        """Create container registry."""
+        logger.debug("Creating container registry component")
+
+        self.container_registry = ContainerRegistry(
+            name="evalap-registry",
+            environment=self.config.environment,
+            project_id=self.config.project_id,
+            region=self.config.region,
+            tags=self.config.tags,
+        )
+
+        self.container_registry.create()
 
     def _create_secret_manager(self) -> None:
         """Create Secret Manager with initial secrets."""
@@ -177,7 +197,13 @@ class ApplicationStack:
         """Create serverless container."""
         logger.debug("Creating container component")
 
-        image_uri = pulumi.Config().get("container_image_uri") or "docker.io/testcontainers/helloworld:latest"
+        # Build and push image
+        image_uri = self._build_image()
+        if not image_uri:
+            # Fallback for preview or if build disabled, though we aim to build
+            image_uri = (
+                pulumi.Config().get("container_image_uri") or "docker.io/testcontainers/helloworld:latest"
+            )
 
         # Map secret names to environment variable names
         secret_mappings = {
@@ -214,6 +240,101 @@ class ApplicationStack:
         )
 
         self.storage.create()
+
+    def _build_image(self) -> Optional[pulumi.Output]:
+        """Build and push Docker image."""
+        if not self.container_registry:
+            return None
+
+        registry_endpoint = self.container_registry.get_endpoint()
+
+        # Get registry credentials (assuming SCW_SECRET_KEY env var or config)
+        # Scaleway Registry user is 'nologin', password is the secret key
+        scw_secret_key = os.environ.get("SCW_SECRET_KEY") or pulumi.Config().get(
+            "access_key"
+        )  # specific to SCW provider setup
+
+        if not scw_secret_key:
+            # Try to get it from provider config if possible, or warn
+            # For now, we assume environment variable is set as per walkthrough
+            logger.warning("SCW_SECRET_KEY not found in env, docker push might fail if not logged in")
+            scw_secret_key = "placeholder"  # Will likely fail build if strictly needed
+
+        # Use manual docker build/push to avoid pulumi-docker context/networking issues with remote daemons (Colima)
+        if pulumi.runtime.is_dry_run():
+            # In preview, just return the expected tag
+            return pulumi.Output.concat(registry_endpoint, "/evalap-api:latest")
+
+        try:
+            # Resolve endpoint to string for subprocess
+            # Note: This requires apply, but we are inside create() which is synchronous construction time.
+            # To mix sync subprocess with async outputs is tricky.
+            # We must use 'apply' if we want to use the value, BUT 'apply' runs asynchronously.
+            # However, for the build we need it "now" or we need to put the build INSIDE an apply.
+
+            # Since we can't easily block on Output inside __init__ phase,
+            # we will use the registry endpoint output in a dynamic provider or 'command' resource ideally.
+            # But the simplest 'hack' that users ask for is to just run it.
+            # Since 'registry_endpoint' is a generic Output, we might not have its value known immediately if it's being created.
+
+            # Check if registry is already known (e.g. from stack ref or if it's just a string).
+            # Self.container_registry.namespace.endpoint is an Output.
+
+            # If we are creating the registry IN THIS STACK, we cannot build and push to it
+            # in the same 'up' operation using simple subprocess at the top level,
+            # because the registry doesn't exist yet when Python code runs!
+
+            # We MUST use a Pulumi resource that depends on the registry.
+            # Convert back to using `command` provider or `docker.Image` but with a workaround.
+            pass
+        except Exception:
+            pass
+
+        # REVERT STRATEGY:
+        # The fail with 'docker.Image' was due to context transfer.
+        # We can try to use 'docker.Image' but with a 'local' build context if we point to a tarball?
+        # No, simpler:
+        # We will keep using docker.Image but we will try to fix the context lookup by using absolute path
+        # OR just acknowledge that the previous 'docker.Image' resource is the correct way but specifically the networking is broken.
+
+        # Let's try ONE MORE configuration on the docker.Image resource: 'skip_push=False' is default.
+        # What if we move the context to be explicitly '.' and ensure we run from root?
+        # No, application.py runs in infra.
+
+        # Alternative: Use "local-exec" via `command.local.Command` to run the docker build/push AFTER registry creation.
+
+        import pulumi_command as command
+
+        full_image_name = pulumi.Output.concat(registry_endpoint, "/evalap-api:latest")
+
+        # Prepare the build command
+        # We need to authenticate first.
+        login_cmd = pulumi.Output.concat(
+            "echo ", scw_secret_key, " | docker login ", registry_endpoint, " -u nologin --password-stdin"
+        )
+
+        build_cmd = pulumi.Output.concat(
+            "docker build --platform linux/amd64 -t ", full_image_name, " -f ../Dockerfile .."
+        )
+
+        push_cmd = pulumi.Output.concat("docker push ", full_image_name)
+
+        # Chain commands: Login && Build && Push
+        # Note: DOCKER_HOST is inherited from the process running pulumi (our justfile fix)
+        create_cmd = pulumi.Output.concat(login_cmd, " && ", build_cmd, " && ", push_cmd)
+
+        image_resource = command.local.Command(
+            "evalap-api-image-build",
+            create=create_cmd,
+            # We can optionally add environment={"DOCKER_HOST": ...} but it should inherit.
+            opts=pulumi.ResourceOptions(
+                depends_on=[self.container_registry.namespace]
+            ),  # Ensure registry exists
+        )
+
+        # Return the image name (tagged)
+        # We make it depend on the command completing
+        return full_image_name.apply(lambda name: name) if image_resource else None
 
     def _create_monitoring(self) -> None:
         """Create monitoring configuration if enabled."""

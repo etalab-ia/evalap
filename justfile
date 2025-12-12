@@ -293,6 +293,8 @@ sync:
 pulumi *args:
   #!/usr/bin/env bash
   cd infra
+  # Ensure Pulumi can access Docker (e.g. for Colima)
+  export DOCKER_HOST=${DOCKER_HOST:-$(docker context inspect | jq -r '.[0].Endpoints.docker.Host' 2>/dev/null || echo "unix:///var/run/docker.sock")}
   uv run --env-file ../.env pulumi {{args}}
 
 #
