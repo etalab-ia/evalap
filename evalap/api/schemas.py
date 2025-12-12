@@ -12,7 +12,6 @@ import evalap.api.models as models
 from evalap.api.errors import SchemaError
 from evalap.api.metrics import metric_registry
 from evalap.clients.llm import LlmApiModels, get_api_url
-from evalap.logger import logger
 from evalap.utils import build_param_grid
 
 

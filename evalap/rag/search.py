@@ -2,7 +2,7 @@ import logging
 import os
 from collections.abc import Iterable
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from elasticsearch import Elasticsearch, helpers
 
@@ -158,7 +158,7 @@ class SearchEngineClient:
         match engine:
             case "elasticsearch":
                 client = Elasticsearch(self.config.es_url, basic_auth=self.config.es_creds)
-                response = client.update(index=index, id=id, body={"doc": payload})
+                client.update(index=index, id=id, body={"doc": payload})
             case "qdrant":
                 raise NotImplementedError
             case _:
