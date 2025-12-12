@@ -64,12 +64,14 @@ class ExperimentStatus(str, Enum):
     running_answers = "running_answers"
     running_metrics = "running_metrics"
     finished = "finished"
+    stopped = "stopped"
 
 
 class MetricStatus(str, Enum):
     pending = "pending"
     running = "running"
     finished = "finished"
+    stopped = "stopped"
 
 
 #
@@ -78,13 +80,14 @@ class MetricStatus(str, Enum):
 
 
 class DatasetBase(EgBaseModel):
-    name: str
-    readme: str
+    name: str = Field(description="Name of the dataset")
+    readme: str = Field(description="Markdown-formatted readme or description of the dataset")
     default_metric: str
     columns_map: dict[str, str] | None = Field(
-        None,
+        default=None,
         description="A column names maping that indicates what names in dataset match the evalap stadandard (output, output_true etc)",
     )
+    compliance: bool = False
 
 
 class DatasetCreate(DatasetBase):
@@ -267,6 +270,9 @@ class ExperimentBase(EgBaseModel):
         False,
         description="Add the image to the user message if an 'img' field is present in the dataset (parquet).",
     )
+    sample: list[int] | None = Field(
+        default=None, description="List of the sample indices to select from the dataset, if applicable."
+    )
 
 
 class ExperimentCreate(ExperimentBase):
@@ -285,8 +291,13 @@ class ExperimentCreate(ExperimentBase):
         else:
             dataset = models.Dataset(**obj["dataset"])
         obj["dataset"] = dataset
+        if self.sample:
+            dataset_size = len(self.sample)
+        else:
+            dataset_size = dataset.parquet_size if self.with_vision else dataset.size
+
         if isinstance(self.model, ModelRaw):
-            obj["num_try"] = dataset.parquet_size if self.with_vision else dataset.size
+            obj["num_try"] = dataset_size
             obj["num_success"] = len(self.model.output)
             if obj["num_try"] != obj["num_success"]:
                 raise SchemaError("The size of the model outputs must match the size of the dataset.")
@@ -301,14 +312,14 @@ class ExperimentCreate(ExperimentBase):
             # --
             answers = []
             m = self.model
-            df = pd.read_json(StringIO(dataset.df))
-            if len(df) != len(m.output):
+            if dataset_size != len(m.output):
                 raise SchemaError("The size of the model outputs must match the size of the dataset.")
 
             for i in range(len(m.output)):
+                num_line = self.sample[i] if self.sample else i
                 answers.append(
                     dict(
-                        num_line=i,
+                        num_line=num_line,
                         answer = m.output[i],
                         think=m.think[i] if m.think else None,
                         execution_time=m.execution_time[i] if m.execution_time else None,
@@ -341,12 +352,18 @@ class ExperimentCreate(ExperimentBase):
             if isinstance(metric, str):
                 metric_name = metric
                 metric_params = None
+                metric_aliased_name = None
             else:
                 metric_name = metric.name
                 metric_params = metric.params
+                metric_aliased_name = metric.aliased_name
 
             results.append(
-                ResultCreate(metric_name=metric_name, metric_params=metric_params).to_table_init(db)
+                ResultCreate(
+                    metric_name=metric_name,
+                    metric_aliased_name=metric_aliased_name,
+                    metric_params=metric_params,
+                ).to_table_init(db)
             )
 
             # Validate Model and metric compatibility
@@ -372,7 +389,7 @@ class ExperimentCreate(ExperimentBase):
                         # Handle columns_maps
                         continue
                     raise SchemaError(
-                        f"Metric {metric_name} require a parameter `{require}`. "
+                        f"Metric '{metric_name}' require a parameter `{require}`. "
                         f"Either your dataset needs to have a `{require}` field or use ModelRaw schema to provide it yourself if its a model generated field."
                     )
 
