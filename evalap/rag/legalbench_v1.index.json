@@ -13,7 +13,6 @@
               "unique",
               "ignore_number",
               "ignore_special",
-              "unique",
               "french_stop", 
               "french_stemmer"
             ]
