@@ -165,22 +165,17 @@ def _create_default_experimentset(
 def create_experiment_set(
     dataset: str,
     model_alias: str,
-    your_ia_system: Any,
+    your_ia_system: pd.DataFrame,
     judge_url: str,
     judge_model: str,
     api_key_judge: str,
     metrics: List[str],
 ) -> Dict[str, Any]:
-    if your_ia_system == "change for file upload":
-        your_ia_system = st.session_state.get("your_ia_system")
-        if your_ia_system is None:
-            raise ValueError("No AI system file uploaded. Please upload a CSV file first.")
-
     if not isinstance(your_ia_system, pd.DataFrame):
-        raise ValueError("Invalid AI system data format")
+        raise ValueError("your_ia_system must be a pandas DataFrame")
 
     if REQUIRED_AI_SYSTEM_COLUMN not in your_ia_system.columns:
-        raise ValueError(f"The uploaded file must contain an '{REQUIRED_AI_SYSTEM_COLUMN}' column")
+        raise ValueError(f"The DataFrame must contain an '{REQUIRED_AI_SYSTEM_COLUMN}' column")
 
     common_params = {
         "dataset": dataset,
@@ -204,13 +199,11 @@ def create_experiment_set(
     expset_name = "NAME ***"  # TODO change
     expset_readme = "README ***"  # TODO change
 
-    expset = {
+    return {
         "name": expset_name,
         "readme": expset_readme,
         "cv": {"common_params": common_params, "grid_params": grid_params, "repeat": 1},
     }
-
-    return expset
 
 
 def post_experiment_set(expset: Dict[str, Any], token: str) -> Optional[Dict[str, Any]]:
@@ -643,7 +636,7 @@ def _render_judge_model_configuration() -> Tuple[str, str, str, str, bool, Optio
 
     with col_provider:
         judge_provider_options = [
-            "select provider",
+            "Select provider",
             "Albert API",
             "OpenAI",
             "Anthropic",
@@ -665,7 +658,7 @@ def _render_judge_model_configuration() -> Tuple[str, str, str, str, bool, Optio
         judge_model = st.text_input(
             "",
             key="model_judge_test",
-            placeholder="Input field",
+            placeholder="",
             help="Inform the Model LLM that will assess and score the system's answers.",
         )
 
@@ -677,7 +670,7 @@ def _render_judge_model_configuration() -> Tuple[str, str, str, str, bool, Optio
             " ",
             type="password",
             key="api_key_judge_test",
-            placeholder="Entrez votre clé API",
+            placeholder="Your API key",
             help="Inform the API key LLM",
         )
 
@@ -686,7 +679,7 @@ def _render_judge_model_configuration() -> Tuple[str, str, str, str, bool, Optio
     error_msg = None
 
     with col_status:
-        if api_key_judge and judge_provider_name != "select provider" and judge_model:
+        if api_key_judge and judge_provider_name != "Select provider" and judge_model:
             is_valid, error_msg = validate_provider_api_key(judge_provider_name, api_key_judge, judge_model)
 
             if is_valid:
@@ -738,7 +731,7 @@ def _render_metrics_selection() -> List[str]:
             "Select metrics",
             options=CHOICE_METRICS,
             key="metrics_test",
-            placeholder="select metrics",
+            placeholder="Select metrics",
             label_visibility="collapsed",
         )
 
@@ -776,21 +769,29 @@ def render_test_tab() -> None:
     experimentset = None
 
     if is_api_key_valid:
-        try:
-            model_alias = "Model alias *****"  # TODO change
-            your_ia_system_file = "change for file upload"
+        your_ia_system = st.session_state.get("your_ia_system")
 
-            experimentset = create_experiment_set(
-                dataset=gold_file,
-                model_alias=model_alias,
-                your_ia_system=your_ia_system_file,
-                judge_url=judge_provider_url,
-                judge_model=judge_model,
-                api_key_judge=api_key_judge,
-                metrics=metrics,
-            )
-        except Exception as e:
-            st.error(f"Error creating experiment set: {e}")
+        if your_ia_system is None:
+            st.warning("⚠️ Please upload your AI system answers before running evaluation.")
+        elif not isinstance(your_ia_system, pd.DataFrame):
+            st.error("❌ Invalid AI system data format")
+        else:
+            try:
+                model_alias = "Model alias *****"  # TODO change
+
+                experimentset = create_experiment_set(
+                    dataset=gold_file,
+                    model_alias=model_alias,
+                    your_ia_system=your_ia_system,  # Passer directement le DataFrame
+                    judge_url=judge_provider_url,
+                    judge_model=judge_model,
+                    api_key_judge=api_key_judge,
+                    metrics=metrics,
+                )
+            except ValueError as e:
+                st.error(f"❌ {str(e)}")
+            except Exception as e:
+                st.error(f"❌ Error creating experiment set: {e}")
 
     # Action buttons
     empty_col, button_col1, button_col2 = st.columns([8, 3, 3])
