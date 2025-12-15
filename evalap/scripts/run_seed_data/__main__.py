@@ -292,11 +292,30 @@ def _seed_with_session(db: Session) -> None:
     print("Starting database seeding...")
     print("-" * 50)
 
-    create_civics_dataset(db)
-    create_toxic_chat_dataset(db)
-    create_deccp_dataset(db)
-    create_service_public_dataset(db)
-    create_annuaire_entreprises_dataset(db)
+    try:
+        create_civics_dataset(db)
+    except Exception as e:
+        print(f"Error creating civics dataset: {e}")
+
+    try:
+        create_toxic_chat_dataset(db)
+    except Exception as e:
+        print(f"Error creating toxic chat dataset: {e}")
+
+    try:
+        create_deccp_dataset(db)
+    except Exception as e:
+        print(f"Error creating deccp dataset: {e}")
+
+    try:
+        create_service_public_dataset(db)
+    except Exception as e:
+        print(f"Error creating service public dataset: {e}")
+
+    try:
+        create_annuaire_entreprises_dataset(db)
+    except Exception as e:
+        print(f"Error creating annuaire entreprises dataset: {e}")
 
     print("-" * 50)
     print("Database seeding completed!")
