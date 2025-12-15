@@ -1,13 +1,15 @@
 import copy
-import json
 import os
 from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
 import requests
 import streamlit as st
-import streamlit.components.v1 as components
 from template_manager import TemplateManager
+from ui_components import (
+    copy_to_clipboard_button,
+    validation_status_indicator,
+)
 from utils import fetch
 
 # ============================================================================
@@ -232,66 +234,6 @@ def mask_infos_in_experimentset(experimentset: Dict[str, Any]) -> Dict[str, Any]
 # ============================================================================
 # UI COMPONENTS
 # ============================================================================
-
-
-def info_banner(text: str) -> None:
-    st.markdown(
-        f"""
-        <div style="
-            background-color:#E3ECFF;
-            color:#000091;
-            border:1px solid #B5C7F9;
-            padding:18px;
-            border-radius:7px;
-            margin-bottom:24px;
-            ">
-            <span style="font-size:20px; font-weight:normal;">
-                {text}
-            </span>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-def copy_to_clipboard_button(text_to_copy: str, button_id: str = "copy_btn", height: int = 60) -> None:
-    safe_text = json.dumps(text_to_copy)
-    html = f"""
-        <button
-            id="{button_id}"
-            onclick="copyToClipboard(this)"
-            style="
-                background-color:#4CAF50;
-                color:white;
-                border:none;
-                padding:8px 16px;
-                border-radius:8px;
-                cursor:pointer;
-                margin-top:1rem;
-                width:100%;
-            ">
-            📋 Copy to clipboard
-        </button>
-        <script>
-        function copyToClipboard(button) {{
-            const originalText = button.innerHTML;
-            const text = {safe_text};
-            navigator.clipboard.writeText(text).then(() => {{
-                button.innerHTML = "✅ Copied!";
-                setTimeout(() => {{
-                    button.innerHTML = originalText;
-                }}, 3000);
-            }}).catch(err => {{
-                console.error('Failed to copy: ', err);
-                button.innerHTML = "❌ Failed to copy";
-                setTimeout(() => {{
-                    button.innerHTML = originalText;
-                }}, 3000);
-            }});
-        }}
-        </script>
-    """
-    components.html(html, height=height)
 
 
 def render_copy_code_popover(experimentset: Optional[Dict[str, Any]] = None) -> None:
@@ -681,39 +623,7 @@ def _render_judge_model_configuration() -> Tuple[str, str, str, str, bool, Optio
     with col_status:
         if api_key_judge and judge_provider_name != "Select provider" and judge_model:
             is_valid, error_msg = validate_provider_api_key(judge_provider_name, api_key_judge, judge_model)
-
-            if is_valid:
-                st.markdown(
-                    """
-                    <div style="
-                        background-color:#d4f6dd;
-                        border:1px solid #7ac89b;
-                        padding:4px 6px;
-                        border-radius:4px;
-                        display:inline-block;
-                        margin-top:4px;
-                    ">
-                        <span style="font-size:12px;">✅ Valid API key</span>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-            else:
-                st.markdown(
-                    f"""
-                    <div style="
-                        background-color:#ffd6d6;
-                        border:1px solid:#ff9b9b;
-                        padding:4px 6px;
-                        border-radius:4px;
-                        display:inline-block;
-                        margin-top:4px;
-                    ">
-                        <span style="font-size:12px;">❌ {error_msg or "Invalid API key"}</span>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
+            validation_status_indicator(is_valid, error_msg)
 
     st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)
 

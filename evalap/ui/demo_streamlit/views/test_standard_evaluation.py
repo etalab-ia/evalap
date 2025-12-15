@@ -1,12 +1,15 @@
 import copy
-import json
 import os
 from datetime import datetime
 
 import requests
 import streamlit as st
-import streamlit.components.v1 as components
 from template_manager import TemplateManager
+from ui_components import (
+    copy_to_clipboard_button,
+    init_page_styles,
+    validation_status_indicator,
+)
 from utils import fetch
 
 EVALAP_FRONTEND_TOKEN = os.getenv("EVALAP_FRONTEND_TOKEN")
@@ -182,101 +185,7 @@ def create_experiment_set(
     return expset
 
 
-def copy_to_clipboard_button(text_to_copy: str, button_id: str = "copy_btn", height: int = 60):
-    safe_text = json.dumps(text_to_copy)
-    html = f"""
-        <button
-            id="{button_id}"
-            onclick="copyToClipboard(this)"
-            style="
-                background-color:#4CAF50;
-                color:white;
-                border:none;
-                padding:8px 16px;
-                border-radius:8px;
-                cursor:pointer;
-                margin-top:1rem;
-                width:100%;
-            ">
-            📋 Copy to clipboard
-        </button>
-        <script>
-        function copyToClipboard(button) {{
-            const originalText = button.innerHTML;
-            const text = {safe_text};
-            navigator.clipboard.writeText(text).then(() => {{
-                button.innerHTML = "✅ Copied!";
-                setTimeout(() => {{
-                    button.innerHTML = originalText;
-                }}, 3000);
-            }}).catch(err => {{
-                console.error('Failed to copy: ', err);
-                button.innerHTML = "❌ Failed to copy";
-                setTimeout(() => {{
-                    button.innerHTML = originalText;
-                }}, 3000);
-            }});
-        }}
-        </script>
-    """
-    components.html(html, height=height)
-
-
 # --- UI ---
-
-
-def info_banner(text):
-    """Display info banner with custom styling"""
-    st.markdown(
-        f"""
-        <div style="
-            background-color:#E3ECFF;
-            color:#000091;
-            border:1px solid #B5C7F9;
-            padding:18px;
-            border-radius:7px;
-            margin-bottom:24px;
-            ">
-            <span style="font-size:20px; font-weight:normal;">
-                {text}
-            </span>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-
-def init_page_styles():
-    st.markdown(
-        """
-        <style>
-        h3 {
-            font-size: 20px !important;
-            font-weight: 600;
-        }
-        .custom-button {
-            background-color: transparent;
-            color: #000091;
-            border: 2px solid #000091;
-            padding: 12px 28px;
-            font-size: 20px;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            width: 100%;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
-        }
-        .custom-button:hover {
-            background-color: #000091;
-            color: white;
-            border-color: #000091;
-        }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
 
 
 def validate_api_key(api_key):
@@ -331,38 +240,7 @@ def render_api_key_section():
 
         with col_status:
             if user_api_key:
-                if is_valid:
-                    st.markdown(
-                        """
-                        <div style="
-                            background-color:#d4f6dd;
-                            border:1px solid #7ac89b;
-                            padding:4px 6px;
-                            border-radius:4px;
-                            display:inline-block;
-                            margin-top:4px;
-                        ">
-                            <span style="font-size:12px;">✅ Valid API key</span>
-                        </div>
-                        """,
-                        unsafe_allow_html=True,
-                    )
-                else:
-                    st.markdown(
-                        f"""
-                        <div style="
-                            background-color:#ffd6d6;
-                            border:1px solid #ff9b9b;
-                            padding:4px 6px;
-                            border-radius:4px;
-                            display:inline-block;
-                            margin-top:4px;
-                        ">
-                            <span style="font-size:12px;">❌ {error_msg or "Invalid API key"}</span>
-                        </div>
-                        """,
-                        unsafe_allow_html=True,
-                    )
+                validation_status_indicator(is_valid, error_msg)
 
     if not is_valid:
         st.write(
