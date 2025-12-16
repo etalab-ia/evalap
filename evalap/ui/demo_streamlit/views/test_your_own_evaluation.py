@@ -1,5 +1,6 @@
 import copy
 import os
+from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
@@ -126,7 +127,7 @@ def validate_provider_api_key(provider_name: str, api_key: str, model_name: str)
 
 def _create_default_experimentset(
     dataset: str = "SELECT_YOUR_DATASET",
-    model_alias: str = "your_model_alias",
+    model_alias: str = "custom_ai_system",
     judge_url: str = "https://api.openai.com/v1",
     judge_model: str = "gpt-4",
     metrics: Optional[List[str]] = None,
@@ -154,8 +155,8 @@ def _create_default_experimentset(
         ]
     }
 
-    expset_name = "my_experiment_set"
-    expset_readme = "Experiment set description"
+    expset_name = f"{dataset}_experimentation_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    expset_readme = f"Test evaluation on the {dataset} dataset"
 
     return {
         "name": expset_name,
@@ -198,8 +199,8 @@ def create_experiment_set(
         ]
     }
 
-    expset_name = "NAME ***"  # TODO change
-    expset_readme = "README ***"  # TODO change
+    expset_name = f"{dataset}_experimentation_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    expset_readme = f"Test evaluation on the {dataset} dataset"
 
     return {
         "name": expset_name,
@@ -687,12 +688,12 @@ def render_test_tab() -> None:
             st.error("❌ Invalid AI system data format")
         else:
             try:
-                model_alias = "Model alias *****"  # TODO change
+                model_alias = "custom_ai_system"
 
                 experimentset = create_experiment_set(
                     dataset=gold_file,
                     model_alias=model_alias,
-                    your_ia_system=your_ia_system,  # Passer directement le DataFrame
+                    your_ia_system=your_ia_system,
                     judge_url=judge_provider_url,
                     judge_model=judge_model,
                     api_key_judge=api_key_judge,
@@ -706,6 +707,7 @@ def render_test_tab() -> None:
     # Action buttons
     empty_col, button_col1, button_col2 = st.columns([8, 3, 3])
 
+    st.write(experimentset)
     with button_col1:
         run_button = st.button(
             "Run test evaluation",
