@@ -59,8 +59,8 @@ COLLECTION_TO_DATASET = {
     "annuaire-administrations-etat": "test_annuaire_entreprises",
 }
 
-DEFAULT_MODEL = "albert-small"
-DEFAULT_JUDGE_MODEL = "albert-large"
+DEFAULT_MODEL = "openweight-small"
+DEFAULT_JUDGE_MODEL = "openweight-medium"
 CHOICE_METRICS = ["judge_notator", "judge_exactness"]
 DEFAULT_METRICS = [
     "generation_time",
