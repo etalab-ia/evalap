@@ -707,7 +707,6 @@ def render_test_tab() -> None:
     # Action buttons
     empty_col, button_col1, button_col2 = st.columns([8, 3, 3])
 
-    st.write(experimentset)
     with button_col1:
         run_button = st.button(
             "Run test evaluation",
