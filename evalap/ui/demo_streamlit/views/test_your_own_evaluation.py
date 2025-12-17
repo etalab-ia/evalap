@@ -534,22 +534,18 @@ def _render_ai_system_upload_section() -> None:
 
 
 def _render_gold_dataset_selection() -> str:
-    col1, col2 = st.columns([3, 7])
+    st.markdown(
+        "<p style='margin-top:8px; margin-bottom:0; text-decoration: underline;'>Your Gold dataset</p>",
+        unsafe_allow_html=True,
+    )
 
-    with col1:
-        st.markdown(
-            "<p style='margin-top:8px; margin-bottom:0;'>Your Gold dataset</p>",
-            unsafe_allow_html=True,
-        )
-
-    with col2:
-        datasets = list_datasets()
-        gold_file = st.selectbox(
-            " ",
-            ["Select dataset"] + datasets,
-            key="gold_dataset_select",
-            help="Choose the reference dataset that will be used to evaluate the test RAG system.",
-        )
+    datasets = list_datasets()
+    gold_file = st.selectbox(
+        " ",
+        ["Select dataset"] + datasets,
+        key="gold_dataset_select",
+        help="Choose the reference dataset that will be used to evaluate the test RAG system.",
+    )
 
     st.markdown("<div style='height:20px;'></div>", unsafe_allow_html=True)
 
@@ -570,9 +566,7 @@ def _render_gold_dataset_selection() -> str:
 
 
 def _render_judge_model_configuration() -> Tuple[str, str, str, str, bool, Optional[str]]:
-    col_provider_info, col_provider, col_model_info, col_model, col_api, col_api_key, col_status = st.columns(
-        [3, 4, 3, 4, 3, 7, 3]
-    )
+    col_provider_info, col_provider, col_empty = st.columns([3, 10, 1])
 
     with col_provider_info:
         st.markdown("<p style='margin-bottom: 0px;'>Judge Provider</p>", unsafe_allow_html=True)
@@ -594,6 +588,8 @@ def _render_judge_model_configuration() -> Tuple[str, str, str, str, bool, Optio
 
     judge_provider_url = PROVIDER_URLS.get(judge_provider_name, "")
 
+    col_model_info, col_model, col_empty = st.columns([3, 10, 1])
+
     with col_model_info:
         st.markdown("<p style='margin-bottom: 0px;'>Judge Model</p>", unsafe_allow_html=True)
 
@@ -605,6 +601,7 @@ def _render_judge_model_configuration() -> Tuple[str, str, str, str, bool, Optio
             help="Inform the Model LLM that will assess and score the system's answers.",
         )
 
+    col_api, col_api_key, col_status = st.columns([3, 10, 1])
     with col_api:
         st.markdown("<p style='margin-top:8px;'>Your API key</p>", unsafe_allow_html=True)
 
@@ -632,7 +629,11 @@ def _render_judge_model_configuration() -> Tuple[str, str, str, str, bool, Optio
 
 
 def _render_metrics_selection() -> List[str]:
-    col_metrics_title, col_metrics_choice, col_empty = st.columns([3, 7, 7])
+    st.markdown(
+        "<p style='margin-top:8px; margin-bottom:0; text-decoration: underline;'>Your metrics</p><br>",
+        unsafe_allow_html=True,
+    )
+    col_metrics_title, col_metrics_choice, col_empty = st.columns([3, 10, 1])
 
     with col_metrics_title:
         st.markdown("<p style='margin-top:8px;'>Metrics</p>", unsafe_allow_html=True)
@@ -663,15 +664,15 @@ def render_test_tab() -> None:
     st.divider()
 
     # Section 2: Configure evaluation settings
-    st.markdown("### Configure the evaluation settings")
+    st.markdown("### Set up the evaluation settings")
 
     gold_file = _render_gold_dataset_selection()
+
+    metrics = _render_metrics_selection()
 
     judge_provider_name, judge_provider_url, judge_model, api_key_judge, is_api_key_valid, error_msg = (
         _render_judge_model_configuration()
     )
-
-    metrics = _render_metrics_selection()
 
     st.markdown("<div style='height:30px;'></div>", unsafe_allow_html=True)
     st.divider()
