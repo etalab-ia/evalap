@@ -1,12 +1,11 @@
 ---
-sidebar_position: 3
+sidebar_position: 2
 ---
 
 # Create an Experiment Set
 
 This guide explains how to create and run an experiment set evaluation  in EvalAP, which allows you to compare multiple models or configurations.
 
-> **Note:** Before proceeding with this guide, please make sure you've read the [Create a Simple Experiment](create-a-simple-experiment) article, as it covers fundamental concepts needed to understand experiment sets.
 
 ## Why Use Experiment Sets?
 
@@ -35,13 +34,18 @@ import os
 import requests
 
 # Replace with your Evalap API endpoint
-API_URL = "https://evalap.etalab.gouv.fr/v1"
+API_URL = "http://localhost:8000/v1"
+EVALAP_API_KEY = os.getenv("EVALAP_API_KEY")
 
-# Replace with your API key or authentication token
+# Replace with your API key or authentication token (or None if launch locally)
 HEADERS = {
-    "Authorization": "Bearer YOUR_API_KEY",
+    "Authorization": "Bearer EVALAP_API_KEY",
     "Content-Type": "application/json"
 }
+
+judge_name = "gpt-4.1"
+judge_api_url = "https://api.openai.com/v1",
+judge_api_key = os.getenv("OPENAI_API_KEY")
 
 # Define your experiment set with CV schema
 expset_name = "model_comparison_v1"
@@ -53,7 +57,11 @@ common_params = {
     "dataset": "qa_benchmark_v2",  # assuming this dataset has been added before
     "model": {"sampling_params": {"temperature": 0.2}},
     "metrics": metrics,
-    "judge_model": "gpt-4o",
+    "judge_model": {
+        "name": judge_name,
+        "base_url": judge_api_url,
+        "api_key": judge_api_key,
+},
 }
 
 # Parameters that will vary across experiments

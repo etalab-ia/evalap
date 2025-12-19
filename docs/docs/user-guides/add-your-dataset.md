@@ -47,11 +47,12 @@ import json
 import pandas as pd
 
 # Replace with your Evalap API endpoint
-API_URL = "https://evalap.etalab.gouv.fr/v1"
+API_URL = "http://localhost:8000/v1"
+EVALAP_API_KEY = os.getenv("EVALAP_API_KEY")
 
 # Replace with your API key or authentication token (or None if launch locally)
 HEADERS = {
-    "Authorization": "Bearer YOUR_EVALAP_KEY",
+    "Authorization": "Bearer EVALAP_API_KEY",
     "Content-Type": "application/json"
 }
 
