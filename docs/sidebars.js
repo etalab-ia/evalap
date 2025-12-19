@@ -23,8 +23,8 @@ const sidebars = {
             type: 'category',
             label: 'Getting Started',
             items: [
-                'getting-started/install-with-docker',
                 'getting-started/install-from-source',
+                'getting-started/install-with-docker',
             ],
         },
         {
@@ -32,12 +32,12 @@ const sidebars = {
             label: 'User Guides',
             items: [
                 'user-guides/add-your-dataset',
-                'user-guides/create-a-simple-experiment',
-                'user-guides/create-experiment-set',
+                'user-guides/evaluate-basic-models',
                 'user-guides/use-custom-llm-judge-prompt',
-                'user-guides/run-answers-locally',
+                'user-guides/run-answers-locally-on-an-offline-machine',
                 'user-guides/evaluate-your-own-ia-system',
                 'user-guides/create-compliance-experiment',
+                'user-guides/sample-your-dataset',
             ],
         },
         {
