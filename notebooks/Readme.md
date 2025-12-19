@@ -25,4 +25,4 @@ The available notebooks are:
 
 - **[run_evals_models_with_rag](/notebooks/run_evals_models_with_rag.ipynb):** RAG evaluation of the Albert models.
 
-- **[r&d_evalap_is_your_own_ia_system](/notebooks/r&d_evalap_is_your_own_ia_system.ipynb):** An exemple of `sampling dataset` usage, on LegalBenchRAG dataset.
+- **[rd_evalap_is_your_own_ia_system](/notebooks/rd_evalap_is_your_own_ia_system.ipynb):** An exemple of `sampling dataset` usage, on LegalBenchRAG dataset.
