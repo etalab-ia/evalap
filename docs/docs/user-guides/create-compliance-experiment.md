@@ -166,7 +166,7 @@ In this example:
 ```python
 products = "MY_PRODUCT_NAME"
 judge_name = "gpt-4.1"
-judge_api_url = "https://api.openai.com/v1",
+judge_api_url = "https://api.openai.com/v1"
 judge_api_key = os.getenv("OPENAI_API_KEY")
 
 # Common technical metrics
