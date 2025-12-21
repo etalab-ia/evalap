@@ -234,9 +234,9 @@ class SearchEngineClient:
         self,
         group_results,
         limit: int,
-        k: float = 2,
+        k: float = 10,
         lexical_weight: float = 1,
-        semantic_weight: float = 1,
+        semantic_weight: float = 1.5,
         **kwargs,
     ):
         """
@@ -265,7 +265,7 @@ class SearchEngineClient:
         reranked_results = []
         for doc_id, rrf_score in ranked_results:
             document = doc_map[doc_id]
-            document["_rff_score"] = rrf_score
+            document["_rrf_score"] = rrf_score
             reranked_results.append(document)
 
         return reranked_results[:limit]
@@ -285,7 +285,7 @@ class SearchEngineClient:
         offset: int = 0,
         filters: dict | None = None,
         fuzzy_search: bool = False,
-        hybrid_limit_factor: float = 4,
+        expansion_factor: float = 4,
         vector: list = None,
         method: str = "hybrid",
         lexical_fields: list | None = None,
@@ -362,20 +362,13 @@ class SearchEngineClient:
             if len(vector) > 1:
                 logging.warning("Multiple vector search is not implemented.")
 
-        K = int(limit * hybrid_limit_factor)
+        K = int(limit * expansion_factor)
         semantic_query = {
-            "bool": {
-                "must": {
-                    "knn": {
-                        "field": embedding_field,
-                        "query_vector": vector,
-                        "k": K,
-                        "num_candidates": max(K * 10, 100),
-                        "filter": filters.to_must_es(),
-                    }
-                },
-                "must_not": filters.to_mustnot_es(),
-            }
+            "field": embedding_field,
+            "query_vector": vector,
+            "k": K,
+            "num_candidates": max(K * 10, 100),
+            "filter": {"bool": {"must": filters.to_must_es(), "must_not": filters.to_mustnot_es()}},
         }
 
         if method == "semantic" or not query:
@@ -384,7 +377,7 @@ class SearchEngineClient:
             semantic_query = {}
 
         hits = self._hybrid_search_es(
-            index, lexical_query, semantic_query, limit, hybrid_limit_factor, offset, **kwargs
+            index, lexical_query, semantic_query, limit, expansion_factor, offset, **kwargs
         )
 
         return hits
@@ -395,7 +388,7 @@ class SearchEngineClient:
         lexical_query,
         semantic_query,
         limit: int,
-        hybrid_limit_factor: float,
+        expansion_factor: float,
         offset: int = 0,
         **kwargs,
     ):
@@ -416,13 +409,13 @@ class SearchEngineClient:
         with ThreadPoolExecutor(max_workers=2) as executor:
             lexical_query_body = {
                 "query": lexical_query,
-                "size": int(limit * hybrid_limit_factor),
+                "size": int(limit * expansion_factor),
                 "from": offset,
                 "_source": {"excludes": self._embedding_fields},
             }
             semantic_query_body = {
                 "query": semantic_query,
-                "size": int(limit * hybrid_limit_factor),
+                "size": int(limit * expansion_factor),
                 "from": offset,
                 "_source": {"excludes": self._embedding_fields},
             }
