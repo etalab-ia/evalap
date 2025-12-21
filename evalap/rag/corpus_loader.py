@@ -3,7 +3,9 @@ import re
 from pathlib import Path
 
 
-def chunk_document(document: str, max_words: int, tolerance: float = 2.1) -> list[dict]:
+def chunk_document(
+    document: str, max_words: int, tolerance: float = 2.1, add_header_chunk: bool = False
+) -> list[dict]:
     """
     Split documents into coherent chunks based on paragraphs.
 
@@ -72,10 +74,22 @@ def chunk_document(document: str, max_words: int, tolerance: float = 2.1) -> lis
         chunk_id = hashlib.sha256(chunk_text.encode()).hexdigest()
         chunks.append({"_id": chunk_id, "text": chunk_text})
 
+    if add_header_chunk:
+        header_chunk = chunks.pop(0)
+        # insert header chunks in all remaining chunks
+        for chunk in chunks:
+            chunk["text"] = (
+                "<intro>\n"
+                + header_chunk["text"].strip()
+                + "\n</intro>\n<passage>\n"
+                + chunk["text"].strip()
+                + "\n</passage>"
+            )
+
     return chunks
 
 
-def load_legalbenchrag(max_words=300) -> list[dict]:
+def load_legalbenchrag(max_words: int = 300, add_header_chunk: bool = False) -> list[dict]:
     # Get all text files
     files = Path("notebooks/_data/LegalBenchRAG/corpus").glob("**/*.txt")
     files = sorted(files)
@@ -85,6 +99,6 @@ def load_legalbenchrag(max_words=300) -> list[dict]:
     for file in files:
         with open(file, encoding="utf-8") as f:
             data = f.read()
-        documents.extend(chunk_document(data, max_words=max_words))
+        documents.extend(chunk_document(data, max_words=max_words, add_header_chunk=add_header_chunk))
 
     return documents
