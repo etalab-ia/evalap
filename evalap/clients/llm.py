@@ -19,11 +19,13 @@ class LlmApiUrl:
     mistral: str = "https://api.mistral.ai/v1"
     openai: str = "https://api.openai.com/v1"
     anthropic: str = "https://api.anthropic.com/v1"
+    scaleway: str = "https://api.scaleway.ai/v1"
     header_keys: dict = field(
         default_factory=lambda: {
             "albert_prod": {"Authorization": "Bearer {ALBERT_API_KEY}"},
             "albert_staging": {"Authorization": "Bearer {ALBERT_API_KEY_STAGING}"},
             "mistral": {"Authorization": "Bearer {MISTRAL_API_KEY}"},
+            "scaleway": {"Authorization": "Bearer {SCALEWAY_API_KEY}"},
             "openai": {
                 "Authorization": "Bearer {OPENAI_API_KEY}",
                 #    "OpenAI-Organization": "{OPENAI_ORG_KEY}",
@@ -57,6 +59,7 @@ class LlmApiModels:
     mistral: set[str] = field(default_factory=set)
     openai: set[str] = field(default_factory=set)
     anthropic: set[str] = field(default_factory=set)
+    scaleway: set[str] = field(default_factory=set)
 
     @classmethod
     def _sync_openai_api_models(cls):

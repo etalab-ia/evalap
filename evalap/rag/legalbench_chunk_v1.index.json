@@ -1,0 +1,20 @@
+{
+  "elasticsearch": {
+    "settings": {
+      "similarity": {
+        "default": { "type": "BM25" }
+      },
+      "index": {
+        "number_of_shards": 1,
+        "number_of_replicas": 0
+      }
+    },
+    "mappings": {
+      "dynamic": false,
+      "properties": {
+        "text": {"type": "text", "analyzer": "english"},
+        "embedding": {"type": "dense_vector", "dims": "__EMBEDDING_SIZE__", "similarity": "cosine", "index_options": {"type": "hnsw"}}
+      }
+    }
+  }
+}
