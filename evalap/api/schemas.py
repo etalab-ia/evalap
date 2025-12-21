@@ -510,7 +510,12 @@ class ExperimentSetCreate(ExperimentSetBase):
                     experiment["name"] = f"{self.name}__{i}"
                     experiments.append(ExperimentCreate(**experiment).to_table_init(db))
                     i += 1
-            obj["experiments"] = experiments
+
+            if self.experiments:
+                obj["experiments"] += experiments
+            else:
+                obj["experiments"] = experiments
+
         elif self.experiments is None:
             obj.pop("experiments")
 

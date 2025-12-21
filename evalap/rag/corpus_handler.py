@@ -191,7 +191,7 @@ class CorpusHandler(ABC):
 
 
 class LegalBenchHandlerV1(CorpusHandler):
-    _type = "legalbench_v1"
+    _type = "legalbench_chunk_v1"
     id_attribute = "_id"
 
     def load(self, verbose=True, **kwargs) -> list[dict]:
@@ -220,4 +220,34 @@ class LegalBenchHandlerV1(CorpusHandler):
         return text
 
 
-CORPUSES_HANDLERS = [LegalBenchHandlerV1]
+class LegalBenchHandlerV2(CorpusHandler):
+    _type = "legalbench_chunk_v2"
+    id_attribute = "_id"
+
+    def load(self, verbose=True, **kwargs) -> list[dict]:
+        documents = load_legalbenchrag(max_words=300, add_header_chunk=True)
+
+        if len(documents) == 0:
+            logger.warning(f"No documents to add to the corpus '{self}'")
+
+        self._corpus = documents
+        return documents
+
+    def doc_to_chunk(self, doc: dict, fields: Sequence | None = None) -> str | None:
+        if not fields:
+            return None
+
+        texts = []
+        for field in fields:
+            if not doc.get(field):
+                continue
+
+            terms = doc[field]
+            terms = terms.strip("., ")
+            texts.append(terms)
+
+        text = " - ".join(texts)
+        return text
+
+
+CORPUSES_HANDLERS = [LegalBenchHandlerV1, LegalBenchHandlerV2]
