@@ -71,7 +71,7 @@ cards = [
     (
         "Configure metrics",
         DOC_URL + "fr/docs/developer-guide/adding-a-new-metric",
-        NB_URL + "run_judge_adhoc.ipynb",
+        NB_URL + "run_your_own_llm_as_a_judge_metric.ipynb",
     ),
     (
         "Run an experiment",
@@ -81,7 +81,7 @@ cards = [
     (
         "Run a compliance experiment",
         DOC_URL + "fr/docs/user-guides/create-compliance-experiment#define-your-compliance-experiment",
-        NB_URL + "run_compliance.ipynb",
+        NB_URL + "run_evals_compliance.ipynb",
     ),
 ]
 
