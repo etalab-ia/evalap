@@ -1,5 +1,6 @@
 ---
-sidebar_position: 3
+sidebar_position: 6
+title: Evaluate your own IA system
 ---
 
 
@@ -30,9 +31,10 @@ import requests
 import pandas as pd
 
 #config
-API_URL = "http://localhost:8000/v1"
+EVALAP_API_URL = "http://localhost:8000"
 EVALAP_API_KEY = os.getenv("EVALAP_API_KEY")
 headers = {"Authorization": f"Bearer {EVALAP_API_KEY}"}
+
 ```
 
 
@@ -51,7 +53,7 @@ def post_dataset_to_api(name, readme, df, default_metric, columns_map=None, comp
     if columns_map:
         dataset_payload["columns_map"] = columns_map
     try:
-        response = requests.post(f"{API_URL}/dataset", json=dataset_payload, headers=headers)
+        response = requests.post(f"{EVALAP_API_URL}/v1/dataset", json=dataset_payload, headers=headers)
         response.raise_for_status()
         resp = response.json()
         if "id" in resp:
@@ -66,8 +68,8 @@ dataset is a df that contains :  "question", "ground_truth" (and other columns)
 
 ```python
 post_dataset_to_api(
-    name="assistant",
-    readme="'assistant -- test",
+    name="assistant-RH_head(2)",
+    readme="'assistant RH -- Edouard Omar",
     df=dataset,
     default_metric="judge_notator",
     columns_map={"query": "question", "output_true" : "ground_truth"},
@@ -81,15 +83,11 @@ First RUN -- You have not completed an assessment on this AI system.
 res_for_evalap contains "answer", "generation_time", "contexts" (in this example)
 
 ```python
+JUDGE = "gpt-4.1"
+products = "assistant-RH"
+dataset_name = "assistant-RH_head(2)"
 
-products = "assistant-"
-dataset_name = "assistant"
-
-judge_name = "gpt-4.1"
-judge_api_url = "https://api.openai.com/v1",
-judge_api_key = os.getenv("OPENAI_API_KEY")
-
-expset_name = f"{products}_run_{judge_name}"
+expset_name = f"{products}_run_{JUDGE}"
 expset_readme = f"evals for perfomring IA system of {products}"
 
 metrics = ["judge_notator", "faithfulness", "answer_relevancy"]
@@ -97,16 +95,12 @@ metrics = ["judge_notator", "faithfulness", "answer_relevancy"]
 common_params = {
     "dataset": dataset_name,
     "metrics": metrics,
-    "judge_model": {
-        "name": judge_name,
-        "base_url": judge_api_url,
-        "api_key": judge_api_key,
-},
+    "judge_model": JUDGE,
 }
 grid_params = {
     "model": [
         {
-            "aliased_name": "IA-system",
+            "aliased_name": "IA-system_RH",
             "output":res_for_evalap["answer"].values.tolist(),
         },
     ]
@@ -118,7 +112,7 @@ expset = {
     "cv": {"common_params": common_params, "grid_params": grid_params, "repeat": 1},
 }
 
-response = requests.post(f"{API_URL}/experiment_set", json=expset, headers=headers)
+response = requests.post(f"{EVALAP_API_URL}/v1/experiment_set", json=expset, headers=headers)
 resp = response.json()
 if "id" in resp:
     print(f'Created expset: {resp["name"]} (ID: {resp["id"]})')
@@ -150,17 +144,13 @@ common_params = {
     "dataset" : dataset_name,
     "model": {"sampling_params" : {"temperature": 0.2}},
     "metrics" : metrics,
-    "judge_model": {
-        "name": judge_name,
-        "base_url": judge_api_url,
-        "api_key": judge_api_key,
-},
+    "judge_model": JUDGE,
 }
 
 grid_params = {
     "model": [
         {
-            "aliased_name": "IA-system_+metrics",
+            "aliased_name": "IA-system_RH+7+metrics",
             "output": json.loads(json.dumps(output_list)),
             "execution_time": time_list,
             "nb_tokens_completion": nb_tokens_completion,
@@ -174,7 +164,7 @@ grid_params = {
 expset = {
     "cv": {"common_params": common_params, "grid_params": grid_params, "repeat":1}
 }
-response = requests.patch(f'{API_URL}/experiment_set/{expset_id}', json=expset, headers=headers)
+response = requests.patch(f'{EVALAP_API_URL}/v1/experiment_set/{expset_id}', json=expset, headers=headers)
 resp = response.json()
 if "id" in resp:
     expset_id = resp["id"]
