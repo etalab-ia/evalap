@@ -3,8 +3,8 @@
 from corpus_handler import CorpusHandler
 
 SPEC = {
-    "index_name": "legalbenchrag_v3",
-    "model_embedding": "BAAI/bge-m3",
+    "index_name": "legalbenchrag_v4",
+    "model_embedding": "qwen3-embedding-8b",
     "search_spec_legalbench_chunk_v2": {
         "main": {
             "semantic_fields": ["text"],

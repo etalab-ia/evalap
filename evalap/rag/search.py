@@ -414,7 +414,7 @@ class SearchEngineClient:
                 "_source": {"excludes": self._embedding_fields},
             }
             semantic_query_body = {
-                "query": semantic_query,
+                "knn": semantic_query,
                 "size": int(limit * expansion_factor),
                 "from": offset,
                 "_source": {"excludes": self._embedding_fields},
