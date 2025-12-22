@@ -1,5 +1,6 @@
 ---
 sidebar_position: 7
+title: LLM Compliance Evaluation Workflows
 ---
 
 # LLM Compliance Evaluation Workflows
@@ -73,12 +74,11 @@ dotenv.load_dotenv("../.env")
 sys.path.append("..")
 
 # Replace with your Evalap API key and endpoint
-API_URL = "http://localhost:8000/v1"
+EVALAP_API_URL = "http://localhost:8000/v1"
 EVALAP_API_KEY = os.getenv("EVALAP_API_KEY")
 
-# Replace with your API key or authentication token (or None if launch locally)
 HEADERS = {
-    "Authorization": "Bearer EVALAP_API_KEY",
+    "Authorization": "Bearer {EVALAP_API_KEY}",
     "Content-Type": "application/json"
 }
 
@@ -108,7 +108,7 @@ def post_dataset_to_api(name, readme, df, default_metric, columns_map=None, comp
     if columns_map:
         dataset_payload["columns_map"] = columns_map
     try:
-        response = requests.post(f"{API_URL}/dataset", json=dataset_payload, headers=headers)
+        response = requests.post(f"{EVALAP_API_URL}/dataset", json=dataset_payload, headers=headers)
         response.raise_for_status()
         resp = response.json()
         if "id" in resp:
@@ -165,9 +165,7 @@ In this example:
 
 ```python
 products = "MY_PRODUCT_NAME"
-judge_name = "gpt-4.1"
-judge_api_url = "https://api.openai.com/v1"
-judge_api_key = os.getenv("OPENAI_API_KEY")
+JUDGE = "gpt-5-mini"
 
 # Common technical metrics
 technical_metrics = [
@@ -207,12 +205,7 @@ for dataset_name, info in datasets_metrics.items():
             "sampling_params": {"temperature": 0.2},
         },
         "metrics": metrics,
-        "judge_model": {
-            "name": judge_name,
-            "base_url": judge_api_url,
-            "api_key": judge_api_key,
-},
-
+        "judge_model": JUDGE,
     }
     grid_params = {
         "model": [
@@ -236,7 +229,7 @@ for dataset_name, info in datasets_metrics.items():
     }
 
     # Launch the experiment set
-    response = requests.post(f"{API_URL}/experiment_set", json=expset, headers=headers)
+    response = requests.post(f"{EVALAP_API_URL}/experiment_set", json=expset, headers=headers)
     resp = response.json()
     if "id" in resp:
         print(f'Created expset: {resp["name"]} (ID: {resp["id"]})')

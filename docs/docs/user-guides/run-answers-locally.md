@@ -1,10 +1,10 @@
 ---
-sidebar_position: 6
+sidebar_position: 5
 ---
 
-# Run Answers Locally with vLLM on an offline machine
+# Run Answers Locally with vLLM
 
-This guide walks you through the process of generating model answers locally using GPU-enabled machines and then submitting experiments to Evalap. This can be useful in cases where the machine does not have access to the internet, for example.
+This guide walks you through the process of generating model answers locally using GPU-enabled machines and then submitting experiments to Evalap.
 We provide two utility scripts to help accomplish this:
 - `run_answers.py`: Generate model responses for an Evalap dataset
 - `run_expe.py`: Create or update experiment sets in Evalap

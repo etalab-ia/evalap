@@ -43,12 +43,9 @@ Here's how to create an experiment with a custom judge prompt:
 import os
 import requests
 
-API_URL = "http://localhost:8000/v1"
-EVALAP_API_KEY = os.getenv("EVALAP_API_KEY")
-
-# Replace with your API key or authentication token (or None if launch locally)
+API_URL = "https://evalap.etalab.gouv.fr/v1"
 HEADERS = {
-    "Authorization": "Bearer EVALAP_API_KEY",
+    "Authorization": "Bearer YOUR_API_KEY",
     "Content-Type": "application/json"
 }
 
@@ -65,7 +62,7 @@ experiment = {
     "name": "politeness_evaluation",
     "dataset": "my_dataset",
     "model": {
-        "name": "gpt-4.1",
+        "name": "gpt-4o",
         "base_url": "https://api.openai.com/v1",
         "api_key": os.getenv("OPENAI_API_KEY")
     },
