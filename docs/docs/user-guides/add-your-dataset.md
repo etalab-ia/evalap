@@ -34,7 +34,7 @@ For example, if your dataset has a column named "question", you would map them l
 "columns_map": {"query": "question"}
 ```
 
-See the [api reference](https://evalap.etalab.gouv.fr/redoc#tag/datasets/operation/create_dataset_v1_dataset_post) for more usage detail.
+See the [api reference](/redoc#tag/datasets/operation/create_dataset_v1_dataset_post) for more usage detail.
 
 
 ## From CSV like dataset
@@ -47,7 +47,7 @@ import json
 import pandas as pd
 
 # Replace with your Evalap API endpoint
-API_URL = "https://evalap.etalab.gouv.fr/v1"
+API_URL = "http://localhost:8000/v1"
 
 # Replace with your API key or authentication token (or None if launch locally)
 HEADERS = {

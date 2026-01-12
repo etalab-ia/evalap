@@ -8,7 +8,7 @@ sidebar_label: Introduction
 
 :::info
 Actuellement, l'application web EvalAP (frontend) est une application en lecture seule permettant de visualiser les données d'évaluation.
-Pour publier des jeux de données et exécuter des expériences, vous devez utiliser l'API EvalAP, soit depuis l'instance publique si vous disposez d'un jeton d'autorisation, soit depuis votre propre instance si vous l'hébergez vous-même.
+Pour publier des jeux de données et exécuter des expériences, vous devez utiliser l'API EvalAP depuis votre propre instance si vous l'hébergez vous-même.
 :::
 
 
@@ -44,7 +44,7 @@ Pour publier des jeux de données et exécuter des expériences, vous devez util
       <div className="featureCard">
         <h3 className="featureTitle">Référence de l'API</h3>
         <p className="featureDescription">Spécification technique complète de l'API Evalap.</p>
-        <a href="https://evalap.etalab.gouv.fr/redoc">Voir la référence de l'API →</a>
+        <span>Consultez la documentation de l'API sur <code>/docs</code> ou <code>/redoc</code> sur votre instance locale.</span>
       </div>
     </div>
   </div>

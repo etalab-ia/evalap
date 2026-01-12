@@ -28,7 +28,7 @@ from docopt import docopt
 
 from evalap.utils import log_and_raise_for_status
 
-evalap_url = "https://evalap.etalab.gouv.fr/v1"
+evalap_url = "http://localhost:8000/v1"
 
 
 def run_expe(args):

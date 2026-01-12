@@ -35,7 +35,7 @@ import os
 import requests
 
 # Replace with your Evalap API endpoint
-API_URL = "https://evalap.etalab.gouv.fr/v1"
+API_URL = "http://localhost:8000/v1"
 
 # Replace with your API key or authentication token
 HEADERS = {
@@ -99,7 +99,7 @@ import os
 import requests
 
 # Replace with your Evalap API endpoint
-API_URL = "https://evalap.etalab.gouv.fr/v1"
+API_URL = "http://localhost:8000/v1"
 
 # Replace with your API key or authentication token
 HEADERS = {

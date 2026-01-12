@@ -59,7 +59,7 @@ st.markdown(
 # ---------- Cards ----------
 cols = st.columns(4)
 
-DOC_URL = "https://evalap.etalab.gouv.fr/doc/"
+DOC_URL = "https://github.com/etalab-ia/evalap/tree/main/docs/docs/"
 NB_URL = "https://github.com/etalab-ia/evalap/blob/main/notebooks/"
 
 cards = [
@@ -110,5 +110,5 @@ for col, (title, doc_link, nb_link) in zip(cols, cards):
             st.markdown("</div>", unsafe_allow_html=True)
 
 st.markdown(
-    "Explore the [documentation](https://evalap.etalab.gouv.fr/doc/) and [notebook](https://github.com/etalab-ia/evalap/blob/main/notebooks/)"
+    "Explore the [documentation](https://github.com/etalab-ia/evalap/tree/main/docs/docs/) and [notebook](https://github.com/etalab-ia/evalap/blob/main/notebooks/)"
 )

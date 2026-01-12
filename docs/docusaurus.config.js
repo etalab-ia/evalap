@@ -11,10 +11,10 @@ const config = {
     favicon: 'img/favicon.ico',
 
     // Set the production url of your site here
-    url: 'https://evalap.etalab.gouv.fr',
+    url: 'https://etalab-ia.github.io',
     // Set the /<baseUrl>/ pathname under which your site is served
     // For GitHub pages deployment, it is often '/<projectName>/'
-    baseUrl: '/doc/',
+    baseUrl: '/evalap/',
     //baseUrl: '/',  // to run locally with `npm run serve`
 
     // GitHub pages deployment config.
@@ -78,11 +78,7 @@ const config = {
                         label: 'Documentation',
                         position: 'left',
                     },
-                    {
-                        label: 'API Reference',
-                        href: "https://evalap.etalab.gouv.fr/redoc",
-                        position: 'left',
-                    },
+
                     {
                         type: 'search',
                         position: 'right',
@@ -134,18 +130,8 @@ const config = {
                     {
                         title: 'More',
                         items: [
-                            {
-                                label: 'Official instance',
-                                href: 'https://evalap.etalab.gouv.fr',
-                            },
-                            {
-                                label: 'API Reference',
-                                href: 'https://evalap.etalab.gouv.fr/redoc',
-                            },
-                            {
-                                label: 'API Swagger',
-                                href: 'https://evalap.etalab.gouv.fr/docs',
-                            },
+
+
                             {
                                 label: 'Github',
                                 href: 'https://github.com/etalab-ia/evalap',
