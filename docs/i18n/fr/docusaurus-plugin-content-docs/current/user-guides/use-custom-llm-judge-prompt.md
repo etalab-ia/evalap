@@ -43,7 +43,7 @@ Voici comment créer une expérience avec un prompt de juge personnalisé :
 import os
 import requests
 
-API_URL = "https://evalap.etalab.gouv.fr/v1"
+API_URL = "http://localhost:8000/v1"
 HEADERS = {
     "Authorization": "Bearer YOUR_API_KEY",
     "Content-Type": "application/json"

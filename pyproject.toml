@@ -42,7 +42,7 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://evalap.etalab.gouv.fr"
+Homepage = "https://github.com/etalab-ia/evalap"
 Source = "https://github.com/etalab-ia/evalap"
 Tracker = "https://github.com/etalab-ia/evalap/issues"
 Documentation = "https://github.com/etalab-ia/evalap"

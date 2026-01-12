@@ -36,7 +36,7 @@ from docopt import docopt
 
 from evalap.clients import multi_step_generate
 
-evalap_url = "https://evalap.etalab.gouv.fr/v1"
+evalap_url = "http://localhost:8000/v1"
 
 
 def process_query(
