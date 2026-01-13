@@ -25,8 +25,9 @@ def fetch_json(endpoint, params=None):
         return response.json()
     except requests.exceptions.RequestException as e:
         print(f"Error fetching {url}: {e}")
-        if e.response is not None:
-            print(f"Response: {e.response.text}")
+        response = getattr(e, "response", None)
+        if response is not None:
+            print(f"Response: {response.text}")
         return None
 
 
