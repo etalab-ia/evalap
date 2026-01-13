@@ -20,7 +20,7 @@ def fetch_json(endpoint, params=None):
     if token:
         headers["Authorization"] = f"Bearer {token}"
     try:
-        response = requests.get(url, params=params, headers=headers)
+        response = requests.get(url, params=params, headers=headers, timeout=30)
         response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException as e:
