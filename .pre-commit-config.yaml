@@ -23,6 +23,7 @@ repos:
       # Prevent giant files from being committed
       - id: check-added-large-files
         args: ["--maxkb=1000"]
+        exclude: '^archives/'
       # Check for files with names that would conflict on case-insensitive filesystems
       - id: check-case-conflict
       # Check for files that contain merge conflict strings

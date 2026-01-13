@@ -10,6 +10,7 @@ config/products/\[BACKUP\]*
 *.parquet
 *.csv
 .deepeval
+archives/
 
 
 #
