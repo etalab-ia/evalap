@@ -75,6 +75,13 @@ def compute_failure_rates(experiments: list) -> tuple[dict, dict]:
     return model_failure_rate, metric_failure_rate
 
 
+def quote_markdown(text):
+    """Prefixes each line of text with '> ' for blockquoting multi-line values."""
+    if not text:
+        return "> "
+    return "> " + "\n> ".join(str(text).splitlines())
+
+
 def generate_markdown(experiment_set_id, output_dir):
     print(f"Processing Experiment Set ID: {experiment_set_id}")
 
