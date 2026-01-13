@@ -392,28 +392,41 @@ def generate_markdown(experiment_set_id, output_dir):
     # Cache for datasets (id -> DataFrame)
     datasets_cache = {}
 
-    for exp in full_experiments:
-        model = exp.get("model") or {}
-        model_name = model.get("aliased_name") or model.get("name", "Unknown")
-        exp_name = exp.get("name", str(exp.get("id")))
+    # Sort experiments by ID ascending (like Streamlit)
+    sorted_experiments = sorted(full_experiments, key=lambda x: x.get("id", 0))
 
-        md_content.append(f"### {model_name} - {exp_name}\n")
+    for exp in sorted_experiments:
+        exp_id = exp.get("id")
+        exp_name = exp.get("name", str(exp_id))
+        exp_readme = exp.get("readme")
 
-        results = exp.get("results", [])
-        answers = exp.get("answers", [])
-
-        # Determine Dataset ID and Fetch if needed
+        # Dataset info
         dataset_info = exp.get("dataset", {})
+        dataset_name = dataset_info.get("name", "Unknown")
         dataset_id = dataset_info.get("id")
 
-        df_dataset = None
+        # Judge model
+        judge_model = exp.get("judge_model")
+        judge_model_name = judge_model.get("name") if judge_model else "None"
+
+        # Model info (show full dict like Streamlit)
+        model = exp.get("model") or {}
+
+        # Experiment header
+        md_content.append(f"### experiment_id n° {exp_id}\n")
+        md_content.append(f"**Name:** {exp_name}\n")
+        md_content.append(f"**Readme:** {exp_readme}\n")
+        md_content.append(f"**Dataset:** {dataset_name}\n")
+        md_content.append(f"**Judge model:** {judge_model_name}\n")
+        md_content.append(f"**Model:** {model}\n")
+
+        # Fetch dataset content if not cached
+        df = None
         if dataset_id:
             if dataset_id not in datasets_cache:
-                print(f"Fetching dataset {dataset_id} content...")
                 ds_full = fetch_json(f"/v1/dataset/{dataset_id}", params={"with_df": "true"})
                 if ds_full and ds_full.get("df"):
                     try:
-                        # df is a JSON string, need to parse it using StringIO
                         datasets_cache[dataset_id] = pd.read_json(StringIO(ds_full["df"]))
                     except Exception as e:
                         print(f"Error parsing dataset {dataset_id} dataframe: {e}")
@@ -421,77 +434,54 @@ def generate_markdown(experiment_set_id, output_dir):
                 else:
                     datasets_cache[dataset_id] = None
 
-            df_dataset = datasets_cache[dataset_id]
+            if datasets_cache.get(dataset_id) is not None:
+                df = datasets_cache[dataset_id].copy()
 
-        # Extract Q&A Data
-        prompt = "N/A"
-        expected_output = "N/A"
-        actual_answer = "N/A"
+        if df is None:
+            md_content.append("No dataset content available.\n\n")
+            continue
 
-        # Use the first answer to find the row index (num_line)
+        # Apply sample if present
+        sample = exp.get("sample")
+        if sample:
+            df = df.iloc[sample]
+
+        # Merge answers into the dataset dataframe
+        answers = exp.get("answers", [])
         if answers:
-            first_ans = answers[0]
-            actual_answer = first_ans.get("answer", "N/A")
-            num_line = first_ans.get("num_line")
+            answer_fields_to_show = ["answer", "error_msg", "context", "retrieval_context"]
+            for field in answer_fields_to_show:
+                values = {answer["num_line"]: answer.get(field) for answer in answers}
+                if any(value is not None for value in values.values()):
+                    field_name = "answer_" + field if not field.startswith("answer") else field
+                    df[field_name] = df.index.map(values)
 
-            if df_dataset is not None and num_line is not None and num_line < len(df_dataset):
-                row = df_dataset.iloc[num_line]
-
-                # Heuristics for columns
-                # Try 'query', 'input', 'prompt', 'instruction' for input
-                for col in ["query", "input", "prompt", "question", "instruction"]:
-                    if col in row:
-                        prompt = row[col]
-                        break
-
-                # Try 'output_true', 'expected_output', 'answer_true', 'gold' for expected
-                for col in ["output_true", "expected_output", "answer", "output", "gold", "ground_truth"]:
-                    if col in row:
-                        expected_output = row[col]
-                        break
-
-        def format_blockquote(text):
-            if not isinstance(text, str):
-                text = str(text) if text is not None else "N/A"
-            return "\n> ".join(text.split("\n"))
-
-        md_content.append(f"**Prompt**:\n\n> {format_blockquote(prompt)}\n\n")
-        md_content.append(f"**Answer**:\n\n> {format_blockquote(actual_answer)}\n\n")
-        md_content.append(f"**Expected Output**:\n\n> {format_blockquote(expected_output)}\n\n")
-
-        # Metrics Table
+        # Merge result scores into the dataset dataframe
+        results = exp.get("results", [])
         if results:
-            for res in results:
-                metric_name = res.get("metric_name")
-                md_content.append(f"#### Metric: {metric_name}\n")
+            for result in results:
+                metric_name = result.get("metric_name")
+                if result.get("metric_aliased_name"):
+                    metric_name = result["metric_aliased_name"]
+                observations = {obs["num_line"]: obs["score"] for obs in result.get("observation_table", [])}
+                df[f"result_{metric_name}"] = df.index.map(observations)
 
-                obs_table = res.get("observation_table", [])
-                if obs_table:
-                    # Create a DataFrame for the observations
-                    obs_data = []
-                    for o in obs_table:
-                        # Try to flatten the observation object if it's a dict
-                        obs_content = o.get("observation")
-                        score = o.get("score")
-                        error = o.get("error_msg")
+        # Reorder columns: put result_ columns at the end
+        if not df.empty:
+            result_cols = sorted([col for col in df.columns if col.startswith("result_")])
+            other_cols = [col for col in df.columns if not col.startswith("result_")]
+            df = df[other_cols + result_cols]
 
-                        row_d = {"Score": score, "Error": error}
-                        if isinstance(obs_content, dict):
-                            for k, v in obs_content.items():
-                                row_d[f"Obs_{k}"] = str(v)[:200]  # Truncate for sanity
-                        else:
-                            row_d["Observation"] = str(obs_content)[:200]
+        # Truncate long text columns for markdown readability
+        for col in df.columns:
+            if df[col].dtype == "object":
+                df[col] = df[col].apply(
+                    lambda x: str(x)[:100] + "..." if isinstance(x, str) and len(str(x)) > 100 else x
+                )
 
-                        obs_data.append(row_d)
-
-                    if obs_data:
-                        df_obs = pd.DataFrame(obs_data)
-                        md_content.append(df_obs.to_markdown(index=False))
-                    else:
-                        md_content.append("No observations found.")
-                md_content.append("\n")
-        else:
-            md_content.append("No results found.\n")
+        # Convert to markdown table
+        md_content.append(df.to_markdown())
+        md_content.append("\n\n")
 
     # 7. Global Infos (Section 4)
     md_content.append("## Global Infos\n")
