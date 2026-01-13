@@ -94,6 +94,3 @@ pdm.lock
 !uv.lock
 supervisord.log
 supervisord.pid
-
-# Archives
-archives/
