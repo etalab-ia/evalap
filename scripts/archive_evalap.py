@@ -1,5 +1,7 @@
 import argparse
 import os
+import re
+from collections import defaultdict
 
 import pandas as pd
 import requests
@@ -26,6 +28,50 @@ def fetch_json(endpoint, params=None):
         if e.response is not None:
             print(f"Response: {e.response.text}")
         return None
+
+
+def check_repeat_mode(experiments: list) -> bool:
+    """Check whether the experiment is related to a repetition."""
+    for expe in experiments:
+        name = expe.get("name", "")
+        if re.search(r"__\d+$", name):
+            return True
+    return False
+
+
+def compute_failure_rates(experiments: list) -> tuple[dict, dict]:
+    """Compute failure rates per model and metric."""
+    model_stats = defaultdict(lambda: {"num_try": 0, "num_success": 0})
+    metric_stats = defaultdict(lambda: {"num_try": 0, "num_success": 0})
+
+    for experiment in experiments:
+        model = experiment.get("model", {})
+        model_name = model.get("name") if model else "Unknown"
+        num_try = experiment.get("num_try", 0)
+        num_success = experiment.get("num_success", 0)
+
+        if model_name:
+            model_stats[model_name]["num_try"] += num_try
+            model_stats[model_name]["num_success"] += num_success
+
+        for result in experiment.get("results", []):
+            metric_name = result.get("metric_name")
+            r_num_try = result.get("num_try", 0)
+            r_num_success = result.get("num_success", 0)
+            if metric_name:
+                metric_stats[metric_name]["num_try"] += r_num_try
+                metric_stats[metric_name]["num_success"] += r_num_success
+
+    model_failure_rate = {
+        name: 1 - (stats["num_success"] / stats["num_try"]) if stats["num_try"] > 0 else 0.0
+        for name, stats in model_stats.items()
+    }
+    metric_failure_rate = {
+        name: 1 - (stats["num_success"] / stats["num_try"]) if stats["num_try"] > 0 else 0.0
+        for name, stats in metric_stats.items()
+    }
+
+    return model_failure_rate, metric_failure_rate
 
 
 def generate_markdown(experiment_set_id, output_dir):
@@ -71,10 +117,44 @@ def generate_markdown(experiment_set_id, output_dir):
     md_content.append("tags: []")  # Placeholder as tags aren't clear in API yet
     md_content.append("---\n")
 
+    # Calculate Finished %
+    total_obs_success = sum(e.get("num_observation_success", 0) for e in full_experiments)
+
+    # Estimate total expected observations (dataset size * num_metrics)
+    # This might be more accurate if we assume dataset size is constant or sum it up
+    observation_length = sum(e["dataset"].get("size", 0) * e.get("num_metrics", 0) for e in full_experiments)
+
+    finished_ratio = 0
+    if observation_length > 0:
+        finished_ratio = min(100, int(total_obs_success / observation_length * 100))
+
     md_content.append(f"# Experiment Set: {expset.get('name')} (ID: {expset.get('id')})\n")
+
+    if expset.get("readme"):
+        md_content.append(f"{expset.get('readme')}\n")
+
+    md_content.append(f"**Finished**: {finished_ratio}%\n")
 
     # 4. Scores Tab (Section 1)
     md_content.append("## Scores\n")
+
+    # Dataset Info (from first experiment)
+    if full_experiments:
+        first_exp = full_experiments[0]
+        ds_name = first_exp["dataset"].get("name", "Unknown")
+        ds_size = first_exp["dataset"].get("size", "Unknown")
+        md_content.append(f"**Dataset**: {ds_name} (Size: {ds_size})\n")
+
+        # Judge Model
+        judge = first_exp.get("judge_model")
+        judge_name = judge.get("name") if judge else "No judge found"
+        md_content.append(f"**Judge model**: {judge_name}\n")
+
+    # Score Description
+    score_desc = "**Score**: Averaged score on experiments metrics"
+    if check_repeat_mode(full_experiments):
+        score_desc += " *(aggregated on model repetition)*"
+    md_content.append(f"{score_desc}\n")
 
     # Aggregate metrics
     data = []
@@ -272,8 +352,28 @@ def generate_markdown(experiment_set_id, output_dir):
     # Eco stats if available
     # Only if `with_eco=True` returned meaningful data in `dataset` or `experiment` object?
     # Or maybe we sum up execution times?
+    # Or maybe we sum up execution times?
     total_duration = sum((e.get("execution_time") or 0) for e in full_experiments)
     md_content.append(f"- **Total Execution Time**: {total_duration}s")
+    md_content.append("\n")
+
+    # Failure Rate Analysis
+    md_content.append("### Failure Rate Analysis\n")
+    model_failure, metric_failure = compute_failure_rates(full_experiments)
+
+    md_content.append("#### By Model\n")
+    if not model_failure or all(v == 0 for v in model_failure.values()):
+        md_content.append("No models with failure.\n")
+    else:
+        for model, rate in sorted(model_failure.items(), key=lambda x: -x[1]):
+            md_content.append(f"- **{model}**: {rate:.1%} failures")
+
+    md_content.append("\n#### By Metric\n")
+    if not metric_failure or all(v == 0 for v in metric_failure.values()):
+        md_content.append("No metrics with failure.\n")
+    else:
+        for metric, rate in sorted(metric_failure.items(), key=lambda x: -x[1]):
+            md_content.append(f"- **{metric}**: {rate:.1%} failures")
 
     md_content.append("\n")
 
