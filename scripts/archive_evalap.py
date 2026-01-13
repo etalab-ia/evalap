@@ -301,9 +301,14 @@ def generate_markdown(experiment_set_id, output_dir):
                         expected_output = row[col]
                         break
 
-        md_content.append(f"**Prompt**:\n\n> {prompt}\n\n")
-        md_content.append(f"**Answer**:\n\n> {actual_answer}\n\n")
-        md_content.append(f"**Expected Output**:\n\n> {expected_output}\n\n")
+        def format_blockquote(text):
+            if not isinstance(text, str):
+                text = str(text) if text is not None else "N/A"
+            return "\n> ".join(text.split("\n"))
+
+        md_content.append(f"**Prompt**:\n\n> {format_blockquote(prompt)}\n\n")
+        md_content.append(f"**Answer**:\n\n> {format_blockquote(actual_answer)}\n\n")
+        md_content.append(f"**Expected Output**:\n\n> {format_blockquote(expected_output)}\n\n")
 
         # Metrics Table
         if results:
