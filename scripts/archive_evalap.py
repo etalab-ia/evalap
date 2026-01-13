@@ -1,7 +1,6 @@
 import argparse
 import os
 import re
-from collections import defaultdict
 from io import StringIO
 
 import numpy as np
@@ -40,41 +39,6 @@ def check_repeat_mode(experiments: list) -> bool:
         if re.search(r"__\d+$", name):
             return True
     return False
-
-
-def compute_failure_rates(experiments: list) -> tuple[dict, dict]:
-    """Compute failure rates per model and metric."""
-    model_stats = defaultdict(lambda: {"num_try": 0, "num_success": 0})
-    metric_stats = defaultdict(lambda: {"num_try": 0, "num_success": 0})
-
-    for experiment in experiments:
-        model = experiment.get("model", {})
-        model_name = model.get("name") if model else "Unknown"
-        num_try = experiment.get("num_try", 0)
-        num_success = experiment.get("num_success", 0)
-
-        if model_name:
-            model_stats[model_name]["num_try"] += num_try
-            model_stats[model_name]["num_success"] += num_success
-
-        for result in experiment.get("results", []):
-            metric_name = result.get("metric_name")
-            r_num_try = result.get("num_try", 0)
-            r_num_success = result.get("num_success", 0)
-            if metric_name:
-                metric_stats[metric_name]["num_try"] += r_num_try
-                metric_stats[metric_name]["num_success"] += r_num_success
-
-    model_failure_rate = {
-        name: 1 - (stats["num_success"] / stats["num_try"]) if stats["num_try"] > 0 else 0.0
-        for name, stats in model_stats.items()
-    }
-    metric_failure_rate = {
-        name: 1 - (stats["num_success"] / stats["num_try"]) if stats["num_try"] > 0 else 0.0
-        for name, stats in metric_stats.items()
-    }
-
-    return model_failure_rate, metric_failure_rate
 
 
 def quote_markdown(text):
@@ -482,44 +446,6 @@ def generate_markdown(experiment_set_id, output_dir):
         # Convert to markdown table
         md_content.append(df.to_markdown())
         md_content.append("\n\n")
-
-    # 7. Global Infos (Section 4)
-    md_content.append("## Global Infos\n")
-    # Aggregated stats
-    total_exp = len(full_experiments)
-    finished_exp = sum(1 for e in full_experiments if e.get("experiment_status") == "finished")
-
-    md_content.append(f"- **Total Experiments**: {total_exp}")
-    md_content.append(f"- **Finished**: {finished_exp}")
-    md_content.append(f"- **Failed/Other**: {total_exp - finished_exp}")
-
-    # Eco stats if available
-    # Only if `with_eco=True` returned meaningful data in `dataset` or `experiment` object?
-    # Or maybe we sum up execution times?
-    # Or maybe we sum up execution times?
-    total_duration = sum((e.get("execution_time") or 0) for e in full_experiments)
-    md_content.append(f"- **Total Execution Time**: {total_duration}s")
-    md_content.append("\n")
-
-    # Failure Rate Analysis
-    md_content.append("### Failure Rate Analysis\n")
-    model_failure, metric_failure = compute_failure_rates(full_experiments)
-
-    md_content.append("#### By Model\n")
-    if not model_failure or all(v == 0 for v in model_failure.values()):
-        md_content.append("No models with failure.\n")
-    else:
-        for model, rate in sorted(model_failure.items(), key=lambda x: -x[1]):
-            md_content.append(f"- **{model}**: {rate:.1%} failures")
-
-    md_content.append("\n#### By Metric\n")
-    if not metric_failure or all(v == 0 for v in metric_failure.values()):
-        md_content.append("No metrics with failure.\n")
-    else:
-        for metric, rate in sorted(metric_failure.items(), key=lambda x: -x[1]):
-            md_content.append(f"- **{metric}**: {rate:.1%} failures")
-
-    md_content.append("\n")
 
     # Save file
     filename = f"experiment_set_{experiment_set_id}.md"
