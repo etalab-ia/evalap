@@ -333,24 +333,54 @@ def generate_markdown(experiment_set_id, output_dir):
 
     # 5. Set Overview Tab (Section 2)
     md_content.append("## Set Overview\n")
-    # Simple table of experiments
+
+    # Helper function to format model params (like Streamlit _format_model_params)
+    def format_model_params(exp):
+        if not exp.get("model"):
+            return None
+        model = exp["model"]
+        model_params = (model.get("sampling_params") or {}) | (model.get("extra_params") or {})
+        if model.get("system_prompt"):
+            # Hash system prompt to a short string
+            import hashlib
+
+            sys_hash = hashlib.md5(model["system_prompt"].encode()).hexdigest()[:4]
+            model_params["sys_prompt"] = sys_hash
+        return model_params if model_params else None
+
+    # Build table of experiments
     overview_data = []
     for exp in full_experiments:
         # Use aliased_name if available, else name
         model = exp.get("model") or {}
         model_name = model.get("aliased_name") or model.get("name", "")
+
+        # Dataset name
+        dataset = exp.get("dataset") or {}
+        dataset_name = dataset.get("name", "")
+
+        # Model params
+        model_params = format_model_params(exp)
+        model_params_str = str(model_params) if model_params else "{}"
+
         overview_data.append(
             {
-                "ID": exp.get("id"),
+                "Id": exp.get("id"),
                 "Name": exp.get("name"),
+                "Dataset": dataset_name,
                 "Model": model_name,
+                "Model params": model_params_str,
                 "Status": exp.get("experiment_status"),
-                "Created At": exp.get("created_at"),
+                "Created at": exp.get("created_at"),
+                "Num try": exp.get("num_try"),
+                "Num success": exp.get("num_success"),
             }
         )
 
     if overview_data:
         df_overview = pd.DataFrame(overview_data)
+        # Sort by Id ascending (like Streamlit)
+        df_overview = df_overview.sort_values(by="Id", ascending=True)
         md_content.append(df_overview.to_markdown(index=False))
     else:
         md_content.append("No overview data.")
