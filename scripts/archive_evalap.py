@@ -2,7 +2,9 @@ import argparse
 import os
 import re
 from collections import defaultdict
+from io import StringIO
 
+import numpy as np
 import pandas as pd
 import requests
 from dotenv import load_dotenv
@@ -146,94 +148,143 @@ def generate_markdown(experiment_set_id, output_dir):
     # 4. Scores Tab (Section 1)
     md_content.append("## Scores\n")
 
-    # Dataset Info (from first experiment)
-    if full_experiments:
-        first_exp = full_experiments[0]
-        ds_name = first_exp["dataset"].get("name", "Unknown")
-        ds_size = first_exp["dataset"].get("size", "Unknown")
-        md_content.append(f"**Dataset**: {ds_name} (Size: {ds_size})\n")
-
-        # Judge Model
-        judge = first_exp.get("judge_model")
-        judge_name = judge.get("name") if judge else "No judge found"
-        md_content.append(f"**Judge model**: {judge_name}\n")
-
-    # Score Description
-    score_desc = "**Score**: Averaged score on experiments metrics"
-    if check_repeat_mode(full_experiments):
-        score_desc += " *(aggregated on model repetition)*"
-    md_content.append(f"{score_desc}\n")
-
-    # Aggregate metrics
-    data = []
-    all_metrics = set()
-
+    # Group experiments by dataset (same as Streamlit UI)
+    experiments_by_dataset = {}
     for exp in full_experiments:
-        row = {
-            "Model": (exp.get("model") or {}).get("name", "Unknown"),
-            "Experiment": exp.get("name", str(exp.get("id"))),
-        }
+        dataset_name = exp.get("dataset", {}).get("name", "Unknown Dataset")
+        if dataset_name not in experiments_by_dataset:
+            experiments_by_dataset[dataset_name] = []
+        experiments_by_dataset[dataset_name].append(exp)
 
-        # Add metrics
-        results = exp.get("results", [])
-        if results:
-            for res in results:
-                metric_name = res.get("metric_name")
-                # Try to get numeric score first, check how it's stored
-                # The API spec says 'observation_table' contains 'score'.
-                # Usually we want the average score or the final score.
-                # Assuming 'num_success' and some aggregation?
-                # Let's look at how the UI does it. The UI likely averages the scores in observation_table.
-                # For now, let's try to extract a representative score if possible, or just mark as Present.
-                # Actually, in 'Result' schema there is NO direct average score field.
-                # We need to compute it from 'observation_table' entries?
-                # Iterate observations and average 'score'
+    # Process each dataset group
+    for dataset_name, dataset_experiments in experiments_by_dataset.items():
+        # Dataset Info
+        ds_size = dataset_experiments[0]["dataset"].get("size", "Unknown")
+        md_content.append(f"**Dataset**: {dataset_name} (Size: {ds_size})\n")
 
-                obs_table = res.get("observation_table", [])
-                scores = [
-                    o.get("score")
-                    for o in obs_table
-                    if o.get("score") is not None and isinstance(o.get("score"), (int, float))
-                ]
+        # Judge Model (from first experiment in this dataset group)
+        available_judges = sorted(
+            list(set(exp["judge_model"]["name"] for exp in dataset_experiments if exp.get("judge_model")))
+        ) or ["No judge found"]
+        md_content.append(f"**Judge model**: {available_judges[0]}\n")
 
+        # Score Description
+        is_repeat_mode = check_repeat_mode(dataset_experiments)
+        score_desc = "**Score**: Averaged score on experiments metrics"
+        if is_repeat_mode:
+            score_desc += " *(aggregated on model repetition)*"
+        md_content.append(f"{score_desc}\n")
+
+        # Build rows for this dataset group (like Streamlit display_experiment_set_score)
+        rows = []
+        for exp in dataset_experiments:
+            row = {}
+
+            # Determine model name (similar to Streamlit logic)
+            if exp.get("model"):
+                model_name = exp["model"].get("aliased_name") or exp["model"].get("name", "Unknown")
+            else:
+                model_name = f"Undefined model ({exp.get('name', 'Unknown')})"
+            row["model"] = model_name
+
+            # Aggregate results/scores (like Streamlit)
+            for result in exp.get("results", []):
+                metric_name = result.get("metric_aliased_name") or result.get("metric_name")
+                scores = [x["score"] for x in result.get("observation_table", []) if pd.notna(x.get("score"))]
                 if scores:
-                    avg_score = sum(scores) / len(scores)
-                    row[metric_name] = round(avg_score, 4)
-                    all_metrics.add(metric_name)
-                else:
-                    # Maybe it's a pass/fail or text?
-                    row[metric_name] = "N/A"  # or check status
-                    all_metrics.add(metric_name)
+                    row[metric_name] = np.mean(scores)
 
-        data.append(row)
+            rows.append(row)
 
-    if data:
-        df = pd.DataFrame(data)
-        # Ensure all metric columns exist (fill NaN)
-        for m in all_metrics:
-            if m not in df.columns:
-                df[m] = None
+        if not rows:
+            md_content.append("No valid experiment results found.\n\n")
+            continue
 
-        # Sort columns: Model, Experiment, then Metrics sorted alphabetically
-        cols = ["Model", "Experiment"] + sorted(list(all_metrics))
-        df = df[cols]
+        df = pd.DataFrame(rows)
+
+        # Reorder columns: model first, then metrics sorted alphabetically
+        metric_columns = [col for col in df.columns if col != "model"]
+        new_column_order = ["model"] + sorted(metric_columns)
+        df = df[[col for col in new_column_order if col in df.columns]]
+
+        # Apply aggregation when in repeat mode (like Streamlit _format_experiments_score_df)
+        if is_repeat_mode and "model" in df.columns and df["model"].notna().all():
+            # Strip repetition trailing code from model names
+            df["model"] = df["model"].str.replace(r"__\d+$", "", regex=True)
+
+            # Group by model and calculate mean and std for all numeric columns
+            grouped = df.groupby("model").agg(["mean", "std"]).reset_index()
+
+            # Create a new DataFrame to store the formatted results
+            result_df = pd.DataFrame()
+            result_df["model"] = grouped["model"]
+
+            # Format each metric column as "mean ± std"
+            for column in df.columns:
+                if column != "model":
+                    decimals = 4 if "_consumption" in column else 2
+                    mean_vals = grouped[(column, "mean")].round(decimals).astype(str)
+                    std_vals = grouped[(column, "std")].round(decimals).astype(str)
+
+                    # Only add ± std if there's actual variation
+                    if all(
+                        x is None or x == 0 or (isinstance(x, float) and np.isnan(x))
+                        for x in grouped[(column, "std")]
+                    ):
+                        result_df[column] = mean_vals
+                    else:
+                        result_df[column] = mean_vals + " ± " + std_vals
+
+            df = result_df
+
+        # Sort by a sensible default metric if available
+        sort_metric = None
+        preferred_metrics = [
+            "judge_precision",
+            "judge_notator",
+            "answer_relevancy",
+            "judge_exactness",
+        ]
+        for metric in preferred_metrics:
+            if metric in df.columns:
+                sort_metric = metric
+                break
+
+        if sort_metric is None and len(df.columns) > 1:
+            sort_metric = [col for col in df.columns if col != "model"][0]
+
+        if sort_metric:
+
+            def extract_mean(value):
+                try:
+                    return float(str(value).split("±")[0].strip())
+                except (ValueError, TypeError):
+                    return value
+
+            df = df.sort_values(
+                by=sort_metric,
+                key=lambda x: x.map(extract_mean),
+                ascending=False,
+            )
 
         md_content.append(df.to_markdown(index=False))
-    else:
-        md_content.append("No score data available.")
+        md_content.append("\n")
 
-    md_content.append("\n")
+    md_content.append("")
 
     # 5. Set Overview Tab (Section 2)
     md_content.append("## Set Overview\n")
     # Simple table of experiments
     overview_data = []
     for exp in full_experiments:
+        # Use aliased_name if available, else name
+        model = exp.get("model") or {}
+        model_name = model.get("aliased_name") or model.get("name", "")
         overview_data.append(
             {
                 "ID": exp.get("id"),
                 "Name": exp.get("name"),
-                "Model": (exp.get("model") or {}).get("name"),
+                "Model": model_name,
                 "Status": exp.get("experiment_status"),
                 "Created At": exp.get("created_at"),
             }
@@ -253,7 +304,8 @@ def generate_markdown(experiment_set_id, output_dir):
     datasets_cache = {}
 
     for exp in full_experiments:
-        model_name = (exp.get("model") or {}).get("name", "Unknown")
+        model = exp.get("model") or {}
+        model_name = model.get("aliased_name") or model.get("name", "Unknown")
         exp_name = exp.get("name", str(exp.get("id")))
 
         md_content.append(f"### {model_name} - {exp_name}\n")
@@ -272,8 +324,8 @@ def generate_markdown(experiment_set_id, output_dir):
                 ds_full = fetch_json(f"/v1/dataset/{dataset_id}", params={"with_df": "true"})
                 if ds_full and ds_full.get("df"):
                     try:
-                        # df is a JSON string, need to parse it
-                        datasets_cache[dataset_id] = pd.read_json(ds_full["df"])
+                        # df is a JSON string, need to parse it using StringIO
+                        datasets_cache[dataset_id] = pd.read_json(StringIO(ds_full["df"]))
                     except Exception as e:
                         print(f"Error parsing dataset {dataset_id} dataframe: {e}")
                         datasets_cache[dataset_id] = None
