@@ -350,8 +350,14 @@ def generate_markdown(experiment_set_id, output_dir):
         md_content.append("No overview data.")
     md_content.append("\n")
 
-    # 6. Details by Experiment (Section 3) - The "Iterating Dropdown" equivalent
-    md_content.append("## Details by Experiment\n")
+    # 6. Details by Experiment links in Index
+    index_content = list(md_content)  # Copy current content for index
+    index_content.append("## Details by Experiment\n")
+
+    # 7. Prepare directories
+    set_dir = os.path.join(output_dir, f"experiment_set_{experiment_set_id}")
+    details_dir = os.path.join(set_dir, "details")
+    os.makedirs(details_dir, exist_ok=True)
 
     # Cache for datasets (id -> DataFrame)
     datasets_cache = {}
@@ -364,6 +370,14 @@ def generate_markdown(experiment_set_id, output_dir):
         exp_name = exp.get("name", str(exp_id))
         exp_readme = exp.get("readme")
 
+        # Add link to index
+        index_content.append(f"- [Experiment {exp_id}](details/experiment_{exp_id}.md) - {exp_name}")
+
+        # Start individual experiment markdown
+        exp_md = []
+        exp_md.append(f"# Experiment {exp_id}\n")
+        exp_md.append("[← Back to Index](../index.md)\n")
+
         # Dataset info
         dataset_info = exp.get("dataset", {})
         dataset_name = dataset_info.get("name", "Unknown")
@@ -373,16 +387,15 @@ def generate_markdown(experiment_set_id, output_dir):
         judge_model = exp.get("judge_model")
         judge_model_name = judge_model.get("name") if judge_model else "None"
 
-        # Model info (show full dict like Streamlit)
+        # Model info
         model = exp.get("model") or {}
 
-        # Experiment header
-        md_content.append(f"### experiment_id n° {exp_id}\n")
-        md_content.append(f"**Name:** {exp_name}\n")
-        md_content.append(f"**Readme:** {exp_readme}\n")
-        md_content.append(f"**Dataset:** {dataset_name}\n")
-        md_content.append(f"**Judge model:** {judge_model_name}\n")
-        md_content.append(f"**Model:** {model}\n")
+        exp_md.append(f"**Name:** {exp_name}\n")
+        exp_md.append(f"**Readme:** {exp_readme}\n")
+        exp_md.append(f"**Dataset:** {dataset_name}\n")
+        exp_md.append(f"**Judge model:** {judge_model_name}\n")
+        exp_md.append(f"**Model:** {model}\n")
+        exp_md.append("## Data Table\n")
 
         # Fetch dataset content if not cached
         df = None
@@ -402,59 +415,63 @@ def generate_markdown(experiment_set_id, output_dir):
                 df = datasets_cache[dataset_id].copy()
 
         if df is None:
-            md_content.append("No dataset content available.\n\n")
-            continue
+            exp_md.append("No dataset content available.\n\n")
+        else:
+            # Apply sample if present
+            sample = exp.get("sample")
+            if sample:
+                df = df.iloc[sample]
 
-        # Apply sample if present
-        sample = exp.get("sample")
-        if sample:
-            df = df.iloc[sample]
+            # Merge answers
+            answers = exp.get("answers", [])
+            if answers:
+                answer_fields_to_show = ["answer", "error_msg", "context", "retrieval_context"]
+                for field in answer_fields_to_show:
+                    values = {answer["num_line"]: answer.get(field) for answer in answers}
+                    if any(value is not None for value in values.values()):
+                        field_name = "answer_" + field if not field.startswith("answer") else field
+                        df[field_name] = df.index.map(values)
 
-        # Merge answers into the dataset dataframe
-        answers = exp.get("answers", [])
-        if answers:
-            answer_fields_to_show = ["answer", "error_msg", "context", "retrieval_context"]
-            for field in answer_fields_to_show:
-                values = {answer["num_line"]: answer.get(field) for answer in answers}
-                if any(value is not None for value in values.values()):
-                    field_name = "answer_" + field if not field.startswith("answer") else field
-                    df[field_name] = df.index.map(values)
+            # Merge result scores
+            results = exp.get("results", [])
+            if results:
+                for result in results:
+                    metric_name = result.get("metric_name")
+                    if result.get("metric_aliased_name"):
+                        metric_name = result["metric_aliased_name"]
+                    observations = {
+                        obs["num_line"]: obs["score"] for obs in result.get("observation_table", [])
+                    }
+                    df[f"result_{metric_name}"] = df.index.map(observations)
 
-        # Merge result scores into the dataset dataframe
-        results = exp.get("results", [])
-        if results:
-            for result in results:
-                metric_name = result.get("metric_name")
-                if result.get("metric_aliased_name"):
-                    metric_name = result["metric_aliased_name"]
-                observations = {obs["num_line"]: obs["score"] for obs in result.get("observation_table", [])}
-                df[f"result_{metric_name}"] = df.index.map(observations)
+            # Reorder columns
+            if not df.empty:
+                result_cols = sorted([col for col in df.columns if col.startswith("result_")])
+                other_cols = [col for col in df.columns if not col.startswith("result_")]
+                df = df[other_cols + result_cols]
 
-        # Reorder columns: put result_ columns at the end
-        if not df.empty:
-            result_cols = sorted([col for col in df.columns if col.startswith("result_")])
-            other_cols = [col for col in df.columns if not col.startswith("result_")]
-            df = df[other_cols + result_cols]
+            # Truncate long text columns
+            for col in df.columns:
+                if df[col].dtype == "object":
+                    df[col] = df[col].apply(
+                        lambda x: str(x)[:100] + "..." if isinstance(x, str) and len(str(x)) > 100 else x
+                    )
 
-        # Truncate long text columns for markdown readability
-        for col in df.columns:
-            if df[col].dtype == "object":
-                df[col] = df[col].apply(
-                    lambda x: str(x)[:100] + "..." if isinstance(x, str) and len(str(x)) > 100 else x
-                )
+            exp_md.append(df.to_markdown())
+            exp_md.append("\n\n")
 
-        # Convert to markdown table
-        md_content.append(df.to_markdown())
-        md_content.append("\n\n")
+        # Save individual experiment file
+        exp_filename = f"experiment_{exp_id}.md"
+        exp_filepath = os.path.join(details_dir, exp_filename)
+        with open(exp_filepath, "w") as f:
+            f.write("\n".join(exp_md))
 
-    # Save file
-    filename = f"experiment_set_{experiment_set_id}.md"
-    filepath = os.path.join(output_dir, filename)
+    # 8. Save index file
+    index_path = os.path.join(set_dir, "index.md")
+    with open(index_path, "w") as f:
+        f.write("\n".join(index_content))
 
-    with open(filepath, "w") as f:
-        f.write("\n".join(md_content))
-
-    print(f"Saved archive to {filepath}")
+    print(f"Saved archive to {set_dir}")
 
 
 def main():
