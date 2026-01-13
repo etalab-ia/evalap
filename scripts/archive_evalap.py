@@ -177,8 +177,10 @@ def generate_markdown(experiment_set_id, output_dir):
 
         # Build rows for this dataset group (like Streamlit display_experiment_set_score)
         rows = []
+        rows_support = []  # Track support (number of items per metric)
         for exp in dataset_experiments:
             row = {}
+            row_support = {}
 
             # Determine model name (similar to Streamlit logic)
             if exp.get("model"):
@@ -186,6 +188,7 @@ def generate_markdown(experiment_set_id, output_dir):
             else:
                 model_name = f"Undefined model ({exp.get('name', 'Unknown')})"
             row["model"] = model_name
+            row_support["model"] = model_name
 
             # Aggregate results/scores (like Streamlit)
             for result in exp.get("results", []):
@@ -193,27 +196,47 @@ def generate_markdown(experiment_set_id, output_dir):
                 scores = [x["score"] for x in result.get("observation_table", []) if pd.notna(x.get("score"))]
                 if scores:
                     row[metric_name] = np.mean(scores)
+                    row_support[f"{metric_name}_support"] = len(scores)
 
             rows.append(row)
+            rows_support.append(row_support)
 
         if not rows:
             md_content.append("No valid experiment results found.\n\n")
             continue
 
         df = pd.DataFrame(rows)
+        df_support = pd.DataFrame(rows_support)
+
+        # Check if there's support variation (like Streamlit _check_support_variation)
+        def check_support_variation(df_sup):
+            metric_cols = [col for col in df_sup.columns if col != "model"]
+            for col in metric_cols:
+                if df_sup[col].nunique(dropna=True) > 1:
+                    return True
+            return False
+
+        has_support_variation = check_support_variation(df_support)
 
         # Reorder columns: model first, then metrics sorted alphabetically
         metric_columns = [col for col in df.columns if col != "model"]
         new_column_order = ["model"] + sorted(metric_columns)
         df = df[[col for col in new_column_order if col in df.columns]]
 
+        # Reorder support columns similarly
+        support_columns = [col for col in df_support.columns if col != "model"]
+        support_column_order = ["model"] + sorted(support_columns)
+        df_support = df_support[[col for col in support_column_order if col in df_support.columns]]
+
         # Apply aggregation when in repeat mode (like Streamlit _format_experiments_score_df)
         if is_repeat_mode and "model" in df.columns and df["model"].notna().all():
             # Strip repetition trailing code from model names
             df["model"] = df["model"].str.replace(r"__\d+$", "", regex=True)
+            df_support["model"] = df_support["model"].str.replace(r"__\d+$", "", regex=True)
 
             # Group by model and calculate mean and std for all numeric columns
             grouped = df.groupby("model").agg(["mean", "std"]).reset_index()
+            grouped_support = df_support.groupby("model").agg(["mean", "std"]).reset_index()
 
             # Create a new DataFrame to store the formatted results
             result_df = pd.DataFrame()
@@ -236,6 +259,27 @@ def generate_markdown(experiment_set_id, output_dir):
                         result_df[column] = mean_vals + " ± " + std_vals
 
             df = result_df
+
+            # Format support DataFrame similarly
+            result_support_df = pd.DataFrame()
+            result_support_df["model"] = grouped_support["model"]
+
+            for column in df_support.columns:
+                if column != "model":
+                    decimals = 2
+                    mean_vals = grouped_support[(column, "mean")].round(decimals).astype(str)
+                    std_vals = grouped_support[(column, "std")].round(decimals).astype(str)
+
+                    # Only add ± std if there's actual variation
+                    if all(
+                        x is None or x == 0 or (isinstance(x, float) and np.isnan(x))
+                        for x in grouped_support[(column, "std")]
+                    ):
+                        result_support_df[column] = mean_vals
+                    else:
+                        result_support_df[column] = mean_vals + " ± " + std_vals
+
+            df_support = result_support_df
 
         # Sort by a sensible default metric if available
         sort_metric = None
@@ -261,14 +305,29 @@ def generate_markdown(experiment_set_id, output_dir):
                 except (ValueError, TypeError):
                     return value
 
+            # Get the sorted order from df
             df = df.sort_values(
                 by=sort_metric,
                 key=lambda x: x.map(extract_mean),
                 ascending=False,
             )
 
+            # Apply same order to df_support
+            if "model" in df_support.columns:
+                df_support = df_support.set_index("model").loc[df["model"].values].reset_index()
+
         md_content.append(df.to_markdown(index=False))
         md_content.append("\n")
+
+        # Add Support table if there's variation (like Streamlit)
+        if has_support_variation:
+            support_desc = (
+                f"**Support**: the numbers of item on which the metrics "
+                f"is computed (total items = {ds_size})\n"
+            )
+            md_content.append(support_desc)
+            md_content.append(df_support.to_markdown(index=False))
+            md_content.append("\n")
 
     md_content.append("")
 
