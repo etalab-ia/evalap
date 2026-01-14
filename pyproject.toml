@@ -39,6 +39,7 @@ dependencies = [
     "streamlit~=1.40.1",
     "plotly~=5.22.0",
     "openpyxl~=3.1.5",
+    "huggingface-hub>=1.2.3",
 ]
 
 [project.urls]
