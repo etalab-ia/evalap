@@ -449,7 +449,10 @@ def update_repository_index(api, repo_id):
     lines.append("")
 
     for sid in set_ids:
-        lines.append(f"- [Experiment Set {sid}](./experiment_set_{sid}/README.md)")
+        # Fetch details to get the name
+        details = fetch_experiment_set_details(sid)
+        name = details.get("name", f"Experiment Set {sid}") if details else f"Experiment Set {sid}"
+        lines.append(f"- [{name} (ID: {sid})](./experiment_set_{sid}/README.md)")
 
     lines.append("")
     content = "\n".join(lines)
