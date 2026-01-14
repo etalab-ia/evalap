@@ -353,20 +353,32 @@ def main():
         with open(local_set_path / "README.md", "a") as f:
             f.write("\n\n" + "\n".join(index_content))
 
-        # 3. Upload to HF
+        # 3. Upload to HF with retry logic
         if not args.dry_run:
             logger.info(f"Uploading set {expset_id} to HF...")
-            try:
-                # Upload the folder content to a subdirectory in the dataset
-                api.upload_folder(
-                    folder_path=str(local_set_path),
-                    repo_id=args.repo_id,
-                    repo_type="dataset",
-                    path_in_repo=set_dir_name,
-                    commit_message=f"Add experiment set {expset_id}",
-                )
-            except Exception as e:
-                logger.error(f"Failed to upload set {expset_id}: {e}")
+            max_retries = 3
+            for attempt in range(max_retries):
+                try:
+                    # Upload the folder content to a subdirectory in the dataset
+                    api.upload_folder(
+                        folder_path=str(local_set_path),
+                        repo_id=args.repo_id,
+                        repo_type="dataset",
+                        path_in_repo=set_dir_name,
+                        commit_message=f"Add experiment set {expset_id}",
+                    )
+                    break  # Success, exit retry loop
+                except Exception as e:
+                    if "timed out" in str(e).lower() and attempt < max_retries - 1:
+                        import time
+
+                        wait_time = 2 ** (attempt + 1)  # Exponential backoff: 2, 4, 8 seconds
+                        logger.warning(
+                            f"Upload timeout, retrying in {wait_time}s... ({attempt + 1}/{max_retries})"
+                        )
+                        time.sleep(wait_time)
+                    else:
+                        logger.error(f"Failed to upload set {expset_id}: {e}")
 
     # After processing all sets, update the root README (index)
     if not args.dry_run:
