@@ -364,7 +364,79 @@ def main():
             except Exception as e:
                 logger.error(f"Failed to upload set {expset_id}: {e}")
 
+    # After processing all sets, update the root README (index)
+    if not args.dry_run:
+        logger.info("Updating root README index...")
+        try:
+            update_repository_index(api, args.repo_id)
+        except Exception as e:
+            logger.error(f"Failed to update root index: {e}")
+
     logger.info("Done.")
+
+
+def update_repository_index(api, repo_id):
+    """
+    Scans the repository for experiment sets and generates a root README.md
+    listing them.
+    """
+    try:
+        files = api.list_repo_files(repo_id=repo_id, repo_type="dataset")
+    except Exception as e:
+        logger.warning(f"Could listed repo files to generate index: {e}")
+        return
+
+    # Find experiment sets (look for experiment_set_*/README.md)
+    set_ids = []
+    for f in files:
+        if f.startswith("experiment_set_") and f.endswith("/README.md"):
+            # Extract ID from "experiment_set_{ID}/README.md"
+            parts = f.split("/")
+            if len(parts) >= 2:
+                dirname = parts[0]
+                if dirname.startswith("experiment_set_"):
+                    try:
+                        sid = int(dirname.replace("experiment_set_", ""))
+                        set_ids.append(sid)
+                    except ValueError:
+                        pass
+
+    set_ids = sorted(list(set(set_ids)))
+
+    if not set_ids:
+        logger.info("No experiment sets found in repo to index.")
+        return
+
+    # Generate README content
+    lines = []
+    lines.append("---")
+    lines.append("tags:")
+    lines.append("- evalap")
+    lines.append("- evaluation")
+    lines.append("- llm")
+    lines.append("---")
+    lines.append("# EvalAP Experiment Sets")
+    lines.append("")
+    lines.append("This repository contains experiment sets exported from EvalAP.")
+    lines.append("")
+    lines.append("## Available Sets")
+    lines.append("")
+
+    for sid in set_ids:
+        lines.append(f"- [Experiment Set {sid}](./experiment_set_{sid}/README.md)")
+
+    lines.append("")
+    content = "\n".join(lines)
+
+    # Upload README.md
+    api.upload_file(
+        path_or_fileobj=content.encode("utf-8"),
+        path_in_repo="README.md",
+        repo_id=repo_id,
+        repo_type="dataset",
+        commit_message="Update repository index",
+    )
+    logger.info("Root README index updated.")
 
 
 if __name__ == "__main__":
