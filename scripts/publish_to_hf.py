@@ -306,11 +306,15 @@ def main():
             shutil.rmtree(local_set_path)
         local_set_path.mkdir(parents=True, exist_ok=True)
 
-        # 1. Generate Parquet
+        # 1. Generate Parquet with HF split naming convention
+        # Using data/{split_name}-00000-of-00001.parquet pattern for HF auto-detection
         logger.info(f"Generating Parquet for set {expset_id}...")
         df_raw = prepare_raw_data(full_experiments)
         if not df_raw.empty:
-            df_raw.to_parquet(local_set_path / "data.parquet", index=False)
+            data_dir = local_set_path / "data"
+            data_dir.mkdir(exist_ok=True)
+            split_name = f"experiment_set_{expset_id}"
+            df_raw.to_parquet(data_dir / f"{split_name}-00000-of-00001.parquet", index=False)
         else:
             logger.warning(f"No raw data generated for set {expset_id}")
 
