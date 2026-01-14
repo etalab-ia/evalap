@@ -423,14 +423,24 @@ def update_repository_index(api, repo_id):
         logger.info("No experiment sets found in repo to index.")
         return
 
-    # Generate README content
+    # Generate README content with YAML configs for subsets
     lines = []
     lines.append("---")
+
+    # Define each experiment set as a separate subset (config_name)
+    lines.append("configs:")
+    for i, sid in enumerate(set_ids):
+        lines.append(f"  - config_name: experiment_set_{sid}")
+        lines.append(f"    data_files: experiment_set_{sid}/data/*.parquet")
+        if i == 0:
+            lines.append("    default: true")
+
     lines.append("tags:")
-    lines.append("- evalap")
-    lines.append("- evaluation")
-    lines.append("- llm")
+    lines.append("  - evalap")
+    lines.append("  - evaluation")
+    lines.append("  - llm")
     lines.append("---")
+    lines.append("")
     lines.append("# EvalAP Experiment Sets")
     lines.append("")
     lines.append("This repository contains experiment sets exported from EvalAP.")
