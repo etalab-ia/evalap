@@ -228,12 +228,14 @@ def generate_experiment_set_readme(expset, full_experiments):
     for dataset_name, dataset_experiments in experiments_by_dataset.items():
         md_content.append(f"### {dataset_name}\n")
 
-        # Build rows with mean ± std for each metric
-        rows = []
+        # Group experiments by model and aggregate scores
+        model_scores = {}  # model_name -> metric_name -> list of all scores
         for exp in dataset_experiments:
-            row = {}
             model_info = exp.get("model") or {}
-            row["model"] = model_info.get("aliased_name") or model_info.get("name", "Unknown")
+            model_name = model_info.get("aliased_name") or model_info.get("name", "Unknown")
+
+            if model_name not in model_scores:
+                model_scores[model_name] = {}
 
             for result in exp.get("results", []):
                 metric_name = result.get("metric_aliased_name") or result.get("metric_name")
@@ -243,10 +245,19 @@ def generate_experiment_set_readme(expset, full_experiments):
                     if x.get("score") is not None and not np.isnan(x.get("score", float("nan")))
                 ]
                 if scores:
-                    mean = np.mean(scores)
-                    std = np.std(scores)
-                    row[metric_name] = f"{mean:.2f} ± {std:.2f}"
+                    if metric_name not in model_scores[model_name]:
+                        model_scores[model_name][metric_name] = []
+                    model_scores[model_name][metric_name].extend(scores)
 
+        # Build rows with aggregated mean ± std for each model
+        rows = []
+        for model_name, metrics in model_scores.items():
+            row = {"model": model_name}
+            for metric_name, all_scores in metrics.items():
+                if all_scores:
+                    mean = np.mean(all_scores)
+                    std = np.std(all_scores)
+                    row[metric_name] = f"{mean:.2f} ± {std:.2f}"
             rows.append(row)
 
         if rows:
