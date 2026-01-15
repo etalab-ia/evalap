@@ -191,27 +191,72 @@ def generate_experiment_set_readme(expset, full_experiments):
     md_content.append("from the EvalAP evaluation platform.\n")
 
     # Collect unique datasets and models
-    datasets = set()
-    models = set()
-    metrics = set()
+    datasets_set = set()
+    models_set = set()
+    metrics_set = set()
     for exp in full_experiments:
         ds = exp.get("dataset", {}).get("name")
         if ds:
-            datasets.add(ds)
+            datasets_set.add(ds)
         model = (exp.get("model") or {}).get("name")
         if model:
-            models.add(model)
+            models_set.add(model)
         for result in exp.get("results", []):
             metric = result.get("metric_aliased_name") or result.get("metric_name")
             if metric:
-                metrics.add(metric)
+                metrics_set.add(metric)
 
-    if datasets:
-        md_content.append(f"**Datasets:** {', '.join(sorted(datasets))}\n")
-    if models:
-        md_content.append(f"**Models evaluated:** {', '.join(sorted(models))}\n")
-    if metrics:
-        md_content.append(f"**Metrics:** {', '.join(sorted(metrics))}\n")
+    if datasets_set:
+        md_content.append(f"**Datasets:** {', '.join(sorted(datasets_set))}\n")
+    if models_set:
+        md_content.append(f"**Models evaluated:** {', '.join(sorted(models_set))}\n")
+    if metrics_set:
+        md_content.append(f"**Metrics:** {', '.join(sorted(metrics_set))}\n")
+
+    # Generate score tables per dataset
+    md_content.append("\n## Scores\n")
+
+    experiments_by_dataset = {}
+    for exp in full_experiments:
+        dataset_name = exp.get("dataset", {}).get("name", "Unknown Dataset")
+        if dataset_name not in experiments_by_dataset:
+            experiments_by_dataset[dataset_name] = []
+        experiments_by_dataset[dataset_name].append(exp)
+
+    import numpy as np
+
+    for dataset_name, dataset_experiments in experiments_by_dataset.items():
+        md_content.append(f"### {dataset_name}\n")
+
+        # Build rows with mean ± std for each metric
+        rows = []
+        for exp in dataset_experiments:
+            row = {}
+            model_info = exp.get("model") or {}
+            row["model"] = model_info.get("aliased_name") or model_info.get("name", "Unknown")
+
+            for result in exp.get("results", []):
+                metric_name = result.get("metric_aliased_name") or result.get("metric_name")
+                scores = [
+                    x["score"]
+                    for x in result.get("observation_table", [])
+                    if x.get("score") is not None and not np.isnan(x.get("score", float("nan")))
+                ]
+                if scores:
+                    mean = np.mean(scores)
+                    std = np.std(scores)
+                    row[metric_name] = f"{mean:.2f} ± {std:.2f}"
+
+            rows.append(row)
+
+        if rows:
+            import pandas as pd
+
+            df = pd.DataFrame(rows)
+            cols = ["model"] + [c for c in sorted(df.columns) if c != "model"]
+            df = df[cols]
+            md_content.append(df.to_markdown(index=False))
+            md_content.append("\n")
 
     # Note about experiments
     md_content.append("\n## Usage\n")
