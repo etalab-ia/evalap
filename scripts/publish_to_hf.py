@@ -1,7 +1,9 @@
 import argparse
 import logging
 import os
+import re
 import shutil
+import time
 from io import StringIO
 from pathlib import Path
 
@@ -17,6 +19,19 @@ load_dotenv()
 API_BASE_URL = "https://evalap.etalab.gouv.fr"
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+def slugify(text: str) -> str:
+    """Convert text to a URL-friendly slug."""
+    # Normalize unicode characters
+    import unicodedata
+
+    text = unicodedata.normalize("NFKD", text)
+    text = text.encode("ascii", "ignore").decode("ascii")
+    # Convert to lowercase and replace spaces/special chars with hyphens
+    text = re.sub(r"[^\w\s-]", "", text.lower())
+    text = re.sub(r"[-\s]+", "-", text).strip("-")
+    return text
 
 
 def fetch_json(endpoint, params=None):
@@ -54,14 +69,6 @@ def fetch_experiments_with_details(experiment_set_id):
         if full_exp:
             full_experiments.append(full_exp)
     return full_experiments
-
-
-def check_repeat_mode(experiments):
-    for expe in experiments:
-        name = expe.get("name", "")
-        if "__" in name and name.split("__")[-1].isdigit():
-            return True
-    return False
 
 
 def get_dataset_dataframe(dataset_id, cache):
@@ -112,109 +119,76 @@ def calculate_metrics_columns(exp, df):
     return df
 
 
-def generate_experiment_markdown(exp, datasets_cache):
-    exp_id = exp.get("id")
-    exp_name = exp.get("name", str(exp_id))
-
-    md = []
-    md.append(f"# Experiment {exp_id}\n")
-    md.append(f"**Name:** {exp_name}\n")
-    md.append(f"**Dataset:** {exp.get('dataset', {}).get('name')}\n")
-    md.append(f"**Model:** {exp.get('model', {}).get('name')}\n")
-    md.append(f"**Status:** {exp.get('experiment_status')}\n")
-    md.append("\n## Results\n")
-
-    # We need to reconstruct the dataframe for this single experiment to print it as markdown
-    # Note: This is slightly inefficient as we might re-fetch/re-process, but clean for isolation.
-    # Optimization: passing the row from the big dataframe would be better if possible.
-    # For now, let's just make a mini-df from the raw data preparation logic
-    # or just print the raw results JSON if complex.
-
-    dataset_id = exp.get("dataset", {}).get("id")
-    df = None
-    if dataset_id:
-        # We can reuse the cache if passed from main, but for now simple fetch
-        if dataset_id not in datasets_cache:
-            get_dataset_dataframe(dataset_id, datasets_cache)
-
-        base_df = datasets_cache.get(dataset_id)
-        if base_df is not None:
-            df = base_df.copy()
-            if exp.get("sample"):
-                df = df.iloc[exp.get("sample")]
-
-            # Add metrics columns locally
-            df = calculate_metrics_columns(exp, df)
-
-            # Truncate long strings for markdown display
-            for col in df.columns:
-                if df[col].dtype == "object":
-                    df[col] = df[col].apply(
-                        lambda x: str(x)[:200] + "..." if isinstance(x, str) and len(str(x)) > 200 else x
-                    )
-
-            md.append(df.to_markdown())
-
-    if df is None:
-        md.append("No data available.")
-
-    return "\n".join(md)
-
-
-def prepare_raw_data(full_experiments):
-    datasets_cache = {}
-    all_rows = []
-
-    for exp in full_experiments:
-        dataset_info = exp.get("dataset")
-        if not dataset_info or not dataset_info.get("id"):
-            continue
-
-        dataset_id = dataset_info["id"]
-        base_df = get_dataset_dataframe(dataset_id, datasets_cache)
-        if base_df is None:
-            continue
-
-        # Create a copy for this experiment
-        exp_df = base_df.copy()
-
-        # Apply sample if present
-        sample = exp.get("sample")
-        if sample:
-            exp_df = exp_df.iloc[sample].copy()
-
-        # Add experiment metadata columns
-        exp_df["experiment_id"] = exp["id"]
-        exp_df["experiment_name"] = exp.get("name")
-        exp_df["model_name"] = (exp.get("model") or {}).get("name")
-        exp_df["dataset_name"] = dataset_info.get("name")
-
-        # Add metrics and answers
-        exp_df = calculate_metrics_columns(exp, exp_df)
-
-        all_rows.append(exp_df)
-
-    if not all_rows:
+def prepare_experiment_data(exp, datasets_cache):
+    """Prepare data for a single experiment."""
+    dataset_info = exp.get("dataset")
+    if not dataset_info or not dataset_info.get("id"):
         return pd.DataFrame()
 
-    return pd.concat(all_rows, ignore_index=True)
+    dataset_id = dataset_info["id"]
+    base_df = get_dataset_dataframe(dataset_id, datasets_cache)
+    if base_df is None:
+        return pd.DataFrame()
+
+    # Create a copy for this experiment
+    exp_df = base_df.copy()
+
+    # Apply sample if present
+    sample = exp.get("sample")
+    if sample:
+        exp_df = exp_df.iloc[sample].copy()
+
+    # Add experiment metadata columns
+    exp_df["experiment_id"] = exp["id"]
+    exp_df["experiment_name"] = exp.get("name")
+    exp_df["model_name"] = (exp.get("model") or {}).get("name")
+    exp_df["dataset_name"] = dataset_info.get("name")
+
+    # Add metrics and answers
+    exp_df = calculate_metrics_columns(exp, exp_df)
+
+    return exp_df
 
 
-def generate_readme_content(expset, full_experiments):
+def generate_experiment_set_readme(expset, full_experiments):
+    """Generate README content for a single experiment set repository."""
     md_content = []
 
-    # Frontmatter
+    # Build configs for each experiment (using experiment name as config)
+    exp_configs = []
+    for exp in full_experiments:
+        exp_id = exp.get("id")
+        exp_name = exp.get("name", str(exp_id))
+        config_name = slugify(f"{exp_name}-{exp_id}")
+        exp_configs.append({"id": exp_id, "name": exp_name, "config_name": config_name})
+
+    # Frontmatter with configs
     md_content.append("---")
     md_content.append(f"pretty_name: {expset.get('name')}")
-    md_content.append("tags:\n- evalap\n- evaluation\n- llm")
-    md_content.append("---")
 
-    md_content.append(f"# Experiment Set: {expset.get('name')} (ID: {expset.get('id')})\n")
+    if exp_configs:
+        md_content.append("configs:")
+        for i, cfg in enumerate(exp_configs):
+            md_content.append(f"  - config_name: {cfg['config_name']}")
+            md_content.append(f"    data_files: data/{cfg['config_name']}/*.parquet")
+            if i == 0:
+                md_content.append("    default: true")
+
+    md_content.append("tags:")
+    md_content.append("  - evalap")
+    md_content.append("  - evaluation")
+    md_content.append("  - llm")
+    md_content.append("---")
+    md_content.append("")
+
+    md_content.append(f"# {expset.get('name')} (ID: {expset.get('id')})\n")
 
     if expset.get("readme"):
         md_content.append(f"{expset.get('readme')}\n")
 
-    # Generate Scores Table (reusing logic from reference script simplified)
+    # Generate Scores Table
+    md_content.append("## Scores\n")
+
     experiments_by_dataset = {}
     for exp in full_experiments:
         dataset_name = exp.get("dataset", {}).get("name", "Unknown Dataset")
@@ -223,7 +197,7 @@ def generate_readme_content(expset, full_experiments):
         experiments_by_dataset[dataset_name].append(exp)
 
     for dataset_name, dataset_experiments in experiments_by_dataset.items():
-        md_content.append(f"## Dataset: {dataset_name}\n")
+        md_content.append(f"### Dataset: {dataset_name}\n")
 
         rows = []
         for exp in dataset_experiments:
@@ -241,46 +215,35 @@ def generate_readme_content(expset, full_experiments):
 
         if rows:
             df = pd.DataFrame(rows)
-            # Reorder columns to put model first
             cols = ["model"] + [c for c in df.columns if c != "model"]
             df = df[cols]
             md_content.append(df.to_markdown(index=False))
             md_content.append("\n")
 
-    return "\n".join(md_content)
+    # List experiments as configs
+    md_content.append("## Experiments\n")
+    md_content.append("Each experiment is available as a separate configuration:\n")
+    for cfg in exp_configs:
+        md_content.append(f"- **{cfg['name']}** (ID: {cfg['id']})")
+
+    return "\n".join(md_content), exp_configs
 
 
 def main():
     parser = argparse.ArgumentParser(description="Publish EvalAP Experiment Sets to Hugging Face")
     parser.add_argument("--id", type=int, help="Specific Experiment Set ID")
-    parser.add_argument("--repo-id", required=True, help="Hugging Face Dataset Repo ID (e.g. user/dataset)")
+    parser.add_argument("--org", required=True, help="Hugging Face Organization/User (e.g. etalab-ia)")
     parser.add_argument("--dry-run", action="store_true", help="Generate files locally without uploading")
     parser.add_argument("--export-dir", default="export", help="Local directory for temporary files")
     args = parser.parse_args()
 
     hf_token = os.getenv("HF_TOKEN")
-    if not hf_token:
-        # Try to find token in ~/.cache/huggingface/token or HF_TOKEN
-        # If not dry run and we need to upload, warn
-        pass  # hf_hub handles login checks usually, or we fail later
-
     api = HfApi(token=hf_token)
-
-    # Create Repo if not exists (and not dry run)
-    if not args.dry_run:
-        try:
-            create_repo(args.repo_id, repo_type="dataset", exist_ok=True, token=hf_token)
-            logger.info(f"Ensured repo {args.repo_id} exists.")
-        except Exception as e:
-            logger.error(f"Error creating/accessing repo: {e}")
-            return
 
     experiment_sets = []
     if args.id:
         experiment_sets = [{"id": args.id}]
     else:
-        # Fetch all sets logic here if needed, keeping it simple for now as requested
-        # The user request sample implies potentially one or all.
         logger.info("Fetching all experiment sets...")
         all_sets = fetch_json("/v1/experiment_sets", params={"limit": 1000, "backward": "false"})
         if all_sets:
@@ -299,173 +262,67 @@ def main():
             logger.warning(f"No experiments found for set {expset_id}")
             continue
 
-        # Prepare Directory
-        set_dir_name = f"experiment_set_{expset_id}"
-        local_set_path = Path(args.export_dir) / set_dir_name
-        if local_set_path.exists():
-            shutil.rmtree(local_set_path)
-        local_set_path.mkdir(parents=True, exist_ok=True)
+        # Generate slugified repo name from experiment set name and ID
+        expset_name = expset.get("name", f"experiment-set-{expset_id}")
+        repo_name = f"evalap-{slugify(expset_name)}-{expset_id}"
+        repo_id = f"{args.org}/{repo_name}"
 
-        # 1. Generate Parquet with HF split naming convention
-        # Using data/{split_name}-00000-of-00001.parquet pattern for HF auto-detection
-        logger.info(f"Generating Parquet for set {expset_id}...")
-        df_raw = prepare_raw_data(full_experiments)
-        if not df_raw.empty:
-            data_dir = local_set_path / "data"
-            data_dir.mkdir(exist_ok=True)
-            split_name = f"experiment_set_{expset_id}"
-            df_raw.to_parquet(data_dir / f"{split_name}-00000-of-00001.parquet", index=False)
-        else:
-            logger.warning(f"No raw data generated for set {expset_id}")
+        logger.info(f"Repository: {repo_id}")
 
-        # 2. Generate README.md
-        readme_content = generate_readme_content(expset, full_experiments)
-        with open(local_set_path / "README.md", "w") as f:
+        # Prepare local directory
+        local_path = Path(args.export_dir) / repo_name
+        if local_path.exists():
+            shutil.rmtree(local_path)
+        local_path.mkdir(parents=True, exist_ok=True)
+
+        # Generate README with configs for each experiment
+        readme_content, exp_configs = generate_experiment_set_readme(expset, full_experiments)
+        with open(local_path / "README.md", "w") as f:
             f.write(readme_content)
 
-        # 3. Generate individual experiment Markdowns (for browsability)
-        logger.info(f"Generating details markdown for set {expset_id}...")
-        details_dir = local_set_path / "details"
-        details_dir.mkdir(exist_ok=True)
+        # Generate parquet files for each experiment (as separate configs)
+        datasets_cache = {}
+        data_dir = local_path / "data"
+        data_dir.mkdir(exist_ok=True)
 
-        # Create index content with links
-        index_content = ["# details by Experiment\n"]
+        for exp, cfg in zip(full_experiments, exp_configs, strict=True):
+            config_dir = data_dir / cfg["config_name"]
+            config_dir.mkdir(exist_ok=True)
 
-        sorted_experiments = sorted(full_experiments, key=lambda x: x.get("id", 0))
-        for exp in sorted_experiments:
-            exp_id = exp.get("id")
-            exp_name = exp.get("name", str(exp_id))
+            df = prepare_experiment_data(exp, datasets_cache)
+            if not df.empty:
+                df.to_parquet(config_dir / "data.parquet", index=False)
 
-            # Add link to index
-            index_content.append(f"- [Experiment {exp_id}](details/experiment_{exp_id}.md) - {exp_name}")
-
-            # Generate individual exp file
-            exp_md = generate_experiment_markdown(
-                exp, datasets_cache={}
-            )  # Using local cache if possible or separate
-            with open(details_dir / f"experiment_{exp_id}.md", "w") as f:
-                f.write(exp_md)
-
-        # Append index to README or save as separate index?
-        # User request was "include metadata present in streamlit UI".
-        # Streamlit has a "Details by Experiment" tab.
-        # Let's append the list of experiments to the main README as well for easier navigation on HF.
-        with open(local_set_path / "README.md", "a") as f:
-            f.write("\n\n" + "\n".join(index_content))
-
-        # 3. Upload to HF with retry logic
+        # Create repo and upload
         if not args.dry_run:
-            logger.info(f"Uploading set {expset_id} to HF...")
+            try:
+                create_repo(repo_id, repo_type="dataset", exist_ok=True, token=hf_token)
+                logger.info(f"Ensured repo {repo_id} exists.")
+            except Exception as e:
+                logger.error(f"Error creating repo {repo_id}: {e}")
+                continue
+
+            logger.info(f"Uploading to {repo_id}...")
             max_retries = 3
             for attempt in range(max_retries):
                 try:
-                    # Upload the folder content to a subdirectory in the dataset
                     api.upload_folder(
-                        folder_path=str(local_set_path),
-                        repo_id=args.repo_id,
+                        folder_path=str(local_path),
+                        repo_id=repo_id,
                         repo_type="dataset",
-                        path_in_repo=set_dir_name,
-                        commit_message=f"Add experiment set {expset_id}",
+                        commit_message=f"Upload experiment set {expset_id}",
                     )
-                    break  # Success, exit retry loop
+                    logger.info(f"Successfully uploaded {repo_id}")
+                    break
                 except Exception as e:
                     if "timed out" in str(e).lower() and attempt < max_retries - 1:
-                        import time
-
-                        wait_time = 2 ** (attempt + 1)  # Exponential backoff: 2, 4, 8 seconds
-                        logger.warning(
-                            f"Upload timeout, retrying in {wait_time}s... ({attempt + 1}/{max_retries})"
-                        )
+                        wait_time = 2 ** (attempt + 1)
+                        logger.warning(f"Timeout, retrying in {wait_time}s... ({attempt + 1}/{max_retries})")
                         time.sleep(wait_time)
                     else:
-                        logger.error(f"Failed to upload set {expset_id}: {e}")
-
-    # After processing all sets, update the root README (index)
-    if not args.dry_run:
-        logger.info("Updating root README index...")
-        try:
-            update_repository_index(api, args.repo_id)
-        except Exception as e:
-            logger.error(f"Failed to update root index: {e}")
+                        logger.error(f"Failed to upload {repo_id}: {e}")
 
     logger.info("Done.")
-
-
-def update_repository_index(api, repo_id):
-    """
-    Scans the repository for experiment sets and generates a root README.md
-    listing them.
-    """
-    try:
-        files = api.list_repo_files(repo_id=repo_id, repo_type="dataset")
-    except Exception as e:
-        logger.warning(f"Could listed repo files to generate index: {e}")
-        return
-
-    # Find experiment sets (look for experiment_set_*/README.md)
-    set_ids = []
-    for f in files:
-        if f.startswith("experiment_set_") and f.endswith("/README.md"):
-            # Extract ID from "experiment_set_{ID}/README.md"
-            parts = f.split("/")
-            if len(parts) >= 2:
-                dirname = parts[0]
-                if dirname.startswith("experiment_set_"):
-                    try:
-                        sid = int(dirname.replace("experiment_set_", ""))
-                        set_ids.append(sid)
-                    except ValueError:
-                        pass
-
-    set_ids = sorted(list(set(set_ids)))
-
-    if not set_ids:
-        logger.info("No experiment sets found in repo to index.")
-        return
-
-    # Generate README content with YAML configs for subsets
-    lines = []
-    lines.append("---")
-
-    # Define each experiment set as a separate subset (config_name)
-    lines.append("configs:")
-    for i, sid in enumerate(set_ids):
-        lines.append(f"  - config_name: experiment_set_{sid}")
-        lines.append(f"    data_files: experiment_set_{sid}/data/*.parquet")
-        if i == 0:
-            lines.append("    default: true")
-
-    lines.append("tags:")
-    lines.append("  - evalap")
-    lines.append("  - evaluation")
-    lines.append("  - llm")
-    lines.append("---")
-    lines.append("")
-    lines.append("# EvalAP Experiment Sets")
-    lines.append("")
-    lines.append("This repository contains experiment sets exported from EvalAP.")
-    lines.append("")
-    lines.append("## Available Sets")
-    lines.append("")
-
-    for sid in set_ids:
-        # Fetch details to get the name
-        details = fetch_experiment_set_details(sid)
-        name = details.get("name", f"Experiment Set {sid}") if details else f"Experiment Set {sid}"
-        lines.append(f"- [{name} (ID: {sid})](./experiment_set_{sid}/README.md)")
-
-    lines.append("")
-    content = "\n".join(lines)
-
-    # Upload README.md
-    api.upload_file(
-        path_or_fileobj=content.encode("utf-8"),
-        path_in_repo="README.md",
-        repo_id=repo_id,
-        repo_type="dataset",
-        commit_message="Update repository index",
-    )
-    logger.info("Root README index updated.")
 
 
 if __name__ == "__main__":
