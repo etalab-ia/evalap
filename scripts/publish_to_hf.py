@@ -213,11 +213,9 @@ def generate_experiment_set_readme(expset, full_experiments):
     if metrics:
         md_content.append(f"**Metrics:** {', '.join(sorted(metrics))}\n")
 
-    # List experiments as configs
-    md_content.append("\n## Experiments\n")
-    md_content.append("Select an experiment from the dropdown above to view its data.\n")
-    for cfg in exp_configs:
-        md_content.append(f"- `{cfg['config_name']}` — {cfg['name']}")
+    # Note about experiments
+    md_content.append("\n## Usage\n")
+    md_content.append("Use the dropdown above to select an experiment configuration.\n")
 
     return "\n".join(md_content), exp_configs
 
@@ -228,6 +226,11 @@ def main():
     parser.add_argument("--org", required=True, help="Hugging Face Organization/User (e.g. etalab-ia)")
     parser.add_argument("--dry-run", action="store_true", help="Generate files locally without uploading")
     parser.add_argument("--export-dir", default="export", help="Local directory for temporary files")
+    parser.add_argument(
+        "--collection",
+        default="evalap-experiments",
+        help="HF Collection slug to add datasets to (default: evalap-experiments)",
+    )
     args = parser.parse_args()
 
     hf_token = os.getenv("HF_TOKEN")
@@ -314,8 +317,52 @@ def main():
                         time.sleep(wait_time)
                     else:
                         logger.error(f"Failed to upload {repo_id}: {e}")
+                        break
+
+            # Add to collection
+            add_to_collection(api, args.org, args.collection, repo_id)
 
     logger.info("Done.")
+
+
+def add_to_collection(api, org, collection_slug, repo_id):
+    """Add a dataset to a HuggingFace collection, creating it if needed."""
+    collection_id = f"{org}/{collection_slug}"
+
+    try:
+        # Try to get existing collection
+        collection = api.get_collection(collection_id)
+        logger.info(f"Found existing collection: {collection_id}")
+    except Exception:
+        # Create collection if it doesn't exist
+        try:
+            collection = api.create_collection(
+                title="EvalAP Experiments",
+                namespace=org,
+                description="Experiment sets exported from the EvalAP evaluation platform.",
+                exists_ok=True,
+            )
+            logger.info(f"Created collection: {collection.slug}")
+        except Exception as e:
+            logger.warning(f"Could not create collection: {e}")
+            return
+
+    # Check if item already in collection
+    existing_items = [item.item_id for item in collection.items]
+    if repo_id in existing_items:
+        logger.info(f"{repo_id} already in collection")
+        return
+
+    # Add item to collection
+    try:
+        api.add_collection_item(
+            collection_slug=collection.slug,
+            item_id=repo_id,
+            item_type="dataset",
+        )
+        logger.info(f"Added {repo_id} to collection {collection.slug}")
+    except Exception as e:
+        logger.warning(f"Could not add {repo_id} to collection: {e}")
 
 
 if __name__ == "__main__":
