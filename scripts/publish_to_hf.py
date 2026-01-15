@@ -7,7 +7,6 @@ import time
 from io import StringIO
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 import requests
 from dotenv import load_dotenv
@@ -186,45 +185,39 @@ def generate_experiment_set_readme(expset, full_experiments):
     if expset.get("readme"):
         md_content.append(f"{expset.get('readme')}\n")
 
-    # Generate Scores Table
-    md_content.append("## Scores\n")
+    # Overview section
+    md_content.append("## Overview\n")
+    md_content.append(f"This dataset contains **{len(full_experiments)} experiments** ")
+    md_content.append("from the EvalAP evaluation platform.\n")
 
-    experiments_by_dataset = {}
+    # Collect unique datasets and models
+    datasets = set()
+    models = set()
+    metrics = set()
     for exp in full_experiments:
-        dataset_name = exp.get("dataset", {}).get("name", "Unknown Dataset")
-        if dataset_name not in experiments_by_dataset:
-            experiments_by_dataset[dataset_name] = []
-        experiments_by_dataset[dataset_name].append(exp)
+        ds = exp.get("dataset", {}).get("name")
+        if ds:
+            datasets.add(ds)
+        model = (exp.get("model") or {}).get("name")
+        if model:
+            models.add(model)
+        for result in exp.get("results", []):
+            metric = result.get("metric_aliased_name") or result.get("metric_name")
+            if metric:
+                metrics.add(metric)
 
-    for dataset_name, dataset_experiments in experiments_by_dataset.items():
-        md_content.append(f"### Dataset: {dataset_name}\n")
-
-        rows = []
-        for exp in dataset_experiments:
-            row = {}
-            model_info = exp.get("model") or {}
-            row["model"] = model_info.get("aliased_name") or model_info.get("name", "Unknown")
-
-            for result in exp.get("results", []):
-                metric_name = result.get("metric_aliased_name") or result.get("metric_name")
-                scores = [x["score"] for x in result.get("observation_table", []) if pd.notna(x.get("score"))]
-                if scores:
-                    row[metric_name] = np.mean(scores)
-
-            rows.append(row)
-
-        if rows:
-            df = pd.DataFrame(rows)
-            cols = ["model"] + [c for c in df.columns if c != "model"]
-            df = df[cols]
-            md_content.append(df.to_markdown(index=False))
-            md_content.append("\n")
+    if datasets:
+        md_content.append(f"**Datasets:** {', '.join(sorted(datasets))}\n")
+    if models:
+        md_content.append(f"**Models evaluated:** {', '.join(sorted(models))}\n")
+    if metrics:
+        md_content.append(f"**Metrics:** {', '.join(sorted(metrics))}\n")
 
     # List experiments as configs
-    md_content.append("## Experiments\n")
-    md_content.append("Each experiment is available as a separate configuration:\n")
+    md_content.append("\n## Experiments\n")
+    md_content.append("Select an experiment from the dropdown above to view its data.\n")
     for cfg in exp_configs:
-        md_content.append(f"- **{cfg['name']}** (ID: {cfg['id']})")
+        md_content.append(f"- `{cfg['config_name']}` — {cfg['name']}")
 
     return "\n".join(md_content), exp_configs
 
