@@ -392,13 +392,18 @@ def add_to_collection(api, org, collection_slug, repo_id):
     except Exception:
         # Create collection if it doesn't exist
         try:
+            # Derive a title from the slug if it's not the default
+            title = "EvalAP Experiments"
+            if collection_slug != "evalap-experiments":
+                title = collection_slug.replace("-", " ").replace("_", " ").title()
+
             collection = api.create_collection(
-                title="EvalAP Experiments",
+                title=title,
                 namespace=org,
                 description="Experiment sets exported from the EvalAP evaluation platform.",
                 exists_ok=True,
             )
-            logger.info(f"Created collection: {collection.slug}")
+            logger.info(f"Created collection: {collection.slug} (Title: {title})")
         except Exception as e:
             logger.warning(f"Could not create collection: {e}")
             return
