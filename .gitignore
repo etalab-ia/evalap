@@ -9,6 +9,8 @@ notebooks/\[BACKUP\]*
 config/products/\[BACKUP\]*
 *.parquet
 *.csv
+export/
+.export/
 .deepeval
 
 
