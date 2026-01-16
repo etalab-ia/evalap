@@ -61,6 +61,7 @@ jobs:
 
   deploy:
     name: Deploy from ${{ github.ref_name }}/${{ github.sha }}
+    if: vars.DEPLOYMENT_ENABLED == 'true'
     runs-on: ubuntu-latest
     needs: build-and-push
     steps:
