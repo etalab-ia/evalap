@@ -63,7 +63,7 @@ EvalAP's UI SHOULD comply with DSFR (Système de Design de l'État - https://www
 - Ensure responsive design patterns (mobile-first approach)
 - Maintain visual consistency with French Government digital services
 
-**Note**: Docusaurus is the primary platform for results and documentation; Streamlit is maintained for legacy/local results exploration.
+**Note**: Docusaurus is the primary platform for results and documentation; Streamlit is maintained for legacy/local results exploration only and is not deployed in production.
 
 ### M5. ProConnect Authentication Standard
 
