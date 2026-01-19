@@ -108,7 +108,7 @@ That's it! No other steps needed.
 Once running, open your browser:
 
 - **Main UI**: http://localhost:8501
-- **API Docs**: http://localhost:8000/docs
+- **API Docs**: http://localhost:8000/api-docs
 
 ## Stop the Application
 

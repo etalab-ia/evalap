@@ -77,7 +77,7 @@ docker compose up -d
 Cela démarrera à la fois l'application et les services de base de données en mode détaché.
 
 Vous devriez alors pouvoir vous connecter aux services suivants :
-- l'API à l'adresse http://localhost:8000/docs
+- l'API à l'adresse http://localhost:8000/api-docs
 - l'application web à l'adresse http://localhost:8501
 
 

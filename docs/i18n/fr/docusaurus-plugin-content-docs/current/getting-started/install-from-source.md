@@ -94,7 +94,7 @@ Pour vérifier qu'Evalap fonctionne correctement, ouvrez votre navigateur web et
 http://localhost:8000/redoc
 ```
 
-Vous devriez voir la page de documentation de l'API. Vous pouvez également utiliser `http://localhost:8000/docs` si vous préférez la version swagger.
+Vous devriez voir la page de documentation de l'API. Vous pouvez également utiliser `http://localhost:8000/api-docs` si vous préférez la version swagger.
 
 ### Configuration des journaux
 

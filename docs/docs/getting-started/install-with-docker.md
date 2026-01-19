@@ -77,7 +77,7 @@ docker compose up -d
 This will start both the application and the database services in detached mode.
 
 You should then be able to connect to the following services:
-- the API at http://localhost:8000/docs
+- the API at http://localhost:8000/api-docs
 - the webapp at http://localhost:8501
 
 

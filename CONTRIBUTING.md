@@ -85,7 +85,7 @@ This will:
 #### Access Your Services
 
 - **API**: http://localhost:8000
-- **API Docs**: http://localhost:8000/docs or http://localhost:8000/redoc
+- **API Docs**: http://localhost:8000/api-docs or http://localhost:8000/redoc
 - **Streamlit UI**: http://localhost:8501
 - **PostgreSQL**: localhost:5432 (credentials: postgres/changeme)
 

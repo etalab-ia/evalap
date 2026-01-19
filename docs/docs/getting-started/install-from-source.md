@@ -94,7 +94,7 @@ To verify that Evalap is running correctly, open your web browser and navigate t
 http://localhost:8000/redoc
 ```
 
-You should see the API documentation page. You can also use `http://localhost:8000/docs` if you prefer the swagger version.
+You should see the API documentation page. You can also use `http://localhost:8000/api-docs` if you prefer the swagger version.
 
 ### Logging Configuration
 

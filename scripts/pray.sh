@@ -176,7 +176,7 @@ STREAMLIT_PID=$!
 # Wait for Uvicorn API to be ready before opening browser
 echo "⏳ Waiting for API to be ready..."
 for i in {1..60}; do
-  if curl -s http://localhost:8000/docs > /dev/null 2>&1; then
+  if curl -s http://localhost:8000/api-docs > /dev/null 2>&1; then
     echo "✅ API is ready"
     break
   fi
