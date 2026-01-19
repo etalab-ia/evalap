@@ -9,7 +9,7 @@ The project includes:
 
 ```
 evalap/
-├── justfile    --> just is a handy way to save and run project-specific commands. See https://just.systems
+├── justfile    --> just is a handy way to save and run project-specific commands. See [https://just.systems](https://just.systems)
 ├── evalap/        --> The evalap code source
 │   ├── api/        --> The evaluation API source code
 │   ├── runner/     --> The runner (message passing) source code
@@ -87,10 +87,10 @@ This will:
 
 #### Access Your Services
 
-- **API**: http://localhost:8000
-- **API Docs**: http://localhost:8000/api-docs or http://localhost:8000/redoc
-- **Docusaurus UI**: http://localhost:3000 (Documentation & Results)
-- **Streamlit UI**: http://localhost:8501 (Local results explorer)
+- **API**: [http://localhost:8000](http://localhost:8000)
+- **API Docs**: [http://localhost:8000/api-docs](http://localhost:8000/api-docs) or [http://localhost:8000/redoc](http://localhost:8000/redoc)
+- **Docusaurus UI**: [http://localhost:3000](http://localhost:3000) (Documentation & Results)
+- **Streamlit UI**: [http://localhost:8501](http://localhost:8501) (Local results explorer)
 - **PostgreSQL**: localhost:5432 (credentials: postgres/changeme)
 
 #### Hot Reloading
@@ -166,11 +166,11 @@ just run
 
 This will:
 
-1. **Seed the database** with initial datasets from Hugging Face (if not already present):
-   - **llm-values-CIVICS**: Cultural values evaluation dataset
-   - **lmsys-toxic-chat**: Toxicity detection dataset
-   - **DECCP**: Chinese censorship benchmark
-2. Start all four services in parallel with colored output and hot reloading
+1.  **Seed the database** with initial datasets from Hugging Face (if not already present):
+    -   **llm-values-CIVICS**: Cultural values evaluation dataset
+    -   **lmsys-toxic-chat**: Toxicity detection dataset
+    -   **DECCP**: Chinese censorship benchmark
+2.  Start all four services in parallel with colored output and hot reloading
 
 Note: Having an `HF_TOKEN` set is recommended for better dataset download reliability.
 
@@ -208,9 +208,9 @@ uv run streamlit run evalap/ui/demo_streamlit/app.py
 
 ### Hot Reload Not Working?
 
-1. **Check volume mounting**: Ensure the volume is mounted correctly in `compose.dev.yml`
-2. **Check logs**: Look for `[Reloader]` messages in runner logs
-3. **Verify file changes**: Make sure you're editing files in the mounted directory
+1.  **Check volume mounting**: Ensure the volume is mounted correctly in `compose.dev.yml`
+2.  **Check logs**: Look for `[Reloader]` messages in runner logs
+3.  **Verify file changes**: Make sure you're editing files in the mounted directory
 
 ### Process Crashed?
 

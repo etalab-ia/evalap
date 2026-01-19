@@ -124,9 +124,7 @@ print(f"Experiment {experiment_id} is running")
 ```
 
 :::tip Champs de Modèle custom supportés
-```markdown
-Consultez la documentation de l'API du schéma ModelRaw pour voir tous les paramètres acceptés pour un modèle personnalisé : /redoc#tag/experiments/operation/create_experiment_v1_experiment_post
-```
+Consultez la documentation de l'API du schéma ModelRaw pour voir tous les paramètres acceptés pour un modèle personnalisé : [create_experiment_v1_experiment_post](/redoc#tag/experiments/operation/create_experiment_v1_experiment_post)
 :::
 
 Dans ce scénario, le schéma du modèle est différent :

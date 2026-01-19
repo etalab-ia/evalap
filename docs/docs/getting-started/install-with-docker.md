@@ -76,8 +76,8 @@ docker compose up -d
 This will start both the application and the database services in detached mode.
 
 You should then be able to connect to the following services:
-- the API at http://localhost:8000/api-docs
-- the Docusaurus platform at http://localhost:3000
+- the API at [http://localhost:8000/api-docs](http://localhost:8000/api-docs)
+- the Docusaurus platform at [http://localhost:3000](http://localhost:3000)
 
 
 ## Next Steps

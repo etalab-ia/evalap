@@ -107,9 +107,9 @@ That's it! No other steps needed.
 
 Once running, open your browser:
 
-- **Main UI**: http://localhost:3000 (Docusaurus Docs & Results)
-- **Local UI**: http://localhost:8501 (Streamlit Results Explorer)
-- **API Docs**: http://localhost:8000/api-docs
+- **Main UI**: [http://localhost:3000](http://localhost:3000) (Docusaurus Docs & Results)
+- **Local UI**: [http://localhost:8501](http://localhost:8501) (Streamlit Results Explorer)
+- **API Docs**: [http://localhost:8000/api-docs](http://localhost:8000/api-docs)
 
 ## Stop the Application
 
