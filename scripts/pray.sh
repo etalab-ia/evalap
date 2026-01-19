@@ -131,13 +131,14 @@ NC='\033[0m' # No Color
 
 echo -e "${BLUE}API: http://localhost:8000${NC}"
 echo -e "${CYAN}Docusaurus: http://localhost:3000${NC}"
+echo -e "${YELLOW}Streamlit UI: http://localhost:8501${NC}"
 echo -e "${GREEN}Press Ctrl-C to stop all services${NC}"
 echo ""
 
 # Function to cleanup background processes
 cleanup() {
   echo -e "\n${RED}Shutting down services...${NC}"
-  kill $API_PID $RUNNER_PID $DOCUSAURUS_PID 2>/dev/null || true
+  kill $API_PID $RUNNER_PID $DOCUSAURUS_PID $STREAMLIT_PID 2>/dev/null || true
   docker compose -f compose.dev.yml down 2>/dev/null || true
   wait
   echo -e "${GREEN}All services stopped${NC}"
@@ -153,6 +154,7 @@ lsof -ti:8000 | xargs kill -9 2>/dev/null || true
 lsof -ti:3000 | xargs kill -9 2>/dev/null || true
 lsof -ti:5555 | xargs kill -9 2>/dev/null || true
 lsof -ti:5556 | xargs kill -9 2>/dev/null || true
+lsof -ti:8501 | xargs kill -9 2>/dev/null || true
 sleep 1
 
 # Start API in background with blue prefix
@@ -172,6 +174,12 @@ RUNNER_PID=$!
   (cd docs && npm run start -- --port 3000) 2>&1 | sed $'s/^/\033[0;36m[DOCUSAURUS]\033[0m /'
 } &
 DOCUSAURUS_PID=$!
+
+# Start Streamlit in background with yellow prefix
+{
+  uv run streamlit run evalap/ui/demo_streamlit/app.py --server.runOnSave true --server.headless=true --server.port 8501 2>&1 | sed $'s/^/\033[1;33m[STREAMLIT]\033[0m /'
+} &
+STREAMLIT_PID=$!
 
 # Wait for Uvicorn API to be ready before opening browser
 echo "⏳ Waiting for API to be ready..."
@@ -200,4 +208,4 @@ elif command -v start &> /dev/null; then
 fi
 
 # Wait for all processes
-wait $API_PID $RUNNER_PID $DOCUSAURUS_PID
+wait $API_PID $RUNNER_PID $DOCUSAURUS_PID $STREAMLIT_PID

@@ -59,11 +59,11 @@ EvalAP MUST remain open source and privilege open source solutions.
 EvalAP's UI SHOULD comply with DSFR (Système de Design de l'État - https://www.systeme-de-design.gouv.fr/).
 
 **Requirements**:
-- Docusaurus UI components SHOULD follow DSFR guidelines where applicable
+- Docusaurus/Streamlit UI components SHOULD follow DSFR guidelines where applicable
 - Ensure responsive design patterns (mobile-first approach)
 - Maintain visual consistency with French Government digital services
 
-**Note**: Docusaurus allows for better DSFR compliance via custom styling and components; prioritize RGAA accessibility.
+**Note**: Docusaurus is the primary platform for results and documentation; Streamlit is maintained for legacy/local results exploration.
 
 ### M5. ProConnect Authentication Standard
 
@@ -95,6 +95,7 @@ Code organization reflects functional domains, not technical layers. Each domain
 - `evalap/runners/` handles async task execution via ZeroMQ
 - `evalap/clients/` provides LLM client abstractions (OpenAI, Anthropic, Mistral, Albert)
 - `docs/` contains Docusaurus platform (results and documentation)
+- `evalap/ui/` contains Streamlit results explorer (legacy/local UI)
 - `evalap/scripts/` contains standalone executable scripts for batch operations
 - Cross-module imports MUST go through public interfaces, not internal modules
 
@@ -250,7 +251,7 @@ For AI-powered evaluation features:
 - **Database**: PostgreSQL with SQLAlchemy ~2.0.35 ORM and Alembic ~1.13.3 for migrations
 - **Async Task Queue**: ZeroMQ ~26.2.0 for message passing between API and runner
 - **Web Server**: Uvicorn ~0.32.0 for ASGI serving
-- **UI Framework**: Docusaurus 3.x (results and documentation)
+- **UI Frameworks**: Docusaurus 3.x (Platform) and Streamlit ~1.40.1 (Local Explorer)
 - **LLM Clients**: Requests ~2.32.3 for HTTP calls to OpenAI, Anthropic, Mistral, Albert APIs
 - **Data Processing**: Pandas ~2.2.3, PyArrow ~19.0.1 for dataset handling
 - **Evaluation Libraries**: DeepEval ~3.5.1, RAGAS ~0.2.14, RapidFuzz ~3.13.0
@@ -293,7 +294,7 @@ The following directories are managed by external tools and MUST be excluded fro
 ### Development Environment
 
 - Use Docker Compose for consistent local development: `docker compose -f compose.dev.yml up --build`
-- Services include PostgreSQL, API (Uvicorn), Runner, and Docusaurus UI
+- Services include PostgreSQL, API (Uvicorn), Runner, Docusaurus UI, and Streamlit UI
 - Hot reloading enabled for all services via file watching
 - Use `just` commands for common tasks (sync, run, test, format, publish)
 

@@ -3,7 +3,9 @@
 ## Project Architecture
 
 The stack is based on Fastapi+pydantic+sqlachemy for the API in conjonction with ZeroMQ for the Runner.
-The project includes a Documentation and Results platform based on Docusaurus.
+The project includes:
+- A **Documentation and Results platform** based on Docusaurus (Port 3000).
+- A **Local Results Explorer** based on Streamlit (Port 8501).
 
 ```
 evalap/
@@ -80,13 +82,15 @@ This will:
 - Start all three services with hot reloading:
   - **Uvicorn API** on port 8000
   - **Runner** with file watching
-  - **Docusaurus UI** on port 3000
+  - **Docusaurus UI** on port 3000 (New platform)
+  - **Streamlit UI** on port 8501 (Local results explorer)
 
 #### Access Your Services
 
 - **API**: http://localhost:8000
 - **API Docs**: http://localhost:8000/api-docs or http://localhost:8000/redoc
-- **Docusaurus UI**: http://localhost:3000
+- **Docusaurus UI**: http://localhost:3000 (Documentation & Results)
+- **Streamlit UI**: http://localhost:8501 (Local results explorer)
 - **PostgreSQL**: localhost:5432 (credentials: postgres/changeme)
 
 #### Hot Reloading
@@ -94,8 +98,9 @@ This will:
 Your code is live-mounted into the container. Any changes you make will automatically trigger reloads:
 
 - **Edit API code** (e.g., `evalap/api/main.py`) → Uvicorn auto-reloads
-- **Edit runner code** (e.g., `evalap/runners/tasks.py`) → Runner auto-restarts (you'll see `[Reloader]` messages)
+- **Edit runner code** (e.g., `evalap/runners/tasks.py`) → Runner auto-restarts
 - **Edit Documentation code** (e.g., `docs/docs/index.md`) → Docusaurus auto-reloads
+- **Edit UI code** (e.g., `evalap/ui/demo_streamlit/app.py`) → Streamlit auto-reloads
 
 #### Managing Docker Services
 
@@ -116,6 +121,7 @@ supervisorctl status
 supervisorctl restart uvicorn
 supervisorctl restart runner
 supervisorctl restart docusaurus
+supervisorctl restart streamlit
 
 # Stop services
 docker compose -f compose.dev.yml down
@@ -151,7 +157,7 @@ alembic -c evalap/api/alembic.ini upgrade head
 
 #### Run All Services
 
-Launch the API, runner and Docusaurus together:
+Launch the API, runner, Docusaurus and Streamlit together:
 
 ```bash
 just run
@@ -164,7 +170,7 @@ This will:
    - **llm-values-CIVICS**: Cultural values evaluation dataset
    - **lmsys-toxic-chat**: Toxicity detection dataset
    - **DECCP**: Chinese censorship benchmark
-2. Start all three services in parallel with colored output and hot reloading
+2. Start all four services in parallel with colored output and hot reloading
 
 Note: Having an `HF_TOKEN` set is recommended for better dataset download reliability.
 
@@ -190,6 +196,12 @@ LOG_LEVEL="DEBUG" PYTHONPATH="." python -m evalap.runners
 
 ```bash
 cd docs && npm run start
+```
+
+**Launch Streamlit:**
+
+```bash
+uv run streamlit run evalap/ui/demo_streamlit/app.py
 ```
 
 ## Troubleshooting

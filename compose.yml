@@ -37,6 +37,7 @@ services:
     ports:
       - "8000:8000"
       - "3000:3000"
+      - "8501:8501"
     volumes:
       - evalap_data:/data
       - huggingface_cache:/root/.cache/huggingface

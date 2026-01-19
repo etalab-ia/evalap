@@ -116,10 +116,18 @@ Si vous rencontrez des problèmes au démarrage de l'application :
 
 L'API devrait maintenant fonctionner à l'adresse `http://localhost:8000`.
 
-## Exécuter l'interface Docusaurus (Optionnel)
+## Exécuter les interfaces (Optionnel)
+
+### Docusaurus (Plateforme & Docs)
 
 ```bash
 cd docs && npm run start
+```
+
+### Streamlit (Interface locale)
+
+```bash
+uv run streamlit run evalap/ui/demo_streamlit/app.py
 ```
 
 

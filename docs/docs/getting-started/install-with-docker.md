@@ -55,6 +55,7 @@ services:
     ports:
       - "8000:8000"
       - "3000:3000"
+      - "8501:8501"
     volumes:
       - evalap_data:/data
     command: ["supervisord", "-c", "/app/supervisord.conf"]
@@ -77,7 +78,8 @@ This will start both the application and the database services in detached mode.
 
 You should then be able to connect to the following services:
 - the API at http://localhost:8000/api-docs
-- the webapp at http://localhost:3000
+- the Docusaurus platform at http://localhost:3000
+- the Streamlit UI at http://localhost:8501
 
 
 ## Next Steps
