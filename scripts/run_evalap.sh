@@ -40,27 +40,19 @@ elif [ "$MODE" = "local" ]; then
   trap cleanup SIGINT SIGTERM
 
   # Start API in background with blue prefix
-  {
-    uv run uvicorn evalap.api.main:app --reload 2>&1 | sed $'s/^/\033[0;34m[API]\033[0m /'
-  } &
+  uv run uvicorn evalap.api.main:app --reload > >(sed $'s/^/\033[0;34m[API]\033[0m /') 2>&1 &
   API_PID=$!
 
   # Start runner in background with yellow prefix
-  {
-    LOG_LEVEL="${LOG_LEVEL}" PYTHONPATH="." uv run python -m evalap.runners 2>&1 | sed $'s/^/\033[1;33m[RUNNER]\033[0m /'
-  } &
+  LOG_LEVEL="${LOG_LEVEL}" PYTHONPATH="." uv run python -m evalap.runners > >(sed $'s/^/\033[1;33m[RUNNER]\033[0m /') 2>&1 &
   RUNNER_PID=$!
 
   # Start Docusaurus in background with cyan prefix
-  {
-    (cd docs && npm run start -- --port 3000) 2>&1 | sed $'s/^/\033[0;36m[DOCUSAURUS]\033[0m /'
-  } &
+  (cd docs && npm run start -- --port 3000) > >(sed $'s/^/\033[0;36m[DOCUSAURUS]\033[0m /') 2>&1 &
   DOCUSAURUS_PID=$!
 
   # Start Streamlit in background with yellow prefix
-  {
-    uv run streamlit run evalap/ui/demo_streamlit/app.py --server.runOnSave true --server.headless=true --server.port 8501 2>&1 | sed $'s/^/\033[1;33m[STREAMLIT]\033[0m /'
-  } &
+  uv run streamlit run evalap/ui/demo_streamlit/app.py --server.runOnSave true --server.headless=true --server.port 8501 > >(sed $'s/^/\033[1;33m[STREAMLIT]\033[0m /') 2>&1 &
   STREAMLIT_PID=$!
 
   # Wait for all processes
