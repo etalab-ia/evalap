@@ -16,6 +16,15 @@ ENV UV_COMPILE_BYTECODE=1 \
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv python install 3.12
 
+# Docs builder stage: Build Docusaurus static site
+FROM base AS docs-builder
+WORKDIR /app/docs
+COPY ./docs .
+# Install dependencies and build
+RUN npm ci
+RUN npm run build
+
+
 # Dependencies stage: Install dependencies only (not the project itself)
 FROM base AS dependencies
 
@@ -38,6 +47,13 @@ COPY ./docs /app/docs
 COPY ./evalap /app/evalap
 COPY ./scripts /app/scripts
 COPY supervisord.conf /app/supervisord.conf
+
+# Copy built Docusaurus site
+COPY --from=docs-builder /app/docs/build /app/docs/build
+
+# Install 'serve' to serve static site
+RUN npm install -g serve
+
 
 # Install the project itself (fast, no dependencies to download)
 RUN --mount=type=cache,target=/root/.cache/uv \

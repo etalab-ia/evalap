@@ -3,6 +3,9 @@
 
 const { themes } = require('prism-react-renderer');
 
+const isDev = process.env.NODE_ENV === 'development';
+const API_URL = isDev ? 'http://localhost:8000' : '';
+
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
@@ -14,8 +17,7 @@ const config = {
     url: 'https://evalap.etalab.gouv.fr',
     // Set the /<baseUrl>/ pathname under which your site is served
     // For GitHub pages deployment, it is often '/<projectName>/'
-    baseUrl: '/doc/',
-    //baseUrl: '/',  // to run locally with `npm run serve`
+    baseUrl: '/',
 
     // GitHub pages deployment config.
     // If you aren't using GitHub pages, you don't need these.
@@ -80,7 +82,7 @@ const config = {
                     },
                     {
                         label: 'API Reference',
-                        href: "https://evalap.etalab.gouv.fr/redoc",
+                        href: `${API_URL}/redoc`,
                         position: 'left',
                     },
                     {
@@ -135,16 +137,12 @@ const config = {
                         title: 'More',
                         items: [
                             {
-                                label: 'Official instance',
-                                href: 'https://evalap.etalab.gouv.fr',
-                            },
-                            {
                                 label: 'API Reference',
-                                href: 'https://evalap.etalab.gouv.fr/redoc',
+                                href: `${API_URL}/redoc`,
                             },
                             {
-                                label: 'API Swagger',
-                                href: 'https://evalap.etalab.gouv.fr/docs',
+                                label: 'API Reference (Swagger)',
+                                href: `${API_URL}/api-docs`,
                             },
                             {
                                 label: 'Github',

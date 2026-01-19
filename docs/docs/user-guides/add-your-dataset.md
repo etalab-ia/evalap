@@ -34,7 +34,7 @@ For example, if your dataset has a column named "question", you would map them l
 "columns_map": {"query": "question"}
 ```
 
-See the [api reference](https://evalap.etalab.gouv.fr/redoc#tag/datasets/operation/create_dataset_v1_dataset_post) for more usage detail.
+See the [api reference](/redoc#tag/datasets/operation/create_dataset_v1_dataset_post) for more usage detail.
 
 
 ## From CSV like dataset

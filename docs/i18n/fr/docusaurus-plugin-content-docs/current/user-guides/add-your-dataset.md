@@ -33,7 +33,7 @@ Par exemple, si votre jeu de données a une colonne nommée "question", vous pou
 "columns_map": {"input": "question", "output": "answer"}
 ```
 
-Consultez la [référence de l'API](https://evalap.etalab.gouv.fr/redoc#tag/datasets/operation/create_dataset_v1_dataset_post) pour plus de détails d'utilisation.
+Consultez la [référence de l'API](/redoc#tag/datasets/operation/create_dataset_v1_dataset_post) pour plus de détails d'utilisation.
 
 
 ## À partir d'un jeu de données de type CSV

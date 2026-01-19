@@ -25,7 +25,7 @@ services:
     image: evalap:dev
     ports:
       - "8000:8000"
-      - "8501:8501"
+      - "3000:3000"
     command: ["/bin/sh", "-c", "/app/.venv/bin/supervisord -c /app/supervisord.dev.conf"]
     volumes:
       - .:/app:cached

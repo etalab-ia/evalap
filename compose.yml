@@ -36,7 +36,6 @@ services:
       - ALBERT_API_KEY=${ALBERT_API_KEY}
     ports:
       - "8000:8000"
-      - "8501:8501"
       - "3000:3000"
     volumes:
       - evalap_data:/data

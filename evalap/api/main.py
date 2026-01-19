@@ -16,7 +16,7 @@ app = FastAPI(
     description=APP_DESCRIPTION,
     version=APP_VERSION,
     contact=CONTACT,
-    docs_url=API_PREFIX + "/docs",
+    docs_url=API_PREFIX + "/api-docs",
     redoc_url=API_PREFIX + "/redoc",
     openapi_url=API_PREFIX + "/openapi.json",
 )
