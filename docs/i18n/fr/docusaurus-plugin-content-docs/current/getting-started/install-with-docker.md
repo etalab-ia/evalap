@@ -55,6 +55,7 @@ services:
     ports:
       - "8000:8000"
       - "3000:3000"
+      - "8501:8501"
     volumes:
       - evalap_data:/data
     command: ["supervisord", "-c", "/app/supervisord.conf"]
@@ -78,6 +79,7 @@ Cela démarrera à la fois l'application et les services de base de données en 
 Vous devriez alors pouvoir vous connecter aux services suivants :
 - l'API à l'adresse http://localhost:8000/api-docs
 - la plateforme Docusaurus à l'adresse http://localhost:3000
+- l'interface locale Streamlit à l'adresse http://localhost:8501
 
 
 ## Prochaines étapes
