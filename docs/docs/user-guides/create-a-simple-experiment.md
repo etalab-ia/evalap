@@ -124,7 +124,7 @@ print(f"Experiment {experiment_id} is running")
 ```
 
 :::tip Custom Model Fields Supported
-See the API documention of the ModelRaw schema to see all the parameters accepted for a custom model : /redoc#tag/experiments/operation/create_experiment_v1_experiment_post
+See the API documention of the ModelRaw schema to see all the parameters accepted for a custom model: [create_experiment_v1_experiment_post](/redoc#tag/experiments/operation/create_experiment_v1_experiment_post)
 :::
 
 In this scenario, the model schema is different:
