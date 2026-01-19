@@ -54,7 +54,6 @@ services:
       - ALBERT_API_KEY=${ALBERT_API_KEY}
     ports:
       - "8000:8000"
-      - "8501:8501"
       - "3000:3000"
     volumes:
       - evalap_data:/data
@@ -78,7 +77,7 @@ Cela démarrera à la fois l'application et les services de base de données en 
 
 Vous devriez alors pouvoir vous connecter aux services suivants :
 - l'API à l'adresse http://localhost:8000/api-docs
-- l'application web à l'adresse http://localhost:8501
+- l'application web à l'adresse http://localhost:3000
 
 
 ## Prochaines étapes

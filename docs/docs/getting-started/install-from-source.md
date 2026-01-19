@@ -116,10 +116,10 @@ If you encounter issues starting the application:
 
 The API should now be running at `http://localhost:8000`.
 
-## Run the Streamlit Frontend (Optional)
+## Run the Docusaurus Frontend (Optional)
 
 ```bash
-streamlit run evalap/ui/demo_streamlit/app.py --server.runOnSave true
+cd docs && npm run start
 ```
 
 

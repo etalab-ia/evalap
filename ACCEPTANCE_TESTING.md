@@ -107,7 +107,7 @@ That's it! No other steps needed.
 
 Once running, open your browser:
 
-- **Main UI**: http://localhost:8501
+- **Main UI**: http://localhost:3000
 - **API Docs**: http://localhost:8000/api-docs
 
 ## Stop the Application
@@ -157,7 +157,7 @@ gh auth login
 
 ### Port already in use
 
-Another app is using port 8000 or 8501. Stop that app or wait a moment and try again.
+Another app is using port 8000 or 3000. Stop that app or wait a moment and try again.
 
 ### "No open pull requests found"
 

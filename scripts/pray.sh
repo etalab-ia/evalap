@@ -130,14 +130,14 @@ CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
 echo -e "${BLUE}API: http://localhost:8000${NC}"
-echo -e "${CYAN}Streamlit: http://localhost:8501${NC}"
+echo -e "${CYAN}Docusaurus: http://localhost:3000${NC}"
 echo -e "${GREEN}Press Ctrl-C to stop all services${NC}"
 echo ""
 
 # Function to cleanup background processes
 cleanup() {
   echo -e "\n${RED}Shutting down services...${NC}"
-  kill $API_PID $RUNNER_PID $STREAMLIT_PID 2>/dev/null || true
+  kill $API_PID $RUNNER_PID $DOCUSAURUS_PID 2>/dev/null || true
   docker compose -f compose.dev.yml down 2>/dev/null || true
   wait
   echo -e "${GREEN}All services stopped${NC}"
@@ -150,7 +150,7 @@ trap cleanup SIGINT SIGTERM
 # Kill any hanging processes on service ports
 echo "🧹 Cleaning up any hanging processes..."
 lsof -ti:8000 | xargs kill -9 2>/dev/null || true
-lsof -ti:8501 | xargs kill -9 2>/dev/null || true
+lsof -ti:3000 | xargs kill -9 2>/dev/null || true
 lsof -ti:5555 | xargs kill -9 2>/dev/null || true
 lsof -ti:5556 | xargs kill -9 2>/dev/null || true
 sleep 1
@@ -167,11 +167,11 @@ API_PID=$!
 } &
 RUNNER_PID=$!
 
-# Start streamlit in background with cyan prefix
+# Start Docusaurus in background with cyan prefix
 {
-  uv run streamlit run evalap/ui/demo_streamlit/app.py --server.runOnSave true --server.headless=true 2>&1 | sed $'s/^/\033[0;36m[STREAMLIT]\033[0m /'
+  (cd docs && npm run start -- --port 3000) 2>&1 | sed $'s/^/\033[0;36m[DOCUSAURUS]\033[0m /'
 } &
-STREAMLIT_PID=$!
+DOCUSAURUS_PID=$!
 
 # Wait for Uvicorn API to be ready before opening browser
 echo "⏳ Waiting for API to be ready..."
@@ -187,17 +187,17 @@ for i in {1..60}; do
   sleep 1
 done
 
-echo "🌐 Opening Streamlit UI in browser..."
+echo "🌐 Opening Docusaurus UI in browser..."
 if command -v open &> /dev/null; then
   # macOS
-  open http://localhost:8501
+  open http://localhost:3000
 elif command -v xdg-open &> /dev/null; then
   # Linux
-  xdg-open http://localhost:8501
+  xdg-open http://localhost:3000
 elif command -v start &> /dev/null; then
   # Windows
-  start http://localhost:8501
+  start http://localhost:3000
 fi
 
 # Wait for all processes
-wait $API_PID $RUNNER_PID $STREAMLIT_PID
+wait $API_PID $RUNNER_PID $DOCUSAURUS_PID

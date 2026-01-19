@@ -54,7 +54,6 @@ services:
       - ALBERT_API_KEY=${ALBERT_API_KEY}
     ports:
       - "8000:8000"
-      - "8501:8501"
       - "3000:3000"
     volumes:
       - evalap_data:/data
@@ -78,7 +77,7 @@ This will start both the application and the database services in detached mode.
 
 You should then be able to connect to the following services:
 - the API at http://localhost:8000/api-docs
-- the webapp at http://localhost:8501
+- the webapp at http://localhost:3000
 
 
 ## Next Steps

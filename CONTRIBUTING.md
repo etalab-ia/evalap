@@ -3,7 +3,7 @@
 ## Project Architecture
 
 The stack is based on Fastapi+pydantic+sqlachemy for the API in conjonction with ZeroMQ for the Runner.
-The project includes an UI/UX based on Streamlit [WIP].
+The project includes a Documentation and Results platform based on Docusaurus.
 
 ```
 evalap/
@@ -80,13 +80,13 @@ This will:
 - Start all three services with hot reloading:
   - **Uvicorn API** on port 8000
   - **Runner** with file watching
-  - **Streamlit UI** on port 8501
+  - **Docusaurus UI** on port 3000
 
 #### Access Your Services
 
 - **API**: http://localhost:8000
 - **API Docs**: http://localhost:8000/api-docs or http://localhost:8000/redoc
-- **Streamlit UI**: http://localhost:8501
+- **Docusaurus UI**: http://localhost:3000
 - **PostgreSQL**: localhost:5432 (credentials: postgres/changeme)
 
 #### Hot Reloading
@@ -95,7 +95,7 @@ Your code is live-mounted into the container. Any changes you make will automati
 
 - **Edit API code** (e.g., `evalap/api/main.py`) → Uvicorn auto-reloads
 - **Edit runner code** (e.g., `evalap/runners/tasks.py`) → Runner auto-restarts (you'll see `[Reloader]` messages)
-- **Edit Streamlit code** (e.g., `evalap/ui/demo_streamlit/app.py`) → Streamlit prompts to rerun
+- **Edit Documentation code** (e.g., `docs/docs/index.md`) → Docusaurus auto-reloads
 
 #### Managing Docker Services
 
@@ -115,7 +115,7 @@ supervisorctl status
 # Restart a specific process
 supervisorctl restart uvicorn
 supervisorctl restart runner
-supervisorctl restart streamlit
+supervisorctl restart docusaurus
 
 # Stop services
 docker compose -f compose.dev.yml down
@@ -151,7 +151,7 @@ alembic -c evalap/api/alembic.ini upgrade head
 
 #### Run All Services
 
-Launch the API, runner and streamlit together:
+Launch the API, runner and Docusaurus together:
 
 ```bash
 just run
@@ -186,10 +186,10 @@ PYTHONPATH="." python -m evalap.runners
 LOG_LEVEL="DEBUG" PYTHONPATH="." python -m evalap.runners
 ```
 
-**Launch Streamlit:**
+**Launch Docusaurus:**
 
 ```bash
-streamlit run evalap/ui/demo_streamlit/app.py --server.runOnSave true --server.headless=true
+cd docs && npm run start
 ```
 
 ## Troubleshooting
