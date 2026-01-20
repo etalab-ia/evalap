@@ -1,0 +1,5307 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "evalap",
+    "description": "Evaluations API and Platform",
+    "contact": {
+      "name": "Etalab - Datalab",
+      "url": "https://www.etalab.gouv.fr/",
+      "email": "etalab@modernisation.gouv.fr"
+    },
+    "version": "0.3.0"
+  },
+  "paths": {
+    "/v1/dataset": {
+      "post": {
+        "tags": [
+          "datasets"
+        ],
+        "summary": "Create Dataset",
+        "operationId": "create_dataset_v1_dataset_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DatasetCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Dataset"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "datasets"
+        ],
+        "summary": "Read Dataset By Query",
+        "operationId": "read_dataset_by_query_v1_dataset_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Id"
+            }
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Name"
+            }
+          },
+          {
+            "name": "with_df",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "With Df"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/Dataset"
+                    },
+                    {
+                      "$ref": "#/components/schemas/DatasetFull"
+                    }
+                  ],
+                  "title": "Response Read Dataset By Query V1 Dataset Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/datasets": {
+      "get": {
+        "tags": [
+          "datasets"
+        ],
+        "summary": "Read Datasets",
+        "operationId": "read_datasets_v1_datasets_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Dataset"
+                  },
+                  "type": "array",
+                  "title": "Response Read Datasets V1 Datasets Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v1/dataset/{id}": {
+      "get": {
+        "tags": [
+          "datasets"
+        ],
+        "summary": "Read Dataset",
+        "operationId": "read_dataset_v1_dataset__id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          },
+          {
+            "name": "with_df",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "With Df"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/Dataset"
+                    },
+                    {
+                      "$ref": "#/components/schemas/DatasetFull"
+                    }
+                  ],
+                  "title": "Response Read Dataset V1 Dataset  Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "datasets"
+        ],
+        "summary": "Patch Dataset",
+        "operationId": "patch_dataset_v1_dataset__id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DatasetPatch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Dataset"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "datasets"
+        ],
+        "summary": "Delete Dataset",
+        "operationId": "delete_dataset_v1_dataset__id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          },
+          {
+            "name": "x-evalap-admin",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "title": "X-Evalap-Admin"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/dataset/{id}/upload_parquet": {
+      "post": {
+        "tags": [
+          "datasets"
+        ],
+        "summary": "Upload Parquet Dataset",
+        "description": "Endpoint to handle streaming upload of Parquet data for a specific dataset.\n\nArgs:\n    dataset_id: ID of the dataset in the database\n    request: The streaming request containing Parquet data\n    db: Database session",
+        "operationId": "upload_parquet_dataset_v1_dataset__id__upload_parquet_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Dataset"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/metrics": {
+      "get": {
+        "tags": [
+          "metrics"
+        ],
+        "summary": "Read Metrics",
+        "operationId": "read_metrics_v1_metrics_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Metric"
+                  },
+                  "type": "array",
+                  "title": "Response Read Metrics V1 Metrics Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v1/experiment": {
+      "post": {
+        "tags": [
+          "experiments"
+        ],
+        "summary": "Create Experiment",
+        "description": "Launch an experiment. If a model is given, it will be use to generate the model output (answer), otherwise it will use the `output` column of the given dataset.",
+        "operationId": "create_experiment_v1_experiment_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExperimentCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Experiment"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v1/experiment/{id}": {
+      "patch": {
+        "tags": [
+          "experiments"
+        ],
+        "summary": "Patch Experiment",
+        "description": "Update an experiment. The given metrics will be added (or rerun) to the existing results for this experiments. Use rerun_answers if want to re-generate the answers/output.",
+        "operationId": "patch_experiment_v1_experiment__id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExperimentPatch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Experiment"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "experiments"
+        ],
+        "summary": "Delete Experiment",
+        "operationId": "delete_experiment_v1_experiment__id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          },
+          {
+            "name": "x-evalap-admin",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "title": "X-Evalap-Admin"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "experiments"
+        ],
+        "summary": "Read Experiment",
+        "operationId": "read_experiment_v1_experiment__id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          },
+          {
+            "name": "with_results",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "With Results"
+            }
+          },
+          {
+            "name": "with_answers",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "With Answers"
+            }
+          },
+          {
+            "name": "with_dataset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "With Dataset"
+            }
+          },
+          {
+            "name": "with_eco",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "With Eco"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/Experiment"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ExperimentWithResults"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ExperimentWithAnswers"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ExperimentFullWithEco"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ExperimentFull"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ExperimentFullWithDataset"
+                    }
+                  ],
+                  "title": "Response Read Experiment V1 Experiment  Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/experiments": {
+      "get": {
+        "tags": [
+          "experiments"
+        ],
+        "summary": "Read Experiments",
+        "operationId": "read_experiments_v1_experiments_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 100,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "backward",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Backward"
+            }
+          },
+          {
+            "name": "set_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Set Id"
+            }
+          },
+          {
+            "name": "orphan",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Orphan"
+            }
+          },
+          {
+            "name": "compliance",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter Experiment by compliance dataset (True/False).",
+              "title": "Compliance"
+            },
+            "description": "Filter Experiment by compliance dataset (True/False)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ExperimentWithResults"
+                  },
+                  "title": "Response Read Experiments V1 Experiments Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/experiment_set": {
+      "post": {
+        "tags": [
+          "experiment_set"
+        ],
+        "summary": "Create Experimentset",
+        "operationId": "create_experimentset_v1_experiment_set_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExperimentSetCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentSet"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v1/experiment_set/{id}": {
+      "patch": {
+        "tags": [
+          "experiment_set"
+        ],
+        "summary": "Patch Experimentset",
+        "description": "Update an experimentset: New experiments will be added to the runner queue.",
+        "operationId": "patch_experimentset_v1_experiment_set__id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExperimentSetPatch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentSet"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "experiment_set"
+        ],
+        "summary": "Read Experimentset",
+        "operationId": "read_experimentset_v1_experiment_set__id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExperimentSet"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "experiment_set"
+        ],
+        "summary": "Delete Experimentset",
+        "operationId": "delete_experimentset_v1_experiment_set__id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          },
+          {
+            "name": "x-evalap-admin",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "title": "X-Evalap-Admin"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/experiment_sets": {
+      "get": {
+        "tags": [
+          "experiment_set"
+        ],
+        "summary": "Read Experimentsets",
+        "operationId": "read_experimentsets_v1_experiment_sets_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 100,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "backward",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Backward"
+            }
+          },
+          {
+            "name": "compliance",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter ExperimentSet by compliance dataset.",
+              "title": "Compliance"
+            },
+            "description": "Filter ExperimentSet by compliance dataset."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ExperimentSet"
+                  },
+                  "title": "Response Read Experimentsets V1 Experiment Sets Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/stop/experiment_set/{id}": {
+      "post": {
+        "tags": [
+          "experiment_set"
+        ],
+        "summary": "Stop Runs",
+        "description": "Stop running experiments.",
+        "operationId": "stop_runs_v1_stop_experiment_set__id__post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/retry/experiment_set/{id}": {
+      "post": {
+        "tags": [
+          "experiment_set"
+        ],
+        "summary": "Retry Runs",
+        "description": "Re-run failed runs and continue unfinished answers or metrics.",
+        "operationId": "retry_runs_v1_retry_experiment_set__id__post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id"
+            }
+          },
+          {
+            "name": "force",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Force retry of all unfinished runs, by resetting their status to pending. <!> Warning this can cause incoherent num_try/num_success value if another runner work on the same experiments.",
+              "default": false,
+              "title": "Force"
+            },
+            "description": "Force retry of all unfinished runs, by resetting their status to pending. <!> Warning this can cause incoherent num_try/num_success value if another runner work on the same experiments."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RetryRuns"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/leaderboard": {
+      "get": {
+        "tags": [
+          "leaderboard"
+        ],
+        "summary": "Read Leaderboard",
+        "operationId": "read_leaderboard_v1_leaderboard_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "metric_name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "judge_notator",
+              "title": "Metric Name"
+            }
+          },
+          {
+            "name": "dataset_name",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "title": "Dataset Name"
+            }
+          },
+          {
+            "name": "judge_model",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "title": "Judge Model"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 100,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Leaderboard"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/ops_metrics": {
+      "get": {
+        "tags": [
+          "ops"
+        ],
+        "summary": "Read Ops Metrics",
+        "operationId": "read_ops_metrics_v1_ops_metrics_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpsMetrics"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v1/ops_eco": {
+      "get": {
+        "tags": [
+          "ops"
+        ],
+        "summary": "Read Ops Eco",
+        "operationId": "read_ops_eco_v1_ops_eco_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpsEcoGlobal"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v1/generate": {
+      "post": {
+        "tags": [
+          "generate"
+        ],
+        "summary": "Generate",
+        "operationId": "generate_v1_generate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Answer"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v1/locust": {
+      "post": {
+        "tags": [
+          "locust"
+        ],
+        "summary": "Create Locustrun",
+        "description": "Save a locust run.\n\n    To format the locust CSV as a dataframe, here is how you must convert it to a dataframe:\n    ```\n    import pandas as pd\n    import requests\n    stats_df = pd.read_csv(\"stats.csv\").to_json()\n\n    # Then you can just pass the data in the POST request along the other parameters.\n    ```",
+        "operationId": "create_locustrun_v1_locust_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LocustRunCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocustRun"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v1/locust/runs": {
+      "get": {
+        "tags": [
+          "locust"
+        ],
+        "summary": "Get Locustruns",
+        "description": "Get the list of locust runs",
+        "operationId": "get_locustruns_v1_locust_runs_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 100,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "backward",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Backward"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LocustRun"
+                  },
+                  "title": "Response Get Locustruns V1 Locust Runs Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/locust/{id}": {
+      "get": {
+        "tags": [
+          "locust"
+        ],
+        "summary": "Get Locustrun",
+        "description": "Get locust run with data.",
+        "operationId": "get_locustrun_v1_locust__id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocustRunFull"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/loadtesting": {
+      "post": {
+        "tags": [
+          "loadtesting"
+        ],
+        "summary": "Create Loadtesting",
+        "description": "Save a loadtesting run.\n\n    To format the loadtesting CSV as a dataframe, here is how you must convert it to a dataframe:\n    ```\n    import pandas as pd\n    import requests\n    stats_df = pd.read_csv(\"stats.csv\").to_json()\n\n    # Then you can just pass the data in the POST request along the other parameters.\n    ```",
+        "operationId": "create_loadtesting_v1_loadtesting_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoadTestingCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoadTesting"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/v1/loadtesting/runs": {
+      "get": {
+        "tags": [
+          "loadtesting"
+        ],
+        "summary": "Get Loadtestings",
+        "description": "Get the list of loadtesting runs",
+        "operationId": "get_loadtestings_v1_loadtesting_runs_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 100,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "backward",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Backward"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/LoadTesting"
+                  },
+                  "title": "Response Get Loadtestings V1 Loadtesting Runs Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/loadtesting/{run_id}": {
+      "get": {
+        "tags": [
+          "loadtesting"
+        ],
+        "summary": "Get Loadtesting",
+        "description": "Get loadtesting run with data.",
+        "operationId": "get_loadtesting_v1_loadtesting__run_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoadTestingFull"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "loadtesting"
+        ],
+        "summary": "Remove Loadtesting",
+        "description": "Remove loadtesting run.",
+        "operationId": "remove_loadtesting_v1_loadtesting__run_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Answer": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "answer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answer"
+          },
+          "think": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Think"
+          },
+          "context": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Context"
+          },
+          "retrieval_context": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retrieval Context"
+          },
+          "num_line": {
+            "type": "integer",
+            "title": "Num Line"
+          },
+          "error_msg": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Msg"
+          },
+          "execution_time": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Execution Time"
+          },
+          "tool_steps": {
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tool Steps"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "created_at",
+          "answer",
+          "think",
+          "context",
+          "retrieval_context",
+          "num_line",
+          "error_msg",
+          "execution_time",
+          "tool_steps"
+        ],
+        "title": "Answer"
+      },
+      "AnswerWithEco": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "answer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answer"
+          },
+          "think": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Think"
+          },
+          "context": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Context"
+          },
+          "retrieval_context": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retrieval Context"
+          },
+          "num_line": {
+            "type": "integer",
+            "title": "Num Line"
+          },
+          "error_msg": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Msg"
+          },
+          "execution_time": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Execution Time"
+          },
+          "tool_steps": {
+            "anyOf": [
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tool Steps"
+          },
+          "emission_carbon": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Emission Carbon"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "created_at",
+          "answer",
+          "think",
+          "context",
+          "retrieval_context",
+          "num_line",
+          "error_msg",
+          "execution_time",
+          "tool_steps",
+          "emission_carbon"
+        ],
+        "title": "AnswerWithEco",
+        "description": "Answer with emission_carbon field for eco metrics."
+      },
+      "Dataset": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Name of the dataset"
+          },
+          "readme": {
+            "type": "string",
+            "title": "Readme",
+            "description": "Markdown-formatted readme or description of the dataset"
+          },
+          "default_metric": {
+            "type": "string",
+            "title": "Default Metric"
+          },
+          "columns_map": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Columns Map",
+            "description": "A column names maping that indicates what names in dataset match the evalap stadandard (output, output_true etc)"
+          },
+          "compliance": {
+            "type": "boolean",
+            "title": "Compliance",
+            "default": false
+          },
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "size": {
+            "type": "integer",
+            "title": "Size",
+            "description": "Number of rows in the dataset (length of the dataframe)"
+          },
+          "columns": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Columns"
+          },
+          "parquet_size": {
+            "type": "integer",
+            "title": "Parquet Size",
+            "description": "Number of rows in the dataset (length of the parquet file)"
+          },
+          "parquet_columns": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Parquet Columns"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "readme",
+          "default_metric",
+          "id",
+          "created_at",
+          "size",
+          "columns",
+          "parquet_size",
+          "parquet_columns"
+        ],
+        "title": "Dataset"
+      },
+      "DatasetCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Name of the dataset"
+          },
+          "readme": {
+            "type": "string",
+            "title": "Readme",
+            "description": "Markdown-formatted readme or description of the dataset"
+          },
+          "default_metric": {
+            "type": "string",
+            "title": "Default Metric"
+          },
+          "columns_map": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Columns Map",
+            "description": "A column names maping that indicates what names in dataset match the evalap stadandard (output, output_true etc)"
+          },
+          "compliance": {
+            "type": "boolean",
+            "title": "Compliance",
+            "default": false
+          },
+          "df": {
+            "type": "string",
+            "title": "Df"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "readme",
+          "default_metric",
+          "df"
+        ],
+        "title": "DatasetCreate"
+      },
+      "DatasetFull": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "description": "Name of the dataset"
+          },
+          "readme": {
+            "type": "string",
+            "title": "Readme",
+            "description": "Markdown-formatted readme or description of the dataset"
+          },
+          "default_metric": {
+            "type": "string",
+            "title": "Default Metric"
+          },
+          "columns_map": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Columns Map",
+            "description": "A column names maping that indicates what names in dataset match the evalap stadandard (output, output_true etc)"
+          },
+          "compliance": {
+            "type": "boolean",
+            "title": "Compliance",
+            "default": false
+          },
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "size": {
+            "type": "integer",
+            "title": "Size",
+            "description": "Number of rows in the dataset (length of the dataframe)"
+          },
+          "columns": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Columns"
+          },
+          "parquet_size": {
+            "type": "integer",
+            "title": "Parquet Size",
+            "description": "Number of rows in the dataset (length of the parquet file)"
+          },
+          "parquet_columns": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Parquet Columns"
+          },
+          "df": {
+            "type": "string",
+            "title": "Df"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "readme",
+          "default_metric",
+          "id",
+          "created_at",
+          "size",
+          "columns",
+          "parquet_size",
+          "parquet_columns",
+          "df"
+        ],
+        "title": "DatasetFull"
+      },
+      "DatasetPatch": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "readme": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Readme"
+          },
+          "default_metric": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Metric"
+          },
+          "columns_map": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Columns Map"
+          },
+          "compliance": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Compliance"
+          },
+          "id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "size": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Size"
+          },
+          "columns": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Columns"
+          },
+          "parquet_size": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parquet Size"
+          },
+          "parquet_columns": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parquet Columns"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "DatasetPatch"
+      },
+      "Experiment": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "readme": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Readme"
+          },
+          "experiment_set_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Experiment Set Id"
+          },
+          "judge_model": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Model"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "with_vision": {
+            "type": "boolean",
+            "title": "With Vision",
+            "description": "Add the image to the user message if an 'img' field is present in the dataset (parquet).",
+            "default": false
+          },
+          "sample": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sample",
+            "description": "List of the sample indices to select from the dataset, if applicable."
+          },
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "experiment_status": {
+            "$ref": "#/components/schemas/ExperimentStatus"
+          },
+          "num_try": {
+            "type": "integer",
+            "title": "Num Try",
+            "description": "How many output/answers were attempted to be generated."
+          },
+          "num_success": {
+            "type": "integer",
+            "title": "Num Success",
+            "description": "How many output/answers were successfully generated."
+          },
+          "num_observation_try": {
+            "type": "integer",
+            "title": "Num Observation Try",
+            "description": "How many metric observations were attempted to be generated."
+          },
+          "num_observation_success": {
+            "type": "integer",
+            "title": "Num Observation Success",
+            "description": "How many metric observations were successfully generated."
+          },
+          "num_metrics": {
+            "type": "integer",
+            "title": "Num Metrics",
+            "description": "How many metrics are associated to this experiment. See the query parameter `with_results` to get the results per metrics."
+          },
+          "dataset": {
+            "$ref": "#/components/schemas/Dataset"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Model"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "judge_model",
+          "id",
+          "created_at",
+          "experiment_status",
+          "num_try",
+          "num_success",
+          "num_observation_try",
+          "num_observation_success",
+          "num_metrics",
+          "dataset",
+          "model"
+        ],
+        "title": "Experiment"
+      },
+      "ExperimentCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "readme": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Readme"
+          },
+          "experiment_set_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Experiment Set Id"
+          },
+          "judge_model": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ModelCreate"
+              },
+              {
+                "type": "string",
+                "enum": [
+                  "gpt-4o-mini-realtime-preview",
+                  "gpt-4o-mini-transcribe-2025-12-15",
+                  "mistralai/Ministral-3-8B-Instruct-2512",
+                  "gpt-4-1106-preview",
+                  "openweight-code",
+                  "gpt-audio-2025-08-28",
+                  "gpt-4o-mini-search-preview",
+                  "openweight-large",
+                  "BAAI/bge-m3",
+                  "o4-mini",
+                  "o3",
+                  "gpt-5.1-codex-mini",
+                  "openweight-embeddings",
+                  "openai/gpt-oss-120b",
+                  "gpt-4o-search-preview",
+                  "gpt-5.2-pro-2025-12-11",
+                  "dall-e-2",
+                  "gpt-4-turbo",
+                  "o1-pro-2025-03-19",
+                  "omni-moderation-2024-09-26",
+                  "gpt-5.2-pro",
+                  "gpt-realtime-mini",
+                  "gpt-3.5-turbo-0125",
+                  "whisper-1",
+                  "tts-1-1106",
+                  "gpt-5.1-chat-latest",
+                  "gpt-5.2-2025-12-11",
+                  "gpt-4o-mini-2024-07-18",
+                  "gpt-4o-mini-tts-2025-03-20",
+                  "gpt-4o-mini-transcribe-2025-03-20",
+                  "gpt-5-nano",
+                  "gpt-4o-mini-tts-2025-12-15",
+                  "gpt-realtime",
+                  "gpt-4.1",
+                  "gpt-realtime-2025-08-28",
+                  "gpt-5-search-api",
+                  "embeddings-small",
+                  "gpt-audio",
+                  "voxtral-small-2507",
+                  "gpt-4-0613",
+                  "mistralai/Mistral-Small-3.2-24B-Instruct-2506",
+                  "gpt-4-turbo-2024-04-09",
+                  "gpt-5-chat-latest",
+                  "gpt-5-mini",
+                  "gpt-3.5-turbo-instruct-0914",
+                  "chatgpt-image-latest",
+                  "gpt-audio-mini",
+                  "tts-1",
+                  "gpt-4o-mini-audio-preview-2024-12-17",
+                  "rerank-small",
+                  "text-embedding-3-large",
+                  "gpt-4o-mini-transcribe",
+                  "gpt-4.1-2025-04-14",
+                  "gpt-5-pro-2025-10-06",
+                  "gpt-4o-realtime-preview-2024-12-17",
+                  "meta-llama/Llama-3.1-8B-Instruct",
+                  "davinci-002",
+                  "gpt-5-pro",
+                  "sora-2",
+                  "gpt-4.1-nano-2025-04-14",
+                  "gpt-image-1-mini",
+                  "o3-2025-04-16",
+                  "gpt-4o-realtime-preview",
+                  "gpt-4o-2024-05-13",
+                  "gpt-4o-search-preview-2025-03-11",
+                  "gpt-4-turbo-preview",
+                  "openweight-small",
+                  "gpt-5-nano-2025-08-07",
+                  "albert-code",
+                  "gpt-4o-audio-preview-2025-06-03",
+                  "gpt-3.5-turbo-16k",
+                  "gpt-audio-mini-2025-12-15",
+                  "gpt-realtime-mini-2025-12-15",
+                  "gpt-4o-2024-08-06",
+                  "gpt-4o-mini-search-preview-2025-03-11",
+                  "gpt-5.2-codex",
+                  "gpt-4-0125-preview",
+                  "gpt-image-1.5",
+                  "gpt-5.1-2025-11-13",
+                  "gpt-realtime-mini-2025-10-06",
+                  "o1",
+                  "gpt-5.1-codex",
+                  "sora-2-pro",
+                  "tts-1-hd",
+                  "gpt-4o-transcribe",
+                  "o3-mini",
+                  "chatgpt-4o-latest",
+                  "gpt-4.1-mini",
+                  "omni-moderation-latest",
+                  "gpt-4.1-nano",
+                  "gpt-5-mini-2025-08-07",
+                  "gpt-5.2-chat-latest",
+                  "openai/whisper-large-v3",
+                  "gpt-5.2",
+                  "gpt-4o-mini",
+                  "gpt-3.5-turbo-1106",
+                  "albert-large",
+                  "gpt-4",
+                  "o4-mini-2025-04-16",
+                  "o1-pro",
+                  "albert-small",
+                  "Qwen/Qwen3-Coder-30B-A3B-Instruct",
+                  "openweight-rerank",
+                  "openweight-audio",
+                  "tts-1-hd-1106",
+                  "o1-2024-12-17",
+                  "gpt-4.1-mini-2025-04-14",
+                  "gpt-5.1-codex-max",
+                  "gpt-audio-mini-2025-10-06",
+                  "gpt-4o",
+                  "babbage-002",
+                  "gpt-4o-2024-11-20",
+                  "gpt-4o-audio-preview-2024-12-17",
+                  "gpt-4o-audio-preview",
+                  "gpt-5-codex",
+                  "gpt-5-2025-08-07",
+                  "gpt-4o-mini-realtime-preview-2024-12-17",
+                  "text-embedding-ada-002",
+                  "gpt-4o-mini-tts",
+                  "o3-mini-2025-01-31",
+                  "gpt-image-1",
+                  "BAAI/bge-reranker-v2-m3",
+                  "gpt-4o-transcribe-diarize",
+                  "gpt-5-search-api-2025-10-14",
+                  "gpt-5.1",
+                  "gpt-4o-realtime-preview-2025-06-03",
+                  "Qwen/Qwen2.5-Coder-32B-Instruct-AWQ",
+                  "gpt-3.5-turbo-instruct",
+                  "openweight-medium",
+                  "dall-e-3",
+                  "text-embedding-3-small",
+                  "audio-large",
+                  "gpt-3.5-turbo",
+                  "gpt-4o-mini-audio-preview"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Judge Model"
+          },
+          "with_vision": {
+            "type": "boolean",
+            "title": "With Vision",
+            "description": "Add the image to the user message if an 'img' field is present in the dataset (parquet).",
+            "default": false
+          },
+          "sample": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sample",
+            "description": "List of the sample indices to select from the dataset, if applicable."
+          },
+          "metrics": {
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/MetricEnum"
+                },
+                {
+                  "$ref": "#/components/schemas/MetricParametrized"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Metrics"
+          },
+          "dataset": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DatasetCreate"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Dataset"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ModelCreate"
+              },
+              {
+                "$ref": "#/components/schemas/ModelRaw"
+              }
+            ],
+            "title": "Model"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "metrics",
+          "dataset",
+          "model"
+        ],
+        "title": "ExperimentCreate"
+      },
+      "ExperimentFull": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "readme": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Readme"
+          },
+          "experiment_set_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Experiment Set Id"
+          },
+          "judge_model": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Model"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "with_vision": {
+            "type": "boolean",
+            "title": "With Vision",
+            "description": "Add the image to the user message if an 'img' field is present in the dataset (parquet).",
+            "default": false
+          },
+          "sample": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sample",
+            "description": "List of the sample indices to select from the dataset, if applicable."
+          },
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "experiment_status": {
+            "$ref": "#/components/schemas/ExperimentStatus"
+          },
+          "num_try": {
+            "type": "integer",
+            "title": "Num Try",
+            "description": "How many output/answers were attempted to be generated."
+          },
+          "num_success": {
+            "type": "integer",
+            "title": "Num Success",
+            "description": "How many output/answers were successfully generated."
+          },
+          "num_observation_try": {
+            "type": "integer",
+            "title": "Num Observation Try",
+            "description": "How many metric observations were attempted to be generated."
+          },
+          "num_observation_success": {
+            "type": "integer",
+            "title": "Num Observation Success",
+            "description": "How many metric observations were successfully generated."
+          },
+          "num_metrics": {
+            "type": "integer",
+            "title": "Num Metrics",
+            "description": "How many metrics are associated to this experiment. See the query parameter `with_results` to get the results per metrics."
+          },
+          "dataset": {
+            "$ref": "#/components/schemas/Dataset"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Model"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "answers": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Answer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answers"
+          },
+          "results": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Result"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Results"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "judge_model",
+          "id",
+          "created_at",
+          "experiment_status",
+          "num_try",
+          "num_success",
+          "num_observation_try",
+          "num_observation_success",
+          "num_metrics",
+          "dataset",
+          "model"
+        ],
+        "title": "ExperimentFull"
+      },
+      "ExperimentFullWithDataset": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "readme": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Readme"
+          },
+          "experiment_set_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Experiment Set Id"
+          },
+          "judge_model": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Model"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "with_vision": {
+            "type": "boolean",
+            "title": "With Vision",
+            "description": "Add the image to the user message if an 'img' field is present in the dataset (parquet).",
+            "default": false
+          },
+          "sample": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sample",
+            "description": "List of the sample indices to select from the dataset, if applicable."
+          },
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "experiment_status": {
+            "$ref": "#/components/schemas/ExperimentStatus"
+          },
+          "num_try": {
+            "type": "integer",
+            "title": "Num Try",
+            "description": "How many output/answers were attempted to be generated."
+          },
+          "num_success": {
+            "type": "integer",
+            "title": "Num Success",
+            "description": "How many output/answers were successfully generated."
+          },
+          "num_observation_try": {
+            "type": "integer",
+            "title": "Num Observation Try",
+            "description": "How many metric observations were attempted to be generated."
+          },
+          "num_observation_success": {
+            "type": "integer",
+            "title": "Num Observation Success",
+            "description": "How many metric observations were successfully generated."
+          },
+          "num_metrics": {
+            "type": "integer",
+            "title": "Num Metrics",
+            "description": "How many metrics are associated to this experiment. See the query parameter `with_results` to get the results per metrics."
+          },
+          "dataset": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DatasetFull"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "model": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Model"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "answers": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Answer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answers"
+          },
+          "results": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Result"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Results"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "judge_model",
+          "id",
+          "created_at",
+          "experiment_status",
+          "num_try",
+          "num_success",
+          "num_observation_try",
+          "num_observation_success",
+          "num_metrics",
+          "model"
+        ],
+        "title": "ExperimentFullWithDataset"
+      },
+      "ExperimentFullWithEco": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "readme": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Readme"
+          },
+          "experiment_set_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Experiment Set Id"
+          },
+          "judge_model": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Model"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "with_vision": {
+            "type": "boolean",
+            "title": "With Vision",
+            "description": "Add the image to the user message if an 'img' field is present in the dataset (parquet).",
+            "default": false
+          },
+          "sample": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sample",
+            "description": "List of the sample indices to select from the dataset, if applicable."
+          },
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "experiment_status": {
+            "$ref": "#/components/schemas/ExperimentStatus"
+          },
+          "num_try": {
+            "type": "integer",
+            "title": "Num Try",
+            "description": "How many output/answers were attempted to be generated."
+          },
+          "num_success": {
+            "type": "integer",
+            "title": "Num Success",
+            "description": "How many output/answers were successfully generated."
+          },
+          "num_observation_try": {
+            "type": "integer",
+            "title": "Num Observation Try",
+            "description": "How many metric observations were attempted to be generated."
+          },
+          "num_observation_success": {
+            "type": "integer",
+            "title": "Num Observation Success",
+            "description": "How many metric observations were successfully generated."
+          },
+          "num_metrics": {
+            "type": "integer",
+            "title": "Num Metrics",
+            "description": "How many metrics are associated to this experiment. See the query parameter `with_results` to get the results per metrics."
+          },
+          "dataset": {
+            "$ref": "#/components/schemas/Dataset"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Model"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "answers": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/AnswerWithEco"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answers"
+          },
+          "results": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Result"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Results"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "judge_model",
+          "id",
+          "created_at",
+          "experiment_status",
+          "num_try",
+          "num_success",
+          "num_observation_try",
+          "num_observation_success",
+          "num_metrics",
+          "dataset",
+          "model",
+          "answers"
+        ],
+        "title": "ExperimentFullWithEco"
+      },
+      "ExperimentPatch": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "readme": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Readme"
+          },
+          "experiment_set_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Experiment Set Id"
+          },
+          "judge_model": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Model"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "with_vision": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "With Vision"
+          },
+          "sample": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sample"
+          },
+          "metrics": {
+            "anyOf": [
+              {
+                "items": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/MetricEnum"
+                    },
+                    {
+                      "$ref": "#/components/schemas/MetricParametrized"
+                    }
+                  ]
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metrics"
+          },
+          "dataset": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Dataset"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "model": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Model"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "experiment_status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExperimentStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "num_try": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Num Try"
+          },
+          "num_success": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Num Success"
+          },
+          "num_observation_try": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Num Observation Try"
+          },
+          "num_observation_success": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Num Observation Success"
+          },
+          "num_metrics": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Num Metrics"
+          },
+          "rerun_answers": {
+            "type": "boolean",
+            "title": "Rerun Answers",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "ExperimentPatch"
+      },
+      "ExperimentSet": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "readme": {
+            "type": "string",
+            "title": "Readme"
+          },
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "experiments": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Experiment"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Experiments"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "readme",
+          "id",
+          "created_at",
+          "experiments"
+        ],
+        "title": "ExperimentSet"
+      },
+      "ExperimentSetCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "readme": {
+            "type": "string",
+            "title": "Readme"
+          },
+          "experiments": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ExperimentCreate"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Experiments"
+          },
+          "cv": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GridCV"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "readme"
+        ],
+        "title": "ExperimentSetCreate"
+      },
+      "ExperimentSetPatch": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "readme": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Readme"
+          },
+          "experiments": {
+            "anyOf": [
+              {
+                "items": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/Experiment"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ExperimentCreate"
+                    }
+                  ]
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Experiments"
+          },
+          "cv": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GridCV"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "ExperimentSetPatch"
+      },
+      "ExperimentStatus": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "running_answers",
+          "running_metrics",
+          "finished",
+          "stopped"
+        ],
+        "title": "ExperimentStatus"
+      },
+      "ExperimentWithAnswers": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "readme": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Readme"
+          },
+          "experiment_set_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Experiment Set Id"
+          },
+          "judge_model": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Model"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "with_vision": {
+            "type": "boolean",
+            "title": "With Vision",
+            "description": "Add the image to the user message if an 'img' field is present in the dataset (parquet).",
+            "default": false
+          },
+          "sample": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sample",
+            "description": "List of the sample indices to select from the dataset, if applicable."
+          },
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "experiment_status": {
+            "$ref": "#/components/schemas/ExperimentStatus"
+          },
+          "num_try": {
+            "type": "integer",
+            "title": "Num Try",
+            "description": "How many output/answers were attempted to be generated."
+          },
+          "num_success": {
+            "type": "integer",
+            "title": "Num Success",
+            "description": "How many output/answers were successfully generated."
+          },
+          "num_observation_try": {
+            "type": "integer",
+            "title": "Num Observation Try",
+            "description": "How many metric observations were attempted to be generated."
+          },
+          "num_observation_success": {
+            "type": "integer",
+            "title": "Num Observation Success",
+            "description": "How many metric observations were successfully generated."
+          },
+          "num_metrics": {
+            "type": "integer",
+            "title": "Num Metrics",
+            "description": "How many metrics are associated to this experiment. See the query parameter `with_results` to get the results per metrics."
+          },
+          "dataset": {
+            "$ref": "#/components/schemas/Dataset"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Model"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "answers": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Answer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answers"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "judge_model",
+          "id",
+          "created_at",
+          "experiment_status",
+          "num_try",
+          "num_success",
+          "num_observation_try",
+          "num_observation_success",
+          "num_metrics",
+          "dataset",
+          "model",
+          "answers"
+        ],
+        "title": "ExperimentWithAnswers"
+      },
+      "ExperimentWithResults": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "readme": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Readme"
+          },
+          "experiment_set_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Experiment Set Id"
+          },
+          "judge_model": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Model"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "with_vision": {
+            "type": "boolean",
+            "title": "With Vision",
+            "description": "Add the image to the user message if an 'img' field is present in the dataset (parquet).",
+            "default": false
+          },
+          "sample": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sample",
+            "description": "List of the sample indices to select from the dataset, if applicable."
+          },
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "experiment_status": {
+            "$ref": "#/components/schemas/ExperimentStatus"
+          },
+          "num_try": {
+            "type": "integer",
+            "title": "Num Try",
+            "description": "How many output/answers were attempted to be generated."
+          },
+          "num_success": {
+            "type": "integer",
+            "title": "Num Success",
+            "description": "How many output/answers were successfully generated."
+          },
+          "num_observation_try": {
+            "type": "integer",
+            "title": "Num Observation Try",
+            "description": "How many metric observations were attempted to be generated."
+          },
+          "num_observation_success": {
+            "type": "integer",
+            "title": "Num Observation Success",
+            "description": "How many metric observations were successfully generated."
+          },
+          "num_metrics": {
+            "type": "integer",
+            "title": "Num Metrics",
+            "description": "How many metrics are associated to this experiment. See the query parameter `with_results` to get the results per metrics."
+          },
+          "dataset": {
+            "$ref": "#/components/schemas/Dataset"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Model"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "results": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Result"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Results"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "judge_model",
+          "id",
+          "created_at",
+          "experiment_status",
+          "num_try",
+          "num_success",
+          "num_observation_try",
+          "num_observation_success",
+          "num_metrics",
+          "dataset",
+          "model",
+          "results"
+        ],
+        "title": "ExperimentWithResults"
+      },
+      "GenerateInput": {
+        "properties": {
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "query": {
+            "type": "string",
+            "title": "Query"
+          },
+          "system_prompt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "System Prompt"
+          },
+          "sampling_params": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sampling Params"
+          },
+          "extra_params": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extra Params"
+          }
+        },
+        "type": "object",
+        "required": [
+          "model",
+          "query"
+        ],
+        "title": "GenerateInput"
+      },
+      "GridCV": {
+        "properties": {
+          "common_params": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Common Params"
+          },
+          "grid_params": {
+            "additionalProperties": {
+              "items": {},
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Grid Params"
+          },
+          "repeat": {
+            "type": "integer",
+            "title": "Repeat",
+            "default": 1
+          }
+        },
+        "type": "object",
+        "required": [
+          "common_params",
+          "grid_params"
+        ],
+        "title": "GridCV"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "Leaderboard": {
+        "properties": {
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/LeaderboardEntry"
+            },
+            "type": "array",
+            "title": "Entries"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "entries"
+        ],
+        "title": "Leaderboard"
+      },
+      "LeaderboardEntry": {
+        "properties": {
+          "experiment_id": {
+            "type": "integer",
+            "title": "Experiment Id"
+          },
+          "experiment_name": {
+            "type": "string",
+            "title": "Experiment Name"
+          },
+          "model_name": {
+            "type": "string",
+            "title": "Model Name"
+          },
+          "dataset_name": {
+            "type": "string",
+            "title": "Dataset Name"
+          },
+          "main_metric_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Main Metric Score"
+          },
+          "other_metrics": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Other Metrics"
+          },
+          "system_prompt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "System Prompt"
+          },
+          "sampling_param": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Sampling Param"
+          },
+          "extra_param": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Extra Param"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "experiment_set_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Experiment Set Id"
+          },
+          "experiment_set_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Experiment Set Name"
+          },
+          "judge_model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Judge Model"
+          }
+        },
+        "type": "object",
+        "required": [
+          "experiment_id",
+          "experiment_name",
+          "model_name",
+          "dataset_name",
+          "main_metric_score",
+          "other_metrics",
+          "sampling_param",
+          "extra_param",
+          "created_at"
+        ],
+        "title": "LeaderboardEntry"
+      },
+      "LoadTesting": {
+        "properties": {
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model",
+            "description": "The LLM model name/id targeted if any."
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name",
+            "description": "The name of the run."
+          },
+          "prompt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prompt",
+            "description": "The prompt use for the run."
+          },
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "created_at"
+        ],
+        "title": "LoadTesting"
+      },
+      "LoadTestingCreate": {
+        "properties": {
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model",
+            "description": "The LLM model name/id targeted if any."
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name",
+            "description": "The name of the run."
+          },
+          "prompt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prompt",
+            "description": "The prompt use for the run."
+          },
+          "df": {
+            "type": "string",
+            "title": "Df",
+            "description": "The stats data."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "df"
+        ],
+        "title": "LoadTestingCreate"
+      },
+      "LoadTestingFull": {
+        "properties": {
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model",
+            "description": "The LLM model name/id targeted if any."
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name",
+            "description": "The name of the run."
+          },
+          "prompt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prompt",
+            "description": "The prompt use for the run."
+          },
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "df": {
+            "type": "string",
+            "title": "Df",
+            "description": "The stats data."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "created_at",
+          "df"
+        ],
+        "title": "LoadTestingFull"
+      },
+      "LocustRun": {
+        "properties": {
+          "scenario": {
+            "type": "string",
+            "title": "Scenario",
+            "description": "The locust scenario name."
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model",
+            "description": "The LLM model name/id targeted if any."
+          },
+          "api_url": {
+            "type": "string",
+            "title": "Api Url",
+            "description": "The url targeted."
+          },
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "scenario",
+          "api_url",
+          "id",
+          "created_at"
+        ],
+        "title": "LocustRun"
+      },
+      "LocustRunCreate": {
+        "properties": {
+          "scenario": {
+            "type": "string",
+            "title": "Scenario",
+            "description": "The locust scenario name."
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model",
+            "description": "The LLM model name/id targeted if any."
+          },
+          "api_url": {
+            "type": "string",
+            "title": "Api Url",
+            "description": "The url targeted."
+          },
+          "stats_df": {
+            "type": "string",
+            "title": "Stats Df",
+            "description": "The stats csv file serialized as a dataframe."
+          },
+          "history_df": {
+            "type": "string",
+            "title": "History Df",
+            "description": "The stats history CSV file serialized as a dataframe."
+          },
+          "custom_history_df": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Custom History Df",
+            "description": "Extra stats history serialized as a dataframe."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "scenario",
+          "api_url",
+          "stats_df",
+          "history_df"
+        ],
+        "title": "LocustRunCreate"
+      },
+      "LocustRunFull": {
+        "properties": {
+          "scenario": {
+            "type": "string",
+            "title": "Scenario",
+            "description": "The locust scenario name."
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model",
+            "description": "The LLM model name/id targeted if any."
+          },
+          "api_url": {
+            "type": "string",
+            "title": "Api Url",
+            "description": "The url targeted."
+          },
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "stats_df": {
+            "type": "string",
+            "title": "Stats Df",
+            "description": "The stats csv file serialized as a dataframe."
+          },
+          "history_df": {
+            "type": "string",
+            "title": "History Df",
+            "description": "The stats history CSV file serialized as a dataframe."
+          },
+          "custom_history_df": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Custom History Df",
+            "description": "Extra stats serialized as a dataframe."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "scenario",
+          "api_url",
+          "id",
+          "created_at",
+          "stats_df",
+          "history_df"
+        ],
+        "title": "LocustRunFull"
+      },
+      "Metric": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "type": {
+            "$ref": "#/components/schemas/MetricType"
+          },
+          "require": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Require"
+          },
+          "required_params": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Required Params"
+          },
+          "optional_params": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Optional Params"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "description",
+          "type",
+          "require"
+        ],
+        "title": "Metric"
+      },
+      "MetricEnum": {
+        "type": "string",
+        "enum": [
+          "judge_rambling",
+          "qcm_exactness",
+          "judge_complexity",
+          "judge_notator",
+          "ocr_v1",
+          "judge_completude",
+          "judge_precision",
+          "judge_relevant",
+          "nb_tokens_prompt",
+          "nb_tokens_completion",
+          "nb_tool_calls",
+          "generation_time",
+          "energy_consumption",
+          "gwp_consumption",
+          "output_length",
+          "judge_adhoc",
+          "judge_exactness",
+          "answer_relevancy",
+          "faithfulness",
+          "hallucination",
+          "prompt_alignment",
+          "summarization",
+          "bias",
+          "toxicity",
+          "pii_leakage",
+          "contextual_precision",
+          "contextual_recall",
+          "contextual_relevancy",
+          "ragas"
+        ],
+        "title": "MetricEnum"
+      },
+      "MetricParametrized": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "params": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Params"
+          },
+          "aliased_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aliased Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "MetricParametrized"
+      },
+      "MetricStatus": {
+        "type": "string",
+        "enum": [
+          "pending",
+          "running",
+          "finished",
+          "stopped"
+        ],
+        "title": "MetricStatus"
+      },
+      "MetricType": {
+        "type": "string",
+        "enum": [
+          "llm",
+          "deepeval",
+          "human"
+        ],
+        "title": "MetricType"
+      },
+      "Model": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "base_url": {
+            "type": "string",
+            "title": "Base Url"
+          },
+          "aliased_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aliased Name"
+          },
+          "system_prompt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "System Prompt"
+          },
+          "prelude_prompt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prelude Prompt"
+          },
+          "sampling_params": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sampling Params"
+          },
+          "extra_params": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extra Params"
+          },
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "has_raw_output": {
+            "type": "boolean",
+            "title": "Has Raw Output",
+            "default": false
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "base_url",
+          "id"
+        ],
+        "title": "Model"
+      },
+      "ModelCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "base_url": {
+            "type": "string",
+            "title": "Base Url"
+          },
+          "aliased_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aliased Name"
+          },
+          "system_prompt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "System Prompt"
+          },
+          "prelude_prompt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prelude Prompt"
+          },
+          "sampling_params": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sampling Params"
+          },
+          "extra_params": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extra Params"
+          },
+          "api_key": {
+            "type": "string",
+            "title": "Api Key"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "name",
+          "base_url",
+          "api_key"
+        ],
+        "title": "ModelCreate"
+      },
+      "ModelInfo": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "aliased_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Aliased Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "aliased_name"
+        ],
+        "title": "ModelInfo"
+      },
+      "ModelRaw": {
+        "properties": {
+          "output": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Output",
+            "description": "The sequence of answers generated for this model, ordered as the 'rows' input of the dataset you are working on."
+          },
+          "aliased_name": {
+            "type": "string",
+            "title": "Aliased Name",
+            "description": "A name to identify this model. The difference with the `name` parameter is that the latter must be used to identify the model name in the Openai API-compatible endpoint."
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "default": ""
+          },
+          "base_url": {
+            "type": "string",
+            "title": "Base Url",
+            "default": ""
+          },
+          "system_prompt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "System Prompt"
+          },
+          "prelude_prompt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prelude Prompt"
+          },
+          "sampling_params": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sampling Params"
+          },
+          "extra_params": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extra Params"
+          },
+          "execution_time": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Execution Time"
+          },
+          "nb_tokens_prompt": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nb Tokens Prompt"
+          },
+          "nb_tokens_completion": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nb Tokens Completion"
+          },
+          "nb_tool_calls": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nb Tool Calls"
+          },
+          "context": {
+            "anyOf": [
+              {
+                "items": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Context"
+          },
+          "retrieval_context": {
+            "anyOf": [
+              {
+                "items": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retrieval Context"
+          },
+          "think": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Think"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "output",
+          "aliased_name"
+        ],
+        "title": "ModelRaw"
+      },
+      "Observation": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          },
+          "observation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Observation"
+          },
+          "num_line": {
+            "type": "integer",
+            "title": "Num Line"
+          },
+          "error_msg": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Msg"
+          },
+          "execution_time": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Execution Time"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "created_at",
+          "score",
+          "observation",
+          "num_line",
+          "error_msg",
+          "execution_time"
+        ],
+        "title": "Observation"
+      },
+      "OpsEcoDetails": {
+        "properties": {
+          "total_emissions": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Total Emissions"
+          },
+          "total_entries_with_emissions": {
+            "type": "integer",
+            "title": "Total Entries With Emissions"
+          },
+          "first_emission_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Emission Date"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_emissions",
+          "total_entries_with_emissions",
+          "first_emission_date"
+        ],
+        "title": "OpsEcoDetails"
+      },
+      "OpsEcoGlobal": {
+        "properties": {
+          "answers": {
+            "$ref": "#/components/schemas/OpsEcoDetails"
+          },
+          "observation_table": {
+            "$ref": "#/components/schemas/OpsEcoDetails"
+          }
+        },
+        "type": "object",
+        "required": [
+          "answers",
+          "observation_table"
+        ],
+        "title": "OpsEcoGlobal"
+      },
+      "OpsMetrics": {
+        "properties": {
+          "experiment_sets": {
+            "type": "integer",
+            "title": "Experiment Sets"
+          },
+          "unique_experiments": {
+            "type": "integer",
+            "title": "Unique Experiments"
+          },
+          "unique_answers": {
+            "type": "integer",
+            "title": "Unique Answers"
+          },
+          "unique_metrics": {
+            "type": "integer",
+            "title": "Unique Metrics"
+          },
+          "unique_observations": {
+            "type": "integer",
+            "title": "Unique Observations"
+          },
+          "distinct_models": {
+            "items": {
+              "$ref": "#/components/schemas/ModelInfo"
+            },
+            "type": "array",
+            "title": "Distinct Models"
+          }
+        },
+        "type": "object",
+        "required": [
+          "experiment_sets",
+          "unique_experiments",
+          "unique_answers",
+          "unique_metrics",
+          "unique_observations",
+          "distinct_models"
+        ],
+        "title": "OpsMetrics"
+      },
+      "Result": {
+        "properties": {
+          "metric_name": {
+            "$ref": "#/components/schemas/MetricEnum"
+          },
+          "metric_params": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metric Params"
+          },
+          "metric_aliased_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metric Aliased Name"
+          },
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "observation_table": {
+            "items": {
+              "$ref": "#/components/schemas/Observation"
+            },
+            "type": "array",
+            "title": "Observation Table"
+          },
+          "num_try": {
+            "type": "integer",
+            "title": "Num Try"
+          },
+          "num_success": {
+            "type": "integer",
+            "title": "Num Success"
+          },
+          "experiment_id": {
+            "type": "integer",
+            "title": "Experiment Id"
+          },
+          "metric_status": {
+            "$ref": "#/components/schemas/MetricStatus"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "metric_name",
+          "id",
+          "created_at",
+          "observation_table",
+          "num_try",
+          "num_success",
+          "experiment_id",
+          "metric_status"
+        ],
+        "title": "Result"
+      },
+      "RetryRuns": {
+        "properties": {
+          "experiment_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Experiment Ids"
+          },
+          "result_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Result Ids"
+          },
+          "unfinished_experiment_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Unfinished Experiment Ids"
+          },
+          "unfinished_result_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Unfinished Result Ids"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "experiment_ids",
+          "result_ids",
+          "unfinished_experiment_ids",
+          "unfinished_result_ids"
+        ],
+        "title": "RetryRuns"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  }
+}

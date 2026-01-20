@@ -1,5 +1,4 @@
 from fastapi import FastAPI
-from fastapi.responses import RedirectResponse
 from starlette.middleware.cors import CORSMiddleware
 
 from evalap.api.config import (
@@ -9,21 +8,26 @@ from evalap.api.config import (
     APP_VERSION,
     BACKEND_CORS_ORIGINS,
     CONTACT,
+    ENV,
 )
 from evalap.api.endpoints import router as router_v1
+
+docs_url_val = API_PREFIX + "/docs" if ENV != "prod" else None
+redoc_url_val = API_PREFIX + "/redoc" if ENV != "prod" else None
+openapi_url_val = API_PREFIX + "/openapi.json" if ENV != "prod" else None
 
 app = FastAPI(
     title=APP_NAME,
     description=APP_DESCRIPTION,
     version=APP_VERSION,
     contact=CONTACT,
-    docs_url=API_PREFIX + "/api-docs",
-    redoc_url=API_PREFIX + "/redoc",
-    openapi_url=API_PREFIX + "/openapi.json",
+    docs_url=docs_url_val,
+    redoc_url=redoc_url_val,
+    openapi_url=openapi_url_val,
 )
 
 app.add_middleware(
-    CORSMiddleware,
+    CORSMiddleware,  # type: ignore
     allow_origins=BACKEND_CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
@@ -33,8 +37,3 @@ app.add_middleware(
 
 # Api rooter
 app.include_router(router_v1, prefix=API_PREFIX + "/v1")
-
-
-@app.get("/docs", include_in_schema=False)
-async def redirect_to_docs():
-    return RedirectResponse(url=API_PREFIX + "/api-docs")

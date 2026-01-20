@@ -82,7 +82,7 @@ const config = {
                     },
                     {
                         label: 'API Reference',
-                        href: `${API_URL}/redoc`,
+                        href: `${API_URL}/redoc.html`,
                         position: 'left',
                     },
                     {
@@ -142,7 +142,7 @@ const config = {
                             },
                             {
                                 label: 'API Reference (Swagger)',
-                                href: `${API_URL}/api-docs`,
+                                href: `${API_URL}/api_docs.html`,
                             },
                             {
                                 label: 'Github',
