@@ -4,9 +4,19 @@ set -e
 # Configuration
 CONTAINER_NAME="evalap"
 REGION="fr-par"
-# Try to get repository name from git, otherwise default
-REPO_NAME=$(git config --get remote.origin.url | sed -E 's/.*github.com[:\/](.*)\.git/\1/' | tr '[:upper:]' '[:lower:]')
-IMAGE_NAME="ghcr.io/${REPO_NAME}/evalap"
+
+# Get Scaleway Registry endpoint
+echo "🔍 Fetching Scaleway Registry endpoint for namespace 'evalap'..."
+REGISTRY_ENDPOINT=$(scw registry namespace list region=$REGION -o json | jq -r '.[] | select(.name == "evalap") | .endpoint')
+
+if [ -z "$REGISTRY_ENDPOINT" ]; then
+    echo "❌ Error: Scaleway Registry namespace 'evalap' not found in region $REGION."
+    echo "Current namespaces:"
+    scw registry namespace list region=$REGION
+    exit 1
+fi
+
+IMAGE_NAME="${REGISTRY_ENDPOINT}/${CONTAINER_NAME}"
 IMAGE_TAG=$(git rev-parse --short HEAD)
 
 # Check dependencies
@@ -26,11 +36,15 @@ echo "🚀 Starting deployment of $CONTAINER_NAME to Scaleway ($REGION)"
 echo "📦 Building production Docker image..."
 docker build --platform linux/amd64 -t "${IMAGE_NAME}:${IMAGE_TAG}" .
 
-# 2. Push to Registry
+# 2. Login to Scaleway Registry
+echo "🔐 Logging in to Scaleway Registry..."
+scw registry login
+
+# 3. Push to Registry
 echo "⬆️ Pushing image to $IMAGE_NAME:$IMAGE_TAG..."
 docker push "${IMAGE_NAME}:${IMAGE_TAG}"
 
-# 3. Find Scaleway Container ID
+# 4. Find Scaleway Container ID
 echo "🔍 Searching for container named '$CONTAINER_NAME'..."
 CONTAINER_ID=$(scw container container list region=$REGION name=$CONTAINER_NAME -o json | jq -r '.[0].id')
 
@@ -42,7 +56,7 @@ fi
 
 echo "✅ Found container ID: $CONTAINER_ID"
 
-# 4. Update and Deploy
+# 5. Update and Deploy
 echo "🔄 Updating container with new image..."
 scw container container update "$CONTAINER_ID" \
     region=$REGION \
