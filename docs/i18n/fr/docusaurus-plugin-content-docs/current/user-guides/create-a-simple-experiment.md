@@ -42,7 +42,7 @@ Voici quelques métriques clés offertes par EvalAP :
 | nb_tool_calls             | Number of tools called during generation                                                                         | ops      | [output]                                     |
 
 :::info
-Consultez la liste complète des métriques depuis la route API [v1/metrics](https://evalap.etalab.gouv.fr/redoc#tag/metrics).
+Consultez la liste complète des métriques depuis la route API [v1/metrics](/redoc#tag/metrics).
 :::
 
 Lors de la sélection des métriques, assurez-vous que les champs requis correspondent aux colonnes de votre jeu de données. Par exemple, `judge_precision` nécessite les champs `output`, `output_true` et `query`. Notez que le champ `output` est généré par EvalAP pendant l'évaluation, il n'a donc pas besoin d'être présent dans votre jeu de données initialement.
@@ -81,7 +81,7 @@ print(f"Experiment {experiment_id} is running")
 ```
 
 :::tip Champs de Modèle supportés
-Le schéma du modèle prend en charge le passage de paramètres d'échantillonnage, comme la température avec `"model": {..., "sampling_params": {"temperature": 0.2}}`, ou des paramètres supplémentaires pris en charge par l'API Openai utilisée. Consultez le [point de terminaison de création d'expérience](https://evalap.etalab.gouv.fr/redoc#tag/experiments/operation/create_experiment_v1_experiment_post) pour la liste complète des paramètres pris en charge.
+Le schéma du modèle prend en charge le passage de paramètres d'échantillonnage, comme la température avec `"model": {..., "sampling_params": {"temperature": 0.2}}`, ou des paramètres supplémentaires pris en charge par l'API Openai utilisée. Consultez le [point de terminaison de création d'expérience](/redoc#tag/experiments/operation/create_experiment_v1_experiment_post) pour la liste complète des paramètres pris en charge.
 :::
 
 ### Créer une Expérience avec un Modèle Personnalisé
@@ -124,9 +124,7 @@ print(f"Experiment {experiment_id} is running")
 ```
 
 :::tip Champs de Modèle custom supportés
-```markdown
-Consultez la documentation de l'API du schéma ModelRaw pour voir tous les paramètres acceptés pour un modèle personnalisé : https://evalap.etalab.gouv.fr/redoc#tag/experiments/operation/create_experiment_v1_experiment_post
-```
+Consultez la documentation de l'API du schéma ModelRaw pour voir tous les paramètres acceptés pour un modèle personnalisé : [create_experiment_v1_experiment_post](/redoc#tag/experiments/operation/create_experiment_v1_experiment_post)
 :::
 
 Dans ce scénario, le schéma du modèle est différent :

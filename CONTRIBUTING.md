@@ -3,11 +3,13 @@
 ## Project Architecture
 
 The stack is based on Fastapi+pydantic+sqlachemy for the API in conjonction with ZeroMQ for the Runner.
-The project includes an UI/UX based on Streamlit [WIP].
+The project includes:
+- A **Documentation and Results platform** based on Docusaurus (Port 3000).
+- A **Local Results Explorer** based on Streamlit (Port 8501).
 
 ```
 evalap/
-├── justfile    --> just is a handy way to save and run project-specific commands. See https://just.systems
+├── justfile    --> just is a handy way to save and run project-specific commands. See [https://just.systems](https://just.systems)
 ├── evalap/        --> The evalap code source
 │   ├── api/        --> The evaluation API source code
 │   ├── runner/     --> The runner (message passing) source code
@@ -80,13 +82,15 @@ This will:
 - Start all three services with hot reloading:
   - **Uvicorn API** on port 8000
   - **Runner** with file watching
-  - **Streamlit UI** on port 8501
+  - **Docusaurus UI** on port 3000 (New platform)
+  - **Streamlit UI** on port 8501 (Local results explorer)
 
 #### Access Your Services
 
-- **API**: http://localhost:8000
-- **API Docs**: http://localhost:8000/docs or http://localhost:8000/redoc
-- **Streamlit UI**: http://localhost:8501
+- **API**: [http://localhost:8000](http://localhost:8000)
+- **API Docs**: [http://localhost:8000/api-docs](http://localhost:8000/api-docs) or [http://localhost:8000/redoc](http://localhost:8000/redoc)
+- **Docusaurus UI**: [http://localhost:3000](http://localhost:3000) (Documentation & Results)
+- **Streamlit UI**: [http://localhost:8501](http://localhost:8501) (Local results explorer)
 - **PostgreSQL**: localhost:5432 (credentials: postgres/changeme)
 
 #### Hot Reloading
@@ -94,8 +98,9 @@ This will:
 Your code is live-mounted into the container. Any changes you make will automatically trigger reloads:
 
 - **Edit API code** (e.g., `evalap/api/main.py`) → Uvicorn auto-reloads
-- **Edit runner code** (e.g., `evalap/runners/tasks.py`) → Runner auto-restarts (you'll see `[Reloader]` messages)
-- **Edit Streamlit code** (e.g., `evalap/ui/demo_streamlit/app.py`) → Streamlit prompts to rerun
+- **Edit runner code** (e.g., `evalap/runners/tasks.py`) → Runner auto-restarts
+- **Edit Documentation code** (e.g., `docs/docs/index.md`) → Docusaurus auto-reloads
+- **Edit UI code** (e.g., `evalap/ui/demo_streamlit/app.py`) → Streamlit auto-reloads
 
 #### Managing Docker Services
 
@@ -115,6 +120,7 @@ supervisorctl status
 # Restart a specific process
 supervisorctl restart uvicorn
 supervisorctl restart runner
+supervisorctl restart docusaurus
 supervisorctl restart streamlit
 
 # Stop services
@@ -151,7 +157,7 @@ alembic -c evalap/api/alembic.ini upgrade head
 
 #### Run All Services
 
-Launch the API, runner and streamlit together:
+Launch the API, runner, Docusaurus and Streamlit together:
 
 ```bash
 just run
@@ -160,11 +166,11 @@ just run
 
 This will:
 
-1. **Seed the database** with initial datasets from Hugging Face (if not already present):
-   - **llm-values-CIVICS**: Cultural values evaluation dataset
-   - **lmsys-toxic-chat**: Toxicity detection dataset
-   - **DECCP**: Chinese censorship benchmark
-2. Start all three services in parallel with colored output and hot reloading
+1.  **Seed the database** with initial datasets from Hugging Face (if not already present):
+    -   **llm-values-CIVICS**: Cultural values evaluation dataset
+    -   **lmsys-toxic-chat**: Toxicity detection dataset
+    -   **DECCP**: Chinese censorship benchmark
+2.  Start all four services in parallel with colored output and hot reloading
 
 Note: Having an `HF_TOKEN` set is recommended for better dataset download reliability.
 
@@ -186,19 +192,25 @@ PYTHONPATH="." python -m evalap.runners
 LOG_LEVEL="DEBUG" PYTHONPATH="." python -m evalap.runners
 ```
 
+**Launch Docusaurus:**
+
+```bash
+cd docs && npm run start
+```
+
 **Launch Streamlit:**
 
 ```bash
-streamlit run evalap/ui/demo_streamlit/app.py --server.runOnSave true --server.headless=true
+uv run streamlit run evalap/ui/demo_streamlit/app.py
 ```
 
 ## Troubleshooting
 
 ### Hot Reload Not Working?
 
-1. **Check volume mounting**: Ensure the volume is mounted correctly in `compose.dev.yml`
-2. **Check logs**: Look for `[Reloader]` messages in runner logs
-3. **Verify file changes**: Make sure you're editing files in the mounted directory
+1.  **Check volume mounting**: Ensure the volume is mounted correctly in `compose.dev.yml`
+2.  **Check logs**: Look for `[Reloader]` messages in runner logs
+3.  **Verify file changes**: Make sure you're editing files in the mounted directory
 
 ### Process Crashed?
 

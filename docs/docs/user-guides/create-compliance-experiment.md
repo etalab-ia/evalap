@@ -245,7 +245,7 @@ for dataset_name, info in datasets_metrics.items():
 
 After launching an experiment:
 
-1. Navigate to the compliance details page : http://localhost:8501/compliance
+1. Navigate to the compliance details page: [http://localhost:8501](http://localhost:8501) (Streamlit local UI)
 2. View summary results showing:
    - Overall performance metrics for each model
    - Support table displaying the number of experiments used for score averaging

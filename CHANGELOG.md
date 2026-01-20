@@ -103,5 +103,5 @@ All notable changes to this project will be documented in this file.
 
 ### ⚙️ Operations
 
-- Added Docker and Streamlit configuration files.
+- Added Docker and Docusaurus configuration files.
 - Fix supervisord path to deploy.

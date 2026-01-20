@@ -44,7 +44,7 @@ Pour publier des jeux de données et exécuter des expériences, vous devez util
       <div className="featureCard">
         <h3 className="featureTitle">Référence de l'API</h3>
         <p className="featureDescription">Spécification technique complète de l'API Evalap.</p>
-        <a href="https://evalap.etalab.gouv.fr/redoc">Voir la référence de l'API →</a>
+        <a href="/redoc">Voir la référence de l'API →</a>
       </div>
     </div>
   </div>

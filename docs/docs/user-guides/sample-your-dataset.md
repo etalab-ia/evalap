@@ -5,7 +5,7 @@ sidebar_position: 5
 # Sample your dataset
 
 This guide will walk you through how to use the sampling feature.
-See the [api reference](https://evalap.etalab.gouv.fr/redoc#tag/experiment_set/operation/create_experimentset_v1_experiment_set_post) for more usage detail.
+See the [api reference](/redoc#tag/experiment_set/operation/create_experimentset_v1_experiment_set_post) for more usage detail.
 
 You must retrieve your dataset:
 

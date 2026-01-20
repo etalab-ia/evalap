@@ -173,4 +173,4 @@ else:
     print(resp)
 ```
 
-You can now see the result in the front : http://localhost:8501/experiments_set
+You can now see the result in the front: [http://localhost:3000/experiments_set](http://localhost:3000/experiments_set) (Docusaurus) or locally at [http://localhost:8501](http://localhost:8501) (Streamlit local UI)

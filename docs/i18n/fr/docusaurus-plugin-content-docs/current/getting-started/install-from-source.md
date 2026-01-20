@@ -94,7 +94,7 @@ Pour vérifier qu'Evalap fonctionne correctement, ouvrez votre navigateur web et
 http://localhost:8000/redoc
 ```
 
-Vous devriez voir la page de documentation de l'API. Vous pouvez également utiliser `http://localhost:8000/docs` si vous préférez la version swagger.
+Vous devriez voir la page de documentation de l'API. Vous pouvez également utiliser `http://localhost:8000/api-docs` si vous préférez la version swagger.
 
 ### Configuration des journaux
 
@@ -116,10 +116,18 @@ Si vous rencontrez des problèmes au démarrage de l'application :
 
 L'API devrait maintenant fonctionner à l'adresse `http://localhost:8000`.
 
-## Exécuter l'interface Streamlit (Optionnel)
+## Exécuter les interfaces (Optionnel)
+
+### Docusaurus (Plateforme & Docs)
 
 ```bash
-streamlit run evalap/ui/demo_streamlit/app.py --server.runOnSave true
+cd docs && npm run start
+```
+
+### Streamlit (Interface locale)
+
+```bash
+uv run streamlit run evalap/ui/demo_streamlit/app.py
 ```
 
 

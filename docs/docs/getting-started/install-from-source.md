@@ -94,7 +94,7 @@ To verify that Evalap is running correctly, open your web browser and navigate t
 http://localhost:8000/redoc
 ```
 
-You should see the API documentation page. You can also use `http://localhost:8000/docs` if you prefer the swagger version.
+You should see the API documentation page. You can also use `http://localhost:8000/api-docs` if you prefer the swagger version.
 
 ### Logging Configuration
 
@@ -116,10 +116,18 @@ If you encounter issues starting the application:
 
 The API should now be running at `http://localhost:8000`.
 
-## Run the Streamlit Frontend (Optional)
+## Run the Frontend Interfaces (Optional)
+
+### Docusaurus (Platform & Docs)
 
 ```bash
-streamlit run evalap/ui/demo_streamlit/app.py --server.runOnSave true
+cd docs && npm run start
+```
+
+### Streamlit (Legacy/Local UI)
+
+```bash
+uv run streamlit run evalap/ui/demo_streamlit/app.py
 ```
 
 

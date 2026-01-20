@@ -54,8 +54,8 @@ services:
       - ALBERT_API_KEY=${ALBERT_API_KEY}
     ports:
       - "8000:8000"
-      - "8501:8501"
       - "3000:3000"
+      - "8501:8501"
     volumes:
       - evalap_data:/data
     command: ["supervisord", "-c", "/app/supervisord.conf"]
@@ -77,8 +77,9 @@ docker compose up -d
 This will start both the application and the database services in detached mode.
 
 You should then be able to connect to the following services:
-- the API at http://localhost:8000/docs
-- the webapp at http://localhost:8501
+- the API at [http://localhost:8000/api-docs](http://localhost:8000/api-docs)
+- the Docusaurus platform at [http://localhost:3000](http://localhost:3000)
+- the Streamlit UI at [http://localhost:8501](http://localhost:8501)
 
 
 ## Next Steps

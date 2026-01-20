@@ -44,7 +44,7 @@ To publish datasets and run experiments you must use the EvalAP API, either from
       <div className="featureCard">
         <h3 className="featureTitle">API Reference</h3>
         <p className="featureDescription">Complete technical specification of the Evalap API.</p>
-        <a href="https://evalap.etalab.gouv.fr/redoc">View API Reference →</a>
+        <a href="/redoc">View API Reference →</a>
       </div>
     </div>
   </div>

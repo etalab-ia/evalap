@@ -176,9 +176,9 @@ rainfrog:
 
 # Run EvalAP locally or with Docker Compose
 # Usage: just run [local|docker]
-# - local (default): Run API, runner, and streamlit in parallel with hot reloading
+# - local (default): Run API, runner, and Docusaurus in parallel with hot reloading
 # - docker: Run with Docker Compose (includes hot reloading for all services)
-# Access: API http://localhost:8000 | Docs http://localhost:8000/docs | Streamlit http://localhost:8501
+# Access: API http://localhost:8000 | Docs http://localhost:3000
 run mode="local" log_level="INFO":
   scripts/run_evalap.sh {{mode}} {{log_level}}
 
