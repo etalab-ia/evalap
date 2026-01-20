@@ -12,6 +12,14 @@ ENV UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy \
     UV_PYTHON_CACHE_DIR=/root/.cache/uv/python
 
+# Install Caddy
+RUN apt-get update && apt-get install -y debian-keyring debian-archive-keyring apt-transport-https curl \
+    && curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg \
+    && curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | tee /etc/apt/sources.list.d/caddy-stable.list \
+    && apt-get update \
+    && apt-get install -y caddy \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
 # Install Python 3.12 using uv (fast!)
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv python install 3.12
@@ -47,6 +55,7 @@ COPY ./docs /app/docs
 COPY ./evalap /app/evalap
 COPY ./scripts /app/scripts
 COPY supervisord.conf /app/supervisord.conf
+COPY Caddyfile /app/Caddyfile
 
 # Copy built Docusaurus site
 COPY --from=docs-builder /app/docs/build /app/docs/build
@@ -63,3 +72,5 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 ENV PATH="/app/.venv/bin:$PATH"
 
 WORKDIR /app
+
+EXPOSE 8080

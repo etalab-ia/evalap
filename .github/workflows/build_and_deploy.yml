@@ -65,20 +65,41 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-and-push
     steps:
-      - name: Trigger dev deployment
-        run: |
-          RESPONSE="$(curl --request POST \
-            --form token=${{ secrets.GITLAB_CI_TOKEN }} \
-            --form ref=main \
-            --form 'variables[pipeline_name]=${{ github.event.repository.name }} - ${{ needs.build-and-push.outputs.commit_title }}' \
-            --form 'variables[docker_image_tag]=${{ env.IMAGE_TAG }}' \
-            --form 'variables[application_to_deploy]=evalap' \
-            --form 'variables[deployment_environment]=dev' \
-            'https://gitlab.com/api/v4/projects/58117805/trigger/pipeline')"
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-          if echo "$RESPONSE" | grep -q '"status":"created"'; then
-            echo $RESPONSE
-          else
-            echo $RESPONSE
+      - name: Install Scaleway CLI
+        uses: scaleway/action-scw@v0
+        with:
+          save-config: true
+          export-config: true
+        env:
+          SCW_ACCESS_KEY: ${{ secrets.SCW_ACCESS_KEY }}
+          SCW_SECRET_KEY: ${{ secrets.SCW_SECRET_KEY }}
+          SCW_DEFAULT_ORGANIZATION_ID: ${{ secrets.SCW_DEFAULT_ORGANIZATION_ID }}
+          SCW_DEFAULT_PROJECT_ID: ${{ secrets.SCW_DEFAULT_PROJECT_ID }}
+          SCW_DEFAULT_REGION: fr-par
+          SCW_DEFAULT_ZONE: fr-par-1
+
+      - name: Deploy to Scaleway Container
+        run: |
+          CONTAINER_NAME="evalap"
+          FULL_IMAGE_NAME="${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}"
+
+          echo "Deploying $FULL_IMAGE_NAME to container $CONTAINER_NAME..."
+
+          # Find container ID
+          CONTAINER_ID=$(scw container container list region=fr-par name=$CONTAINER_NAME -o json | jq -r '.[0].id')
+
+          if [ "$CONTAINER_ID" == "null" ] || [ -z "$CONTAINER_ID" ]; then
+            echo "Error: Container $CONTAINER_NAME not found."
             exit 1
           fi
+
+          echo "Found container ID: $CONTAINER_ID"
+
+          # Update container image and port
+          scw container container update region=fr-par $CONTAINER_ID registry-image=$FULL_IMAGE_NAME port=8080
+
+          # Deploy
+          scw container container deploy region=fr-par $CONTAINER_ID

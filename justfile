@@ -202,3 +202,7 @@ sync:
 # Test a PR: list open PRs, select one, checkout its branch, migrate, and run
 pray:
   scripts/pray.sh
+
+# Build production image and deploy to Scaleway (requires scw and docker)
+deploy-scaleway:
+  scripts/deploy_to_scaleway.sh

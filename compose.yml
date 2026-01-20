@@ -35,8 +35,7 @@ services:
       - MISTRAL_API_KEY=${MISTRAL_API_KEY}
       - ALBERT_API_KEY=${ALBERT_API_KEY}
     ports:
-      - "8000:8000"
-      - "3000:3000"
+      - "80:8080"
     volumes:
       - evalap_data:/data
       - huggingface_cache:/root/.cache/huggingface
