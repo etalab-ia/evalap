@@ -43,3 +43,9 @@ repos:
       # Remove trailing whitespace
       - id: trailing-whitespace
         exclude: '^(\.claude/|\.cursor/|\.specify/|\.windsurf/)'
+
+  - repo: https://github.com/dotenv-linter/dotenv-linter
+    rev: v4.0.0
+    hooks:
+      - id: dotenv-linter
+        args: [--skip, UnorderedKey]
