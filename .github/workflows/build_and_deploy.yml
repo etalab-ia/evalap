@@ -89,7 +89,7 @@ jobs:
           echo "Deploying $FULL_IMAGE_NAME to container $CONTAINER_NAME..."
 
           # Find container ID
-          CONTAINER_ID=$(scw container container list region=fr-par name=$CONTAINER_NAME -o json | jq -r '.[0].id')
+          CONTAINER_ID=$(scw container container list region=fr-par name="$CONTAINER_NAME" -o json | jq -r '.[0].id')
 
           if [ "$CONTAINER_ID" == "null" ] || [ -z "$CONTAINER_ID" ]; then
             echo "Error: Container $CONTAINER_NAME not found."
@@ -99,7 +99,7 @@ jobs:
           echo "Found container ID: $CONTAINER_ID"
 
           # Update container image and port
-          scw container container update region=fr-par $CONTAINER_ID registry-image=$FULL_IMAGE_NAME port=8080
+          scw container container update region=fr-par "$CONTAINER_ID" registry-image="$FULL_IMAGE_NAME" port=8080
 
           # Deploy
-          scw container container deploy region=fr-par $CONTAINER_ID
+          scw container container deploy region=fr-par "$CONTAINER_ID"
