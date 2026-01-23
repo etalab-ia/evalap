@@ -48,4 +48,4 @@ repos:
     rev: v4.0.0
     hooks:
       - id: dotenv-linter
-        args: [--skip, UnorderedKey]
+        args: [check]

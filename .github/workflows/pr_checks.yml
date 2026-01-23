@@ -62,8 +62,6 @@ jobs:
 
       - name: Lint .env files
         uses: dotenv-linter/action-dotenv-linter@v2
-        with:
-          dotenv_linter_flags: --skip UnorderedKey
 
 #      - name: Check formatting
 #        run: uv run ruff format --check --diff --config=pyproject.toml
