@@ -30,6 +30,11 @@ if ! command -v docker &> /dev/null; then
     exit 1
 fi
 
+if ! command -v jq &> /dev/null; then
+    echo "Error: jq is not installed."
+    exit 1
+fi
+
 echo "🚀 Starting deployment of $CONTAINER_NAME to Scaleway ($REGION)"
 
 # 1. Build the production image
